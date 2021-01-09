@@ -1,0 +1,23 @@
+#pragma once
+
+namespace ureact { namespace detail {
+
+using turn_id_t = unsigned int;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// turn_base
+///////////////////////////////////////////////////////////////////////////////////////////////////
+class turn_base
+{
+public:
+    inline explicit turn_base(turn_id_t id) :
+        id_( id )
+    {}
+
+    inline turn_id_t id() const { return id_; }
+
+private:
+    turn_id_t    id_;
+};
+
+}}

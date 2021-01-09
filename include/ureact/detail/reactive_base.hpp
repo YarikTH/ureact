@@ -1,0 +1,88 @@
+#pragma once
+
+#include <memory>
+#include <utility>
+
+#include "ureact/context.hpp"
+
+namespace ureact { namespace detail {
+
+template <typename L, typename R>
+bool equals(const L& lhs, const R& rhs)
+{
+    return lhs == rhs;
+}
+
+template <typename L, typename R>
+bool equals(const std::reference_wrapper<L>& lhs, const std::reference_wrapper<R>& rhs)
+{
+    return lhs.get() == rhs.get();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// reactive_base
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename node_t>
+class reactive_base
+{
+public:
+    // Default ctor
+    reactive_base() = default;
+    
+    // Constructor
+    explicit reactive_base(context* context) :
+        context_( context )
+    {}
+
+    // Copy ctor
+    reactive_base(const reactive_base&) = default;
+
+    // Move ctor
+    reactive_base(reactive_base&& other) noexcept = default;
+
+    // Explicit node ctor
+    reactive_base(context* context, std::shared_ptr<node_t>&& ptr) noexcept :
+        context_( context ),
+        ptr_( std::move(ptr) )
+    {}
+
+    // Copy assignment
+    reactive_base& operator=(const reactive_base&) = default;
+
+    // Move assignment
+    reactive_base& operator=(reactive_base&& other) noexcept = default;
+
+    ~reactive_base() = default;
+    
+    bool is_valid() const
+    {
+        return ptr_ != nullptr;
+    }
+
+    bool equals(const reactive_base& other) const
+    {
+        return this->ptr_ == other.ptr_;
+    }
+    
+    context* get_context() const
+    {
+        return context_;
+    }
+protected:
+    context* context_ = nullptr;
+    std::shared_ptr<node_t> ptr_;
+
+    template <typename node_t_>
+    friend const std::shared_ptr<node_t_>& get_node_ptr(const reactive_base<node_t_>& node);
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// get_node_ptr
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename node_t>
+const std::shared_ptr<node_t>& get_node_ptr(const reactive_base<node_t>& node)
+{
+    return node.ptr_;
+}
+
+}}

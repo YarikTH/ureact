@@ -1,0 +1,3 @@
+add_library(UreactApprovalTests INTERFACE)
+target_include_directories(UreactApprovalTests SYSTEM INTERFACE include)
+add_library(ureact::ApprovalTests ALIAS UreactApprovalTests)

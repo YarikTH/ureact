@@ -30,10 +30,8 @@ TEST_CASE( "detach" )
 
         if (phase == 0)
             CHECK(v == 3);
-        else if (phase == 1)
-            CHECK(v == 4);
         else
-            CHECK(false);
+            FAIL("We shouldn't be here");
     });
 
     auto obs2 = observe(result, [&] (int v)
@@ -45,7 +43,7 @@ TEST_CASE( "detach" )
         else if (phase == 1)
             CHECK(v == 4);
         else
-            CHECK(false);
+            FAIL("We shouldn't be here");
     });
 
     auto obs3 = observe(result, [&] (int v)
@@ -57,7 +55,7 @@ TEST_CASE( "detach" )
         else if (phase == 1)
             CHECK(v == 4);
         else
-            CHECK(false);
+            FAIL("We shouldn't be here");
     });
 
     phase = 0;
@@ -82,6 +80,78 @@ TEST_CASE( "detach" )
     CHECK(observeCount3 == 2);
 }
 
+TEST_CASE( "NoObserveOnNoChanged" )
+{
+    ureact::context ctx;
+    
+    auto a = make_var(&ctx, 1);
+    auto b = make_var(&ctx, 1);
+
+    auto product = a * b;
+    
+    auto expressionString = make_signal(with(a, b, product),
+        []( const int a_, const int b_, const int product_ )
+        {
+            return std::to_string(a_) + " * " + std::to_string(b_) + " = " + std::to_string(product_);
+        });
+        
+    int aObserveCount = 0;
+    int bObserveCount = 0;
+    int productObserveCount = 0;
+    
+    observe(a, [&] (int /*v*/)
+    {
+        ++aObserveCount;
+    });
+    observe(b, [&] (int /*v*/)
+    {
+        ++bObserveCount;
+    });
+    observe(product, [&] (int /*v*/)
+    {
+        ++productObserveCount;
+    });
+    
+    CHECK(aObserveCount == 0);
+    CHECK(bObserveCount == 0);
+    CHECK(productObserveCount == 0);
+    CHECK(expressionString.value() == "1 * 1 = 1");
+    
+    b <<= 2;
+    CHECK(aObserveCount == 0);
+    CHECK(bObserveCount == 1);
+    CHECK(productObserveCount == 1);
+    CHECK(expressionString.value() == "1 * 2 = 2");
+    
+    b <<= 2; // Shouldn't change
+    CHECK(aObserveCount == 0);
+    CHECK(bObserveCount == 1);
+    CHECK(productObserveCount == 1);
+    CHECK(expressionString.value() == "1 * 2 = 2");
+    
+    ctx.do_transaction([&]()
+    {
+        b <<= 1;
+        b <<= 2; // Shouldn't change
+    });
+    CHECK(aObserveCount == 0);
+    CHECK(bObserveCount == 1);
+    CHECK(productObserveCount == 1);
+    CHECK(expressionString.value() == "1 * 2 = 2");
+    
+    a <<= 0;
+    CHECK(aObserveCount == 1);
+    CHECK(bObserveCount == 1);
+    CHECK(productObserveCount == 2);
+    CHECK(expressionString.value() == "0 * 2 = 0");
+    
+    b <<= 3;
+    CHECK(aObserveCount == 1);
+    CHECK(bObserveCount == 2);
+    CHECK(productObserveCount == 2); // Product shouldn't change
+    CHECK(expressionString.value() == "0 * 3 = 0");
+}
+
 TEST_CASE( "ScopedObserverTest" )
 {
     ureact::context ctx;
@@ -102,6 +172,36 @@ TEST_CASE( "ScopedObserverTest" )
 
     CHECK(results.size() == 1);
     CHECK(results[0] == 2);
+}
+
+TEST_CASE( "SelfObserverDetachTest" )
+{
+    ureact::context ctx;
+    
+    std::vector<int> results;
+    
+    auto in = make_var(&ctx, 0);
+    
+    ureact::observer obs = observe(in, [&] (int v) {
+        if( v < 0 )
+        {
+            return ureact::observer_action::stop_and_detach;
+        }
+        else
+        {
+            results.push_back(v);
+            return ureact::observer_action::next;
+        }
+    });
+    
+    in <<= 1;
+    in <<= 2;
+    in <<= -1;
+    in <<= 3;
+    
+    CHECK(results.size() == 2);
+    CHECK(results[0] == 1);
+    CHECK(results[1] == 2);
 }
 
 TEST_SUITE_END();

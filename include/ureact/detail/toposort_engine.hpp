@@ -123,24 +123,24 @@ struct i_reactive_engine
     using node_t = reactive_node;
     using turn_t = turn_base;
 
-    virtual void on_turn_admission_start(turn_t& /*turn*/){}
-    virtual void on_turn_admission_end(turn_t& /*turn*/){}
+    virtual void on_turn_admission_start(turn_t& /*turn*/) = 0;
+    virtual void on_turn_admission_end(turn_t& /*turn*/) = 0;
 
-    virtual void on_input_change(node_t& /*node*/, turn_t& /*turn*/){}
+    virtual void on_input_change(node_t& /*node*/, turn_t& /*turn*/) = 0;
 
-    virtual void propagate(turn_t& /*turn*/){}
+    virtual void propagate(turn_t& /*turn*/) = 0;
 
-    virtual void on_node_create(node_t& /*node*/){}
-    virtual void on_node_destroy(node_t& /*node*/){}
+    virtual void on_node_create(node_t& /*node*/) = 0;
+    virtual void on_node_destroy(node_t& /*node*/) = 0;
 
-    virtual void on_node_attach(node_t& /*node*/, node_t& /*parent*/){}
-    virtual void on_node_detach(node_t& /*node*/, node_t& /*parent*/){}
+    virtual void on_node_attach(node_t& /*node*/, node_t& /*parent*/) = 0;
+    virtual void on_node_detach(node_t& /*node*/, node_t& /*parent*/) = 0;
 
-    virtual void on_node_pulse(node_t& /*node*/, turn_t& /*turn*/){}
-    virtual void on_node_idle_pulse(node_t& /*node*/, turn_t& /*turn*/){}
+    virtual void on_node_pulse(node_t& /*node*/, turn_t& /*turn*/) = 0;
+    virtual void on_node_idle_pulse(node_t& /*node*/, turn_t& /*turn*/) = 0;
 
-    virtual void on_dynamic_node_attach(node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/){}
-    virtual void on_dynamic_node_detach(node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/){}
+    virtual void on_dynamic_node_attach(node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/) = 0;
+    virtual void on_dynamic_node_detach(node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/) = 0;
 };
 
 
@@ -155,7 +155,19 @@ public:
 
     void on_input_change(node_t& node, turn_t& turn) override;
     void on_node_pulse(node_t& node, turn_t& turn) override;
+    
+    void on_turn_admission_start(turn_t& /*turn*/) override {}
+    void on_turn_admission_end(turn_t& /*turn*/) override {}
+    
+    void propagate(turn_t& /*turn*/) override {}
 
+    void on_node_create(node_t& /*node*/) override {}
+    void on_node_destroy(node_t& /*node*/) override {}
+    
+    void on_node_idle_pulse(node_t& /*node*/, turn_t& /*turn*/) override {}
+
+    void on_dynamic_node_attach(node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/) override {}
+    void on_dynamic_node_detach(node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/) override {}
 protected:
     virtual void process_children(node_t& node, turn_t& turn) = 0;
 };

@@ -274,26 +274,26 @@ auto operator op(left_val_in_t&& lhs, temp_signal<right_val_t,right_op_t>&& rhs)
 }                                                                                   \
 }
 
-REACT_DECLARE_OP(+, addition)
-REACT_DECLARE_OP(-, subtraction)
-REACT_DECLARE_OP(*, multiplication)
-REACT_DECLARE_OP(/, division)
-REACT_DECLARE_OP(%, modulo)
+REACT_DECLARE_OP( +, addition )
+REACT_DECLARE_OP( -, subtraction )
+REACT_DECLARE_OP( *, multiplication )
+REACT_DECLARE_OP( /, division )
+REACT_DECLARE_OP( %, modulo )
 
-REACT_DECLARE_OP(==, equal)
-REACT_DECLARE_OP(!=, not_equal)
-REACT_DECLARE_OP(<,  less)
-REACT_DECLARE_OP(<=, less_equal)
-REACT_DECLARE_OP(>,  greater)
-REACT_DECLARE_OP(>=, greater_equal)
+REACT_DECLARE_OP( ==, equal )
+REACT_DECLARE_OP( !=, not_equal )
+REACT_DECLARE_OP( <,  less )
+REACT_DECLARE_OP( <=, less_equal )
+REACT_DECLARE_OP( >,  greater )
+REACT_DECLARE_OP( >=, greater_equal )
 
-REACT_DECLARE_OP(&&, logical_and)
-REACT_DECLARE_OP(||, logical_or)
+REACT_DECLARE_OP( &&, logical_and )
+REACT_DECLARE_OP( ||, logical_or )
 
-REACT_DECLARE_OP(&, bitwise_and)
-REACT_DECLARE_OP(|, bitwise_or)
-REACT_DECLARE_OP(^, bitwise_xor)
-//REACT_DECLARE_OP(<<, bitwise_left_shift); // MSVC: Internal compiler error
-//REACT_DECLARE_OP(>>, bitwise_right_shift);
+REACT_DECLARE_OP( &, bitwise_and )
+REACT_DECLARE_OP( |, bitwise_or )
+REACT_DECLARE_OP( ^, bitwise_xor )
+REACT_DECLARE_OP( <<, bitwise_left_shift )
+REACT_DECLARE_OP( >>, bitwise_right_shift )
 
 #undef REACT_DECLARE_OP

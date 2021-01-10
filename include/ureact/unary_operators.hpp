@@ -53,11 +53,9 @@ auto operator op(temp_signal<val_t,op_in_t>&& arg)                              
 }                                                                                   \
 }
 
-REACT_DECLARE_OP(+, unary_plus)
-REACT_DECLARE_OP(-, unary_minus)
-REACT_DECLARE_OP(!, logical_negation)
-REACT_DECLARE_OP(~, bitwise_complement)
-REACT_DECLARE_OP(++, increment)
-REACT_DECLARE_OP(--, decrement)
+REACT_DECLARE_OP( +, unary_plus )
+REACT_DECLARE_OP( -, unary_minus )
+REACT_DECLARE_OP( !, logical_negation )
+REACT_DECLARE_OP( ~, bitwise_complement )
 
 #undef REACT_DECLARE_OP

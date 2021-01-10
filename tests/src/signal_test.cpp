@@ -586,7 +586,6 @@ TEST_CASE( "Modify3" )
         obsCount++;
     });
     
-    // Also terrible
     ctx.do_transaction([&] {
 
         vect.set(std::vector<int>{ 30, 50 });
@@ -596,7 +595,34 @@ TEST_CASE( "Modify3" )
         });
     });
 
-    CHECK(obsCount ==  1);
+    CHECK(obsCount == 1);
+}
+
+TEST_CASE( "Recursive transactions" )
+{
+    ureact::context ctx;
+    
+    auto v1 = make_var(&ctx, 1);
+    
+    int observeCount = 0;
+    
+    observe(v1, [&observeCount] (int /*v*/)
+    {
+        observeCount++;
+    });
+    
+    ctx.do_transaction([&] {
+        v1 <<= 7;
+        
+        ctx.do_transaction([&] {
+            v1 <<= 4;
+        });
+        
+        v1 <<= 1;
+        v1 <<= 2;
+    });
+    
+    CHECK(observeCount == 1);
 }
 
 TEST_SUITE_END();

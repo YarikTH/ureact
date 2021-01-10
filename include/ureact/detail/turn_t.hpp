@@ -1,6 +1,9 @@
 #pragma once
 
-namespace ureact { namespace detail {
+namespace ureact
+{
+namespace detail
+{
 
 using turn_id_t = unsigned int;
 
@@ -11,15 +14,19 @@ class turn_t
 {
 public:
     turn_t() = default;
-    
-    turn_t( turn_id_t id ) :
-        m_id( id )
+
+    turn_t( turn_id_t id )
+        : m_id( id )
     {}
 
-    turn_id_t id() const { return m_id; }
+    turn_id_t id() const
+    {
+        return m_id;
+    }
 
 private:
-    turn_id_t    m_id = -1u;
+    turn_id_t m_id = -1u;
 };
 
-}}
+} // namespace detail
+} // namespace ureact

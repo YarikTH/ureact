@@ -13,7 +13,8 @@
 #include "ureact/detail/graph/signal_op_node.hpp"
 #include "ureact/detail/graph/flatten_node.hpp"
 
-namespace ureact {
+namespace ureact
+{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Forward declarations
@@ -30,36 +31,29 @@ class temp_signal;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// signal_pack - Wraps several nodes in a tuple. Create with comma operator.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-template
-<
-    typename ... values_t
->
+template <typename... values_t>
 class signal_pack
 {
 public:
-    signal_pack(const signal<values_t>&  ... deps) :
-        data( std::tie(deps ...) )
+    signal_pack( const signal<values_t>&... deps )
+        : data( std::tie( deps... ) )
     {}
 
-    template <typename ... cur_values_t, typename append_value_t>
-    signal_pack(const signal_pack<cur_values_t ...>& cur_args, const signal<append_value_t>& new_arg) :
-        data( std::tuple_cat(cur_args.data, std::tie(new_arg)) )
+    template <typename... cur_values_t, typename append_value_t>
+    signal_pack( const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
+        : data( std::tuple_cat( cur_args.data, std::tie( new_arg ) ) )
     {}
 
-    std::tuple<const signal<values_t>& ...> data;
+    std::tuple<const signal<values_t>&...> data;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// with - Utility function to create a signal_pack
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-template
-<
-    typename ... values_t
->
-auto with(const signal<values_t>&  ... deps)
-    -> signal_pack<values_t ...>
+template <typename... values_t>
+auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
 {
-    return signal_pack<values_t...>(deps ...);
+    return signal_pack<values_t...>( deps... );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,12 +76,8 @@ auto make_var(context* context, V&& value)
             std::forward<V>(value)));
 }
 
-template
-<
-    typename S
->
-auto make_var(context* context, std::reference_wrapper<S> value)
-    -> var_signal<S&>
+template <typename S>
+auto make_var( context* context, std::reference_wrapper<S> value ) -> var_signal<S&>
 {
     return var_signal<S&>(
         context,
@@ -152,13 +142,12 @@ auto make_signal(const signal_pack<values_t...>& arg_pack, in_f&& func)
 
     struct node_builder
     {
-        explicit node_builder(context* context, in_f&& func) :
-            m_context( context ),
-            m_my_func( std::forward<in_f>( func ) )
+        explicit node_builder( context* context, in_f&& func )
+            : m_context( context )
+            , m_my_func( std::forward<in_f>( func ) )
         {}
 
-        auto operator()(const signal<values_t>& ... args)
-            -> temp_signal<S,op_t>
+        auto operator()( const signal<values_t>&... args ) -> temp_signal<S, op_t>
         {
             return temp_signal<S,op_t>(
                 m_context,
@@ -168,7 +157,7 @@ auto make_signal(const signal_pack<values_t...>& arg_pack, in_f&& func)
         }
 
         context* m_context;
-        in_f     m_my_func;
+        in_f m_my_func;
     };
 
     return apply(
@@ -179,29 +168,21 @@ auto make_signal(const signal_pack<values_t...>& arg_pack, in_f&& func)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Comma operator overload to create signal pack from 2 signals.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-template
-<
-    typename left_val_t,
-    typename right_val_t
->
-auto operator,(const signal<left_val_t>& a, const signal<right_val_t>& b)
+template <typename left_val_t, typename right_val_t>
+auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
     -> signal_pack<left_val_t, right_val_t>
 {
-    return signal_pack<left_val_t, right_val_t>(a, b);
+    return signal_pack<left_val_t, right_val_t>( a, b );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Comma operator overload to append node to existing signal pack.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-template
-<
-    typename ... cur_values_t,
-    typename append_value_t
->
-auto operator,(const signal_pack<cur_values_t ...>& cur, const signal<append_value_t>& append)
-    -> signal_pack<cur_values_t ... , append_value_t>
+template <typename... cur_values_t, typename append_value_t>
+auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
+    -> signal_pack<cur_values_t..., append_value_t>
 {
-    return signal_pack<cur_values_t ... , append_value_t>(cur, append);
+    return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,33 +197,25 @@ template
     class = typename std::enable_if<
         is_signal<signal_t<value_t>>::value>::type
 >
-auto operator->*(const signal_t<value_t>& arg, F&& func)
-    -> signal<typename std::result_of<F(value_t)>::type>
+auto operator->*( const signal_t<value_t>& arg, F&& func )
+    -> signal<typename std::result_of<F( value_t )>::type>
 {
-    return ::ureact::make_signal(arg, std::forward<F>(func));
+    return ::ureact::make_signal( arg, std::forward<F>( func ) );
 }
 
 // Multiple args
-template
-<
-    typename F,
-    typename ... values_t
->
-auto operator->*(const signal_pack<values_t ...>& arg_pack, F&& func)
-    -> signal<typename std::result_of<F(values_t ...)>::type>
+template <typename F, typename... values_t>
+auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
+    -> signal<typename std::result_of<F( values_t... )>::type>
 {
-    return ::ureact::make_signal(arg_pack, std::forward<F>(func));
+    return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// flatten
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-template
-<
-    typename inner_value_t
->
-auto flatten(const signal<signal<inner_value_t>>& outer)
-    -> signal<inner_value_t>
+template <typename inner_value_t>
+auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
 {
     context* context = outer.get_context();
     return signal<inner_value_t>(
@@ -251,20 +224,23 @@ auto flatten(const signal<signal<inner_value_t>>& outer)
             context, get_node_ptr(outer), get_node_ptr(outer.value())));
 }
 
-}
+} // namespace ureact
 
-#include "ureact/unary_operators.hpp"
 #include "ureact/binary_operators.hpp"
 #include "ureact/signal_.hpp"
-#include "ureact/var_signal.hpp"
 #include "ureact/temp_signal.hpp"
+#include "ureact/unary_operators.hpp"
+#include "ureact/var_signal.hpp"
 
-namespace ureact { namespace detail {
+namespace ureact
+{
+namespace detail
+{
 
 template <typename L, typename R>
-bool equals(const signal<L>& lhs, const signal<R>& rhs)
+bool equals( const signal<L>& lhs, const signal<R>& rhs )
 {
-    return lhs.equals(rhs);
+    return lhs.equals( rhs );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -273,35 +249,36 @@ bool equals(const signal<L>& lhs, const signal<R>& rhs)
 // Note: Using static_cast rather than -> return type, because when using lambda for inline
 // class initialization, decltype did not recognize the parameter r
 // Note2: MSVC doesn't like typename in the lambda
-#if defined(_MSC_VER) && _MSC_VER && !__INTEL_COMPILER
-    #define REACT_MSVC_NO_TYPENAME
+#if defined( _MSC_VER ) && _MSC_VER && !__INTEL_COMPILER
+#    define REACT_MSVC_NO_TYPENAME
 #else
-    #define REACT_MSVC_NO_TYPENAME typename
+#    define REACT_MSVC_NO_TYPENAME typename
 #endif
 
 #define REACTIVE_REF(obj, name)                                                             \
     flatten(                                                                                \
-        make_signal(                                                                         \
+        make_signal(                                                                        \
             obj,                                                                            \
             [] (const REACT_MSVC_NO_TYPENAME                                                \
-                ::ureact::detail::identity<decltype(obj)>::type::value_t& r)                       \
+                ::ureact::detail::identity<decltype(obj)>::type::value_t& r)                \
             {                                                                               \
                 using T = decltype(r.name);                                                 \
-                using S = REACT_MSVC_NO_TYPENAME ::ureact::decay_input<T>::type;              \
+                using S = REACT_MSVC_NO_TYPENAME ::ureact::decay_input<T>::type;            \
                 return static_cast<S>(r.name);                                              \
             }))
 
 #define REACTIVE_PTR(obj, name)                                                             \
     flatten(                                                                                \
-        make_signal(                                                                         \
+        make_signal(                                                                        \
             obj,                                                                            \
             [] (REACT_MSVC_NO_TYPENAME                                                      \
-                ::ureact::detail::identity<decltype(obj)>::type::value_t r)                        \
+                ::ureact::detail::identity<decltype(obj)>::type::value_t r)                 \
             {                                                                               \
                 assert(r != nullptr);                                                       \
                 using T = decltype(r->name);                                                \
-                using S = REACT_MSVC_NO_TYPENAME ::ureact::decay_input<T>::type;              \
+                using S = REACT_MSVC_NO_TYPENAME ::ureact::decay_input<T>::type;            \
                 return static_cast<S>(r->name);                                             \
             }))
 
-}}
+} // namespace detail
+} // namespace ureact

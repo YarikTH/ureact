@@ -3,20 +3,23 @@
 #include "ureact/detail/graph/node_base.hpp"
 #include "ureact/detail/observer_base.hpp"
 
-namespace ureact { namespace detail {
+namespace ureact
+{
+namespace detail
+{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// observer_node
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-class observer_node :
-    public node_base,
-    public observer_interface
+class observer_node
+    : public node_base
+    , public observer_interface
 {
 public:
-    explicit observer_node(context* context)
+    explicit observer_node( context* context )
         : node_base( context )
-    {
-    }
+    {}
 };
 
-}}
+} // namespace detail
+} // namespace ureact

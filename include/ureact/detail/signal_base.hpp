@@ -35,14 +35,14 @@ public:
 protected:
     const S& get_value() const
     {
-        return this->ptr_->value_ref();
+        return this->m_ptr->value_ref();
     }
 
     template <typename T>
     void set_value(T&& new_value) const
     {
         signal_base::get_context()->get_input_manager().add_input(
-            *static_cast<var_node<S>*>(this->ptr_.get()),
+            *static_cast<var_node<S>*>(this->m_ptr.get()),
             std::forward<T>(new_value) );
     }
 
@@ -50,7 +50,7 @@ protected:
     void modify_value(const F& func) const
     {
         signal_base::get_context()->get_input_manager().modify_input(
-            *static_cast<var_node<S>*>(this->ptr_.get()), func );
+            *static_cast<var_node<S>*>(this->m_ptr.get()), func );
     }
 };
 

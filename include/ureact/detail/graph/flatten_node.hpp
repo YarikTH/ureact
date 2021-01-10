@@ -21,18 +21,18 @@ public:
                 std::shared_ptr<signal_node<outer_t>> outer,
                 const std::shared_ptr<signal_node<inner_t>>& inner) :
         flatten_node::signal_node( context, inner->value_ref() ),
-        outer_(std::move( outer )),
-        inner_( inner )
+        m_outer(std::move( outer )),
+        m_inner( inner )
     {
         flatten_node::get_context()->on_node_create(*this);
-        flatten_node::get_context()->on_node_attach(*this, *outer_);
-        flatten_node::get_context()->on_node_attach(*this, *inner_);
+        flatten_node::get_context()->on_node_attach(*this, *m_outer);
+        flatten_node::get_context()->on_node_attach(*this, *m_inner);
     }
 
     ~flatten_node() override
     {
-        flatten_node::get_context()->on_node_detach(*this, *inner_);
-        flatten_node::get_context()->on_node_detach(*this, *outer_);
+        flatten_node::get_context()->on_node_detach(*this, *m_inner);
+        flatten_node::get_context()->on_node_detach(*this, *m_outer);
         flatten_node::get_context()->on_node_destroy(*this);
     }
     
@@ -44,13 +44,13 @@ public:
     
     void tick(turn_base& turn) override
     {
-        const auto& new_inner = get_node_ptr(outer_->value_ref());
+        const auto& new_inner = get_node_ptr(m_outer->value_ref());
 
-        if (new_inner != inner_)
+        if (new_inner != m_inner)
         {
             // Topology has been changed
-            auto old_inner = inner_;
-            inner_ = new_inner;
+            auto old_inner = m_inner;
+            m_inner = new_inner;
 
             flatten_node::get_context()->on_dynamic_node_detach(*this, *old_inner, turn);
             flatten_node::get_context()->on_dynamic_node_attach(*this, *new_inner, turn);
@@ -58,9 +58,9 @@ public:
             return;
         }
         
-        if (! equals(this->value_, inner_->value_ref()))
+        if (! equals( this->m_value, m_inner->value_ref() ))
         {
-            this->value_ = inner_->value_ref();
+            this->m_value = m_inner->value_ref();
             flatten_node::get_context()->on_node_pulse(*this, turn);
         }
         else
@@ -70,8 +70,8 @@ public:
     }
     
 private:
-    std::shared_ptr<signal_node<outer_t>>   outer_;
-    std::shared_ptr<signal_node<inner_t>>   inner_;
+    std::shared_ptr<signal_node<outer_t>>   m_outer;
+    std::shared_ptr<signal_node<inner_t>>   m_inner;
 };
 
 }}

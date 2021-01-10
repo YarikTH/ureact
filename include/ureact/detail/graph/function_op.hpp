@@ -69,13 +69,13 @@ public:
 
     template <typename ... deps_in_t>
     explicit reactive_op_base(dont_move /*unused*/, deps_in_t&& ... deps) :
-        deps_( std::forward<deps_in_t>(deps) ... )
+        m_deps( std::forward<deps_in_t>( deps ) ... )
     {}
 
     ~reactive_op_base() = default;
     
     reactive_op_base(reactive_op_base&& other) noexcept :
-        deps_( std::move(other.deps_) )
+        m_deps( std::move( other.m_deps ) )
     {}
     
     reactive_op_base& operator=(reactive_op_base&&) noexcept = delete;
@@ -87,30 +87,30 @@ public:
     template <typename node_t>
     void attach(node_t& node) const
     {
-        apply(attach_functor<node_t,deps_t...>{ node }, deps_);
+        apply(attach_functor<node_t,deps_t...>{ node }, m_deps );
     }
 
     template <typename node_t>
     void detach(node_t& node) const
     {
-        apply(detach_functor<node_t,deps_t...>{ node }, deps_);
+        apply(detach_functor<node_t,deps_t...>{ node }, m_deps );
     }
 
     template <typename node_t, typename functor_t>
     void attach_rec(const functor_t& functor) const
     {
         // Same memory layout, different func
-        apply(reinterpret_cast<const attach_functor<node_t,deps_t...>&>(functor), deps_);
+        apply(reinterpret_cast<const attach_functor<node_t,deps_t...>&>(functor), m_deps );
     }
 
     template <typename node_t, typename functor_t>
     void detach_rec(const functor_t& functor) const
     {
-        apply(reinterpret_cast<const detach_functor<node_t,deps_t...>&>(functor), deps_);
+        apply(reinterpret_cast<const detach_functor<node_t,deps_t...>&>(functor), m_deps );
     }
 
 protected:
-    dep_holder_t   deps_;
+    dep_holder_t   m_deps;
 };
 
 
@@ -129,12 +129,12 @@ public:
     template <typename in_f, typename ... deps_in_t>
     explicit function_op(in_f&& func, deps_in_t&& ... deps) :
         function_op::reactive_op_base( dont_move(), std::forward<deps_in_t>(deps) ... ),
-        func_( std::forward<in_f>(func) )
+        m_func( std::forward<in_f>( func ) )
     {}
 
     function_op(function_op&& other)  noexcept :
         function_op::reactive_op_base( std::move(other) ),
-        func_( std::move(other.func_) )
+        m_func( std::move( other.m_func ) )
     {}
     
     function_op& operator=(function_op&&) noexcept = delete;
@@ -146,7 +146,7 @@ public:
 
     S evaluate()
     {
-        return apply(eval_functor( func_ ), this->deps_);
+        return apply( eval_functor( m_func ), this->m_deps );
     }
 
 private:
@@ -176,7 +176,7 @@ private:
         F& my_func;
     };
 
-    F   func_;
+    F   m_func;
 };
 
 }}

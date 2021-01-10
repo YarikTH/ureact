@@ -150,29 +150,29 @@ auto make_signal(const signal_pack<values_t...>& arg_pack, in_f&& func)
 {
     using ::ureact::detail::signal_op_node;
 
-    struct node_builder_
+    struct node_builder
     {
-        explicit node_builder_(context* context, in_f&& func) :
-            context_( context ),
-            my_func_( std::forward<in_f>(func) )
+        explicit node_builder(context* context, in_f&& func) :
+            m_context( context ),
+            m_my_func( std::forward<in_f>( func ) )
         {}
 
         auto operator()(const signal<values_t>& ... args)
             -> temp_signal<S,op_t>
         {
             return temp_signal<S,op_t>(
-                context_,
+                m_context,
                 std::make_shared<signal_op_node<S,op_t>>(
-                    context_,
-                    std::forward<in_f>(my_func_), get_node_ptr(args) ...));
+                    m_context,
+                    std::forward<in_f>( m_my_func ), get_node_ptr( args ) ...));
         }
 
-        context* context_;
-        in_f     my_func_;
+        context* m_context;
+        in_f     m_my_func;
     };
 
     return apply(
-        node_builder_( std::get<0>(arg_pack.data).get_context(), std::forward<in_f>(func) ),
+        node_builder( std::get<0>(arg_pack.data).get_context(), std::forward<in_f>(func) ),
         arg_pack.data);
 }
 

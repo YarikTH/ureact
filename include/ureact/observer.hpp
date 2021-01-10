@@ -42,27 +42,27 @@ public:
 
     /// Move constructor
     observer(observer&& other) noexcept :
-        node_ptr_( other.node_ptr_ ),
-        subject_ptr_( std::move(other.subject_ptr_) )
+        m_node_ptr( other.m_node_ptr ),
+        m_subject_ptr( std::move( other.m_subject_ptr ) )
     {
-        other.node_ptr_ = nullptr;
-        other.subject_ptr_.reset();
+        other.m_node_ptr = nullptr;
+        other.m_subject_ptr.reset();
     }
 
     /// Node constructor
     observer(node_t* node_ptr, subject_ptr_t subject_ptr) :
-        node_ptr_( node_ptr ),
-        subject_ptr_(std::move( subject_ptr ))
+        m_node_ptr( node_ptr ),
+        m_subject_ptr( std::move( subject_ptr ) )
     {}
 
     /// Move assignment
     observer& operator=(observer&& other) noexcept
     {
-        node_ptr_ = other.node_ptr_;
-        subject_ptr_ = std::move(other.subject_ptr_);
+        m_node_ptr = other.m_node_ptr;
+        m_subject_ptr = std::move( other.m_subject_ptr );
 
-        other.node_ptr_ = nullptr;
-        other.subject_ptr_.reset();
+        other.m_node_ptr = nullptr;
+        other.m_subject_ptr.reset();
 
         return *this;
     }
@@ -77,21 +77,21 @@ public:
     void detach()
     {
         assert(is_valid());
-        subject_ptr_->unregister_observer(node_ptr_);
+        m_subject_ptr->unregister_observer( m_node_ptr );
     }
 
     /// Tests if this instance is linked to a node
     bool is_valid() const
     {
-        return node_ptr_ != nullptr;
+        return m_node_ptr != nullptr;
     }
 
 private:
     /// Owned by subject
-    node_t*          node_ptr_ = nullptr;
+    node_t*          m_node_ptr = nullptr;
 
     /// While the observer handle exists, the subject is not destroyed
-    subject_ptr_t     subject_ptr_ = nullptr;
+    subject_ptr_t     m_subject_ptr = nullptr;
 };
 
 /// Takes ownership of an observer and automatically detaches it on scope exit.
@@ -100,18 +100,18 @@ class scoped_observer
 public:
     /// Move constructor
     scoped_observer(scoped_observer&& other)  noexcept :
-        obs_( std::move(other.obs_) )
+        m_obs( std::move( other.m_obs ) )
     {}
 
     /// Constructs instance from observer
     scoped_observer(observer&& obs) :
-        obs_( std::move(obs) )
+        m_obs( std::move( obs ) )
     {}
 
     // Move assignment
     scoped_observer& operator=(scoped_observer&& other) noexcept
     {
-        obs_ = std::move(other.obs_);
+        m_obs = std::move( other.m_obs );
         return *this;
     }
 
@@ -123,17 +123,17 @@ public:
     /// Destructor
     ~scoped_observer()
     {
-        obs_.detach();
+        m_obs.detach();
     }
 
     /// Tests if this instance is linked to a node
     bool is_valid() const
     {
-        return obs_.is_valid();
+        return m_obs.is_valid();
     }
 
 private:
-    observer     obs_;
+    observer     m_obs;
 };
 
 /// When the signal value S of subject changes, func(s) is called.

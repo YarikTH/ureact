@@ -20,7 +20,7 @@ template <typename L, typename R>                                               
 struct op_r_functor_ ## name                                                           \
 {                                                                                   \
     op_r_functor_ ## name(op_r_functor_ ## name&& other) noexcept :                       \
-        left_val_( std::move(other.left_val_) )                                         \
+        m_left_val( std::move(other.m_left_val) )                                         \
     {}                                                                              \
                                                                                     \
     op_r_functor_ ## name& operator=(op_r_functor_ ## name&& other) noexcept = delete;    \
@@ -30,7 +30,7 @@ struct op_r_functor_ ## name                                                    
         class = typename std::enable_if<!is_same_decay<T,op_r_functor_ ## name>::value>::type \
     >                                                                               \
     op_r_functor_ ## name(T&& val) :                                                   \
-        left_val_( std::forward<T>(val) )                                             \
+        m_left_val( std::forward<T>(val) )                                             \
     {}                                                                              \
                                                                                     \
     op_r_functor_ ## name(const op_r_functor_ ## name& other) = delete;                   \
@@ -42,17 +42,17 @@ struct op_r_functor_ ## name                                                    
     auto operator()(const R& rhs) const                                             \
         -> decltype(std::declval<L>() op std::declval<R>())                         \
     {                                                                               \
-        return left_val_ op rhs;                                                      \
+        return m_left_val op rhs;                                                      \
     }                                                                               \
                                                                                     \
-    L left_val_;                                                                      \
+    L m_left_val;                                                                      \
 };                                                                                  \
                                                                                     \
 template <typename L, typename R>                                                   \
 struct op_l_functor_ ## name                                                           \
 {                                                                                   \
     op_l_functor_ ## name(op_l_functor_ ## name&& other) noexcept :                       \
-        right_val_( std::move(other.right_val_) )                                       \
+        m_right_val( std::move(other.m_right_val) )                                       \
     {}                                                                              \
                                                                                     \
     op_l_functor_ ## name& operator=(op_l_functor_ ## name&& other) noexcept = delete;    \
@@ -62,7 +62,7 @@ struct op_l_functor_ ## name                                                    
         class = typename std::enable_if<!is_same_decay<T,op_l_functor_ ## name>::value>::type \
     >                                                                               \
     op_l_functor_ ## name(T&& val) :                                                   \
-        right_val_( std::forward<T>(val) )                                            \
+        m_right_val( std::forward<T>(val) )                                            \
     {}                                                                              \
                                                                                     \
     op_l_functor_ ## name(const op_l_functor_ ## name& other) = delete;                   \
@@ -74,10 +74,10 @@ struct op_l_functor_ ## name                                                    
     auto operator()(const L& lhs) const                                             \
         -> decltype(std::declval<L>() op std::declval<R>())                         \
     {                                                                               \
-        return lhs op right_val_;                                                     \
+        return lhs op m_right_val;                                                     \
     }                                                                               \
                                                                                     \
-    R right_val_;                                                                     \
+    R m_right_val;                                                                     \
 };                                                                                  \
 }}}                                                                                  \
                                                                                     \

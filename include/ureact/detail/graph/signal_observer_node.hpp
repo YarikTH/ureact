@@ -27,8 +27,8 @@ public:
     template <typename F>
     signal_observer_node(context* context, const std::shared_ptr<signal_node<S>>& subject, F&& func) :
         signal_observer_node::observer_node( context ),
-        subject_( subject ),
-        func_( std::forward<F>(func) )
+        m_subject( subject ),
+        m_func( std::forward<F>( func ) )
     {
         get_context()->on_node_create(*this);
         get_context()->on_node_attach(*this, *subject);
@@ -48,9 +48,9 @@ public:
     {
         bool should_detach = false;
 
-        if (auto p = subject_.lock())
+        if (auto p = m_subject.lock())
         {// timer
-            if (func_(p->value_ref()) == observer_action::stop_and_detach)
+            if ( m_func( p->value_ref() ) == observer_action::stop_and_detach)
                 should_detach = true;
         }// ~timer
 
@@ -60,22 +60,22 @@ public:
 
     void unregister_self() override
     {
-        if (auto p = subject_.lock())
+        if (auto p = m_subject.lock())
             p->unregister_observer(this);
     }
 
 private:
     void detach_observer() override
     {
-        if (auto p = subject_.lock())
+        if (auto p = m_subject.lock())
         {
             get_context()->on_node_detach(*this, *p);
-            subject_.reset();
+            m_subject.reset();
         }
     }
 
-    std::weak_ptr<signal_node<S>>  subject_;
-    func_t                         func_;
+    std::weak_ptr<signal_node<S>>  m_subject;
+    func_t                         m_func;
 };
 
 }}

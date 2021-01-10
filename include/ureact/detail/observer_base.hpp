@@ -39,31 +39,31 @@ public:
     
     ~observable()
     {
-        for (const auto& p : observers_)
+        for (const auto& p : m_observers)
             if (p != nullptr)
                 p->detach_observer();
     }
 
     void register_observer(std::unique_ptr<i_observer>&& obs_ptr)
     {
-        observers_.push_back(std::move(obs_ptr));
+        m_observers.push_back( std::move( obs_ptr ) );
     }
 
     void unregister_observer(i_observer* raw_obs_ptr)
     {
-        for (auto it = observers_.begin(); it != observers_.end(); ++it)
+        for ( auto it = m_observers.begin(); it != m_observers.end(); ++it)
         {
             if (it->get() == raw_obs_ptr)
             {
                 it->get()->detach_observer();
-                observers_.erase(it);
+                m_observers.erase( it );
                 break;
             }
         }
     }
 
 private:
-    std::vector<std::unique_ptr<i_observer>> observers_;
+    std::vector<std::unique_ptr<i_observer>> m_observers;
 };
 
 }}

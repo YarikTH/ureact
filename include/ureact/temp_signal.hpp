@@ -52,7 +52,7 @@ public:
     
     op_t steal_op()
     {
-        return std::move(static_cast<node_t*>(this->ptr_.get())->steal_op());
+        return std::move(static_cast<node_t*>(this->m_ptr.get())->steal_op() );
     }
 };
 

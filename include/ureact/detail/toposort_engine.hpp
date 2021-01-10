@@ -34,74 +34,74 @@ public:
         class = typename std::enable_if<!is_same_decay<in_f,topo_queue>::value>::type
     >
     explicit topo_queue(in_f&& level_func) :
-        level_func_( std::forward<in_f>(level_func) )
+        m_level_func( std::forward<in_f>( level_func ) )
     {}
 
     void push(const T& value)
     {
-        queue_data_.emplace_back(value, level_func_(value));
+        m_queue_data.emplace_back( value, m_level_func( value ) );
     }
 
     bool fetch_next()
     {
         // Throw away previous values
-        next_data_.clear();
+        m_next_data.clear();
 
         // Find min level of nodes in queue data
-        min_level_ = (std::numeric_limits<int>::max)();
-        for (const auto& e : queue_data_)
-            if (min_level_ > e.level_)
-                min_level_ = e.level_;
+        m_min_level = (std::numeric_limits<int>::max)();
+        for (const auto& e : m_queue_data)
+            if ( m_min_level > e.m_level)
+                m_min_level = e.m_level;
 
         // Swap entries with min level to the end
         auto p = std::partition(
-            queue_data_.begin(),
-            queue_data_.end(),
-            level_comp_functor{ min_level_ });
+            m_queue_data.begin(),
+            m_queue_data.end(),
+            level_comp_functor{ m_min_level } );
 
         // Reserve once to avoid multiple re-allocations
-        const auto to_reserve = static_cast<size_t>(std::distance(p, queue_data_.end()));
-        next_data_.reserve(to_reserve);
+        const auto to_reserve = static_cast<size_t>(std::distance(p, m_queue_data.end() ));
+        m_next_data.reserve( to_reserve );
 
         // Move min level values to next data
-        for (auto it = p; it != queue_data_.end(); ++it)
-            next_data_.push_back(std::move(it->value_));
+        for ( auto it = p; it != m_queue_data.end(); ++it)
+            m_next_data.push_back( std::move( it->m_value ) );
 
         // Truncate moved entries
-        const auto to_resize = static_cast<size_t>(std::distance(queue_data_.begin(), p));
-        queue_data_.resize(to_resize);
+        const auto to_resize = static_cast<size_t>(std::distance( m_queue_data.begin(), p ));
+        m_queue_data.resize( to_resize );
 
-        return !next_data_.empty();
+        return !m_next_data.empty();
     }
 
-    const next_data_t& next_values() const  { return next_data_; }
+    const next_data_t& next_values() const  { return m_next_data; }
 
 private:
     struct entry
     {
         entry() = default;
         
-        entry(const T& value, int level) noexcept : value_( value ), level_( level ) {}
+        entry(const T& value, int level) noexcept : m_value( value ), m_level( level ) {}
 
-        T       value_{};
-        int     level_{};
+        T       m_value{};
+        int     m_level{};
     };
 
     struct level_comp_functor
     {
-        explicit level_comp_functor(int level) : level_( level ) {}
+        explicit level_comp_functor(int level) : m_level( level ) {}
 
-        bool operator()(const entry& e) const { return e.level_ != level_; }
+        bool operator()(const entry& e) const { return e.m_level != m_level; }
 
-        const int level_;
+        const int m_level;
     };
 
-    next_data_t   next_data_;
-    queue_data_t  queue_data_;
+    next_data_t   m_next_data;
+    queue_data_t  m_queue_data;
 
-    level_func_t  level_func_;
+    level_func_t  m_level_func;
 
-    int         min_level_ = (std::numeric_limits<int>::max)();
+    int         m_min_level = (std::numeric_limits<int>::max)();
 };
 
 
@@ -184,7 +184,7 @@ private:
 
     void process_children( reactive_node& node, turn_base& turn ) override;
 
-    topo_queue_t    scheduled_nodes_;
+    topo_queue_t    m_scheduled_nodes;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,15 +218,15 @@ inline void engine_base::on_node_pulse(node_t& node, turn_t& turn)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 inline void seq_engine_base::propagate(turn_base& turn)
 {
-    while (scheduled_nodes_.fetch_next())
+    while (m_scheduled_nodes.fetch_next())
     {
-        for (auto* cur_node : scheduled_nodes_.next_values())
+        for (auto* cur_node : m_scheduled_nodes.next_values())
         {
             if (cur_node->level < cur_node->new_level)
             {
                 cur_node->level = cur_node->new_level;
                 invalidate_successors(*cur_node);
-                scheduled_nodes_.push(cur_node);
+                m_scheduled_nodes.push( cur_node );
                 continue;
             }
 
@@ -244,7 +244,7 @@ inline void seq_engine_base::on_dynamic_node_attach( reactive_node& node, reacti
 
     // Re-schedule this node
     node.queued = true;
-    scheduled_nodes_.push(&node);
+    m_scheduled_nodes.push( &node );
 }
 
 inline void seq_engine_base::on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_base&  /*unused*/)
@@ -260,7 +260,7 @@ inline void seq_engine_base::process_children( reactive_node& node, turn_base&  
         if (!succ->queued)
         {
             succ->queued = true;
-            scheduled_nodes_.push(succ);
+            m_scheduled_nodes.push( succ );
         }
     }
 }

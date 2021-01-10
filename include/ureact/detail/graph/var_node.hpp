@@ -20,7 +20,7 @@ public:
     template <typename T>
     explicit var_node(context* context, T&& value) :
         var_node::signal_node( context, std::forward<T>(value) ),
-        new_value_( value )
+        m_new_value( value )
     {
         var_node::signal_node::get_context()->on_node_create(*this);
     }
@@ -45,13 +45,13 @@ public:
     template <typename V>
     void add_input(V&& new_value)
     {
-        new_value_ = std::forward<V>(new_value);
+        m_new_value = std::forward<V>(new_value);
 
-        is_input_added_ = true;
+        m_is_input_added = true;
 
-        // is_input_added_ takes precedences over is_input_modified_
-        // the only difference between the two is that is_input_modified_ doesn't/can't compare
-        is_input_modified_ = false;
+        // m_is_input_added takes precedences over m_is_input_modified
+        // the only difference between the two is that m_is_input_modified doesn't/can't compare
+        m_is_input_modified = false;
     }
 
     // This is signal-specific
@@ -59,38 +59,38 @@ public:
     void modify_input(F& func)
     {
         // There hasn't been any set(...) input yet, modify.
-        if (! is_input_added_)
+        if (! m_is_input_added)
         {
-            func(this->value_);
+            func(this->m_value );
 
-            is_input_modified_ = true;
+            m_is_input_modified = true;
         }
         // There's a new_value, modify new_value instead.
-        // The modified new_value will handled like before, i.e. it'll be compared to value_
+        // The modified new_value will handled like before, i.e. it'll be compared to m_value
         // in apply_input
         else
         {
-            func(new_value_);
+            func(m_new_value);
         }
     }
 
     bool apply_input(turn_base& turn) override
     {
-        if (is_input_added_)
+        if (m_is_input_added)
         {
-            is_input_added_ = false;
+            m_is_input_added = false;
 
-            if (! equals(this->value_, new_value_))
+            if (! equals( this->m_value, m_new_value ))
             {
-                this->value_ = std::move(new_value_);
+                this->m_value = std::move( m_new_value );
                 var_node::get_context()->on_input_change(*this, turn);
                 return true;
             }
             return false;
         }
-        if (is_input_modified_)
+        if (m_is_input_modified)
         {
-            is_input_modified_ = false;
+            m_is_input_modified = false;
 
             var_node::get_context()->on_input_change(*this, turn);
             return true;
@@ -99,9 +99,9 @@ public:
     }
 
 private:
-    S       new_value_;
-    bool    is_input_added_ = false;
-    bool    is_input_modified_ = false;
+    S       m_new_value;
+    bool    m_is_input_added = false;
+    bool    m_is_input_modified = false;
 };
 
 }}

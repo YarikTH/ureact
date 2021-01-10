@@ -11,7 +11,7 @@ class node_base : public reactive_node
 {
 public:
     explicit node_base(context* context)
-        : context_(context)
+        : m_context( context )
     {
     }
 
@@ -23,9 +23,9 @@ public:
     
     ~node_base() override = default;
     
-    context* get_context() const             { return context_; }
+    context* get_context() const             { return m_context; }
 private:
-    context* context_;
+    context* m_context;
 };
 
 }}

@@ -22,16 +22,16 @@ public:
     template <typename T>
     signal_node(context* context, T&& value) :
         observable_node( context ),
-        value_( std::forward<T>(value) )
+        m_value( std::forward<T>( value ) )
     {}
 
     const S& value_ref() const
     {
-        return value_;
+        return m_value;
     }
 
 protected:
-    S value_;
+    S m_value;
 };
 
 template <typename S>

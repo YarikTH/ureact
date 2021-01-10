@@ -31,7 +31,7 @@ public:
     
     // Constructor
     explicit reactive_base(context* context) :
-        context_( context )
+        m_context( context )
     {}
 
     // Copy ctor
@@ -42,8 +42,8 @@ public:
 
     // Explicit node ctor
     reactive_base(context* context, std::shared_ptr<node_t>&& ptr) noexcept :
-        context_( context ),
-        ptr_( std::move(ptr) )
+        m_context( context ),
+        m_ptr( std::move( ptr ) )
     {}
 
     // Copy assignment
@@ -56,21 +56,21 @@ public:
     
     bool is_valid() const
     {
-        return ptr_ != nullptr;
+        return m_ptr != nullptr;
     }
 
     bool equals(const reactive_base& other) const
     {
-        return this->ptr_ == other.ptr_;
+        return this->m_ptr == other.m_ptr;
     }
     
     context* get_context() const
     {
-        return context_;
+        return m_context;
     }
 protected:
-    context* context_ = nullptr;
-    std::shared_ptr<node_t> ptr_;
+    context* m_context = nullptr;
+    std::shared_ptr<node_t> m_ptr;
 
     template <typename node_t_>
     friend const std::shared_ptr<node_t_>& get_node_ptr(const reactive_base<node_t_>& node);
@@ -82,7 +82,7 @@ protected:
 template <typename node_t>
 const std::shared_ptr<node_t>& get_node_ptr(const reactive_base<node_t>& node)
 {
-    return node.ptr_;
+    return node.m_ptr;
 }
 
 }}

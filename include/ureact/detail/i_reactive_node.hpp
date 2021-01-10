@@ -18,25 +18,25 @@ private:
 public:
     void add(node_t& node)
     {
-        data_.push_back(&node);
+        m_data.push_back( &node );
     }
 
     void remove(const node_t& node)
     {
-        data_.erase(std::find(data_.begin(), data_.end(), &node));
+        m_data.erase( std::find( m_data.begin(), m_data.end(), &node ) );
     }
 
     using iterator = typename data_t::iterator;
     using const_iterator = typename data_t::const_iterator;
 
-    iterator    begin() { return data_.begin(); }
-    iterator    end()   { return data_.end(); }
+    iterator    begin() { return m_data.begin(); }
+    iterator    end()   { return m_data.end(); }
 
-    const_iterator begin() const    { return data_.begin(); }
-    const_iterator end() const      { return data_.end(); }
+    const_iterator begin() const    { return m_data.begin(); }
+    const_iterator end() const      { return m_data.end(); }
 
 private:
-    data_t    data_;
+    data_t    m_data;
 };
 
 

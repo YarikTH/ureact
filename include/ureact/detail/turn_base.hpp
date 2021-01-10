@@ -13,13 +13,13 @@ public:
     turn_base() = default;
     
     turn_base(turn_id_t id) :
-        id_( id )
+        m_id( id )
     {}
 
-    turn_id_t id() const { return id_; }
+    turn_id_t id() const { return m_id; }
 
 private:
-    turn_id_t    id_ = -1u;
+    turn_id_t    m_id = -1u;
 };
 
 }}

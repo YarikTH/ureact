@@ -19,12 +19,12 @@ public:
     template <typename ... args_t>
     explicit signal_op_node(context* context, args_t&& ... args) :
         signal_op_node::signal_node( context ),
-        op_( std::forward<args_t>(args) ... )
+        m_op( std::forward<args_t>( args ) ... )
     {
-        this->value_ = op_.evaluate();
+        this->m_value = m_op.evaluate();
 
         signal_op_node::get_context()->on_node_create(*this);
-        op_.template attach(*this);
+        m_op.template attach( *this );
     }
 
     signal_op_node(const signal_op_node&) = delete;
@@ -34,8 +34,8 @@ public:
     
     ~signal_op_node() override
     {
-        if (!was_op_stolen_)
-            op_.template detach(*this);
+        if (!m_was_op_stolen)
+            m_op.template detach( *this );
         signal_op_node::get_context()->on_node_destroy(*this);
     }
 
@@ -44,11 +44,11 @@ public:
         bool changed = false;
 
         {// timer
-            S new_value = op_.evaluate();
+            S new_value = m_op.evaluate();
 
-            if (! equals(this->value_, new_value))
+            if (! equals( this->m_value, new_value ))
             {
-                this->value_ = std::move(new_value);
+                this->m_value = std::move( new_value );
                 changed = true;
             }
         }// ~timer
@@ -61,15 +61,15 @@ public:
     
     op_t steal_op()
     {
-        assert(!was_op_stolen_ && "Op was already stolen.");
-        was_op_stolen_ = true;
-        op_.template detach(*this);
-        return std::move(op_);
+        assert( !m_was_op_stolen && "Op was already stolen." );
+        m_was_op_stolen = true;
+        m_op.template detach( *this );
+        return std::move( m_op );
     }
 
 private:
-    op_t     op_;
-    bool    was_op_stolen_ = false;
+    op_t    m_op;
+    bool    m_was_op_stolen = false;
 };
 
 }}

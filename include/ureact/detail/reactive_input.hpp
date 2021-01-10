@@ -41,10 +41,10 @@ public:
     template <typename F>
     void do_transaction(F&& func)
     {
-        const bool is_top_transaction = transactionLevel_ == 0;
+        const bool is_top_transaction = m_transaction_level == 0;
         
         // Phase 1 - Input admission
-        ++transactionLevel_;
+        ++m_transaction_level;
 
         toposort::i_reactive_engine::turn_t turn;
         
@@ -60,16 +60,16 @@ public:
             func();
         }
         
-        --transactionLevel_;
+        --m_transaction_level;
 
         if( is_top_transaction )
         {
             // Phase 2 - apply_helper input node changes
             bool should_propagate = false;
-            for (auto* p : changed_inputs_)
+            for (auto* p : m_changed_inputs)
                 if (p->apply_input(turn))
                     should_propagate = true;
-            changed_inputs_.clear();
+            m_changed_inputs.clear();
     
             // Phase 3 - propagate changes
             if (should_propagate)
@@ -107,7 +107,7 @@ public:
 
     void queue_observer_for_detach(i_observer& obs)
     {
-        detached_observers_.push_back(&obs);
+        m_detached_observers.push_back( &obs );
     }
     
     engine_t& get_engine() const
@@ -118,19 +118,19 @@ public:
 private:
     turn_id_t next_turn_id()
     {
-        return next_turn_id_++;
+        return m_next_turn_id++;
     }
 
     bool is_transaction_active() const
     {
-        return transactionLevel_ > 0;
+        return m_transaction_level > 0;
     }
     
     void detach_queued_observers()
     {
-        for (auto* o : detached_observers_)
+        for (auto* o : m_detached_observers)
             o->unregister_self();
-        detached_observers_.clear();
+        m_detached_observers.clear();
     }
 
     // Create a turn with a single input
@@ -169,25 +169,25 @@ private:
     void add_transaction_input(R& r, V&& v)
     {
         r.add_input(std::forward<V>(v));
-        changed_inputs_.push_back(&r);
+        m_changed_inputs.push_back( &r );
     }
 
     template <typename R, typename F>
     void modify_transaction_input(R& r, const F& func)
     {
         r.modify_input(func);
-        changed_inputs_.push_back(&r);
+        m_changed_inputs.push_back( &r );
     }
     
     std::unique_ptr<engine_t> m_engine;
     
-    turn_id_t next_turn_id_{ 0 };
+    turn_id_t m_next_turn_id{ 0 };
 
-    int  transactionLevel_ = 0;
+    int  m_transaction_level = 0;
     
-    std::vector<i_input_node*>    changed_inputs_;
+    std::vector<i_input_node*>    m_changed_inputs;
     
-    std::vector<i_observer*>    detached_observers_;
+    std::vector<i_observer*>    m_detached_observers;
 };
 
 }}

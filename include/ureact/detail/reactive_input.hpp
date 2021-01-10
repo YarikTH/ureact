@@ -124,12 +124,7 @@ public:
 private:
     turn_id_t next_turn_id()
     {
-        auto cur_id = next_turn_id_.fetch_add(1, std::memory_order_relaxed);
-        
-        if (cur_id == (std::numeric_limits<turn_id_t>::max)())
-            next_turn_id_.fetch_sub((std::numeric_limits<turn_id_t>::max)());
-
-        return cur_id;
+        return next_turn_id_++;
     }
 
     void detach_queued_observers()
@@ -187,7 +182,7 @@ private:
     
     std::unique_ptr<engine_t> m_engine;
     
-    std::atomic<turn_id_t>    next_turn_id_{ 0 };
+    turn_id_t next_turn_id_{ 0 };
 
     std::vector<i_input_node*>    changed_inputs_;
     

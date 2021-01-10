@@ -35,11 +35,13 @@ public:
         var_node::signal_node::get_context()->on_node_destroy(*this);
     }
     
+// LCOV_EXCL_START
     void tick(turn_base& /*turn*/) override
     {
         assert(false && "Ticked var_node");
     }
-
+// LCOV_EXCL_STOP
+    
     template <typename V>
     void add_input(V&& new_value)
     {

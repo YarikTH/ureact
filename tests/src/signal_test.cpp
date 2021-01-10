@@ -461,6 +461,38 @@ TEST_CASE( "Flatten4" )
     CHECK(std::find(results.begin(), results.end(), 600) != results.end());
 }
 
+TEST_CASE( "Flatten5" )
+{
+    ureact::context ctx;
+
+    auto inner1 = make_var(&ctx, 123);
+    auto inner2 = make_var(&ctx, 123);
+    
+    auto outer = make_var(&ctx, inner1);
+
+    auto flattened = flatten(outer);
+
+    std::queue<int> results;
+
+    observe(flattened, [&] (int v)
+    {
+        results.push(v);
+    });
+
+    CHECK(outer.value().equals(inner1));
+    CHECK(flattened.value() == 123);
+    
+    CHECK(results.empty());
+
+    outer <<= inner2;
+
+    CHECK(outer.value().equals(inner2));
+    CHECK(flattened.value() == 123);
+    
+    // flattened observer shouldn't trigger if value isn't changed
+    CHECK(results.empty());
+}
+
 TEST_CASE( "Member1" )
 {
     ureact::context ctx;

@@ -177,7 +177,7 @@ So. Finally we are ready to make our first problem example. \
 Here we have two separate subsystems. One that imitates reading of two values:
 'a' and 'b'. And one that calculates sum of 'a' and 'b'.
 
-First way to do so it's just perform
+First way to do so it's just perform (TODO write end of the phrase)
 
 ```cpp
 // Singleton that contains all read and calculated values. All these values

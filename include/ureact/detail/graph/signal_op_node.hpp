@@ -58,9 +58,7 @@ public:
         else
             signal_op_node::get_context()->on_node_idle_pulse(*this, turn);
     }
-
-    const char* get_node_type() const override        { return "signal_op_node"; }
-
+    
     op_t steal_op()
     {
         assert(!was_op_stolen_ && "Op was already stolen.");

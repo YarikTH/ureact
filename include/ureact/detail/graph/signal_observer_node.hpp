@@ -43,9 +43,7 @@ public:
     {
         get_context()->on_node_destroy(*this);
     }
-
-    const char* get_node_type() const override        { return "signal_observer_node"; }
-
+    
     void tick(turn_base& /*turn*/) override
     {
         bool should_detach = false;

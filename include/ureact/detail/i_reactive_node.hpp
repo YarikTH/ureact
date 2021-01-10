@@ -46,12 +46,7 @@ private:
 struct i_reactive_node
 {
     virtual ~i_reactive_node() = default;
-
-    /// Returns unique type identifier
-    virtual const char* get_node_type() const = 0;
-
-    // Note: Could get rid of this ugly ptr by adding a template parameter to the interface
-    // But that would mean all engine nodes need that template parameter too - so rather cast
+    
     virtual void    tick(turn_base& turn) = 0;
 };
 

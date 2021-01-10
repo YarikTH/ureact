@@ -68,9 +68,7 @@ public:
             flatten_node::get_context()->on_node_idle_pulse(*this, turn);
         }
     }
-
-    const char* get_node_type() const override        { return "flatten_node"; }
-
+    
 private:
     std::shared_ptr<signal_node<outer_t>>   outer_;
     std::shared_ptr<signal_node<inner_t>>   inner_;

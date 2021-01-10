@@ -34,9 +34,7 @@ public:
     {
         var_node::signal_node::get_context()->on_node_destroy(*this);
     }
-
-    const char* get_node_type() const override        { return "var_node"; }
-
+    
     void tick(turn_base& /*turn*/) override
     {
         assert(false && "Ticked var_node");

@@ -78,7 +78,7 @@ if(build_examples)
 endif()
 
 ### tests/ 
-option(build_tests "Build unit tests?" OFF)
+option(build_tests "Build unit tests?" ON)
 if(build_tests)
 	add_subdirectory(tests)
 endif()

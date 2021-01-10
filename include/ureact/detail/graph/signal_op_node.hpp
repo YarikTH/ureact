@@ -39,7 +39,7 @@ public:
         signal_op_node::get_context()->on_node_destroy(*this);
     }
 
-    void tick(turn_base& turn) override
+    void tick( turn_t& turn ) override
     {
         bool changed = false;
 

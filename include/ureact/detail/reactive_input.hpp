@@ -31,7 +31,6 @@ class input_manager
 public:
     using engine_t = toposort_engine;
     using node_t = engine_t::node_t;
-    using turn_t = engine_t::turn_t;
     
     input_manager()
         : m_engine( new toposort_engine() )
@@ -46,14 +45,14 @@ public:
         // Phase 1 - Input admission
         ++m_transaction_level;
 
-        toposort::reactive_engine_interface::turn_t turn;
+        turn_t current_turn;
         
         if( is_top_transaction )
         {
-            turn = next_turn_id();
-            get_engine().on_turn_admission_start( turn );
+            current_turn = next_turn_id();
+            get_engine().on_turn_admission_start( current_turn );
             func();
-            get_engine().on_turn_admission_end( turn );
+            get_engine().on_turn_admission_end( current_turn );
         }
         else
         {
@@ -67,13 +66,13 @@ public:
             // Phase 2 - apply_helper input node changes
             bool should_propagate = false;
             for (auto* p : m_changed_inputs)
-                if (p->apply_input(turn))
+                if (p->apply_input( current_turn ))
                     should_propagate = true;
             m_changed_inputs.clear();
     
             // Phase 3 - propagate changes
             if (should_propagate)
-                get_engine().propagate( turn );
+                get_engine().propagate( current_turn );
         
             detach_queued_observers();
         }
@@ -137,12 +136,12 @@ private:
     template <typename R, typename V>
     void add_simple_input(R& r, V&& v)
     {
-        toposort::reactive_engine_interface::turn_t turn( next_turn_id() );
+        turn_t turn( next_turn_id() );
         get_engine().on_turn_admission_start( turn );
         r.add_input(std::forward<V>(v));
         get_engine().on_turn_admission_end( turn );
 
-        if (r.apply_input(turn))
+        if (r.apply_input( turn ))
             get_engine().propagate( turn );
     
         detach_queued_observers();
@@ -151,13 +150,13 @@ private:
     template <typename R, typename F>
     void modify_simple_input(R& r, const F& func)
     {
-        toposort::reactive_engine_interface::turn_t turn( next_turn_id() );
+        turn_t turn( next_turn_id() );
         get_engine().on_turn_admission_start( turn );
         r.modify_input(func);
         get_engine().on_turn_admission_end( turn );
 
         // Return value, will always be true
-        r.apply_input(turn);
+        r.apply_input( turn );
 
         get_engine().propagate( turn );
     

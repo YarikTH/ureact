@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "ureact/detail/reactive_node_interface.hpp"
-#include "ureact/detail/turn_base.hpp"
+#include "ureact/detail/turn_t.hpp"
 #include "ureact/detail/util.hpp"
 
 namespace ureact { namespace detail {
@@ -121,14 +121,13 @@ struct get_level_functor
 struct reactive_engine_interface
 {
     using node_t = reactive_node;
-    using turn_t = turn_base;
 
-    virtual void on_turn_admission_start(turn_t& /*turn*/) = 0;
-    virtual void on_turn_admission_end(turn_t& /*turn*/) = 0;
+    virtual void on_turn_admission_start( turn_t& /*turn*/) = 0;
+    virtual void on_turn_admission_end( turn_t& /*turn*/) = 0;
 
     virtual void on_input_change(node_t& /*node*/, turn_t& /*turn*/) = 0;
 
-    virtual void propagate(turn_t& /*turn*/) = 0;
+    virtual void propagate( turn_t& /*turn*/) = 0;
 
     virtual void on_node_create(node_t& /*node*/) = 0;
     virtual void on_node_destroy(node_t& /*node*/) = 0;
@@ -153,10 +152,10 @@ public:
     void on_node_attach(node_t& node, node_t& parent) override;
     void on_node_detach(node_t& node, node_t& parent) override;
 
-    void on_input_change(node_t& node, turn_t& turn) override;
-    void on_node_pulse(node_t& node, turn_t& turn) override;
+    void on_input_change(node_t& node, turn_t& turn ) override;
+    void on_node_pulse(node_t& node, turn_t& turn ) override;
 protected:
-    virtual void process_children(node_t& node, turn_t& turn) = 0;
+    virtual void process_children(node_t& node, turn_t& turn ) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,13 +166,13 @@ class seq_engine_base final : public engine_base
 public:
     using topo_queue_t = topo_queue<reactive_node*, get_level_functor<reactive_node>>;
 
-    void propagate(turn_base& turn) override;
+    void propagate( turn_t& turn ) override;
 
-    void on_dynamic_node_attach( reactive_node& node, reactive_node& parent, turn_base& turn ) override;
-    void on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_base& turn ) override;
+    void on_dynamic_node_attach( reactive_node& node, reactive_node& parent, turn_t& turn ) override;
+    void on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_t& turn ) override;
 
-    void on_turn_admission_start(turn_t& /*turn*/) override {}
-    void on_turn_admission_end(turn_t& /*turn*/) override {}
+    void on_turn_admission_start( turn_t& /*turn*/) override {}
+    void on_turn_admission_end( turn_t& /*turn*/) override {}
     
     void on_node_create(node_t& /*node*/) override {}
     void on_node_destroy(node_t& /*node*/) override {}
@@ -182,7 +181,7 @@ public:
 private:
     static void invalidate_successors( reactive_node& node );
 
-    void process_children( reactive_node& node, turn_base& turn ) override;
+    void process_children( reactive_node& node, turn_t& turn ) override;
 
     topo_queue_t    m_scheduled_nodes;
 };
@@ -203,12 +202,12 @@ inline void engine_base::on_node_detach(node_t& node, node_t& parent)
     parent.successors.remove(node);
 }
 
-inline void engine_base::on_input_change(node_t& node, turn_t& turn)
+inline void engine_base::on_input_change(node_t& node, turn_t& turn )
 {
     process_children(node, turn);
 }
 
-inline void engine_base::on_node_pulse(node_t& node, turn_t& turn)
+inline void engine_base::on_node_pulse(node_t& node, turn_t& turn )
 {
     process_children(node, turn);
 }
@@ -216,7 +215,7 @@ inline void engine_base::on_node_pulse(node_t& node, turn_t& turn)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// seq_engine_base
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-inline void seq_engine_base::propagate(turn_base& turn)
+inline void seq_engine_base::propagate( turn_t& turn )
 {
     while (m_scheduled_nodes.fetch_next())
     {
@@ -236,7 +235,7 @@ inline void seq_engine_base::propagate(turn_base& turn)
     }
 }
 
-inline void seq_engine_base::on_dynamic_node_attach( reactive_node& node, reactive_node& parent, turn_base&  /*unused*/)
+inline void seq_engine_base::on_dynamic_node_attach( reactive_node& node, reactive_node& parent, turn_t&  /*turn*/)
 {
     this->on_node_attach(node, parent);
     
@@ -247,12 +246,12 @@ inline void seq_engine_base::on_dynamic_node_attach( reactive_node& node, reacti
     m_scheduled_nodes.push( &node );
 }
 
-inline void seq_engine_base::on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_base&  /*unused*/)
+inline void seq_engine_base::on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_t& /*turn*/)
 {
     this->on_node_detach(node, parent);
 }
 
-inline void seq_engine_base::process_children( reactive_node& node, turn_base&  /*turn*/)
+inline void seq_engine_base::process_children( reactive_node& node, turn_t&  /*turn*/)
 {
     // add children to queue
     for (auto* succ : node.successors)

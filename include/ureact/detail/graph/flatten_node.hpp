@@ -42,7 +42,7 @@ public:
     flatten_node(flatten_node&&) noexcept = delete;
     flatten_node& operator=(flatten_node&&) noexcept = delete;
     
-    void tick(turn_base& turn) override
+    void tick( turn_t& turn ) override
     {
         const auto& new_inner = get_node_ptr(m_outer->value_ref());
 

@@ -44,7 +44,7 @@ public:
         get_context()->on_node_destroy(*this);
     }
     
-    void tick(turn_base& /*turn*/) override
+    void tick( turn_t& /*turn*/) override
     {
         bool should_detach = false;
 

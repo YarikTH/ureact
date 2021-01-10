@@ -5,14 +5,14 @@ namespace ureact { namespace detail {
 using turn_id_t = unsigned int;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// turn_base
+/// turn_t
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-class turn_base
+class turn_t
 {
 public:
-    turn_base() = default;
+    turn_t() = default;
     
-    turn_base(turn_id_t id) :
+    turn_t( turn_id_t id ) :
         m_id( id )
     {}
 

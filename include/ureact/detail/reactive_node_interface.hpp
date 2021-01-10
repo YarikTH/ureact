@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ureact/detail/turn_base.hpp"
+#include "ureact/detail/turn_t.hpp"
 #include <limits>
 #include <algorithm>
 
@@ -47,7 +47,7 @@ struct reactive_node_interface
 {
     virtual ~reactive_node_interface() = default;
     
-    virtual void    tick(turn_base& turn) = 0;
+    virtual void    tick( turn_t& turn ) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ struct input_node_interface
 {
     virtual ~input_node_interface() = default;
 
-    virtual bool apply_input(turn_base& turn) = 0;
+    virtual bool apply_input( turn_t& turn ) = 0;
 };
 
 }}

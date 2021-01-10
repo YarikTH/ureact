@@ -36,7 +36,7 @@ public:
     }
     
 // LCOV_EXCL_START
-    void tick(turn_base& /*turn*/) override
+    void tick( turn_t& /*turn*/) override
     {
         assert(false && "Ticked var_node");
     }
@@ -74,7 +74,7 @@ public:
         }
     }
 
-    bool apply_input(turn_base& turn) override
+    bool apply_input( turn_t& turn ) override
     {
         if (m_is_input_added)
         {

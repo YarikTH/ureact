@@ -23,25 +23,6 @@ namespace ureact { namespace detail {
 struct i_input_node;
 class i_observer;
 
-class input_manager;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Common types & constants
-///////////////////////////////////////////////////////////////////////////////////////////////////
-using transaction_func_t = std::function<void()>;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// thread_local_input_state
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename = void>
-struct thread_local_input_state
-{
-    static thread_local bool   is_transaction_active;
-};
-
-template <typename T>
-thread_local bool thread_local_input_state<T>::is_transaction_active(false);
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// input_manager
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,35 +41,48 @@ public:
     template <typename F>
     void do_transaction(F&& func)
     {
-        bool should_propagate = false;
+        const bool is_top_transaction = transactionLevel_ == 0;
         
         // Phase 1 - Input admission
-        thread_local_input_state<>::is_transaction_active = true;
+        ++transactionLevel_;
 
-        toposort::i_reactive_engine::turn_t turn( next_turn_id() );
-        get_engine().on_turn_admission_start( turn );
-        func();
-        get_engine().on_turn_admission_end( turn );
+        toposort::i_reactive_engine::turn_t turn;
+        
+        if( is_top_transaction )
+        {
+            turn = next_turn_id();
+            get_engine().on_turn_admission_start( turn );
+            func();
+            get_engine().on_turn_admission_end( turn );
+        }
+        else
+        {
+            func();
+        }
+        
+        --transactionLevel_;
 
-        thread_local_input_state<>::is_transaction_active = false;
-
-        // Phase 2 - apply_helper input node changes
-        for (auto* p : changed_inputs_)
-            if (p->apply_input(turn))
-                should_propagate = true;
-        changed_inputs_.clear();
-
-        // Phase 3 - propagate changes
-        if (should_propagate)
-            get_engine().propagate( turn );
+        if( is_top_transaction )
+        {
+            // Phase 2 - apply_helper input node changes
+            bool should_propagate = false;
+            for (auto* p : changed_inputs_)
+                if (p->apply_input(turn))
+                    should_propagate = true;
+            changed_inputs_.clear();
     
-        detach_queued_observers();
+            // Phase 3 - propagate changes
+            if (should_propagate)
+                get_engine().propagate( turn );
+        
+            detach_queued_observers();
+        }
     }
 
     template <typename R, typename V>
     void add_input(R& r, V&& v)
     {
-        if (thread_local_input_state<>::is_transaction_active)
+        if (is_transaction_active())
         {
             add_transaction_input(r, std::forward<V>(v));
         }
@@ -101,7 +95,7 @@ public:
     template <typename R, typename F>
     void modify_input(R& r, const F& func)
     {
-        if (thread_local_input_state<>::is_transaction_active)
+        if (is_transaction_active())
         {
             modify_transaction_input(r, func);
         }
@@ -127,6 +121,11 @@ private:
         return next_turn_id_++;
     }
 
+    bool is_transaction_active() const
+    {
+        return transactionLevel_ > 0;
+    }
+    
     void detach_queued_observers()
     {
         for (auto* o : detached_observers_)
@@ -184,6 +183,8 @@ private:
     
     turn_id_t next_turn_id_{ 0 };
 
+    int  transactionLevel_ = 0;
+    
     std::vector<i_input_node*>    changed_inputs_;
     
     std::vector<i_observer*>    detached_observers_;

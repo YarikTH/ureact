@@ -14,7 +14,7 @@ template
 >
 class var_node :
     public signal_node<S>,
-    public i_input_node
+    public input_node_interface
 {
 public:
     template <typename T>

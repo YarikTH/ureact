@@ -10,7 +10,7 @@ namespace ureact { namespace detail {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 class observer_node :
     public node_base,
-    public i_observer
+    public observer_interface
 {
 public:
     explicit observer_node(context* context)

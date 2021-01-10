@@ -4,17 +4,17 @@
 #include <vector>
 #include <utility>
 
-#include "i_reactive_node.hpp"
+#include "reactive_node_interface.hpp"
 
 namespace ureact { namespace detail {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// i_observer
+/// observer_interface
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-class i_observer
+class observer_interface
 {
 public:
-    virtual ~i_observer() = default;
+    virtual ~observer_interface() = default;
 
     virtual void unregister_self() = 0;
 
@@ -44,12 +44,12 @@ public:
                 p->detach_observer();
     }
 
-    void register_observer(std::unique_ptr<i_observer>&& obs_ptr)
+    void register_observer(std::unique_ptr<observer_interface>&& obs_ptr)
     {
         m_observers.push_back( std::move( obs_ptr ) );
     }
 
-    void unregister_observer(i_observer* raw_obs_ptr)
+    void unregister_observer(observer_interface* raw_obs_ptr)
     {
         for ( auto it = m_observers.begin(); it != m_observers.end(); ++it)
         {
@@ -63,7 +63,7 @@ public:
     }
 
 private:
-    std::vector<std::unique_ptr<i_observer>> m_observers;
+    std::vector<std::unique_ptr<observer_interface>> m_observers;
 };
 
 }}

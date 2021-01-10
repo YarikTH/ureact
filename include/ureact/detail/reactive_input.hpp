@@ -20,8 +20,8 @@ namespace ureact { namespace detail {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Forward declarations
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-struct i_input_node;
-class i_observer;
+struct input_node_interface;
+class observer_interface;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// input_manager
@@ -46,7 +46,7 @@ public:
         // Phase 1 - Input admission
         ++m_transaction_level;
 
-        toposort::i_reactive_engine::turn_t turn;
+        toposort::reactive_engine_interface::turn_t turn;
         
         if( is_top_transaction )
         {
@@ -105,7 +105,7 @@ public:
         }
     }
 
-    void queue_observer_for_detach(i_observer& obs)
+    void queue_observer_for_detach(observer_interface& obs)
     {
         m_detached_observers.push_back( &obs );
     }
@@ -137,7 +137,7 @@ private:
     template <typename R, typename V>
     void add_simple_input(R& r, V&& v)
     {
-        toposort::i_reactive_engine::turn_t turn( next_turn_id() );
+        toposort::reactive_engine_interface::turn_t turn( next_turn_id() );
         get_engine().on_turn_admission_start( turn );
         r.add_input(std::forward<V>(v));
         get_engine().on_turn_admission_end( turn );
@@ -151,7 +151,7 @@ private:
     template <typename R, typename F>
     void modify_simple_input(R& r, const F& func)
     {
-        toposort::i_reactive_engine::turn_t turn( next_turn_id() );
+        toposort::reactive_engine_interface::turn_t turn( next_turn_id() );
         get_engine().on_turn_admission_start( turn );
         r.modify_input(func);
         get_engine().on_turn_admission_end( turn );
@@ -185,9 +185,9 @@ private:
 
     int  m_transaction_level = 0;
     
-    std::vector<i_input_node*>    m_changed_inputs;
+    std::vector<input_node_interface*>    m_changed_inputs;
     
-    std::vector<i_observer*>    m_detached_observers;
+    std::vector<observer_interface*>    m_detached_observers;
 };
 
 }}

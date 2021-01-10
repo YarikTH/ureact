@@ -36,16 +36,16 @@ public:
     const_iterator end() const      { return m_data.end(); }
 
 private:
-    data_t    m_data;
+    data_t    m_data {};
 };
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// i_reactive_node
+/// reactive_node_interface
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-struct i_reactive_node
+struct reactive_node_interface
 {
-    virtual ~i_reactive_node() = default;
+    virtual ~reactive_node_interface() = default;
     
     virtual void    tick(turn_base& turn) = 0;
 };
@@ -53,7 +53,7 @@ struct i_reactive_node
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// reactive_node
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-class reactive_node : public i_reactive_node
+class reactive_node : public reactive_node_interface
 {
 public:
     int     level       { 0 };
@@ -64,11 +64,11 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// i_input_node
+/// input_node_interface
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-struct i_input_node
+struct input_node_interface
 {
-    virtual ~i_input_node() = default;
+    virtual ~input_node_interface() = default;
 
     virtual bool apply_input(turn_base& turn) = 0;
 };

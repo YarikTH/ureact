@@ -5,7 +5,7 @@
 #include <cassert>
 
 #include "ureact/detail/util.hpp"
-#include "ureact/detail/i_reactive_node.hpp"
+#include "ureact/detail/reactive_node_interface.hpp"
 #include "ureact/detail/observer_base.hpp"
 #include "ureact/detail/graph/observable_node.hpp"
 #include "ureact/detail/graph/signal_observer_node.hpp"
@@ -151,7 +151,7 @@ template
 auto observe(const signal<S>& subject, in_f&& func)
     -> observer
 {
-    using ::ureact::detail::i_observer;
+    using ::ureact::detail::observer_interface;
     using observer_node = ::ureact::detail::observer_node;
     using ::ureact::detail::signal_observer_node;
     using ::ureact::detail::add_default_return_value_wrapper;

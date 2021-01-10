@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "ureact/detail/i_reactive_node.hpp"
+#include "ureact/detail/reactive_node_interface.hpp"
 #include "ureact/detail/turn_base.hpp"
 #include "ureact/detail/util.hpp"
 
@@ -116,9 +116,9 @@ struct get_level_functor
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// i_reactive_engine
+/// reactive_engine_interface
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-struct i_reactive_engine
+struct reactive_engine_interface
 {
     using node_t = reactive_node;
     using turn_t = turn_base;
@@ -147,7 +147,7 @@ struct i_reactive_engine
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// engine_base
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-class engine_base : public i_reactive_engine
+class engine_base : public reactive_engine_interface
 {
 public:
     void on_node_attach(node_t& node, node_t& parent) override;

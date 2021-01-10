@@ -10,14 +10,16 @@ using turn_id_t = unsigned int;
 class turn_base
 {
 public:
-    inline explicit turn_base(turn_id_t id) :
+    turn_base() = default;
+    
+    turn_base(turn_id_t id) :
         id_( id )
     {}
 
-    inline turn_id_t id() const { return id_; }
+    turn_id_t id() const { return id_; }
 
 private:
-    turn_id_t    id_;
+    turn_id_t    id_ = -1u;
 };
 
 }}

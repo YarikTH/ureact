@@ -1,11 +1,13 @@
-### example_composition
-add_executable(example_composition src/composition.cpp)
-target_link_libraries(example_composition ureact::ureact)
 
-### example_observers
-add_executable(example_observers src/observers.cpp)
-target_link_libraries(example_observers ureact::ureact)
+function( ureact_add_example name )
+    add_executable(example_${name} src/${name}.cpp)
+    target_link_libraries(example_${name} ureact::ureact)
+endfunction()
 
-### example_signals
-add_executable(example_signals src/signals.cpp)
-target_link_libraries(example_signals ureact::ureact)
+
+ureact_add_example( observers )
+ureact_add_example( signals )
+
+ureact_add_example( reactive_class_members )
+ureact_add_example( signals_of_references )
+ureact_add_example( dynamic_signal_references )

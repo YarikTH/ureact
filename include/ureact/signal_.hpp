@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ureact/detail/signal_base.hpp"
+
 namespace ureact
 {
 

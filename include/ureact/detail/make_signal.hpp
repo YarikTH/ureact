@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ureact/detail/signal_.hpp"
+#include "ureact/detail/signal.hpp"
 #include "ureact/detail/temp_signal.hpp"
 #include "ureact/detail/signal_pack.hpp"
 #include "ureact/detail/type_traits.hpp"

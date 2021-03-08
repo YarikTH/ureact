@@ -1,6 +1,5 @@
 #include "doctest/doctest.h"
-#include "ureact/context.hpp"
-#include "ureact/signal.hpp"
+#include "ureact/ureact.hpp"
 
 namespace
 {

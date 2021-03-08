@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-#include "ureact/context.hpp"
+#include "ureact/detail/context.hpp"
 
 namespace ureact
 {

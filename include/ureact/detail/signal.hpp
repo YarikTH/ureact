@@ -5,10 +5,10 @@
 #include <type_traits>
 #include <utility>
 
-#include "ureact/signal_pack.hpp"
-#include "ureact/context.hpp"
-#include "ureact/observer.hpp"
-#include "ureact/type_traits.hpp"
+#include "ureact/detail/signal_pack.hpp"
+#include "ureact/detail/context.hpp"
+#include "ureact/detail/observer.hpp"
+#include "ureact/detail/type_traits.hpp"
 #include "ureact/detail/signal_base.hpp"
 #include "ureact/detail/graph/function_op.hpp"
 #include "ureact/detail/graph/signal_op_node.hpp"
@@ -179,11 +179,11 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
 
 } // namespace ureact
 
-#include "ureact/binary_operators.hpp"
-#include "ureact/signal_.hpp"
-#include "ureact/temp_signal.hpp"
-#include "ureact/unary_operators.hpp"
-#include "ureact/var_signal.hpp"
+#include "ureact/detail/binary_operators.hpp"
+#include "ureact/detail/signal_.hpp"
+#include "ureact/detail/temp_signal.hpp"
+#include "ureact/detail/unary_operators.hpp"
+#include "ureact/detail/var_signal.hpp"
 
 namespace ureact
 {

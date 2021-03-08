@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ureact/context.hpp"
-#include "ureact/observer.hpp"
-#include "ureact/signal.hpp"
-#include "ureact/type_traits.hpp"
+#include "ureact/detail/context.hpp"
+#include "ureact/detail/observer.hpp"
+#include "ureact/detail/signal.hpp"
+#include "ureact/detail/type_traits.hpp"

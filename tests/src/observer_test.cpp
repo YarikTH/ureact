@@ -1,3 +1,5 @@
+#include <string>
+
 #include "doctest/doctest.h"
 #include "ureact/ureact.hpp"
 

@@ -1,12 +1,9 @@
 #pragma once
 
-#include <atomic>
-#include <condition_variable>
 #include <deque>
 #include <functional>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <type_traits>
 #include <utility>
 #include <vector>

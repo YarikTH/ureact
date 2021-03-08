@@ -124,15 +124,4 @@ public:
     }
 };
 
-namespace detail
-{
-
-template <typename L, typename R>
-bool equals( const signal<L>& lhs, const signal<R>& rhs )
-{
-    return lhs.equals( rhs );
-}
-
-} // namespace detail
-
 } // namespace ureact

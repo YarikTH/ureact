@@ -10,18 +10,6 @@ namespace ureact
 namespace detail
 {
 
-template <typename L, typename R>
-bool equals( const L& lhs, const R& rhs )
-{
-    return lhs == rhs;
-}
-
-template <typename L, typename R>
-bool equals( const std::reference_wrapper<L>& lhs, const std::reference_wrapper<R>& rhs )
-{
-    return lhs.get() == rhs.get();
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// reactive_base
 ///////////////////////////////////////////////////////////////////////////////////////////////////

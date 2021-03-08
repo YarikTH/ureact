@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "ureact/detail/graph/signal_node.hpp"
+#include "ureact/detail/equals.hpp"
 
 namespace ureact
 {

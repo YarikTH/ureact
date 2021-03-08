@@ -5,7 +5,14 @@ function( ureact_add_example name )
 endfunction()
 
 
-ureact_add_example( signals )
+ureact_add_example( hello_world_operators )
+ureact_add_example( hello_world_make_signal )
+ureact_add_example( modifying_signal_values_in_place )
+ureact_add_example( changing_multiple_inputs )
+ureact_add_example( reacting_to_value_changes )
+ureact_add_example( complex_signals_v1 )
+ureact_add_example( complex_signals_v2 )
+ureact_add_example( complex_signals_v3 )
 
 ureact_add_example( creating_subject_bound_observers_v1 )
 ureact_add_example( creating_subject_bound_observers_v2 )

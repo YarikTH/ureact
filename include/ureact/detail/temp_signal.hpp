@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ureact/detail/graph/signal_op_node.hpp"
+
 namespace ureact
 {
 

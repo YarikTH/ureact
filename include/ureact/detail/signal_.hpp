@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ureact/detail/signal_base.hpp"
+#include "ureact/detail/flatten.hpp"
+#include "ureact/detail/type_traits.hpp"
 
 namespace ureact
 {
@@ -121,5 +123,16 @@ public:
         return signal::signal_base::is_valid();
     }
 };
+
+namespace detail
+{
+
+template <typename L, typename R>
+bool equals( const signal<L>& lhs, const signal<R>& rhs )
+{
+    return lhs.equals( rhs );
+}
+
+} // namespace detail
 
 } // namespace ureact

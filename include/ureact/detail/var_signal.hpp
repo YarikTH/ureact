@@ -19,11 +19,6 @@ public:
     // Default ctor
     var_signal() = default;
 
-    // Constructor
-    explicit var_signal( context* context )
-        : var_signal::signal( context )
-    {}
-
     // Copy ctor
     var_signal( const var_signal& ) = default;
 
@@ -33,8 +28,8 @@ public:
     {}
 
     // Node ctor
-    explicit var_signal( context* context, node_ptr_t&& node_ptr )
-        : var_signal::signal( context, std::move( node_ptr ) )
+    explicit var_signal( node_ptr_t&& node_ptr )
+        : var_signal::signal( std::move( node_ptr ) )
     {}
 
     // Copy assignment
@@ -92,11 +87,6 @@ public:
     // Default ctor
     var_signal() = default;
 
-    // Constructor
-    explicit var_signal( context* context )
-        : var_signal::signal( context )
-    {}
-
     // Copy ctor
     var_signal( const var_signal& ) = default;
 
@@ -106,8 +96,8 @@ public:
     {}
 
     // Node ctor
-    explicit var_signal( context* context, node_ptr_t&& node_ptr )
-        : var_signal::signal( context, std::move( node_ptr ) )
+    explicit var_signal( node_ptr_t&& node_ptr )
+        : var_signal::signal( std::move( node_ptr ) )
     {}
 
     // Copy assignment

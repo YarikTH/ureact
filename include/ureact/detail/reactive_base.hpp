@@ -20,11 +20,6 @@ public:
     // Default ctor
     reactive_base() = default;
 
-    // Constructor
-    explicit reactive_base( context* context )
-        : m_context( context )
-    {}
-
     // Copy ctor
     reactive_base( const reactive_base& ) = default;
 
@@ -32,9 +27,8 @@ public:
     reactive_base( reactive_base&& other ) noexcept = default;
 
     // Explicit node ctor
-    reactive_base( context* context, std::shared_ptr<node_t>&& ptr ) noexcept
-        : m_context( context )
-        , m_ptr( std::move( ptr ) )
+    reactive_base( std::shared_ptr<node_t>&& ptr ) noexcept
+        : m_ptr( std::move( ptr ) )
     {}
 
     // Copy assignment
@@ -57,11 +51,10 @@ public:
 
     context* get_context() const
     {
-        return m_context;
+        return m_ptr->get_context();
     }
 
 protected:
-    context* m_context = nullptr;
     std::shared_ptr<node_t> m_ptr;
 
     template <typename node_t_>

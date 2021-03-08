@@ -22,14 +22,9 @@ public:
     // Default ctor
     signal_base() = default;
 
-    // Constructor
-    explicit signal_base( context* context )
-        : signal_base::reactive_base( context )
-    {}
-
     template <typename T>
-    explicit signal_base( context* context, T&& t )
-        : signal_base::reactive_base( context, std::forward<T>( t ) )
+    explicit signal_base( T&& t )
+        : signal_base::reactive_base( std::forward<T>( t ) )
     {}
 
 protected:
@@ -41,16 +36,17 @@ protected:
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        signal_base::get_context()->get_input_manager().add_input(
-            *static_cast<var_node<S>*>(this->m_ptr.get()),
-            std::forward<T>(new_value) );
+        auto node = static_cast<var_node<S>*>(this->m_ptr.get());
+        auto& input_manager = node->get_context()->get_input_manager();
+        input_manager.add_input( *node, std::forward<T>(new_value) );
     }
 
     template <typename F>
     void modify_value( const F& func ) const
     {
-        signal_base::get_context()->get_input_manager().modify_input(
-            *static_cast<var_node<S>*>(this->m_ptr.get()), func );
+        auto node = static_cast<var_node<S>*>(this->m_ptr.get());
+        auto& input_manager = node->get_context()->get_input_manager();
+        input_manager.modify_input( *node, func );
     }
 };
 

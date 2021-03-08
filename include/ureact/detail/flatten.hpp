@@ -17,7 +17,6 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
 {
     context* context = outer.get_context();
     return signal<inner_value_t>(
-        context,
         std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
             context, get_node_ptr(outer), get_node_ptr(outer.value())));
 }

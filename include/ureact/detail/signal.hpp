@@ -23,11 +23,6 @@ public:
     // Default ctor
     signal() = default;
 
-    // Constructor
-    explicit signal( context* context )
-        : signal::signal_base( context )
-    {}
-
     // Copy ctor
     signal( const signal& ) = default;
 
@@ -35,8 +30,8 @@ public:
     signal( signal&& other ) noexcept = default;
 
     // Node ctor
-    explicit signal( context* context, node_ptr_t&& node_ptr )
-        : signal::signal_base( context, std::move( node_ptr ) )
+    explicit signal( node_ptr_t&& node_ptr )
+        : signal::signal_base( std::move( node_ptr ) )
     {}
 
     // Copy assignment

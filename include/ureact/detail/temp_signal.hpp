@@ -19,11 +19,6 @@ public:
     // Default ctor
     temp_signal() = default;
 
-    // Constructor
-    explicit temp_signal( context* context )
-        : temp_signal::signal( context )
-    {}
-
     // Copy ctor
     temp_signal( const temp_signal& ) = default;
 
@@ -33,8 +28,8 @@ public:
     {}
 
     // Node ctor
-    explicit temp_signal( context* context, node_ptr_t&& ptr )
-        : temp_signal::signal( context, std::move( ptr ) )
+    explicit temp_signal( node_ptr_t&& ptr )
+        : temp_signal::signal( std::move( ptr ) )
     {}
 
     // Copy assignment

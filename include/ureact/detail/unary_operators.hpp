@@ -32,7 +32,6 @@ auto operator op(const signal_t& arg)                                           
 {                                                                                   \
     context* context = arg.get_context();                                            \
     return temp_signal<S,op_t>(                                                       \
-        context,                                                                    \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                          \
             context, F(), get_node_ptr(arg)));                                        \
 }                                                                                   \

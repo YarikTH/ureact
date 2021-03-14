@@ -11,3 +11,5 @@ target_link_libraries(ureact_test
 					  ureact::ureact
 					  ureact::doctest
 					  ureact::ApprovalTests)
+
+add_test(NAME ureact_test COMMAND ureact_test)

@@ -33,4 +33,4 @@ jobs:
       run: cmake --build . --config ${{matrix.build_type}}
     - name: Test
       working-directory: ${{runner.workspace}}/build
-      run: ./bin/ureact_test
+      run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure

@@ -1,4 +1,5 @@
 name: windows
+# based on https://github.com/nlohmann/json/blob/develop/.github/workflows/windows.yml
 
 on: [push, pull_request]
 
@@ -8,9 +9,54 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: cmake
-        run: cmake -S . -B build -G "Visual Studio 16 2019" -D CMAKE_BUILD_TYPE=Release
-      - name: build
-        run: cmake --build build --parallel 10
-      - name: test
-        run: cd build ; ctest -j 10 -C Release --output-on-failure
+      - name: Configure
+        run: cmake -S . \
+          -B ${{runner.workspace}}/build \
+          -G "Visual Studio 16 2019"
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        run: cmake --build . --parallel 10 --config Release
+      - name: Test
+        working-directory: ${{runner.workspace}}/build
+        run: ctest -j 10 -C Release --output-on-failure
+
+  clang10:
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Clang
+        run: curl -fsSL -o LLVM10.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe ; 7z x LLVM10.exe -y -o"C:/Program Files/LLVM"
+      - name: Configure
+        run: cmake -S . \
+          -B ${{runner.workspace}}/build \
+          -D CMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" \
+          -D CMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" \
+          -D CMAKE_BUILD_TYPE=Release \
+          -G"MinGW Makefiles"
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        run: cmake --build . --parallel 10
+      - name: Test
+        working-directory: ${{runner.workspace}}/build
+        run: ctest -j 10 -C Release --output-on-failure
+
+  clang-cl-10:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        arch: [Win32, x64]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Configure
+        run: cmake -S . \
+          -B ${{runner.workspace}}/build \
+          -G "Visual Studio 16 2019" \
+          -A ${{matrix.arch}} \
+          -T ClangCL
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        run: cmake --build . --config Release --parallel 10
+      - name: Test
+        working-directory: ${{runner.workspace}}/build
+        run: ctest -j 10 -C Release --output-on-failure

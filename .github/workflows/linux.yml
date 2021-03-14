@@ -3,14 +3,14 @@ name: linux
 on: [push, pull_request]
 
 jobs:
-  build:
+  gcc-10:
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
-        cxx: [g++-8, g++-10, clang++-9]
-        build_type: [Debug, Release]
-        std: [11, 14, 17]
+        cxx: [g++-10]
+        build_type: [Release]
+        std: [11, 17]
 
     steps:
     - uses: actions/checkout@v2
@@ -23,7 +23,6 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       env:
         CXX: ${{matrix.cxx}}
-        CXXFLAGS: ${{matrix.cxxflags}}
       run: |
         cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
               -DCMAKE_CXX_STANDARD=${{matrix.std}} \
@@ -34,3 +33,33 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure
+
+  clang-9:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        cxx: [clang++-9]
+        build_type: [Release]
+        std: [11, 17]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create Build Environment
+        run: |
+          ${{matrix.install}}
+          cmake -E make_directory ${{runner.workspace}}/build
+      - name: Configure
+        working-directory: ${{runner.workspace}}/build
+        env:
+          CXX: ${{matrix.cxx}}
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+                -DCMAKE_CXX_STANDARD=${{matrix.std}} \
+                $GITHUB_WORKSPACE
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        run: cmake --build . --config ${{matrix.build_type}}
+      - name: Test
+        working-directory: ${{runner.workspace}}/build
+        run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure

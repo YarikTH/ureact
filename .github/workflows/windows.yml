@@ -1,0 +1,16 @@
+name: windows
+
+on: [push, pull_request]
+
+jobs:
+  msvc2019:
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: cmake -S . -B build -G "Visual Studio 16 2019" -D CMAKE_BUILD_TYPE=Release
+      - name: build
+        run: cmake --build build --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 -C Release --output-on-failure

@@ -25,7 +25,7 @@ public:
         this->m_value = m_op.evaluate();
 
         signal_op_node::get_context()->on_node_create( *this );
-        m_op.template attach( *this );
+        m_op.attach( *this );
     }
 
     signal_op_node( const signal_op_node& ) = delete;
@@ -36,7 +36,9 @@ public:
     ~signal_op_node() override
     {
         if ( !m_was_op_stolen )
-            m_op.template detach( *this );
+        {
+            m_op.detach( *this );
+        }
         signal_op_node::get_context()->on_node_destroy( *this );
     }
 
@@ -64,7 +66,7 @@ public:
     {
         assert( !m_was_op_stolen && "Op was already stolen." );
         m_was_op_stolen = true;
-        m_op.template detach( *this );
+        m_op.detach( *this );
         return std::move( m_op );
     }
 

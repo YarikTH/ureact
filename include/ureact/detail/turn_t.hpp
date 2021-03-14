@@ -25,7 +25,7 @@ public:
     }
 
 private:
-    turn_id_t m_id = -1u;
+    turn_id_t m_id = std::numeric_limits<turn_id_t>::max();
 };
 
 } // namespace detail

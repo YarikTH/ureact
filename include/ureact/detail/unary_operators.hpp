@@ -12,7 +12,11 @@ namespace ureact { namespace detail { namespace op_functors {                   
 template <typename T>                                                               \
 struct op_functor_ ## name                                                            \
 {                                                                                   \
-    T operator()(const T& v) const { return op v; }                                 \
+    auto operator()(const T& v) const                                               \
+        -> decltype(op std::declval<T>())                                           \
+    {                                                                               \
+        return op v;                                                                \
+    }                                                                               \
 };                                                                                  \
 }}}                                                                                  \
                                                                                     \

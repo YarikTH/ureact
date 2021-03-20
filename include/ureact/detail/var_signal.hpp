@@ -55,33 +55,11 @@ private:
     using node_ptr_t = std::shared_ptr<node_t>;
 
 public:
-    // Default ctor
     var_signal() = default;
-
-    // Copy ctor
-    var_signal( const var_signal& ) = default;
-
-    // Move ctor
-    var_signal( var_signal&& other ) noexcept
-        : var_signal::var_signal_base( std::move( other ) )
-    {}
-
-    // Node ctor
+    
     explicit var_signal( node_ptr_t&& node_ptr )
         : var_signal::var_signal_base( std::move( node_ptr ) )
     {}
-
-    // Copy assignment
-    var_signal& operator=( const var_signal& ) = default;
-
-    // Move assignment
-    var_signal& operator=( var_signal&& other ) noexcept
-    {
-        var_signal::signal_base::operator=( std::move( other ) );
-        return *this;
-    }
-
-    ~var_signal() = default;
 
     void set( const S& new_value ) const
     {
@@ -122,34 +100,12 @@ private:
 
 public:
     using value_t = S;
-
-    // Default ctor
+    
     var_signal() = default;
-
-    // Copy ctor
-    var_signal( const var_signal& ) = default;
-
-    // Move ctor
-    var_signal( var_signal&& other ) noexcept
-        : var_signal::signal( std::move( other ) )
-    {}
-
-    // Node ctor
+    
     explicit var_signal( node_ptr_t&& node_ptr )
-        : var_signal::signal( std::move( node_ptr ) )
+        : var_signal::var_signal_base( std::move( node_ptr ) )
     {}
-
-    // Copy assignment
-    var_signal& operator=( const var_signal& ) = default;
-
-    // Move assignment
-    var_signal& operator=( var_signal&& other ) noexcept
-    {
-        var_signal::signal::operator=( std::move( other ) );
-        return *this;
-    }
-
-    ~var_signal() = default;
 
     void set( std::reference_wrapper<S> new_value ) const
     {

@@ -44,6 +44,20 @@ public:
     // LCOV_EXCL_STOP
 
     template <typename V>
+    void request_add_input( V&& new_value )
+    {
+        auto& input_manager = var_node::signal_node::get_context()->get_input_manager();
+        input_manager.add_input( *this, std::forward<V>(new_value) );
+    }
+    
+    template <typename F>
+    void request_modify_input( F& func )
+    {
+        auto& input_manager = var_node::signal_node::get_context()->get_input_manager();
+        input_manager.modify_input( *this, std::forward<F>(func) );
+    }
+    
+    template <typename V>
     void add_input( V&& new_value )
     {
         m_new_value = std::forward<V>( new_value );

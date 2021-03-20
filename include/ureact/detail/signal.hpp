@@ -81,93 +81,11 @@ template <typename S>
 class signal_base : public reactive_base<signal_node<S>>
 {
 public:
-    // Default ctor
     signal_base() = default;
 
     template <typename T>
     explicit signal_base( T&& t )
         : signal_base::reactive_base( std::forward<T>( t ) )
-    {}
-
-protected:
-    const S& get_value() const
-    {
-        return this->m_ptr->value_ref();
-    }
-};
-
-} // namespace detail
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// signal
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename S>
-class signal : public detail::signal_base<S>
-{
-private:
-    using node_t = detail::signal_node<S>;
-    using node_ptr_t = std::shared_ptr<node_t>;
-
-public:
-    using value_t = S;
-
-    signal() = default;
-
-    explicit signal( node_ptr_t&& node_ptr )
-        : signal::signal_base( std::move( node_ptr ) )
-    {}
-
-    const S& value() const
-    {
-        return signal::signal_base::get_value();
-    }
-
-    S flatten() const
-    {
-        static_assert( is_signal<S>::value, "flatten requires a signal value type." );
-        return ::ureact::flatten( *this );
-    }
-};
-
-// Specialize for references
-template <typename S>
-class signal<S&> : public detail::signal_base<std::reference_wrapper<S>>
-{
-private:
-    using node_t = detail::signal_node<std::reference_wrapper<S>>;
-    using node_ptr_t = std::shared_ptr<node_t>;
-
-public:
-    using value_t = S;
-
-    signal() = default;
-
-    explicit signal( node_ptr_t&& node_ptr )
-        : signal::signal_base( std::move( node_ptr ) )
-    {}
-
-    const S& value() const
-    {
-        return signal::signal_base::get_value();
-    }
-};
-
-
-namespace detail
-{
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// var_signal_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename S>
-class var_signal_base : public signal<S>
-{
-public:
-    // Default ctor
-    var_signal_base() = default;
-
-    template <typename T>
-    explicit var_signal_base( T&& t )
-        : var_signal_base::signal( std::forward<T>( t ) )
     {}
 
 private:
@@ -177,6 +95,10 @@ private:
     }
     
 protected:
+    const S& get_value() const
+    {
+        return this->m_ptr->value_ref();
+    }
     
     template <typename T>
     void set_value( T&& new_value ) const
@@ -193,16 +115,104 @@ protected:
 
 } // namespace detail
 
+/**
+ * A signal is a reactive variable that can propagate its changes to dependents
+ * and react to changes of its dependencies.
+ *
+ * Instances of this class act as a proxies to signal nodes. It takes shared
+ * ownership of the node, so while it exists, the node will not be destroyed.
+ * Copy, move and assignment semantics are similar to std::shared_ptr.
+ *
+ * signals are created by constructor functions, i.e. make_signal.
+ *
+ * Specialization for non-reference types.
+ */
+template <typename S>
+class signal : public detail::signal_base<S>
+{
+private:
+    using node_t = detail::signal_node<S>;
+
+public:
+    using value_t = S;
+
+    /// Default constructor that needed for REACTIVE_REF for some reason
+    /// @todo investigate and remove it if possible
+    signal() = default;
+
+    /**
+     * Construct temp_signal from var_node.
+     * @todo make it private and allow to call it only from make_var function
+     */
+    explicit signal( std::shared_ptr<node_t>&& node_ptr )
+        : signal::signal_base( std::move( node_ptr ) )
+    {}
+
+    /// Return value of linked node
+    const S& value() const
+    {
+        return signal::get_value();
+    }
+
+    /// Semantically equivalent to the respective free function in namespace ureact.
+    S flatten() const
+    {
+        static_assert( is_signal<S>::value, "flatten requires a signal value type." );
+        return ::ureact::flatten( *this );
+    }
+};
+
+/**
+ * A signal is a reactive variable that can propagate its changes to dependents
+ * and react to changes of its dependencies.
+ *
+ * Instances of this class act as a proxies to signal nodes. It takes shared
+ * ownership of the node, so while it exists, the node will not be destroyed.
+ * Copy, move and assignment semantics are similar to std::shared_ptr.
+ *
+ * signals are created by constructor functions, i.e. make_signal.
+ *
+ * Specialization for references.
+ */
+template <typename S>
+class signal<S&> : public detail::signal_base<std::reference_wrapper<S>>
+{
+private:
+    using node_t = detail::signal_node<std::reference_wrapper<S>>;
+
+public:
+    using value_t = S;
+
+    /// Default constructor that needed for REACTIVE_REF for some reason
+    /// @todo investigate and remove it if possible
+    signal() = default;
+
+    /**
+     * Construct temp_signal from var_node.
+     * @todo make it private and allow to call it only from make_var function
+     */
+    explicit signal( std::shared_ptr<node_t>&& node_ptr )
+        : signal::signal_base( std::move( node_ptr ) )
+    {}
+
+    /// Return value of linked node
+    const S& value() const
+    {
+        return signal::get_value();
+    }
+};
 
 /**
  * This class extends the immutable signal interface with functions that support
  * imperative value input. In the dataflow graph, input signals are sources.
  * As such, they don't have any predecessors.
  *
+ * var_signal is created by constructor function make_var.
+ *
  * Specialization for non-reference types.
  */
 template <typename S>
-class var_signal : public detail::var_signal_base<S>
+class var_signal : public signal<S>
 {
 private:
     using node_t = ::ureact::detail::var_node<S>;
@@ -213,7 +223,7 @@ public:
      * @todo make it private and allow to call it only from make_var function
      */
     explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::var_signal_base( std::move( node_ptr ) )
+        : var_signal::signal( std::move( node_ptr ) )
     {}
 
     /**
@@ -232,6 +242,7 @@ public:
         var_signal::set_value( new_value );
     }
 
+    /// @copydoc set
     void set( S&& new_value ) const
     {
         var_signal::set_value( std::move( new_value ) );
@@ -248,6 +259,7 @@ public:
         return *this;
     }
 
+    /// @copydoc operator<<=
     const var_signal& operator<<=( S&& new_value ) const
     {
         var_signal::set_value( std::move( new_value ) );
@@ -270,10 +282,12 @@ public:
  * imperative value input. In the dataflow graph, input signals are sources.
  * As such, they don't have any predecessors.
  *
+ * var_signal is created by constructor function make_var.
+ *
  * Specialization for references.
  */
 template <typename S>
-class var_signal<S&> : public detail::var_signal_base<std::reference_wrapper<S>>
+class var_signal<S&> : public signal<std::reference_wrapper<S>>
 {
 private:
     using node_t = detail::var_node<std::reference_wrapper<S>>;
@@ -286,7 +300,7 @@ public:
      * @todo make it private and allow to call it only from make_var function
      */
     explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::var_signal_base( std::move( node_ptr ) )
+        : var_signal::signal( std::move( node_ptr ) )
     {}
 
     /**
@@ -336,10 +350,15 @@ private:
     using node_t = signal_op_node<S, op_t>;
 
 public:
+    /**
+     * Construct temp_signal from var_node.
+     * @todo make it private and allow to call it only from make_var function
+     */
     explicit temp_signal( std::shared_ptr<node_t>&& ptr )
         : temp_signal::signal( std::move( ptr ) )
     {}
 
+    /// Return internal operator, leaving node invalid
     op_t steal_op()
     {
         auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );

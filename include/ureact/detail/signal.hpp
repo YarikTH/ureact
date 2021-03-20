@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ureact/detail/flatten.hpp"
-#include "ureact/detail/type_traits.hpp"
 #include "ureact/detail/reactive_input.hpp"
 #include "ureact/detail/graph/signal_node.hpp"
 #include "ureact/detail/graph/signal_op_node.hpp"
@@ -113,7 +112,25 @@ protected:
     }
 };
 
+// Got from https://stackoverflow.com/a/34672753
+// std::is_base_of for template classes
+template <template <typename...> class base, typename derived>
+struct is_base_of_template_impl
+{
+    template <typename... Ts>
+    static constexpr std::true_type test( const base<Ts...>* ){ return {}; }
+    static constexpr std::false_type test( ... ){ return {}; }
+    using type = decltype( test( std::declval<derived*>() ) );
+};
+
+template <template <typename...> class base, typename derived>
+using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
+
 } // namespace detail
+
+/// Return if type is signal or its inheritor
+template <typename T>
+struct is_signal : detail::is_base_of_template<signal, T>{};
 
 /**
  * A signal is a reactive variable that can propagate its changes to dependents

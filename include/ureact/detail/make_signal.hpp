@@ -2,7 +2,6 @@
 
 #include "ureact/detail/signal.hpp"
 #include "ureact/detail/signal_pack.hpp"
-#include "ureact/detail/type_traits.hpp"
 #include "ureact/detail/graph/function_op.hpp"
 #include "ureact/detail/graph/signal_op_node.hpp"
 

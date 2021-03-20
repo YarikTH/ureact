@@ -6,8 +6,8 @@ namespace ureact
 {
 
 // Forward declaration to break cyclic dependency
-template <typename S>
-class signal;
+template <typename S> class signal;
+template <typename S> class var_signal;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// flatten
@@ -32,6 +32,22 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
 #else
 #    define REACT_MSVC_NO_TYPENAME typename
 #endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// decay_input
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// @todo understand its meaning and document it
+template <typename T>
+struct decay_input
+{
+    using type = T;
+};
+
+template <typename T>
+struct decay_input<var_signal<T>>
+{
+    using type = signal<T>;
+};
 
 #define REACTIVE_REF(obj, name)                                                             \
     flatten(                                                                                \

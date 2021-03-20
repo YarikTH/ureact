@@ -193,77 +193,126 @@ protected:
 
 } // namespace detail
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// var_signal
-///////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This class extends the immutable signal interface with functions that support
+ * imperative value input. In the dataflow graph, input signals are sources.
+ * As such, they don't have any predecessors.
+ *
+ * Specialization for non-reference types.
+ */
 template <typename S>
 class var_signal : public detail::var_signal_base<S>
 {
 private:
     using node_t = ::ureact::detail::var_node<S>;
-    using node_ptr_t = std::shared_ptr<node_t>;
 
 public:
-    var_signal() = default;
-    
-    explicit var_signal( node_ptr_t&& node_ptr )
+    /**
+     * Construct var_signal from var_node.
+     * @todo make it private and allow to call it only from make_var function
+     */
+    explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
         : var_signal::var_signal_base( std::move( node_ptr ) )
     {}
 
+    /**
+     * @brief Set new signal value
+     *
+     * Set the the signal value of the linked variable signal node to a new_value.
+     * If the old value equals the new value, the call has no effect.
+     *
+     * Furthermore, if set was called inside of a transaction function, it will
+     * return after the changed value has been set and change propagation is delayed
+     * until the transaction function returns.
+     * Otherwise, propagation starts immediately and Set blocks until it's done.
+     */
     void set( const S& new_value ) const
     {
-        var_signal::signal_base::set_value( new_value );
+        var_signal::set_value( new_value );
     }
 
     void set( S&& new_value ) const
     {
-        var_signal::var_signal_base::set_value( std::move( new_value ) );
+        var_signal::set_value( std::move( new_value ) );
     }
 
+    /**
+     * @brief Operator version of set()
+     *
+     * Semantically equivalent to set().
+     */
     const var_signal& operator<<=( const S& new_value ) const
     {
-        var_signal::var_signal_base::set_value( new_value );
+        var_signal::set_value( new_value );
         return *this;
     }
 
     const var_signal& operator<<=( S&& new_value ) const
     {
-        var_signal::var_signal_base::set_value( std::move( new_value ) );
+        var_signal::set_value( std::move( new_value ) );
         return *this;
     }
 
+    /**
+     * @brief Modify current signal value in-place
+     */
     template <typename F>
     void modify( const F& func ) const
     {
-        var_signal::var_signal_base::modify_value( func );
+        var_signal::modify_value( func );
     }
 };
 
-// Specialize for references
+
+/**
+ * This class extends the immutable signal interface with functions that support
+ * imperative value input. In the dataflow graph, input signals are sources.
+ * As such, they don't have any predecessors.
+ *
+ * Specialization for references.
+ */
 template <typename S>
 class var_signal<S&> : public detail::var_signal_base<std::reference_wrapper<S>>
 {
 private:
-    using node_t = ::ureact::detail::var_node<std::reference_wrapper<S>>;
-    using node_ptr_t = std::shared_ptr<node_t>;
+    using node_t = detail::var_node<std::reference_wrapper<S>>;
 
 public:
     using value_t = S;
     
-    var_signal() = default;
-    
-    explicit var_signal( node_ptr_t&& node_ptr )
+    /**
+     * Construct var_signal from var_node.
+     * @todo make it private and allow to call it only from make_var function
+     */
+    explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
         : var_signal::var_signal_base( std::move( node_ptr ) )
     {}
 
+    /**
+     * @brief Set new signal value
+     *
+     * Set the the signal value of the linked variable signal node to a new_value.
+     * If the old value equals the new value, the call has no effect.
+     *
+     * Furthermore, if set was called inside of a transaction function, it will
+     * return after the changed value has been set and change propagation is delayed
+     * until the transaction function returns.
+     * Otherwise, propagation starts immediately and Set blocks until it's done.
+     */
     void set( std::reference_wrapper<S> new_value ) const
     {
-        var_signal::var_signal_base::set_value( new_value );
+        var_signal::set_value( new_value );
     }
 
+    /**
+     * @brief Operator version of set()
+     *
+     * Semantically equivalent to set().
+     */
     const var_signal& operator<<=( std::reference_wrapper<S> new_value ) const
     {
-        var_signal::var_signal_base::set_value( new_value );
+        var_signal::set_value( new_value );
         return *this;
     }
 };

@@ -32,13 +32,13 @@ protected:
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        get_var_node()->template request_add_input(std::forward<T>(new_value));
+        get_var_node()->request_add_input(std::forward<T>(new_value));
     }
 
     template <typename F>
     void modify_value( const F& func ) const
     {
-        get_var_node()->template request_modify_input(func);
+        get_var_node()->request_modify_input(func);
     }
 };
 

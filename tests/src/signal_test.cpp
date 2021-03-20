@@ -36,14 +36,6 @@ TEST_CASE( "MakeVars" )
     CHECK( v2.value() == 20 );
     CHECK( v3.value() == 30 );
     CHECK( v4.value() == 40 );
-    
-    auto _2 = make_var( &ctx, 2 );
-    
-    auto result = _2 + _2 * _2;
-    CHECK( result.value() == 6 );
-    
-    auto result2 = (_2 + _2) * _2;
-    CHECK( result2.value() == 8 );
 }
 
 TEST_CASE( "Signals1" )

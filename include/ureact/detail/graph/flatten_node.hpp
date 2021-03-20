@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "ureact/detail/equals.hpp"
 #include "ureact/detail/graph/signal_node.hpp"
 
 namespace ureact

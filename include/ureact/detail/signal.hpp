@@ -4,6 +4,7 @@
 #include "ureact/detail/type_traits.hpp"
 #include "ureact/detail/reactive_input.hpp"
 #include "ureact/detail/graph/signal_node.hpp"
+#include "ureact/detail/graph/signal_op_node.hpp"
 #include "ureact/detail/graph/var_node.hpp"
 
 namespace ureact
@@ -264,6 +265,52 @@ public:
     {
         var_signal::var_signal_base::set_value( new_value );
         return *this;
+    }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// temp_signal
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename S, typename op_t>
+class temp_signal : public signal<S>
+{
+private:
+    using node_t = ::ureact::detail::signal_op_node<S, op_t>;
+    using node_ptr_t = std::shared_ptr<node_t>;
+
+public:
+    // Default ctor
+    temp_signal() = default;
+
+    // Copy ctor
+    temp_signal( const temp_signal& ) = default;
+
+    // Move ctor
+    temp_signal( temp_signal&& other ) noexcept
+        : temp_signal::signal( std::move( other ) )
+    {}
+
+    // Node ctor
+    explicit temp_signal( node_ptr_t&& ptr )
+        : temp_signal::signal( std::move( ptr ) )
+    {}
+
+    // Copy assignment
+    temp_signal& operator=( const temp_signal& ) = default;
+
+    // Move assignemnt
+    temp_signal& operator=( temp_signal&& other ) noexcept
+    {
+        temp_signal::signal::operator=( std::move( other ) );
+        return *this;
+    }
+
+    ~temp_signal() = default;
+
+    op_t steal_op()
+    {
+        return std::move( static_cast<node_t*>( this->m_ptr.get() )->steal_op() );
     }
 };
 

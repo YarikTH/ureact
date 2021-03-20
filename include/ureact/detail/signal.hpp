@@ -271,48 +271,30 @@ public:
 namespace detail
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// temp_signal
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * This class exposes additional type information of the linked node, which enables
+ * r-value based node merging at construction time.
+ * The primary use case for this is to avoid unnecessary nodes when creating signal
+ * expression from overloaded arithmetic operators.
+ *
+ * temp_signal shouldn't be used as an l-value type, but instead implicitly
+ * converted to signal.
+ */
 template <typename S, typename op_t>
 class temp_signal : public signal<S>
 {
 private:
     using node_t = signal_op_node<S, op_t>;
-    using node_ptr_t = std::shared_ptr<node_t>;
 
 public:
-    // Default ctor
-    temp_signal() = default;
-
-    // Copy ctor
-    temp_signal( const temp_signal& ) = default;
-
-    // Move ctor
-    temp_signal( temp_signal&& other ) noexcept
-        : temp_signal::signal( std::move( other ) )
-    {}
-
-    // Node ctor
-    explicit temp_signal( node_ptr_t&& ptr )
+    explicit temp_signal( std::shared_ptr<node_t>&& ptr )
         : temp_signal::signal( std::move( ptr ) )
     {}
 
-    // Copy assignment
-    temp_signal& operator=( const temp_signal& ) = default;
-
-    // Move assignemnt
-    temp_signal& operator=( temp_signal&& other ) noexcept
-    {
-        temp_signal::signal::operator=( std::move( other ) );
-        return *this;
-    }
-
-    ~temp_signal() = default;
-
     op_t steal_op()
     {
-        return std::move( static_cast<node_t*>( this->m_ptr.get() )->steal_op() );
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->steal_op();
     }
 };
 

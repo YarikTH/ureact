@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ureact/detail/var_signal.hpp"
+#include "ureact/detail/signal.hpp"
 #include "ureact/detail/type_traits.hpp"
 
 namespace ureact

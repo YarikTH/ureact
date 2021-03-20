@@ -102,11 +102,11 @@ template                                                                        
         ::ureact::detail::signal_node_ptr_t<right_val_t>>                                   \
 >                                                                                   \
 auto operator op(const left_signal_t& lhs, const right_signal_t& rhs)                   \
-    -> temp_signal<S,op_t>                                                            \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = lhs.get_context();                                            \
     assert(context == rhs.get_context());                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F(), get_node_ptr(lhs), get_node_ptr(rhs)));                       \
 }                                                                                   \
@@ -127,10 +127,10 @@ template                                                                        
         ::ureact::detail::signal_node_ptr_t<left_val_t>>                                    \
 >                                                                                   \
 auto operator op(const left_signal_t& lhs, right_val_in_t&& rhs)                         \
-    -> temp_signal<S,op_t>                                                            \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = lhs.get_context();                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F( std::forward<right_val_in_t>(rhs) ), get_node_ptr(lhs)));        \
 }                                                                                   \
@@ -151,10 +151,10 @@ template                                                                        
         ::ureact::detail::signal_node_ptr_t<right_val_t>>                                   \
 >                                                                                   \
 auto operator op(left_val_in_t&& lhs, const right_signal_t& rhs)                         \
-    -> temp_signal<S,op_t>                                                            \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = rhs.get_context();                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         context,                                                                    \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F( std::forward<left_val_in_t>(lhs) ), get_node_ptr(rhs)));         \
@@ -169,13 +169,13 @@ template                                                                        
     typename S = typename std::result_of<F(left_val_t,right_val_t)>::type,              \
     typename op_t = ::ureact::detail::function_op<S,F,left_op_t,right_op_t>                  \
 >                                                                                   \
-auto operator op(temp_signal<left_val_t,left_op_t>&& lhs,                                \
-                 temp_signal<right_val_t,right_op_t>&& rhs)                              \
-    -> temp_signal<S,op_t>                                                            \
+auto operator op(detail::temp_signal<left_val_t,left_op_t>&& lhs,                                \
+                 detail::temp_signal<right_val_t,right_op_t>&& rhs)                              \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = lhs.get_context();                                            \
     assert(context == rhs.get_context());                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         context,                                                                    \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F(), lhs.steal_op(), rhs.steal_op()));                           \
@@ -195,12 +195,12 @@ template                                                                        
         left_op_t,                                                                    \
         ::ureact::detail::signal_node_ptr_t<right_val_t>>                                   \
 >                                                                                   \
-auto operator op(temp_signal<left_val_t,left_op_t>&& lhs,                                \
+auto operator op(detail::temp_signal<left_val_t,left_op_t>&& lhs,                                \
                  const right_signal_t& rhs)                                           \
-    -> temp_signal<S,op_t>                                                            \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = rhs.get_context();                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F(), lhs.steal_op(), get_node_ptr(rhs)));                         \
 }                                                                                   \
@@ -219,11 +219,11 @@ template                                                                        
         ::ureact::detail::signal_node_ptr_t<left_val_t>,                                    \
         right_op_t>                                                                   \
 >                                                                                   \
-auto operator op(const left_signal_t& lhs, temp_signal<right_val_t,right_op_t>&& rhs)      \
-    -> temp_signal<S,op_t>                                                            \
+auto operator op(const left_signal_t& lhs, detail::temp_signal<right_val_t,right_op_t>&& rhs)      \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = lhs.get_context();                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F(), get_node_ptr(lhs), rhs.steal_op()));                         \
 }                                                                                   \
@@ -240,11 +240,11 @@ template                                                                        
     typename S = typename std::result_of<F(left_val_t)>::type,                        \
     typename op_t = ::ureact::detail::function_op<S,F,left_op_t>                           \
 >                                                                                   \
-auto operator op(temp_signal<left_val_t,left_op_t>&& lhs, right_val_in_t&& rhs)             \
-    -> temp_signal<S,op_t>                                                            \
+auto operator op(detail::temp_signal<left_val_t,left_op_t>&& lhs, right_val_in_t&& rhs)             \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = lhs.get_context();                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F( std::forward<right_val_in_t>(rhs) ), lhs.steal_op()));          \
 }                                                                                   \
@@ -261,11 +261,11 @@ template                                                                        
     typename S = typename std::result_of<F(right_val_t)>::type,                       \
     typename op_t = ::ureact::detail::function_op<S,F,right_op_t>                          \
 >                                                                                   \
-auto operator op(left_val_in_t&& lhs, temp_signal<right_val_t,right_op_t>&& rhs)            \
-    -> temp_signal<S,op_t>                                                            \
+auto operator op(left_val_in_t&& lhs, detail::temp_signal<right_val_t,right_op_t>&& rhs)            \
+    -> detail::temp_signal<S,op_t>                                                            \
 {                                                                                   \
     context* context = rhs.get_context();                                            \
-    return temp_signal<S,op_t>(                                                       \
+    return detail::temp_signal<S,op_t>(                                                       \
         context,                                                                    \
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(                       \
             context, F( std::forward<left_val_in_t>(lhs) ), rhs.steal_op()));           \

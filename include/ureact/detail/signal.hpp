@@ -268,6 +268,8 @@ public:
     }
 };
 
+namespace detail
+{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// temp_signal
@@ -276,7 +278,7 @@ template <typename S, typename op_t>
 class temp_signal : public signal<S>
 {
 private:
-    using node_t = ::ureact::detail::signal_op_node<S, op_t>;
+    using node_t = signal_op_node<S, op_t>;
     using node_ptr_t = std::shared_ptr<node_t>;
 
 public:
@@ -313,5 +315,7 @@ public:
         return std::move( static_cast<node_t*>( this->m_ptr.get() )->steal_op() );
     }
 };
+
+} // namespace detail
 
 } // namespace ureact

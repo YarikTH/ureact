@@ -22,10 +22,10 @@ template
     typename op_t = ::ureact::detail::function_op<S,F, ::ureact::detail::signal_node_ptr_t<value_t>>
 >
 auto make_signal(const signal<value_t>& arg, in_f&& func)
-    -> temp_signal<S,op_t>
+    -> detail::temp_signal<S,op_t>
 {
     context* context = arg.get_context();
-    return temp_signal<S,op_t>(
+    return detail::temp_signal<S,op_t>(
         std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(
             context, std::forward<in_f>(func), get_node_ptr(arg)));
 }
@@ -40,7 +40,7 @@ template
     typename op_t = ::ureact::detail::function_op<S,F, ::ureact::detail::signal_node_ptr_t<values_t> ...>
 >
 auto make_signal(const signal_pack<values_t...>& arg_pack, in_f&& func)
-    -> temp_signal<S,op_t>
+    -> detail::temp_signal<S,op_t>
 {
     struct node_builder
     {
@@ -49,9 +49,9 @@ auto make_signal(const signal_pack<values_t...>& arg_pack, in_f&& func)
             , m_my_func( std::forward<in_f>( func ) )
         {}
 
-        auto operator()( const signal<values_t>&... args ) -> temp_signal<S, op_t>
+        auto operator()( const signal<values_t>&... args ) -> detail::temp_signal<S, op_t>
         {
-            return temp_signal<S,op_t>(
+            return detail::temp_signal<S,op_t>(
                 std::make_shared<::ureact::detail::signal_op_node<S,op_t>>(
                     m_context,
                     std::forward<in_f>( m_my_func ), get_node_ptr( args ) ...));

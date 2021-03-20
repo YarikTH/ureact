@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <vector>
 
 #include "ureact/detail/turn_t.hpp"
 

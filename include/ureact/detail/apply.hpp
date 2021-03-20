@@ -2,14 +2,12 @@
 
 #include <tuple>
 
-#include "ureact/detail/cpp_features_detection.hpp"
-
 namespace ureact
 {
 namespace detail
 {
 
-#ifdef REACT_HAS_CPP_17
+#if ( defined( __cplusplus ) && __cplusplus >= 201703L ) || ( defined( _HAS_CXX17 ) && _HAS_CXX17 == 1 )
 using std::apply;
 #else
 

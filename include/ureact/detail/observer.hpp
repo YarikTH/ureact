@@ -4,6 +4,7 @@
 #include <memory>
 #include <utility>
 
+#include "ureact/detail/signal.hpp"
 #include "ureact/detail/util.hpp"
 #include "ureact/detail/reactive_node_interface.hpp"
 #include "ureact/detail/observer_base.hpp"
@@ -13,16 +14,7 @@
 namespace ureact
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Forward declarations
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename S>
-class signal;
-
-template <typename... values_t>
-class signal_pack;
-
-using ::ureact::detail::observer_action;
+using detail::observer_action;
 
 /// An instance of this class provides a unique handle to an observer which can
 /// be used to detach it explicitly. It also holds a strong reference to
@@ -34,7 +26,7 @@ using ::ureact::detail::observer_action;
 class observer
 {
 private:
-    using subject_ptr_t = std::shared_ptr<::ureact::detail::observable_node>;
+    using subject_ptr_t = std::shared_ptr<detail::observable_node>;
     using node_t = ::ureact::detail::observer_node;
 
 public:

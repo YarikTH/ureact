@@ -22,18 +22,6 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// flatten macros
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Note: Using static_cast rather than -> return type, because when using lambda for inline
-// class initialization, decltype did not recognize the parameter r
-// Note2: MSVC doesn't like typename in the lambda
-#if defined( _MSC_VER ) && _MSC_VER && !__INTEL_COMPILER
-#    define REACT_MSVC_NO_TYPENAME
-#else
-#    define REACT_MSVC_NO_TYPENAME typename
-#endif
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /// decay_input
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// @todo understand its meaning and document it
@@ -49,15 +37,18 @@ struct decay_input<var_signal<T>>
     using type = signal<T>;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// flatten macros
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 #define REACTIVE_REF(obj, name)                                                             \
     flatten(                                                                                \
         make_signal(                                                                        \
             obj,                                                                            \
-            [] (const REACT_MSVC_NO_TYPENAME                                                \
-                ::ureact::detail::identity<decltype(obj)>::type::value_t& r)                \
+            [] (const typename ::ureact::detail::identity<decltype(obj)>::type::value_t& r) \
             {                                                                               \
                 using T = decltype(r.name);                                                 \
-                using S = REACT_MSVC_NO_TYPENAME ::ureact::decay_input<T>::type;            \
+                using S = typename ::ureact::decay_input<T>::type;                          \
                 return static_cast<S>(r.name);                                              \
             }))
 
@@ -65,12 +56,11 @@ struct decay_input<var_signal<T>>
     flatten(                                                                                \
         make_signal(                                                                        \
             obj,                                                                            \
-            [] (REACT_MSVC_NO_TYPENAME                                                      \
-                ::ureact::detail::identity<decltype(obj)>::type::value_t r)                 \
+            [] (typename ::ureact::detail::identity<decltype(obj)>::type::value_t r)        \
             {                                                                               \
                 assert(r != nullptr);                                                       \
                 using T = decltype(r->name);                                                \
-                using S = REACT_MSVC_NO_TYPENAME ::ureact::decay_input<T>::type;            \
+                using S = typename ::ureact::decay_input<T>::type;                          \
                 return static_cast<S>(r->name);                                             \
             }))
 

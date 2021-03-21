@@ -13,4 +13,6 @@ target_link_libraries(ureact_test
 					  ureact::doctest
 					  ureact::ApprovalTests)
 
+target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
+
 add_test(NAME ureact_test COMMAND ureact_test)

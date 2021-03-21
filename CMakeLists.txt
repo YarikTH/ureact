@@ -23,6 +23,24 @@ option(
 option(UREACT_EXAMPLES "Generate example targets." ${UREACT_MASTER_PROJECT})
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
 
+# Get version from core.h
+file(
+    READ
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/ureact/detail/version.hpp
+        version_hpp
+)
+if(NOT version_hpp MATCHES "UREACT_VERSION ([0-9]+)([0-9][0-9])([0-9][0-9])")
+    message(FATAL_ERROR "Cannot get UREACT_VERSION from version_hpp.")
+endif()
+# Use math to skip leading zeros if any.
+math(EXPR UREACT_VERSION_MAJOR ${CMAKE_MATCH_1})
+math(EXPR UREACT_VERSION_MINOR ${CMAKE_MATCH_2})
+math(EXPR UREACT_VERSION_PATCH ${CMAKE_MATCH_3})
+set(UREACT_VERSION
+    ${UREACT_VERSION_MAJOR}.${UREACT_VERSION_MINOR}.${UREACT_VERSION_PATCH}
+)
+message(STATUS "ureact version: ${UREACT_VERSION}")
+
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 endif()
@@ -40,7 +58,7 @@ endif()
 if(UREACT_WERROR)
     set_werror_flag(UREACT_WARNING_OPTION)
 endif()
-message(STATUS "ureact compiler warning options: ${UREACT_WARNING_OPTION}")
+message(STATUS "ureact compiler warning options: \"${UREACT_WARNING_OPTION}\"")
 
 ### ureact
 add_library(ureact INTERFACE)
@@ -49,7 +67,8 @@ add_library(ureact::ureact ALIAS ureact)
 
 target_include_directories(
     ureact
-    INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
 target_compile_features(ureact INTERFACE cxx_std_11)

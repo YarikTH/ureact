@@ -12,6 +12,7 @@ jobs:
       - name: Configure
         run: cmake -S . \
           -B ${{runner.workspace}}/build \
+          --warn-uninitialized \
           -D UREACT_PEDANTIC:BOOL=y \
           -D UREACT_WERROR:BOOL=y \
           -G "Visual Studio 16 2019"
@@ -32,6 +33,7 @@ jobs:
       - name: Configure
         run: cmake -S . \
           -B ${{runner.workspace}}/build \
+          --warn-uninitialized \
           -D CMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" \
           -D CMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" \
           -D CMAKE_BUILD_TYPE=Release \
@@ -55,6 +57,7 @@ jobs:
       - name: Configure
         run: cmake -S . \
           -B ${{runner.workspace}}/build \
+          --warn-uninitialized \
           -G "Visual Studio 16 2019" \
           -A ${{matrix.arch}} \
           -T ClangCL

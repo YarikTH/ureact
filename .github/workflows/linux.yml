@@ -24,7 +24,8 @@ jobs:
       env:
         CXX: ${{matrix.cxx}}
       run: |
-        cmake -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
+        cmake --warn-uninitialized \
+              -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
               -D CMAKE_CXX_STANDARD=${{matrix.std}} \
               -D UREACT_PEDANTIC:BOOL=y \
               -D UREACT_WERROR:BOOL=y \
@@ -56,7 +57,8 @@ jobs:
         env:
           CXX: ${{matrix.cxx}}
         run: |
-          cmake -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          cmake --warn-uninitialized \
+                -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
                 -D CMAKE_CXX_STANDARD=${{matrix.std}} \
                 -D UREACT_PEDANTIC:BOOL=y \
                 -D UREACT_WERROR:BOOL=y \

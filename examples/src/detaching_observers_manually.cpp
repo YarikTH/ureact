@@ -11,15 +11,13 @@ int main()
 
     ureact::context c;
 
-    auto x = make_var(&c, 1);
-    
-    ureact::observer obs = observe(x, [] (int /*unused*/) {
-        std::cout << "Triggered!\n";
-    });
+    auto x = make_var( &c, 1 );
+
+    ureact::observer obs = observe( x, []( int /*unused*/ ) { std::cout << "Triggered!\n"; } );
 
     x <<= 2; // output: Triggered!
 
-    obs.detach();   // remove the observer
+    obs.detach(); // remove the observer
 
     x <<= 3; // no output
 }

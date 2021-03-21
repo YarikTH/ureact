@@ -10,20 +10,16 @@ int main()
     std::cout << "Modifying signal values in place\n";
     std::cout << "================================\n";
     std::cout << "\n";
-    
+
     ureact::context c;
 
-    ureact::var_signal<std::vector<std::string>> data = make_var(&c, std::vector<std::string>{ });
-    
-    data.modify([] (std::vector<std::string>& value) {
-        value.emplace_back("Hello");
-    });
+    ureact::var_signal<std::vector<std::string>> data = make_var( &c, std::vector<std::string>{} );
 
-    data.modify([] (std::vector<std::string>& value) {
-        value.emplace_back("World");
-    });
+    data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "Hello" ); } );
 
-    for (const auto& s : data.value())
+    data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "World" ); } );
+
+    for ( const auto& s : data.value() )
         std::cout << s << " ";
     std::cout << "\n";
     // output: Hello World

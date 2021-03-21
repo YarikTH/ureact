@@ -8,16 +8,15 @@ int main()
     std::cout << "Using scoped observer\n";
     std::cout << "=====================\n";
     std::cout << "\n";
-    
+
     ureact::context c;
 
-    auto x = make_var(&c, 1);
-    
+    auto x = make_var( &c, 1 );
+
     // Inner scope
     {
-        ureact::scoped_observer scopedObs = observe(x, [] (int /*unused*/) {
-            std::cout << "Triggered!\n";
-        });
+        ureact::scoped_observer scopedObs
+            = observe( x, []( int /*unused*/ ) { std::cout << "Triggered!\n"; } );
 
         x <<= 2; // output: Triggered!
     }

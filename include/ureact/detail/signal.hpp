@@ -1,13 +1,22 @@
 #pragma once
 
-#include "ureact/detail/flatten.hpp"
 #include "ureact/detail/reactive_input.hpp"
 #include "ureact/detail/graph/signal_node.hpp"
 #include "ureact/detail/graph/signal_op_node.hpp"
+#include "ureact/detail/graph/function_op.hpp"
+#include "ureact/detail/graph/flatten_node.hpp"
 #include "ureact/detail/graph/var_node.hpp"
 
 namespace ureact
 {
+// Forward declaration to break cyclic dependency
+template <typename S>
+class signal;
+template <typename S>
+class var_signal;
+template <typename inner_value_t>
+auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>;
+
 namespace detail
 {
 
@@ -333,6 +342,39 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// make_var
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename V,
+    typename S = typename std::decay<V>::type,
+    class = typename std::enable_if<!is_signal<S>::value>::type>
+auto make_var( context& context, V&& value ) -> var_signal<S>
+{
+    return var_signal<S>(
+        std::make_shared<::ureact::detail::var_node<S>>( context, std::forward<V>( value ) ) );
+}
+
+template <typename S>
+auto make_var( context& context, std::reference_wrapper<S> value ) -> var_signal<S&>
+{
+    return var_signal<S&>(
+        std::make_shared<::ureact::detail::var_node<std::reference_wrapper<S>>>( context, value ) );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// make_var (higher order reactives)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename V,
+    typename S = typename std::decay<V>::type,
+    typename inner_t = typename S::value_t,
+    class = typename std::enable_if<is_signal<S>::value>::type>
+auto make_var( context& context, V&& value ) -> var_signal<signal<inner_t>>
+{
+    return var_signal<signal<inner_t>>(
+        std::make_shared<::ureact::detail::var_node<signal<inner_t>>>(
+            context, std::forward<V>( value ) ) );
+}
+
 namespace detail
 {
 
@@ -418,5 +460,128 @@ auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_val
 {
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// make_signal
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Single arg
+template <typename value_t,
+    typename in_f,
+    typename F = typename std::decay<in_f>::type,
+    typename S = typename std::result_of<F( value_t )>::type,
+    typename op_t
+    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
+auto make_signal( const signal<value_t>& arg, in_f&& func ) -> detail::temp_signal<S, op_t>
+{
+    context& context = arg.get_context();
+    return detail::temp_signal<S, op_t>(
+        std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(
+            context, std::forward<in_f>( func ), get_node_ptr( arg ) ) );
+}
+
+// Multiple args
+template <typename... values_t,
+    typename in_f,
+    typename F = typename std::decay<in_f>::type,
+    typename S = typename std::result_of<F( values_t... )>::type,
+    typename op_t
+    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
+auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
+    -> detail::temp_signal<S, op_t>
+{
+    struct node_builder
+    {
+        explicit node_builder( context& context, in_f&& func )
+            : m_context( context )
+            , m_my_func( std::forward<in_f>( func ) )
+        {}
+
+        auto operator()( const signal<values_t>&... args ) -> detail::temp_signal<S, op_t>
+        {
+            return detail::temp_signal<S, op_t>(
+                std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(
+                    m_context, std::forward<in_f>( m_my_func ), get_node_ptr( args )... ) );
+        }
+
+        context& m_context;
+        in_f m_my_func;
+    };
+
+    return apply(
+        node_builder( std::get<0>( arg_pack.data ).get_context(), std::forward<in_f>( func ) ),
+        arg_pack.data );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// operator->* overload to connect signals to a function and return the resulting signal.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Single arg
+template <typename F,
+    template <typename>
+    class signal_t,
+    typename value_t,
+    class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
+auto operator->*( const signal_t<value_t>& arg, F&& func )
+    -> signal<typename std::result_of<F( value_t )>::type>
+{
+    return ::ureact::make_signal( arg, std::forward<F>( func ) );
+}
+
+// Multiple args
+template <typename F, typename... values_t>
+auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
+    -> signal<typename std::result_of<F( values_t... )>::type>
+{
+    return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// flatten
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename inner_value_t>
+auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
+{
+    context& context = outer.get_context();
+    return signal<inner_value_t>(
+        std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
+            context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// decay_input
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// @todo understand its meaning and document it
+template <typename T>
+struct decay_input
+{
+    using type = T;
+};
+
+template <typename T>
+struct decay_input<var_signal<T>>
+{
+    using type = signal<T>;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// flatten macros
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define REACTIVE_REF( obj, name )                                                                  \
+    flatten( make_signal(                                                                          \
+        obj, []( const typename ::ureact::detail::identity<decltype( obj )>::type::value_t& r ) {  \
+            using T = decltype( r.name );                                                          \
+            using S = typename ::ureact::decay_input<T>::type;                                     \
+            return static_cast<S>( r.name );                                                       \
+        } ) )
+
+#define REACTIVE_PTR( obj, name )                                                                  \
+    flatten( make_signal(                                                                          \
+        obj, []( typename ::ureact::detail::identity<decltype( obj )>::type::value_t r ) {         \
+            assert( r != nullptr );                                                                \
+            using T = decltype( r->name );                                                         \
+            using S = typename ::ureact::decay_input<T>::type;                                     \
+            return static_cast<S>( r->name );                                                      \
+        } ) )
 
 } // namespace ureact

@@ -4,24 +4,28 @@ project(ureact VERSION 0.0.1 LANGUAGES CXX)
 
 # Determine if ureact is built as a subproject (using add_subdirectory)
 # or if it is the master project.
-if (NOT DEFINED UREACT_MASTER_PROJECT)
-  set(UREACT_MASTER_PROJECT OFF)
-  if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    set(UREACT_MASTER_PROJECT ON)
-    message(STATUS "CMake version: ${CMAKE_VERSION}")
-  endif ()
-endif ()
+if(NOT DEFINED UREACT_MASTER_PROJECT)
+    set(UREACT_MASTER_PROJECT OFF)
+    if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+        set(UREACT_MASTER_PROJECT ON)
+        message(STATUS "CMake version: ${CMAKE_VERSION}")
+    endif()
+endif()
 
 option(UREACT_PEDANTIC "Enable extra warnings and expensive tests." OFF)
-option(UREACT_WERROR "Halt the compilation with an error on compiler warnings." OFF)
+option(
+    UREACT_WERROR
+    "Halt the compilation with an error on compiler warnings."
+    OFF
+)
 
 # Options that control generation of various targets.
 option(UREACT_EXAMPLES "Generate example targets." ${UREACT_MASTER_PROJECT})
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
 
-if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-endif ()
+if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/support/cmake")
 
@@ -30,11 +34,11 @@ include(set_warning_flags)
 set(UREACT_WARNING_OPTION)
 
 if(UREACT_PEDANTIC)
-  set_warning_flags(UREACT_WARNING_OPTION)
+    set_warning_flags(UREACT_WARNING_OPTION)
 endif()
 
 if(UREACT_WERROR)
-  set_werror_flag(UREACT_WARNING_OPTION)
+    set_werror_flag(UREACT_WARNING_OPTION)
 endif()
 message(STATUS "ureact compiler warning options: ${UREACT_WARNING_OPTION}")
 
@@ -43,17 +47,20 @@ add_library(ureact INTERFACE)
 
 add_library(ureact::ureact ALIAS ureact)
 
-target_include_directories(ureact INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(
+    ureact
+    INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
 
 target_compile_features(ureact INTERFACE cxx_std_11)
 
 ### examples/
 if(UREACT_EXAMPLES)
-	add_subdirectory(examples)
+    add_subdirectory(examples)
 endif()
 
 ### tests/
 if(UREACT_TEST)
     enable_testing()
-	add_subdirectory(tests)
+    add_subdirectory(tests)
 endif()

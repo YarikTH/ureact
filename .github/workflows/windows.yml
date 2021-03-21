@@ -12,6 +12,8 @@ jobs:
       - name: Configure
         run: cmake -S . \
           -B ${{runner.workspace}}/build \
+          -D UREACT_PEDANTIC:BOOL=y \
+          -D UREACT_WERROR:BOOL=y \
           -G "Visual Studio 16 2019"
       - name: Build
         working-directory: ${{runner.workspace}}/build
@@ -33,6 +35,8 @@ jobs:
           -D CMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" \
           -D CMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" \
           -D CMAKE_BUILD_TYPE=Release \
+          -D UREACT_PEDANTIC:BOOL=y \
+          -D UREACT_WERROR:BOOL=y \
           -G"MinGW Makefiles"
       - name: Build
         working-directory: ${{runner.workspace}}/build

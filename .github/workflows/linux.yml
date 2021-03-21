@@ -24,8 +24,10 @@ jobs:
       env:
         CXX: ${{matrix.cxx}}
       run: |
-        cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-              -DCMAKE_CXX_STANDARD=${{matrix.std}} \
+        cmake -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
+              -D CMAKE_CXX_STANDARD=${{matrix.std}} \
+              -D UREACT_PEDANTIC:BOOL=y \
+              -D UREACT_WERROR:BOOL=y \
               $GITHUB_WORKSPACE
     - name: Build
       working-directory: ${{runner.workspace}}/build
@@ -54,8 +56,10 @@ jobs:
         env:
           CXX: ${{matrix.cxx}}
         run: |
-          cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-                -DCMAKE_CXX_STANDARD=${{matrix.std}} \
+          cmake -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
+                -D CMAKE_CXX_STANDARD=${{matrix.std}} \
+                -D UREACT_PEDANTIC:BOOL=y \
+                -D UREACT_WERROR:BOOL=y \
                 $GITHUB_WORKSPACE
       - name: Build
         working-directory: ${{runner.workspace}}/build

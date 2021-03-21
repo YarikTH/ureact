@@ -745,4 +745,28 @@ TEST_CASE( "OperatorsPriority" )
     CHECK( result2.value() == 8 );
 }
 
+TEST_CASE( "ConstSignals" )
+{
+    ureact::context ctx;
+
+    auto makeExprStr = []( const int lhs,
+                           const std::string& op,
+                           const int rhs,
+                           const int resultSignal ) -> std::string {
+        return std::to_string( lhs ) + op + std::to_string( rhs ) + "="
+             + std::to_string( resultSignal );
+    };
+
+    auto a = make_var( ctx, 2 );
+    auto b = make_var( ctx, 3 );
+
+    auto sum_string = ( a, std::string( "+" ), b, ( a + b ) )->*makeExprStr;
+    std::cout << "???\n";
+    // @todo Understand what the hell happens with nodes lifetume
+    // It seems that my node created under the hood dies just after creation
+    // but nodes created from temp_signal continue to be alive for some reason
+
+    CHECK( sum_string.value() == "2+3=5" );
+}
+
 TEST_SUITE_END();

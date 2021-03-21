@@ -14,13 +14,14 @@ public:
     Company( ureact::context* c, const int aindex, const char* aname )
         : index( aindex )
         , name( make_var( c, std::string( aname ) ) )
-    {
-    }
+    {}
 
     friend bool operator==( const Company& lhs, const Company& rhs )
     {
+        // clang-format off
         return std::tie( lhs.index, lhs.name.value() )
             == std::tie( rhs.index, rhs.name.value() );
+        // clang-format on
     }
 };
 
@@ -31,8 +32,7 @@ public:
 
     Employee( ureact::context* ctx, Company& companyRef )
         : company( make_var( ctx, std::ref( companyRef ) ) )
-    {
-    }
+    {}
 };
 
 class Employee2
@@ -42,11 +42,10 @@ public:
 
     Employee2( ureact::context* ctx, Company* companyPtr )
         : company( make_var( ctx, companyPtr ) )
-    {
-    }
+    {}
 };
 
-}
+} // namespace
 
 TEST_SUITE_BEGIN( "dynamic_signals_test" );
 
@@ -63,10 +62,7 @@ TEST_CASE( "DynamicSignalReferences" )
 
     std::vector<std::string> result;
 
-    observe( aliceCompanyName, [&]( const std::string& name )
-        {
-            result.push_back( name );
-        } );
+    observe( aliceCompanyName, [&]( const std::string& name ) { result.push_back( name ); } );
 
     company1.name <<= std::string( "ModernTec" );
     Alice.company <<= std::ref( company2 );
@@ -88,10 +84,7 @@ TEST_CASE( "DynamicSignalPointers" )
 
     std::vector<std::string> result;
 
-    observe( aliceCompanyName, [&]( const std::string& name )
-    {
-      result.push_back( name );
-    } );
+    observe( aliceCompanyName, [&]( const std::string& name ) { result.push_back( name ); } );
 
     company1.name <<= std::string( "ModernTec" );
     Alice.company <<= &company2;

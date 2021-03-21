@@ -6,12 +6,11 @@ class Shape
 {
 public:
     explicit Shape( ureact::context* c )
-        : width( make_var(c, 0) )
-        , height( make_var(c, 0) )
+        : width( make_var( c, 0 ) )
+        , height( make_var( c, 0 ) )
         , size( width * height )
-    {
-    }
-    
+    {}
+
     ureact::var_signal<int> width;
     ureact::var_signal<int> height;
 
@@ -20,10 +19,12 @@ public:
 
 std::ostream& operator<<( std::ostream& os, const Shape& shape )
 {
+    // clang-format off
     os << "Shape{ width: "  << shape.width.value()
             << ", height: " << shape.height.value()
             << ", size: "   << shape.size.value()
             << " }";
+    // clang-format on
     return os;
 }
 
@@ -33,29 +34,28 @@ int main()
     std::cout << "Reactive class members\n";
     std::cout << "======================\n";
     std::cout << "\n";
-    
+
     ureact::context c;
-    
+
     Shape myShape( &c );
-    
+
     std::cout << "-------------\n";
     std::cout << "Initial state\n";
     std::cout << "-------------\n";
     std::cout << "myShape: " << myShape << "\n";
     std::cout << "\n";
-    
-    observe(myShape.size, [] (int new_value) {
-        std::cout << ">> size changed to " << new_value << "\n";
-    });
+
+    observe( myShape.size,
+        []( int new_value ) { std::cout << ">> size changed to " << new_value << "\n"; } );
 
     std::cout << "--------------------------------------------------------\n";
     std::cout << "Do transaction to change width and height in single step\n";
     std::cout << "--------------------------------------------------------\n";
-    
-    c.do_transaction([&] {
-        myShape.width  <<= 4;
+
+    c.do_transaction( [&] {
+        myShape.width <<= 4;
         myShape.height <<= 4;
-    });
-    
+    } );
+
     std::cout << "myShape: " << myShape << "\n";
 }

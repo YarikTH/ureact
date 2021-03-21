@@ -150,15 +150,14 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
 
     // If return value of passed function is void, add observer_action::next as
     // default return value.
-    using node_t = typename std::conditional<
-        std::is_same<void,R>::value,
-        signal_observer_node<S,wrapper_t>,
-        signal_observer_node<S,F>
-            >::type;
+    using node_t = typename std::conditional<std::is_same<void, R>::value,
+        signal_observer_node<S, wrapper_t>,
+        signal_observer_node<S, F>>::type;
 
     const auto& subject_ptr = get_node_ptr( subject );
 
-    std::unique_ptr<observer_node> node_ptr( new node_t( subject.get_context(), subject_ptr, std::forward<in_f>( func ) ) );
+    std::unique_ptr<observer_node> node_ptr(
+        new node_t( subject.get_context(), subject_ptr, std::forward<in_f>( func ) ) );
     observer_node* raw_node_ptr = node_ptr.get();
 
     subject_ptr->register_observer( std::move( node_ptr ) );

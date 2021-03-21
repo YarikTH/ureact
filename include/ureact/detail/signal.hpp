@@ -11,7 +11,6 @@ namespace ureact
 namespace detail
 {
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// reactive_base
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +52,6 @@ const std::shared_ptr<node_t>& get_node_ptr( const reactive_base<node_t>& node )
     return node.m_ptr;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// signal_base
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,25 +69,25 @@ public:
 private:
     auto get_var_node() const -> var_node<S>*
     {
-        return static_cast<var_node<S>*>(this->m_ptr.get());
+        return static_cast<var_node<S>*>( this->m_ptr.get() );
     }
-    
+
 protected:
     const S& get_value() const
     {
         return this->m_ptr->value_ref();
     }
-    
+
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        get_var_node()->request_add_input(std::forward<T>(new_value));
+        get_var_node()->request_add_input( std::forward<T>( new_value ) );
     }
 
     template <typename F>
     void modify_value( const F& func ) const
     {
-        get_var_node()->request_modify_input(func);
+        get_var_node()->request_modify_input( func );
     }
 };
 
@@ -99,8 +97,14 @@ template <template <typename...> class base, typename derived>
 struct is_base_of_template_impl
 {
     template <typename... Ts>
-    static constexpr std::true_type test( const base<Ts...>* ){ return {}; }
-    static constexpr std::false_type test( ... ){ return {}; }
+    static constexpr std::true_type test( const base<Ts...>* )
+    {
+        return {};
+    }
+    static constexpr std::false_type test( ... )
+    {
+        return {};
+    }
     using type = decltype( test( std::declval<derived*>() ) );
 };
 
@@ -111,7 +115,8 @@ using is_base_of_template = typename is_base_of_template_impl<base, derived>::ty
 
 /// Return if type is signal or its inheritor
 template <typename T>
-struct is_signal : detail::is_base_of_template<signal, T>{};
+struct is_signal : detail::is_base_of_template<signal, T>
+{};
 
 /**
  * A signal is a reactive variable that can propagate its changes to dependents
@@ -274,7 +279,6 @@ public:
     }
 };
 
-
 /**
  * This class extends the immutable signal interface with functions that support
  * imperative value input. In the dataflow graph, input signals are sources.
@@ -292,7 +296,7 @@ private:
 
 public:
     using value_t = S;
-    
+
     /**
      * Construct var_signal from var_node.
      * @todo make it private and allow to call it only from make_var function
@@ -378,7 +382,8 @@ public:
     {}
 
     template <typename... cur_values_t, typename append_value_t>
-    signal_pack( const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
+    signal_pack(
+        const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
         : data( std::tuple_cat( cur_args.data, std::tie( new_arg ) ) )
     {}
 
@@ -399,7 +404,7 @@ auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename left_val_t, typename right_val_t>
 auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
-    -> signal_pack<left_val_t, right_val_t>
+                  -> signal_pack<left_val_t, right_val_t>
 {
     return signal_pack<left_val_t, right_val_t>( a, b );
 }
@@ -409,7 +414,7 @@ auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename... cur_values_t, typename append_value_t>
 auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
-    -> signal_pack<cur_values_t..., append_value_t>
+                  -> signal_pack<cur_values_t..., append_value_t>
 {
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }

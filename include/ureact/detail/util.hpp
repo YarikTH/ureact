@@ -50,9 +50,12 @@ struct add_default_return_value_wrapper
         : my_func( std::move( other.my_func ) )
     {}
 
-    add_default_return_value_wrapper& operator=( add_default_return_value_wrapper&& ) noexcept = delete;
+    add_default_return_value_wrapper& operator=(
+        add_default_return_value_wrapper&& ) noexcept = delete;
 
-    template <typename in_f, class = typename std::enable_if<!is_same_decay<in_f, add_default_return_value_wrapper>::value>::type>
+    template <typename in_f,
+        class = typename std::enable_if<
+            !is_same_decay<in_f, add_default_return_value_wrapper>::value>::type>
     explicit add_default_return_value_wrapper( in_f&& func )
         : my_func( std::forward<in_f>( func ) )
     {}

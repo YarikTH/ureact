@@ -82,25 +82,19 @@ TEST_CASE( "NoObserveOnNoChanged" )
 
     auto product = a * b;
 
-    auto expressionString = make_signal( with( a, b, product ),
-        []( const int a_, const int b_, const int product_ )
-        {
-            return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = " + std::to_string( product_ );
-        } );
+    auto expressionString
+        = make_signal( with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
+              return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
+                   + std::to_string( product_ );
+          } );
 
     int aObserveCount = 0;
     int bObserveCount = 0;
     int productObserveCount = 0;
 
-    observe( a, [&]( int /*v*/ ) {
-        ++aObserveCount;
-    } );
-    observe( b, [&]( int /*v*/ ) {
-        ++bObserveCount;
-    } );
-    observe( product, [&]( int /*v*/ ) {
-        ++productObserveCount;
-    } );
+    observe( a, [&]( int /*v*/ ) { ++aObserveCount; } );
+    observe( b, [&]( int /*v*/ ) { ++bObserveCount; } );
+    observe( product, [&]( int /*v*/ ) { ++productObserveCount; } );
 
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 0 );
@@ -150,9 +144,7 @@ TEST_CASE( "ScopedObserverTest" )
     auto in = make_var( &ctx, 1 );
 
     {
-        ureact::scoped_observer obs = observe( in, [&]( int v ) {
-            results.push_back( v );
-        } );
+        ureact::scoped_observer obs = observe( in, [&]( int v ) { results.push_back( v ); } );
 
         in <<= 2;
     }

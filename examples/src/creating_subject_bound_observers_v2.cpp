@@ -8,11 +8,11 @@ int main()
     std::cout << "Creating subject-bound observers (v2)\n";
     std::cout << "=====================================\n";
     std::cout << "\n";
-    
+
     ureact::context c;
 
-    auto x = make_var(&c, 1);
-    
+    auto x = make_var( &c, 1 );
+
     // Outer scope
     {
         // Unbound observer
@@ -20,12 +20,10 @@ int main()
 
         // Inner scope
         {
-            auto mySignal = make_signal(x, [] (int x_) { return x_; } );
+            auto mySignal = make_signal( x, []( int x_ ) { return x_; } );
 
             // Move-assign to obs
-            obs = observe(mySignal, [] (int value) {
-                std::cout << value << "\n";
-            });
+            obs = observe( mySignal, []( int value ) { std::cout << value << "\n"; } );
 
             // The node linked to mySignal is now also owned by obs
 

@@ -12,7 +12,7 @@ int main()
 
     ureact::context c;
 
-    ureact::var_signal<int> x = make_var( &c, 1 );
+    ureact::var_signal<int> x = make_var( c, 1 );
     ureact::signal<int> xAbs = make_signal( x, []( int value ) { return abs( value ); } );
 
     observe( xAbs, []( int new_value ) { std::cout << "xAbs changed to " << new_value << "\n"; } );

@@ -14,12 +14,12 @@ template <typename S>
 class signal_node : public observable_node
 {
 public:
-    explicit signal_node( context* context )
+    explicit signal_node( context& context )
         : observable_node( context )
     {}
 
     template <typename T>
-    signal_node( context* context, T&& value )
+    signal_node( context& context, T&& value )
         : observable_node( context )
         , m_value( std::forward<T>( value ) )
     {}

@@ -37,8 +37,8 @@ int main()
     ureact::context c;
 
     // Input operands
-    ureact::var_signal<int> a = make_var( &c, 1 );
-    ureact::var_signal<int> b = make_var( &c, 2 );
+    ureact::var_signal<int> a = make_var( c, 1 );
+    ureact::var_signal<int> b = make_var( c, 2 );
 
     // Calculations
     // clang-format off

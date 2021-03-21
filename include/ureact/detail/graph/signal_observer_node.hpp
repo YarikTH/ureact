@@ -24,13 +24,13 @@ class signal_observer_node : public observer_node
 public:
     template <typename F>
     signal_observer_node(
-        context* context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
+        context& context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
         : signal_observer_node::observer_node( context )
         , m_subject( subject )
         , m_func( std::forward<F>( func ) )
     {
-        get_context()->on_node_create( *this );
-        get_context()->on_node_attach( *this, *subject );
+        get_context().on_node_create( *this );
+        get_context().on_node_attach( *this, *subject );
     }
 
     signal_observer_node( const signal_observer_node& ) = delete;
@@ -40,7 +40,7 @@ public:
 
     ~signal_observer_node() override
     {
-        get_context()->on_node_destroy( *this );
+        get_context().on_node_destroy( *this );
     }
 
     void tick( turn_t& /*turn*/ ) override
@@ -54,7 +54,7 @@ public:
         } // ~timer
 
         if ( should_detach )
-            get_context()->get_input_manager().queue_observer_for_detach( *this );
+            get_context().get_input_manager().queue_observer_for_detach( *this );
     }
 
     void unregister_self() override
@@ -68,7 +68,7 @@ private:
     {
         if ( auto p = m_subject.lock() )
         {
-            get_context()->on_node_detach( *this, *p );
+            get_context().on_node_detach( *this, *p );
             m_subject.reset();
         }
     }

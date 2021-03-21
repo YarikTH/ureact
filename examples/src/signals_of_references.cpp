@@ -33,7 +33,7 @@ class Employee
 public:
     ureact::var_signal<Company&> company;
 
-    Employee( ureact::context* c, Company& acompany )
+    Employee( ureact::context& c, Company& acompany )
         : company( make_var( c, std::ref( acompany ) ) )
     {}
 };
@@ -56,7 +56,7 @@ int main()
     Company company1( 1, "MetroTec" );
     Company company2( 2, "ACME" );
 
-    Employee Bob( &c, company1 );
+    Employee Bob( c, company1 );
 
     std::cout << "-------------\n";
     std::cout << "Initial state\n";

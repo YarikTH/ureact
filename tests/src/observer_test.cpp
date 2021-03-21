@@ -9,8 +9,8 @@ TEST_CASE( "detach" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( &ctx, 1 );
-    auto a2 = make_var( &ctx, 1 );
+    auto a1 = make_var( ctx, 1 );
+    auto a2 = make_var( ctx, 1 );
 
     auto result = a1 + a2;
 
@@ -77,8 +77,8 @@ TEST_CASE( "NoObserveOnNoChanged" )
 {
     ureact::context ctx;
 
-    auto a = make_var( &ctx, 1 );
-    auto b = make_var( &ctx, 1 );
+    auto a = make_var( ctx, 1 );
+    auto b = make_var( ctx, 1 );
 
     auto product = a * b;
 
@@ -141,7 +141,7 @@ TEST_CASE( "ScopedObserverTest" )
 
     std::vector<int> results;
 
-    auto in = make_var( &ctx, 1 );
+    auto in = make_var( ctx, 1 );
 
     {
         ureact::scoped_observer obs = observe( in, [&]( int v ) { results.push_back( v ); } );
@@ -161,7 +161,7 @@ TEST_CASE( "SelfObserverDetachTest" )
 
     std::vector<int> results;
 
-    auto in = make_var( &ctx, 0 );
+    auto in = make_var( ctx, 0 );
 
     ureact::observer obs = observe( in, [&]( int v ) {
         if ( v < 0 )

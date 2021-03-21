@@ -15,7 +15,7 @@ namespace detail
 class node_base : public reactive_node
 {
 public:
-    explicit node_base( context* context )
+    explicit node_base( context& context )
         : m_context( context )
     {}
 
@@ -27,13 +27,13 @@ public:
 
     ~node_base() override = default;
 
-    context* get_context() const
+    context& get_context() const
     {
         return m_context;
     }
 
 private:
-    context* m_context;
+    context& m_context;
 };
 
 } // namespace detail

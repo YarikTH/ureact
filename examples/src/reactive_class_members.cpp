@@ -5,7 +5,7 @@
 class Shape
 {
 public:
-    explicit Shape( ureact::context* c )
+    explicit Shape( ureact::context& c )
         : width( make_var( c, 0 ) )
         , height( make_var( c, 0 ) )
         , size( width * height )
@@ -37,7 +37,7 @@ int main()
 
     ureact::context c;
 
-    Shape myShape( &c );
+    Shape myShape( c );
 
     std::cout << "-------------\n";
     std::cout << "Initial state\n";

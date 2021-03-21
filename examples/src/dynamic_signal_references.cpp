@@ -9,7 +9,7 @@ public:
     int index;
     ureact::var_signal<std::string> name;
 
-    Company( ureact::context* c, const int aindex, const char* aname )
+    Company( ureact::context& c, const int aindex, const char* aname )
         : index( aindex )
         , name( make_var( c, std::string( aname ) ) )
     {}
@@ -34,7 +34,7 @@ class Employee
 public:
     ureact::var_signal<Company&> company;
 
-    Employee( ureact::context* c, Company& acompany )
+    Employee( ureact::context& c, Company& acompany )
         : company( make_var( c, std::ref( acompany ) ) )
     {}
 };
@@ -54,10 +54,10 @@ int main()
 
     ureact::context c;
 
-    Company company1( &c, 1, "MetroTec" );
-    Company company2( &c, 2, "ACME" );
+    Company company1( c, 1, "MetroTec" );
+    Company company2( c, 2, "ACME" );
 
-    Employee Alice( &c, company1 );
+    Employee Alice( c, company1 );
 
     std::cout << "-------------\n";
     std::cout << "Initial state\n";

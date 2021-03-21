@@ -11,8 +11,8 @@ int main()
 
     ureact::context c;
 
-    ureact::var_signal<int> a = make_var( &c, 1 );
-    ureact::var_signal<int> b = make_var( &c, 1 );
+    ureact::var_signal<int> a = make_var( c, 1 );
+    ureact::var_signal<int> b = make_var( c, 1 );
 
     ureact::signal<int> x = a + b;
     ureact::signal<int> y = a + b;

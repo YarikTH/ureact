@@ -37,7 +37,7 @@
         = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<val_t>>>         \
     auto operator op( const signal_t& arg ) -> detail::temp_signal<S, op_t>                        \
     {                                                                                              \
-        context* context = arg.get_context();                                                      \
+        context& context = arg.get_context();                                                      \
         return detail::temp_signal<S, op_t>(                                                       \
             std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
                 context, F(), get_node_ptr( arg ) ) );                                             \
@@ -50,7 +50,7 @@
         typename op_t = ::ureact::detail::function_op<S, F, op_in_t>>                              \
     auto operator op( detail::temp_signal<val_t, op_in_t>&& arg ) -> detail::temp_signal<S, op_t>  \
     {                                                                                              \
-        context* context = arg.get_context();                                                      \
+        context& context = arg.get_context();                                                      \
         return detail::temp_signal<S, op_t>( context,                                              \
             std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
                 context, F(), arg.steal_op() ) );                                                  \

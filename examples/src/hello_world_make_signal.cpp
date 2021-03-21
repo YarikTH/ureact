@@ -20,8 +20,8 @@ int main()
 
     // The two words
     // clang-format off
-    ureact::var_signal<std::string> firstWord  = make_var( &c, std::string( "Change" ) );
-    ureact::var_signal<std::string> secondWord = make_var( &c, std::string( "me!" ) );
+    ureact::var_signal<std::string> firstWord  = make_var( c, std::string( "Change" ) );
+    ureact::var_signal<std::string> secondWord = make_var( c, std::string( "me!" ) );
     // clang-format on
 
     ureact::signal<std::string> bothWords

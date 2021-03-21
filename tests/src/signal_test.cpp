@@ -26,10 +26,10 @@ TEST_CASE( "MakeVars" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( &ctx, 1 );
-    auto v2 = make_var( &ctx, 2 );
-    auto v3 = make_var( &ctx, 3 );
-    auto v4 = make_var( &ctx, 4 );
+    auto v1 = make_var( ctx, 1 );
+    auto v2 = make_var( ctx, 2 );
+    auto v3 = make_var( ctx, 3 );
+    auto v4 = make_var( ctx, 4 );
 
     CHECK( v1.value() == 1 );
     CHECK( v2.value() == 2 );
@@ -51,10 +51,10 @@ TEST_CASE( "Signals1" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( &ctx, 1 );
-    auto v2 = make_var( &ctx, 2 );
-    auto v3 = make_var( &ctx, 3 );
-    auto v4 = make_var( &ctx, 4 );
+    auto v1 = make_var( ctx, 1 );
+    auto v2 = make_var( ctx, 2 );
+    auto v3 = make_var( ctx, 3 );
+    auto v4 = make_var( ctx, 4 );
 
     auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) { return a + b; } );
 
@@ -88,8 +88,8 @@ TEST_CASE( "Signals2" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( &ctx, 1 );
-    auto a2 = make_var( &ctx, 1 );
+    auto a1 = make_var( ctx, 1 );
+    auto a2 = make_var( ctx, 1 );
 
     auto b1 = a1 + 0;
     auto b2 = a1 + a2;
@@ -159,8 +159,8 @@ TEST_CASE( "Signals3" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( &ctx, 1 );
-    auto a2 = make_var( &ctx, 1 );
+    auto a1 = make_var( ctx, 1 );
+    auto a2 = make_var( ctx, 1 );
 
     auto b1 = a1 + 0;
     auto b2 = a1 + a2;
@@ -214,8 +214,8 @@ TEST_CASE( "Signals4" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( &ctx, 1 );
-    auto a2 = make_var( &ctx, 1 );
+    auto a1 = make_var( ctx, 1 );
+    auto a2 = make_var( ctx, 1 );
 
     auto b1 = a1 + a2;
     auto b2 = b1 + a2;
@@ -239,9 +239,9 @@ TEST_CASE( "FunctionBind1" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( &ctx, 2 );
-    auto v2 = make_var( &ctx, 30 );
-    auto v3 = make_var( &ctx, 10 );
+    auto v1 = make_var( ctx, 2 );
+    auto v2 = make_var( ctx, 30 );
+    auto v3 = make_var( ctx, 10 );
 
     auto signal = ( v1, v2, v3 )->*[=]( int a, int b, int c ) -> int { return a * b * c; };
 
@@ -254,8 +254,8 @@ TEST_CASE( "FunctionBind2" )
 {
     ureact::context ctx;
 
-    auto a = make_var( &ctx, 1 );
-    auto b = make_var( &ctx, 1 );
+    auto a = make_var( ctx, 1 );
+    auto b = make_var( ctx, 1 );
 
     auto c = ( ( a + b ), ( a + 100 ) )->*&myfunc;
     auto d = c->*&myfunc2;
@@ -279,10 +279,10 @@ TEST_CASE( "Flatten1" )
 {
     ureact::context ctx;
 
-    auto inner1 = make_var( &ctx, 123 );
-    auto inner2 = make_var( &ctx, 789 );
+    auto inner1 = make_var( ctx, 123 );
+    auto inner2 = make_var( ctx, 789 );
 
-    auto outer = make_var( &ctx, inner1 );
+    auto outer = make_var( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -315,11 +315,11 @@ TEST_CASE( "Flatten2" )
 {
     ureact::context ctx;
 
-    auto a0 = make_var( &ctx, 100 );
+    auto a0 = make_var( ctx, 100 );
 
-    auto inner1 = make_var( &ctx, 200 );
+    auto inner1 = make_var( ctx, 200 );
 
-    auto a1 = make_var( &ctx, 300 );
+    auto a1 = make_var( ctx, 300 );
     auto a2 = a1 + 0;
     auto a3 = a2 + 0;
     auto a4 = a3 + 0;
@@ -330,7 +330,7 @@ TEST_CASE( "Flatten2" )
     CHECK( inner1.value() == 200 );
     CHECK( inner2.value() == 300 );
 
-    auto outer = make_var( &ctx, inner1 );
+    auto outer = make_var( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -370,16 +370,16 @@ TEST_CASE( "Flatten3" )
 {
     ureact::context ctx;
 
-    auto inner1 = make_var( &ctx, 10 );
+    auto inner1 = make_var( ctx, 10 );
 
-    auto a1 = make_var( &ctx, 20 );
+    auto a1 = make_var( ctx, 20 );
     auto a2 = a1 + 0;
     auto a3 = a2 + 0;
     auto inner2 = a3 + 0;
 
-    auto outer = make_var( &ctx, inner1 );
+    auto outer = make_var( ctx, inner1 );
 
-    auto a0 = make_var( &ctx, 30 );
+    auto a0 = make_var( ctx, 30 );
 
     auto flattened = flatten( outer );
 
@@ -425,15 +425,15 @@ TEST_CASE( "Flatten4" )
 
     std::vector<int> results;
 
-    auto a1 = make_var( &ctx, 100 );
+    auto a1 = make_var( ctx, 100 );
     auto inner1 = a1 + 0;
 
-    auto a2 = make_var( &ctx, 200 );
+    auto a2 = make_var( ctx, 200 );
     auto inner2 = a2;
 
-    auto a3 = make_var( &ctx, 200 );
+    auto a3 = make_var( ctx, 200 );
 
-    auto outer = make_var( &ctx, inner1 );
+    auto outer = make_var( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -455,10 +455,10 @@ TEST_CASE( "Flatten5" )
 {
     ureact::context ctx;
 
-    auto inner1 = make_var( &ctx, 123 );
-    auto inner2 = make_var( &ctx, 123 );
+    auto inner1 = make_var( ctx, 123 );
+    auto inner2 = make_var( ctx, 123 );
 
-    auto outer = make_var( &ctx, inner1 );
+    auto outer = make_var( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -484,8 +484,8 @@ TEST_CASE( "Member1" )
 {
     ureact::context ctx;
 
-    auto outer = make_var( &ctx, 10 );
-    auto inner = make_var( &ctx, outer );
+    auto outer = make_var( ctx, 10 );
+    auto inner = make_var( ctx, outer );
 
     auto flattened = inner.flatten();
 
@@ -498,7 +498,7 @@ TEST_CASE( "Modify1" )
 {
     ureact::context ctx;
 
-    auto v = make_var( &ctx, std::vector<int>{} );
+    auto v = make_var( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
@@ -524,7 +524,7 @@ TEST_CASE( "Modify2" )
 {
     ureact::context ctx;
 
-    auto v = make_var( &ctx, std::vector<int>{} );
+    auto v = make_var( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
@@ -552,7 +552,7 @@ TEST_CASE( "Modify3" )
 {
     ureact::context ctx;
 
-    auto vect = make_var( &ctx, std::vector<int>{} );
+    auto vect = make_var( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
@@ -577,7 +577,7 @@ TEST_CASE( "Recursive transactions" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( &ctx, 1 );
+    auto v1 = make_var( ctx, 1 );
 
     int observeCount = 0;
 
@@ -599,7 +599,7 @@ TEST_CASE( "UnaryOperators" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( &ctx, 1 );
+    auto v1 = make_var( ctx, 1 );
 
     // clang-format off
     auto unary_plus         = +v1;
@@ -629,10 +629,10 @@ TEST_CASE( "BinaryOperators" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( &ctx, 0 );
-    auto v2 = make_var( &ctx, 1 );
-    auto v3 = make_var( &ctx, 0 );
-    auto v4 = make_var( &ctx, 1 );
+    auto v1 = make_var( ctx, 0 );
+    auto v2 = make_var( ctx, 1 );
+    auto v3 = make_var( ctx, 0 );
+    auto v4 = make_var( ctx, 1 );
 
     // clang-format off
     auto addition            = v1 + v2;
@@ -736,7 +736,7 @@ TEST_CASE( "OperatorsPriority" )
 
     ureact::context ctx;
 
-    auto _2 = make_var( &ctx, 2 );
+    auto _2 = make_var( ctx, 2 );
 
     auto result = _2 + _2 * _2;
     CHECK( result.value() == 6 );

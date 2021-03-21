@@ -98,6 +98,16 @@ public:
         get_engine().on_dynamic_node_detach( node, parent, turn );
     }
 
+    bool operator==( const context& rsh )
+    {
+        return this == &rsh;
+    }
+
+    bool operator!=( const context& rsh )
+    {
+        return this != &rsh;
+    }
+
 private:
     std::unique_ptr<input_manager_t> m_input_manager;
 };

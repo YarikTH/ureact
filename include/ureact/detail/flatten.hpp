@@ -17,7 +17,7 @@ class var_signal;
 template <typename inner_value_t>
 auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
 {
-    context* context = outer.get_context();
+    context& context = outer.get_context();
     return signal<inner_value_t>(
         std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
             context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );

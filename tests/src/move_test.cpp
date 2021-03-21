@@ -77,10 +77,10 @@ TEST_CASE( "Copy1" )
 
     Stats stats1;
 
-    auto a = ureact::make_var( &ctx, CopyCounter{ 1, &stats1 } );
-    auto b = ureact::make_var( &ctx, CopyCounter{ 10, &stats1 } );
-    auto c = ureact::make_var( &ctx, CopyCounter{ 100, &stats1 } );
-    auto d = ureact::make_var( &ctx, CopyCounter{ 1000, &stats1 } );
+    auto a = ureact::make_var( ctx, CopyCounter{ 1, &stats1 } );
+    auto b = ureact::make_var( ctx, CopyCounter{ 10, &stats1 } );
+    auto c = ureact::make_var( ctx, CopyCounter{ 100, &stats1 } );
+    auto d = ureact::make_var( ctx, CopyCounter{ 1000, &stats1 } );
 
     // 4x move to m_value_
     // 4x copy to m_new_value (can't be unitialized for references)

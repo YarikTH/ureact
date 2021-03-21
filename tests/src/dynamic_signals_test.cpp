@@ -11,7 +11,7 @@ public:
     int index;
     ureact::var_signal<std::string> name;
 
-    Company( ureact::context* c, const int aindex, const char* aname )
+    Company( ureact::context& c, const int aindex, const char* aname )
         : index( aindex )
         , name( make_var( c, std::string( aname ) ) )
     {}
@@ -30,7 +30,7 @@ class Employee
 public:
     ureact::var_signal<Company&> company;
 
-    Employee( ureact::context* ctx, Company& companyRef )
+    Employee( ureact::context& ctx, Company& companyRef )
         : company( make_var( ctx, std::ref( companyRef ) ) )
     {}
 };
@@ -40,7 +40,7 @@ class Employee2
 public:
     ureact::var_signal<Company*> company;
 
-    Employee2( ureact::context* ctx, Company* companyPtr )
+    Employee2( ureact::context& ctx, Company* companyPtr )
         : company( make_var( ctx, companyPtr ) )
     {}
 };
@@ -53,10 +53,10 @@ TEST_CASE( "DynamicSignalReferences" )
 {
     ureact::context ctx;
 
-    Company company1( &ctx, 1, "MetroTec" );
-    Company company2( &ctx, 2, "ACME" );
+    Company company1( ctx, 1, "MetroTec" );
+    Company company2( ctx, 2, "ACME" );
 
-    Employee Alice( &ctx, company1 );
+    Employee Alice( ctx, company1 );
 
     ureact::signal<std::string> aliceCompanyName = REACTIVE_REF( Alice.company, name );
 
@@ -75,10 +75,10 @@ TEST_CASE( "DynamicSignalPointers" )
 {
     ureact::context ctx;
 
-    Company company1( &ctx, 1, "MetroTec" );
-    Company company2( &ctx, 2, "ACME" );
+    Company company1( ctx, 1, "MetroTec" );
+    Company company2( ctx, 2, "ACME" );
 
-    Employee2 Alice( &ctx, &company1 );
+    Employee2 Alice( ctx, &company1 );
 
     ureact::signal<std::string> aliceCompanyName = REACTIVE_PTR( Alice.company, name );
 

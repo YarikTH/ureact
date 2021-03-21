@@ -9,9 +9,9 @@ int main()
     std::cout << "=====================================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
-    auto x = make_var( c, 1 );
+    auto x = make_var( ctx, 1 );
 
     // Outer scope
     {

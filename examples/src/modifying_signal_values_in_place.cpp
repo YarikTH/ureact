@@ -11,9 +11,9 @@ int main()
     std::cout << "================================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
-    ureact::var_signal<std::vector<std::string>> data = make_var( c, std::vector<std::string>{} );
+    ureact::var_signal<std::vector<std::string>> data = make_var( ctx, std::vector<std::string>{} );
 
     data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "Hello" ); } );
 

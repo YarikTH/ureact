@@ -5,9 +5,9 @@
 class Shape
 {
 public:
-    explicit Shape( ureact::context& c )
-        : width( make_var( c, 0 ) )
-        , height( make_var( c, 0 ) )
+    explicit Shape( ureact::context& ctx )
+        : width( make_var( ctx, 0 ) )
+        , height( make_var( ctx, 0 ) )
         , size( width * height )
     {}
 
@@ -35,9 +35,9 @@ int main()
     std::cout << "======================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
-    Shape myShape( c );
+    Shape myShape( ctx );
 
     std::cout << "-------------\n";
     std::cout << "Initial state\n";
@@ -52,7 +52,7 @@ int main()
     std::cout << "Do transaction to change width and height in single step\n";
     std::cout << "--------------------------------------------------------\n";
 
-    c.do_transaction( [&] {
+    ctx.do_transaction( [&] {
         myShape.width <<= 4;
         myShape.height <<= 4;
     } );

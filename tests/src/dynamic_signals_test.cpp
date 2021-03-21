@@ -11,9 +11,9 @@ public:
     int index;
     ureact::var_signal<std::string> name;
 
-    Company( ureact::context& c, const int aindex, const char* aname )
+    Company( ureact::context& ctx, const int aindex, const char* aname )
         : index( aindex )
-        , name( make_var( c, std::string( aname ) ) )
+        , name( make_var( ctx, std::string( aname ) ) )
     {}
 
     friend bool operator==( const Company& lhs, const Company& rhs )

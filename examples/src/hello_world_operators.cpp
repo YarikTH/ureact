@@ -10,11 +10,11 @@ int main()
     std::cout << "=======================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
     // The two words
-    ureact::var_signal<std::string> firstWord = make_var( c, std::string( "Change" ) );
-    ureact::var_signal<std::string> secondWord = make_var( c, std::string( "me!" ) );
+    ureact::var_signal<std::string> firstWord = make_var( ctx, std::string( "Change" ) );
+    ureact::var_signal<std::string> secondWord = make_var( ctx, std::string( "me!" ) );
 
     ureact::signal<std::string> bothWords = firstWord + std::string( " " ) + secondWord;
 

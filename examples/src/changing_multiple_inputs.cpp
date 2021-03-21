@@ -9,10 +9,10 @@ int main()
     std::cout << "========================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
-    ureact::var_signal<int> a = make_var( c, 1 );
-    ureact::var_signal<int> b = make_var( c, 1 );
+    ureact::var_signal<int> a = make_var( ctx, 1 );
+    ureact::var_signal<int> b = make_var( ctx, 1 );
 
     ureact::signal<int> x = a + b;
     ureact::signal<int> y = a + b;
@@ -23,7 +23,7 @@ int main()
     a <<= 2; // output: z changed to 6
     b <<= 2; // output: z changed to 8
 
-    c.do_transaction( [&] {
+    ctx.do_transaction( [&] {
         a <<= 4;
         b <<= 4;
     } ); // output: z changed to 16

@@ -35,11 +35,11 @@ int main()
     std::cout << "========================================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
     // Input operands
-    ureact::var_signal<int> a = make_var( c, 1 );
-    ureact::var_signal<int> b = make_var( c, 2 );
+    ureact::var_signal<int> a = make_var( ctx, 1 );
+    ureact::var_signal<int> b = make_var( ctx, 2 );
 
     // The expression std::vector
     ureact::signal<ExprVectT> expressions = make_signal( with( a, b ), []( int a_, int b_ ) {

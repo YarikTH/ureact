@@ -10,9 +10,9 @@ int main()
     std::cout << "=========================\n";
     std::cout << "\n";
 
-    ureact::context c;
+    ureact::context ctx;
 
-    ureact::var_signal<int> x = make_var( c, 1 );
+    ureact::var_signal<int> x = make_var( ctx, 1 );
     ureact::signal<int> xAbs = make_signal( x, []( int value ) { return abs( value ); } );
 
     observe( xAbs, []( int new_value ) { std::cout << "xAbs changed to " << new_value << "\n"; } );

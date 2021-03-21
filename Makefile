@@ -4,7 +4,13 @@
 
 # the list of CMakeLists.txt
 CMAKE_FILES_TO_FORMAT=$(shell find . -type f -name CMakeLists.txt -o -name '*.cmake' | grep -v './cmake-build' | sort)
-FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT}
+
+INCLUDE_FILES_TO_FORMAT=$(shell find ./include -type f -name '*.hpp' | sort)
+EXAMPLE_FILES_TO_FORMAT=$(shell find ./examples -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | sort)
+TEST_FILES_TO_FORMAT=$(shell find ./tests/src -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | sort)
+CPP_FILES_TO_FORMAT=${INCLUDE_FILES_TO_FORMAT} ${EXAMPLE_FILES_TO_FORMAT} ${TEST_FILES_TO_FORMAT}
+
+FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT} ${CPP_FILES_TO_FORMAT}
 
 ##########################################################################
 # documentation of the Makefile's targets

@@ -6,6 +6,7 @@
 #include "ureact/detail/graph/function_op.hpp"
 #include "ureact/detail/graph/flatten_node.hpp"
 #include "ureact/detail/graph/var_node.hpp"
+#include "ureact/detail/graph/const_node.hpp"
 
 namespace ureact
 {
@@ -413,6 +414,18 @@ public:
 } // namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+/// make_const
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename V,
+    typename S = typename std::decay<V>::type,
+    class = typename std::enable_if<!is_signal<S>::value>::type>
+auto make_const( context& context, V&& value ) -> signal<S>
+{
+    return signal<S>(
+        std::make_shared<detail::const_node<S>>( context, std::forward<V>( value ) ) );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// signal_pack - Wraps several nodes in a tuple. Create with comma operator.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename... values_t>
@@ -432,6 +445,15 @@ public:
     std::tuple<const signal<values_t>&...> data;
 };
 
+/// Return if type is signal_pack
+template <typename T>
+struct is_signal_pack : std::false_type
+{};
+
+template <typename... values_t>
+struct is_signal_pack<signal_pack<values_t...>> : std::true_type
+{};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// with - Utility function to create a signal_pack
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,6 +471,27 @@ auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
                   -> signal_pack<left_val_t, right_val_t>
 {
     return signal_pack<left_val_t, right_val_t>( a, b );
+}
+
+template <typename left_val_t,
+    typename right_val_t,
+    typename S = typename std::decay<right_val_t>::type,
+    class = typename std::enable_if<!is_signal<S>::value>::type,
+    class = typename std::enable_if<!is_signal_pack<right_val_t>::value>::type>
+auto operator,( const signal<left_val_t>& a, right_val_t&& b )
+{
+    return ( a, make_const( a.get_context(), std::forward<right_val_t>( b ) ) );
+}
+
+template <typename left_val_t,
+    typename right_val_t,
+    typename S = typename std::decay<left_val_t>::type,
+    class = typename std::enable_if<!is_signal<S>::value>::type,
+    class = typename std::enable_if<!is_signal_pack<left_val_t>::value>::type>
+auto operator,( left_val_t&& a, const signal<right_val_t>& b )
+                  -> signal_pack<left_val_t, right_val_t>
+{
+    return ( make_const( b.get_context(), std::forward<left_val_t>( a ) ), b );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

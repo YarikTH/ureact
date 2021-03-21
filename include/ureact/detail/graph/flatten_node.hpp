@@ -17,9 +17,9 @@ template <typename outer_t, typename inner_t>
 class flatten_node : public signal_node<inner_t>
 {
 public:
-    flatten_node( context* context
-                , std::shared_ptr<signal_node<outer_t>> outer
-                , const std::shared_ptr<signal_node<inner_t>>& inner )
+    flatten_node( context* context,
+        std::shared_ptr<signal_node<outer_t>> outer,
+        const std::shared_ptr<signal_node<inner_t>>& inner )
         : flatten_node::signal_node( context, inner->value_ref() )
         , m_outer( std::move( outer ) )
         , m_inner( inner )

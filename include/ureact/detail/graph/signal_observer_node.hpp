@@ -23,7 +23,8 @@ class signal_observer_node : public observer_node
 {
 public:
     template <typename F>
-    signal_observer_node( context* context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
+    signal_observer_node(
+        context* context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
         : signal_observer_node::observer_node( context )
         , m_subject( subject )
         , m_func( std::forward<F>( func ) )

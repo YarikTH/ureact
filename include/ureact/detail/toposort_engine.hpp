@@ -32,7 +32,8 @@ public:
 
     topo_queue() = default;
 
-    template <typename in_f, class = typename std::enable_if<!is_same_decay<in_f, topo_queue>::value>::type>
+    template <typename in_f,
+        class = typename std::enable_if<!is_same_decay<in_f, topo_queue>::value>::type>
     explicit topo_queue( in_f&& level_func )
         : m_level_func( std::forward<in_f>( level_func ) )
     {}
@@ -54,7 +55,8 @@ public:
                 m_min_level = e.m_level;
 
         // Swap entries with min level to the end
-        auto p = std::partition( m_queue_data.begin(), m_queue_data.end(), level_comp_functor{ m_min_level } );
+        auto p = std::partition(
+            m_queue_data.begin(), m_queue_data.end(), level_comp_functor{ m_min_level } );
 
         // Reserve once to avoid multiple re-allocations
         const auto to_reserve = static_cast<size_t>( std::distance( p, m_queue_data.end() ) );
@@ -147,8 +149,10 @@ struct reactive_engine_interface
     virtual void on_node_pulse( node_t& /*node*/, turn_t& /*turn*/ ) = 0;
     virtual void on_node_idle_pulse( node_t& /*node*/, turn_t& /*turn*/ ) = 0;
 
-    virtual void on_dynamic_node_attach( node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/ ) = 0;
-    virtual void on_dynamic_node_detach( node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/ ) = 0;
+    virtual void on_dynamic_node_attach( node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/ )
+        = 0;
+    virtual void on_dynamic_node_detach( node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/ )
+        = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,8 +181,10 @@ public:
 
     void propagate( turn_t& turn ) override;
 
-    void on_dynamic_node_attach( reactive_node& node, reactive_node& parent, turn_t& turn ) override;
-    void on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_t& turn ) override;
+    void on_dynamic_node_attach(
+        reactive_node& node, reactive_node& parent, turn_t& turn ) override;
+    void on_dynamic_node_detach(
+        reactive_node& node, reactive_node& parent, turn_t& turn ) override;
 
     void on_turn_admission_start( turn_t& /*turn*/ ) override
     {}
@@ -250,7 +256,8 @@ inline void seq_engine_base::propagate( turn_t& turn )
     }
 }
 
-inline void seq_engine_base::on_dynamic_node_attach( reactive_node& node, reactive_node& parent, turn_t& /*turn*/ )
+inline void seq_engine_base::on_dynamic_node_attach(
+    reactive_node& node, reactive_node& parent, turn_t& /*turn*/ )
 {
     this->on_node_attach( node, parent );
 
@@ -261,7 +268,8 @@ inline void seq_engine_base::on_dynamic_node_attach( reactive_node& node, reacti
     m_scheduled_nodes.push( &node );
 }
 
-inline void seq_engine_base::on_dynamic_node_detach( reactive_node& node, reactive_node& parent, turn_t& /*turn*/ )
+inline void seq_engine_base::on_dynamic_node_detach(
+    reactive_node& node, reactive_node& parent, turn_t& /*turn*/ )
 {
     this->on_node_detach( node, parent );
 }

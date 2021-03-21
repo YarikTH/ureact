@@ -5,9 +5,18 @@
 namespace
 {
 
-int myfunc( int a, int b )        { return a + b; }
-float myfunc2( int a )            { return static_cast<float>( a ) / 2.0f; }
-float myfunc3( float a, float b ) { return a * b; }
+int myfunc( int a, int b )
+{
+    return a + b;
+}
+float myfunc2( int a )
+{
+    return static_cast<float>( a ) / 2.0f;
+}
+float myfunc3( float a, float b )
+{
+    return a * b;
+}
 
 } // namespace
 
@@ -47,13 +56,9 @@ TEST_CASE( "Signals1" )
     auto v3 = make_var( &ctx, 3 );
     auto v4 = make_var( &ctx, 4 );
 
-    auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) {
-        return a + b;
-    } );
+    auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) { return a + b; } );
 
-    auto s2 = make_signal( with( v3, v4 ), []( int a, int b ) {
-        return a + b;
-    } );
+    auto s2 = make_signal( with( v3, v4 ), []( int a, int b ) { return a + b; } );
 
     auto s3 = s1 + s2;
 
@@ -238,9 +243,7 @@ TEST_CASE( "FunctionBind1" )
     auto v2 = make_var( &ctx, 30 );
     auto v3 = make_var( &ctx, 10 );
 
-    auto signal = ( v1, v2, v3 )->*[=]( int a, int b, int c ) -> int {
-        return a * b * c;
-    };
+    auto signal = ( v1, v2, v3 )->*[=]( int a, int b, int c ) -> int { return a * b * c; };
 
     CHECK( signal.value() == 600 );
     v3 <<= 100;
@@ -285,9 +288,7 @@ TEST_CASE( "Flatten1" )
 
     std::queue<int> results;
 
-    observe( flattened, [&]( int v ) {
-        results.push( v );
-    } );
+    observe( flattened, [&]( int v ) { results.push( v ); } );
 
     CHECK( outer.value().equals( inner1 ) );
     CHECK( flattened.value() == 123 );
@@ -337,9 +338,7 @@ TEST_CASE( "Flatten2" )
 
     int observeCount = 0;
 
-    observe( flattened, [&observeCount]( int /*unused*/ ) {
-        observeCount++;
-    } );
+    observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto o1 = a0 + flattened;
     auto o2 = o1 + 0;
@@ -386,9 +385,7 @@ TEST_CASE( "Flatten3" )
 
     int observeCount = 0;
 
-    observe( flattened, [&observeCount]( int /*unused*/ ) {
-        observeCount++;
-    } );
+    observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto result = flattened + a0;
 
@@ -442,9 +439,7 @@ TEST_CASE( "Flatten4" )
 
     auto result = flattened + a3;
 
-    observe( result, [&]( int v ) {
-        results.push_back( v );
-    } );
+    observe( result, [&]( int v ) { results.push_back( v ); } );
 
     ctx.do_transaction( [&] {
         a3 <<= 400;
@@ -469,9 +464,7 @@ TEST_CASE( "Flatten5" )
 
     std::queue<int> results;
 
-    observe( flattened, [&]( int v ) {
-        results.push( v );
-    } );
+    observe( flattened, [&]( int v ) { results.push( v ); } );
 
     CHECK( outer.value().equals( inner1 ) );
     CHECK( flattened.value() == 123 );
@@ -496,9 +489,7 @@ TEST_CASE( "Member1" )
 
     auto flattened = inner.flatten();
 
-    observe( flattened, []( int v ) {
-        CHECK( v == 30 );
-    } );
+    observe( flattened, []( int v ) { CHECK( v == 30 ); } );
 
     outer <<= 30;
 }
@@ -547,17 +538,11 @@ TEST_CASE( "Modify2" )
     } );
 
     ctx.do_transaction( [&] {
-        v.modify( []( std::vector<int>& v_ ) {
-            v_.push_back( 30 );
-        } );
+        v.modify( []( std::vector<int>& v_ ) { v_.push_back( 30 ); } );
 
-        v.modify( []( std::vector<int>& v_ ) {
-            v_.push_back( 50 );
-        } );
+        v.modify( []( std::vector<int>& v_ ) { v_.push_back( 50 ); } );
 
-        v.modify( []( std::vector<int>& v_ ) {
-            v_.push_back( 70 );
-        } );
+        v.modify( []( std::vector<int>& v_ ) { v_.push_back( 70 ); } );
     } );
 
     CHECK( obsCount == 1 );
@@ -582,9 +567,7 @@ TEST_CASE( "Modify3" )
     ctx.do_transaction( [&] {
         vect.set( std::vector<int>{ 30, 50 } );
 
-        vect.modify( []( std::vector<int>& v ) {
-            v.push_back( 70 );
-        } );
+        vect.modify( []( std::vector<int>& v ) { v.push_back( 70 ); } );
     } );
 
     CHECK( obsCount == 1 );
@@ -598,16 +581,12 @@ TEST_CASE( "Recursive transactions" )
 
     int observeCount = 0;
 
-    observe( v1, [&observeCount]( int /*v*/ ) {
-        observeCount++;
-    } );
+    observe( v1, [&observeCount]( int /*v*/ ) { observeCount++; } );
 
     ctx.do_transaction( [&] {
         v1 <<= 7;
 
-        ctx.do_transaction( [&] {
-            v1 <<= 4;
-        } );
+        ctx.do_transaction( [&] { v1 <<= 4; } );
 
         v1 <<= 1;
         v1 <<= 2;
@@ -619,39 +598,43 @@ TEST_CASE( "Recursive transactions" )
 TEST_CASE( "UnaryOperators" )
 {
     ureact::context ctx;
-    
+
     auto v1 = make_var( &ctx, 1 );
-    
+
+    // clang-format off
     auto unary_plus         = +v1;
     auto unary_minus        = -v1;
     auto logical_negation   = !v1;
     auto bitwise_complement = ~v1;
-    
-    auto checkValues = [&]( std::initializer_list<int> valuesToTest )
-    {
-        for( const int& value : valuesToTest )
+    // clang-format on
+
+    auto checkValues = [&]( std::initializer_list<int> valuesToTest ) {
+        for ( const int& value : valuesToTest )
         {
             v1 <<= value;
-            
+
+            // clang-format off
             CHECK( unary_plus.value()         == (+value) );
             CHECK( unary_minus.value()        == (-value) );
             CHECK( logical_negation.value()   == (!value) );
             CHECK( bitwise_complement.value() == (~value) );
+            // clang-format on
         }
     };
-    
-    checkValues( { 0, 1, -4, 654} );
+
+    checkValues( { 0, 1, -4, 654 } );
 }
 
 TEST_CASE( "BinaryOperators" )
 {
     ureact::context ctx;
-    
+
     auto v1 = make_var( &ctx, 0 );
     auto v2 = make_var( &ctx, 1 );
     auto v3 = make_var( &ctx, 0 );
     auto v4 = make_var( &ctx, 1 );
-    
+
+    // clang-format off
     auto addition            = v1 + v2;
     auto subtraction         = v1 - v2;
     auto multiplication      = v1 * v2;
@@ -671,16 +654,17 @@ TEST_CASE( "BinaryOperators" )
 
     auto division            = v3 / v4;
     auto modulo              = v3 % v4;
+    // clang-format on
 
-    auto checkValues = [&]( std::initializer_list<std::pair<int, int>> valuesToTest )
-    {
-        for( const auto& values : valuesToTest )
+    auto checkValues = [&]( std::initializer_list<std::pair<int, int>> valuesToTest ) {
+        for ( const auto& values : valuesToTest )
         {
-            ctx.do_transaction([&]()
-                {
-                    v1 <<= values.first;
-                    v2 <<= values.second;
-                });
+            ctx.do_transaction( [&]() {
+                v1 <<= values.first;
+                v2 <<= values.second;
+            } );
+
+            // clang-format off
             CHECK( addition.value()            == (values.first +  values.second) );
             CHECK( subtraction.value()         == (values.first -  values.second) );
             CHECK( multiplication.value()      == (values.first *  values.second) );
@@ -697,40 +681,39 @@ TEST_CASE( "BinaryOperators" )
             CHECK( bitwise_xor.value()         == (values.first ^  values.second) );
             CHECK( bitwise_left_shift.value()  == (values.first << values.second) );
             CHECK( bitwise_right_shift.value() == (values.first >> values.second) );
+            // clang-format on
         }
     };
-    
-    auto checkDivisionValues = [&]( std::initializer_list<std::pair<int, int>> valuesToTest )
-    {
-        for( const auto& values : valuesToTest )
+
+    auto checkDivisionValues = [&]( std::initializer_list<std::pair<int, int>> valuesToTest ) {
+        for ( const auto& values : valuesToTest )
         {
-            ctx.do_transaction([&]()
-                {
-                    v3 <<= values.first;
-                    v4 <<= values.second;
-                });
+            ctx.do_transaction( [&]() {
+                v3 <<= values.first;
+                v4 <<= values.second;
+            } );
+            // clang-format off
             CHECK( division.value()            == (values.first /  values.second) );
             CHECK( modulo.value()              == (values.first %  values.second) );
+            // clang-format on
         }
     };
-    
-    checkValues(
-        {
-            { 2, 2 },
-            { 3, -3 },
-            { 0, 0 },
-            { -4, 7 },
-            { -8, -2 },
-            { 0, -2 },
-            { 5, 0 },
-        } );
-    
-    checkDivisionValues(
-        {
-            { 2, 2 },
-            { 3, -3 },
-            { 8, 3 },
-        } );
+
+    checkValues( {
+        { 2, 2 },
+        { 3, -3 },
+        { 0, 0 },
+        { -4, 7 },
+        { -8, -2 },
+        { 0, -2 },
+        { 5, 0 },
+    } );
+
+    checkDivisionValues( {
+        { 2, 2 },
+        { 3, -3 },
+        { 8, 3 },
+    } );
 }
 
 TEST_CASE( "OperatorsPriority" )
@@ -758,7 +741,7 @@ TEST_CASE( "OperatorsPriority" )
     auto result = _2 + _2 * _2;
     CHECK( result.value() == 6 );
 
-    auto result2 = (_2 + _2) * _2;
+    auto result2 = ( _2 + _2 ) * _2;
     CHECK( result2.value() == 8 );
 }
 

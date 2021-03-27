@@ -26,7 +26,7 @@ function F_detect_tools() {
     # that the version number be part of the command. We prefer clang-format if
     # that's present, otherwise we work backwards from highest version to lowest
     # version.
-    for clangfmt in clang-format{,-{13,12,11,10,9},-{10,9}.{9,8,7,6,5,4,3,2,1,0}}; do
+    for clangfmt in clang-format{-{13,12,11},-{13,12,11}.{9,8,7,6,5,4,3,2,1,0}}; do
         if which "$clangfmt" &>/dev/null; then
             CLANG_FORMAT_TOOL="$clangfmt"
             break

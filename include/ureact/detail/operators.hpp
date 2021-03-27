@@ -45,7 +45,7 @@ namespace ureact
     auto operator op( detail::temp_signal<val_t, op_in_t>&& arg )->detail::temp_signal<S, op_t>    \
     {                                                                                              \
         context& context = arg.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( context,                                              \
+        return detail::temp_signal<S, op_t>(                                                       \
             std::make_shared<detail::signal_op_node<S, op_t>>( context, F(), arg.steal_op() ) );   \
     }
 

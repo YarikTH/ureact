@@ -602,10 +602,14 @@ TEST_CASE( "UnaryOperators" )
     auto v1 = make_var( ctx, 1 );
 
     // clang-format off
-    auto unary_plus         = +v1;
-    auto unary_minus        = -v1;
-    auto logical_negation   = !v1;
-    auto bitwise_complement = ~v1;
+    auto unary_plus           = +v1;
+    auto unary_minus          = -v1;
+    auto logical_negation     = !v1;
+    auto bitwise_complement   = ~v1;
+    auto unary_plus_2         = +(+v1);
+    auto unary_minus_2        = -(+v1);
+    auto logical_negation_2   = !(+v1);
+    auto bitwise_complement_2 = ~(+v1);
     // clang-format on
 
     auto checkValues = [&]( std::initializer_list<int> valuesToTest ) {
@@ -614,10 +618,14 @@ TEST_CASE( "UnaryOperators" )
             v1 <<= value;
 
             // clang-format off
-            CHECK( unary_plus.value()         == (+value) );
-            CHECK( unary_minus.value()        == (-value) );
-            CHECK( logical_negation.value()   == (!value) );
-            CHECK( bitwise_complement.value() == (~value) );
+            CHECK( unary_plus.value()           == (+value) );
+            CHECK( unary_minus.value()          == (-value) );
+            CHECK( logical_negation.value()     == (!value) );
+            CHECK( bitwise_complement.value()   == (~value) );
+            CHECK( unary_plus_2.value()         == (+value) );
+            CHECK( unary_minus_2.value()        == (-value) );
+            CHECK( logical_negation_2.value()   == (!value) );
+            CHECK( bitwise_complement_2.value() == (~value) );
             // clang-format on
         }
     };

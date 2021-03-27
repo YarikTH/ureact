@@ -6,6 +6,41 @@
 namespace ureact
 {
 
+namespace detail
+{
+
+template <typename S, typename op_t, typename F, typename arg_node_t>
+auto make_unary_operator_signal( context& context, arg_node_t&& arg_node ) -> temp_signal<S, op_t>
+{
+    return temp_signal<S, op_t>( std::make_shared<signal_op_node<S, op_t>>(
+        context, F(), std::forward<arg_node_t>( arg_node ) ) );
+}
+
+template <template <typename> class functor_op,
+    typename signal_t,
+    typename val_t = typename signal_t::value_t,
+    class = typename std::enable_if<is_signal<signal_t>::value>::type,
+    typename F = functor_op<val_t>,
+    typename S = typename std::result_of<F( val_t )>::type,
+    typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
+auto unary_operator_impl( const signal_t& arg ) -> temp_signal<S, op_t>
+{
+    return make_unary_operator_signal<S, op_t, F>( arg.get_context(), get_node_ptr( arg ) );
+}
+
+template <template <typename> class functor_op,
+    typename val_t,
+    typename op_in_t,
+    typename F = functor_op<val_t>,
+    typename S = typename std::result_of<F( val_t )>::type,
+    typename op_t = function_op<S, F, op_in_t>>
+auto unary_operator_impl( temp_signal<val_t, op_in_t>&& arg ) -> temp_signal<S, op_t>
+{
+    return make_unary_operator_signal<S, op_t, F>( arg.get_context(), arg.steal_op() );
+}
+
+} // namespace detail
+
 #define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
     namespace detail                                                                               \
     {                                                                                              \
@@ -22,37 +57,18 @@ namespace ureact
     } /* namespace op_functors */                                                                  \
     } /* namespace detail */
 
-#define UREACT_DECLARE_UNARY_OP_FOR_SIGNAL( op, name )                                             \
-    template <typename signal_t,                                                                   \
-        typename val_t = typename signal_t::value_t,                                               \
-        class = typename std::enable_if<is_signal<signal_t>::value>::type,                         \
-        typename F = detail::op_functors::op_functor_##name<val_t>,                                \
-        typename S = typename std::result_of<F( val_t )>::type,                                    \
-        typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<val_t>>>               \
-    auto operator op( const signal_t& arg )->detail::temp_signal<S, op_t>                          \
+#define UREACT_DECLARE_UNARY_OP( op, name )                                                        \
+    template <typename arg_t,                                                                      \
+        template <typename> class functor_op = detail::op_functors::op_functor_##name>             \
+    auto operator op( arg_t&& arg )                                                                \
+        ->decltype( detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) ) )        \
     {                                                                                              \
-        context& context = arg.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F(), get_node_ptr( arg ) ) );                                                 \
-    }
-
-#define UREACT_DECLARE_UNARY_OP_FOR_TEMP_SIGNAL( op, name )                                        \
-    template <typename val_t,                                                                      \
-        typename op_in_t,                                                                          \
-        typename F = detail::op_functors::op_functor_##name<val_t>,                                \
-        typename S = typename std::result_of<F( val_t )>::type,                                    \
-        typename op_t = detail::function_op<S, F, op_in_t>>                                        \
-    auto operator op( detail::temp_signal<val_t, op_in_t>&& arg )->detail::temp_signal<S, op_t>    \
-    {                                                                                              \
-        context& context = arg.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<detail::signal_op_node<S, op_t>>( context, F(), arg.steal_op() ) );   \
+        return detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) );              \
     }
 
 #define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
     UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
-    UREACT_DECLARE_UNARY_OP_FOR_SIGNAL( op, name )                                                 \
-    UREACT_DECLARE_UNARY_OP_FOR_TEMP_SIGNAL( op, name )
+    UREACT_DECLARE_UNARY_OP( op, name )
 
 UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
 UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )

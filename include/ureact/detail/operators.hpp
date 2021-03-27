@@ -3,13 +3,10 @@
 #include "ureact/detail/signal.hpp"
 #include "ureact/detail/graph/function_op.hpp"
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Unary operators
-///////////////////////////////////////////////////////////////////////////////////////////////////
-#define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
-                                                                                                   \
-    namespace ureact                                                                               \
-    {                                                                                              \
+namespace ureact
+{
+
+#define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
     namespace detail                                                                               \
     {                                                                                              \
     namespace op_functors                                                                          \
@@ -22,40 +19,40 @@
             return op v;                                                                           \
         }                                                                                          \
     };                                                                                             \
-    }                                                                                              \
-    }                                                                                              \
-    }                                                                                              \
-                                                                                                   \
-    namespace ureact                                                                               \
-    {                                                                                              \
+    } /* namespace op_functors */                                                                  \
+    } /* namespace detail */
+
+#define UREACT_DECLARE_UNARY_OP_FOR_SIGNAL( op, name )                                             \
     template <typename signal_t,                                                                   \
         typename val_t = typename signal_t::value_t,                                               \
         class = typename std::enable_if<is_signal<signal_t>::value>::type,                         \
-        typename F = ::ureact::detail::op_functors::op_functor_##name<val_t>,                      \
+        typename F = detail::op_functors::op_functor_##name<val_t>,                                \
         typename S = typename std::result_of<F( val_t )>::type,                                    \
-        typename op_t                                                                              \
-        = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<val_t>>>         \
-    auto operator op( const signal_t& arg ) -> detail::temp_signal<S, op_t>                        \
+        typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<val_t>>>               \
+    auto operator op( const signal_t& arg )->detail::temp_signal<S, op_t>                          \
     {                                                                                              \
         context& context = arg.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F(), get_node_ptr( arg ) ) );                                             \
-    }                                                                                              \
-                                                                                                   \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F(), get_node_ptr( arg ) ) );                                                 \
+    }
+
+#define UREACT_DECLARE_UNARY_OP_FOR_TEMP_SIGNAL( op, name )                                        \
     template <typename val_t,                                                                      \
         typename op_in_t,                                                                          \
-        typename F = ::ureact::detail::op_functors::op_functor_##name<val_t>,                      \
+        typename F = detail::op_functors::op_functor_##name<val_t>,                                \
         typename S = typename std::result_of<F( val_t )>::type,                                    \
-        typename op_t = ::ureact::detail::function_op<S, F, op_in_t>>                              \
-    auto operator op( detail::temp_signal<val_t, op_in_t>&& arg ) -> detail::temp_signal<S, op_t>  \
+        typename op_t = detail::function_op<S, F, op_in_t>>                                        \
+    auto operator op( detail::temp_signal<val_t, op_in_t>&& arg )->detail::temp_signal<S, op_t>    \
     {                                                                                              \
         context& context = arg.get_context();                                                      \
         return detail::temp_signal<S, op_t>( context,                                              \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F(), arg.steal_op() ) );                                                  \
-    }                                                                                              \
+            std::make_shared<detail::signal_op_node<S, op_t>>( context, F(), arg.steal_op() ) );   \
     }
+
+#define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
+    UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
+    UREACT_DECLARE_UNARY_OP_FOR_SIGNAL( op, name )                                                 \
+    UREACT_DECLARE_UNARY_OP_FOR_TEMP_SIGNAL( op, name )
 
 UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
 UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )
@@ -64,13 +61,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
 
 #undef UREACT_DECLARE_UNARY_OPERATOR
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Binary operators
-///////////////////////////////////////////////////////////////////////////////////////////////////
-#define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
-                                                                                                   \
-    namespace ureact                                                                               \
-    {                                                                                              \
+#define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
     namespace detail                                                                               \
     {                                                                                              \
     namespace op_functors                                                                          \
@@ -84,7 +75,14 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             return lhs op rhs;                                                                     \
         }                                                                                          \
     };                                                                                             \
-                                                                                                   \
+    } /* namespace op_functors */                                                                  \
+    } /* namespace detail */
+
+#define UREACT_DECLARE_BINARY_OP_R_FUNCTOR( op, name )                                             \
+    namespace detail                                                                               \
+    {                                                                                              \
+    namespace op_functors                                                                          \
+    {                                                                                              \
     template <typename L, typename R>                                                              \
     struct op_r_functor_##name                                                                     \
     {                                                                                              \
@@ -114,7 +112,14 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
                                                                                                    \
         L m_left_val;                                                                              \
     };                                                                                             \
-                                                                                                   \
+    } /* namespace op_functors */                                                                  \
+    } /* namespace detail */
+
+#define UREACT_DECLARE_BINARY_OP_L_FUNCTOR( op, name )                                             \
+    namespace detail                                                                               \
+    {                                                                                              \
+    namespace op_functors                                                                          \
+    {                                                                                              \
     template <typename L, typename R>                                                              \
     struct op_l_functor_##name                                                                     \
     {                                                                                              \
@@ -144,158 +149,172 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
                                                                                                    \
         R m_right_val;                                                                             \
     };                                                                                             \
-    }                                                                                              \
-    }                                                                                              \
-    }                                                                                              \
-                                                                                                   \
-    namespace ureact                                                                               \
-    {                                                                                              \
+    } /* namespace op_functors */                                                                  \
+    } /* namespace detail */
+
+#define UREACT_DECLARE_BINARY_OP_1( op, name )                                                     \
     template <typename left_signal_t,                                                              \
         typename right_signal_t,                                                                   \
         typename left_val_t = typename left_signal_t::value_t,                                     \
         typename right_val_t = typename right_signal_t::value_t,                                   \
         class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
         class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
-        typename F = ::ureact::detail::op_functors::op_functor_##name<left_val_t, right_val_t>,    \
+        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
         typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t = ::ureact::detail::function_op<S,                                           \
+        typename op_t = detail::function_op<S,                                                     \
             F,                                                                                     \
-            ::ureact::detail::signal_node_ptr_t<left_val_t>,                                       \
-            ::ureact::detail::signal_node_ptr_t<right_val_t>>>                                     \
+            detail::signal_node_ptr_t<left_val_t>,                                                 \
+            detail::signal_node_ptr_t<right_val_t>>>                                               \
     auto operator op( const left_signal_t& lhs, const right_signal_t& rhs )                        \
-        -> detail::temp_signal<S, op_t>                                                            \
+        ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
         context& context = lhs.get_context();                                                      \
         assert( context == rhs.get_context() );                                                    \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );                        \
-    }                                                                                              \
-                                                                                                   \
-    template <typename left_signal_t,                                                              \
-        typename right_val_in_t,                                                                   \
-        typename left_val_t = typename left_signal_t::value_t,                                     \
-        typename right_val_t = typename std::decay<right_val_in_t>::type,                          \
-        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
-        class = typename std::enable_if<!is_signal<right_val_t>::value>::type,                     \
-        typename F = ::ureact::detail::op_functors::op_l_functor_##name<left_val_t, right_val_t>,  \
-        typename S = typename std::result_of<F( left_val_t )>::type,                               \
-        typename op_t                                                                              \
-        = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<left_val_t>>>    \
-    auto operator op( const left_signal_t& lhs, right_val_in_t&& rhs )                             \
-        -> detail::temp_signal<S, op_t>                                                            \
-    {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );        \
-    }                                                                                              \
-                                                                                                   \
-    template <typename left_val_in_t,                                                              \
-        typename right_signal_t,                                                                   \
-        typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
-        typename right_val_t = typename right_signal_t::value_t,                                   \
-        class = typename std::enable_if<!is_signal<left_val_t>::value>::type,                      \
-        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
-        typename F = ::ureact::detail::op_functors::op_r_functor_##name<left_val_t, right_val_t>,  \
-        typename S = typename std::result_of<F( right_val_t )>::type,                              \
-        typename op_t                                                                              \
-        = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<right_val_t>>>   \
-    auto operator op( left_val_in_t&& lhs, const right_signal_t& rhs )                             \
-        -> detail::temp_signal<S, op_t>                                                            \
-    {                                                                                              \
-        context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( context,                                              \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );         \
-    }                                                                                              \
-    template <typename left_val_t,                                                                 \
-        typename left_op_t,                                                                        \
-        typename right_val_t,                                                                      \
-        typename right_op_t,                                                                       \
-        typename F = ::ureact::detail::op_functors::op_functor_##name<left_val_t, right_val_t>,    \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t = ::ureact::detail::function_op<S, F, left_op_t, right_op_t>>                \
-    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs,                            \
-        detail::temp_signal<right_val_t, right_op_t>&& rhs ) -> detail::temp_signal<S, op_t>       \
-    {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        assert( context == rhs.get_context() );                                                    \
-        return detail::temp_signal<S, op_t>( context,                                              \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F(), lhs.steal_op(), rhs.steal_op() ) );                                  \
-    }                                                                                              \
-                                                                                                   \
-    template <typename left_val_t,                                                                 \
-        typename left_op_t,                                                                        \
-        typename right_signal_t,                                                                   \
-        typename right_val_t = typename right_signal_t::value_t,                                   \
-        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
-        typename F = ::ureact::detail::op_functors::op_functor_##name<left_val_t, right_val_t>,    \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t = ::ureact::detail::                                                         \
-            function_op<S, F, left_op_t, ::ureact::detail::signal_node_ptr_t<right_val_t>>>        \
-    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs,                            \
-        const right_signal_t& rhs ) -> detail::temp_signal<S, op_t>                                \
-    {                                                                                              \
-        context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F(), lhs.steal_op(), get_node_ptr( rhs ) ) );                             \
-    }                                                                                              \
-                                                                                                   \
-    template <typename left_signal_t,                                                              \
-        typename right_val_t,                                                                      \
-        typename right_op_t,                                                                       \
-        typename left_val_t = typename left_signal_t::value_t,                                     \
-        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
-        typename F = ::ureact::detail::op_functors::op_functor_##name<left_val_t, right_val_t>,    \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t = ::ureact::detail::                                                         \
-            function_op<S, F, ::ureact::detail::signal_node_ptr_t<left_val_t>, right_op_t>>        \
-    auto operator op( const left_signal_t& lhs,                                                    \
-        detail::temp_signal<right_val_t, right_op_t>&& rhs ) -> detail::temp_signal<S, op_t>       \
-    {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );                             \
-    }                                                                                              \
-                                                                                                   \
-    template <typename left_val_t,                                                                 \
-        typename left_op_t,                                                                        \
-        typename right_val_in_t,                                                                   \
-        typename right_val_t = typename std::decay<right_val_in_t>::type,                          \
-        class = typename std::enable_if<!is_signal<right_val_t>::value>::type,                     \
-        typename F = ::ureact::detail::op_functors::op_l_functor_##name<left_val_t, right_val_t>,  \
-        typename S = typename std::result_of<F( left_val_t )>::type,                               \
-        typename op_t = ::ureact::detail::function_op<S, F, left_op_t>>                            \
-    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )     \
-        -> detail::temp_signal<S, op_t>                                                            \
-    {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );             \
-    }                                                                                              \
-                                                                                                   \
-    template <typename left_val_in_t,                                                              \
-        typename right_val_t,                                                                      \
-        typename right_op_t,                                                                       \
-        typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
-        class = typename std::enable_if<!is_signal<left_val_t>::value>::type,                      \
-        typename F = ::ureact::detail::op_functors::op_r_functor_##name<left_val_t, right_val_t>,  \
-        typename S = typename std::result_of<F( right_val_t )>::type,                              \
-        typename op_t = ::ureact::detail::function_op<S, F, right_op_t>>                           \
-    auto operator op( left_val_in_t&& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )    \
-        -> detail::temp_signal<S, op_t>                                                            \
-    {                                                                                              \
-        context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( context,                                              \
-            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
-                context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() ) );              \
-    }                                                                                              \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );                            \
     }
+
+#define UREACT_DECLARE_BINARY_OP_2( op, name )                                                     \
+    template <typename left_signal_t,                                                              \
+        typename right_val_in_t,                                                                   \
+        typename left_val_t = typename left_signal_t::value_t,                                     \
+        typename right_val_t = typename std::decay<right_val_in_t>::type,                          \
+        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
+        class = typename std::enable_if<!is_signal<right_val_t>::value>::type,                     \
+        typename F = detail::op_functors::op_l_functor_##name<left_val_t, right_val_t>,            \
+        typename S = typename std::result_of<F( left_val_t )>::type,                               \
+        typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>          \
+    auto operator op( const left_signal_t& lhs, right_val_in_t&& rhs )                             \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = lhs.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );            \
+    }
+
+#define UREACT_DECLARE_BINARY_OP_3( op, name )                                                     \
+    template <typename left_val_in_t,                                                              \
+        typename right_signal_t,                                                                   \
+        typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
+        typename right_val_t = typename right_signal_t::value_t,                                   \
+        class = typename std::enable_if<!is_signal<left_val_t>::value>::type,                      \
+        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
+        typename F = detail::op_functors::op_r_functor_##name<left_val_t, right_val_t>,            \
+        typename S = typename std::result_of<F( right_val_t )>::type,                              \
+        typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>         \
+    auto operator op( left_val_in_t&& lhs, const right_signal_t& rhs )                             \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = rhs.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( context,                                              \
+            std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
+                context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );         \
+    }
+
+#define UREACT_DECLARE_BINARY_OP_4( op, name )                                                     \
+    template <typename left_val_t,                                                                 \
+        typename left_op_t,                                                                        \
+        typename right_val_t,                                                                      \
+        typename right_op_t,                                                                       \
+        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
+        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
+        typename op_t = detail::function_op<S, F, left_op_t, right_op_t>>                          \
+    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs,                            \
+        detail::temp_signal<right_val_t, right_op_t>&& rhs )                                       \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = lhs.get_context();                                                      \
+        assert( context == rhs.get_context() );                                                    \
+        return detail::temp_signal<S, op_t>( context,                                              \
+            std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
+                context, F(), lhs.steal_op(), rhs.steal_op() ) );                                  \
+    }
+
+#define UREACT_DECLARE_BINARY_OP_5( op, name )                                                     \
+    template <typename left_val_t,                                                                 \
+        typename left_op_t,                                                                        \
+        typename right_signal_t,                                                                   \
+        typename right_val_t = typename right_signal_t::value_t,                                   \
+        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
+        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
+        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
+        typename op_t                                                                              \
+        = detail::function_op<S, F, left_op_t, detail::signal_node_ptr_t<right_val_t>>>            \
+    auto operator op(                                                                              \
+        detail::temp_signal<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )              \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = rhs.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F(), lhs.steal_op(), get_node_ptr( rhs ) ) );                                 \
+    }
+
+#define UREACT_DECLARE_BINARY_OP_6( op, name )                                                     \
+    template <typename left_signal_t,                                                              \
+        typename right_val_t,                                                                      \
+        typename right_op_t,                                                                       \
+        typename left_val_t = typename left_signal_t::value_t,                                     \
+        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
+        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
+        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
+        typename op_t                                                                              \
+        = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>, right_op_t>>            \
+    auto operator op(                                                                              \
+        const left_signal_t& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )             \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = lhs.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );                                 \
+    }
+
+#define UREACT_DECLARE_BINARY_OP_7( op, name )                                                     \
+    template <typename left_val_t,                                                                 \
+        typename left_op_t,                                                                        \
+        typename right_val_in_t,                                                                   \
+        typename right_val_t = typename std::decay<right_val_in_t>::type,                          \
+        class = typename std::enable_if<!is_signal<right_val_t>::value>::type,                     \
+        typename F = detail::op_functors::op_l_functor_##name<left_val_t, right_val_t>,            \
+        typename S = typename std::result_of<F( left_val_t )>::type,                               \
+        typename op_t = detail::function_op<S, F, left_op_t>>                                      \
+    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )     \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = lhs.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );                 \
+    }
+
+#define UREACT_DECLARE_BINARY_OP_8( op, name )                                                     \
+    template <typename left_val_in_t,                                                              \
+        typename right_val_t,                                                                      \
+        typename right_op_t,                                                                       \
+        typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
+        class = typename std::enable_if<!is_signal<left_val_t>::value>::type,                      \
+        typename F = detail::op_functors::op_r_functor_##name<left_val_t, right_val_t>,            \
+        typename S = typename std::result_of<F( right_val_t )>::type,                              \
+        typename op_t = detail::function_op<S, F, right_op_t>>                                     \
+    auto operator op( left_val_in_t&& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )    \
+        ->detail::temp_signal<S, op_t>                                                             \
+    {                                                                                              \
+        context& context = rhs.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( context,                                              \
+            std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
+                context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() ) );              \
+    }
+
+#define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
+    UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
+    UREACT_DECLARE_BINARY_OP_R_FUNCTOR( op, name )                                                 \
+    UREACT_DECLARE_BINARY_OP_L_FUNCTOR( op, name )                                                 \
+    UREACT_DECLARE_BINARY_OP_1( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_2( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_3( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_4( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_5( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_6( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_7( op, name )                                                         \
+    UREACT_DECLARE_BINARY_OP_8( op, name )
 
 UREACT_DECLARE_BINARY_OPERATOR( +, addition )
 UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )
@@ -320,3 +339,5 @@ UREACT_DECLARE_BINARY_OPERATOR( <<, bitwise_left_shift )
 UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
 
 #undef UREACT_DECLARE_BINARY_OPERATOR
+
+} // namespace ureact

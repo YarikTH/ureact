@@ -4,9 +4,70 @@
 #include "ureact/detail/graph/function_op.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Unary operators
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
+                                                                                                   \
+    namespace ureact                                                                               \
+    {                                                                                              \
+    namespace detail                                                                               \
+    {                                                                                              \
+    namespace op_functors                                                                          \
+    {                                                                                              \
+    template <typename T>                                                                          \
+    struct op_functor_##name                                                                       \
+    {                                                                                              \
+        auto operator()( const T& v ) const -> decltype( op std::declval<T>() )                    \
+        {                                                                                          \
+            return op v;                                                                           \
+        }                                                                                          \
+    };                                                                                             \
+    }                                                                                              \
+    }                                                                                              \
+    }                                                                                              \
+                                                                                                   \
+    namespace ureact                                                                               \
+    {                                                                                              \
+    template <typename signal_t,                                                                   \
+        typename val_t = typename signal_t::value_t,                                               \
+        class = typename std::enable_if<is_signal<signal_t>::value>::type,                         \
+        typename F = ::ureact::detail::op_functors::op_functor_##name<val_t>,                      \
+        typename S = typename std::result_of<F( val_t )>::type,                                    \
+        typename op_t                                                                              \
+        = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<val_t>>>         \
+    auto operator op( const signal_t& arg ) -> detail::temp_signal<S, op_t>                        \
+    {                                                                                              \
+        context& context = arg.get_context();                                                      \
+        return detail::temp_signal<S, op_t>(                                                       \
+            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
+                context, F(), get_node_ptr( arg ) ) );                                             \
+    }                                                                                              \
+                                                                                                   \
+    template <typename val_t,                                                                      \
+        typename op_in_t,                                                                          \
+        typename F = ::ureact::detail::op_functors::op_functor_##name<val_t>,                      \
+        typename S = typename std::result_of<F( val_t )>::type,                                    \
+        typename op_t = ::ureact::detail::function_op<S, F, op_in_t>>                              \
+    auto operator op( detail::temp_signal<val_t, op_in_t>&& arg ) -> detail::temp_signal<S, op_t>  \
+    {                                                                                              \
+        context& context = arg.get_context();                                                      \
+        return detail::temp_signal<S, op_t>( context,                                              \
+            std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(                           \
+                context, F(), arg.steal_op() ) );                                                  \
+    }                                                                                              \
+    }
+
+UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
+UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )
+UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
+UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
+
+#undef UREACT_DECLARE_UNARY_OPERATOR
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Binary operators
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-#define REACT_DECLARE_OP( op, name )                                                               \
+#define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
                                                                                                    \
     namespace ureact                                                                               \
     {                                                                                              \
@@ -35,7 +96,7 @@
                                                                                                    \
         template <typename T,                                                                      \
             class = typename std::enable_if<!is_same_decay<T, op_r_functor_##name>::value>::type>  \
-        op_r_functor_##name( T&& val )                                                             \
+        explicit op_r_functor_##name( T&& val )                                                    \
             : m_left_val( std::forward<T>( val ) )                                                 \
         {}                                                                                         \
                                                                                                    \
@@ -65,7 +126,7 @@
                                                                                                    \
         template <typename T,                                                                      \
             class = typename std::enable_if<!is_same_decay<T, op_l_functor_##name>::value>::type>  \
-        op_l_functor_##name( T&& val )                                                             \
+        explicit op_l_functor_##name( T&& val )                                                    \
             : m_right_val( std::forward<T>( val ) )                                                \
         {}                                                                                         \
                                                                                                    \
@@ -236,26 +297,26 @@
     }                                                                                              \
     }
 
-REACT_DECLARE_OP( +, addition )
-REACT_DECLARE_OP( -, subtraction )
-REACT_DECLARE_OP( *, multiplication )
-REACT_DECLARE_OP( /, division )
-REACT_DECLARE_OP( %, modulo )
+UREACT_DECLARE_BINARY_OPERATOR( +, addition )
+UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )
+UREACT_DECLARE_BINARY_OPERATOR( *, multiplication )
+UREACT_DECLARE_BINARY_OPERATOR( /, division )
+UREACT_DECLARE_BINARY_OPERATOR( %, modulo )
 
-REACT_DECLARE_OP( ==, equal )
-REACT_DECLARE_OP( !=, not_equal )
-REACT_DECLARE_OP( <, less )
-REACT_DECLARE_OP( <=, less_equal )
-REACT_DECLARE_OP( >, greater )
-REACT_DECLARE_OP( >=, greater_equal )
+UREACT_DECLARE_BINARY_OPERATOR( ==, equal )
+UREACT_DECLARE_BINARY_OPERATOR( !=, not_equal )
+UREACT_DECLARE_BINARY_OPERATOR( <, less )
+UREACT_DECLARE_BINARY_OPERATOR( <=, less_equal )
+UREACT_DECLARE_BINARY_OPERATOR( >, greater )
+UREACT_DECLARE_BINARY_OPERATOR( >=, greater_equal )
 
-REACT_DECLARE_OP( &&, logical_and )
-REACT_DECLARE_OP( ||, logical_or )
+UREACT_DECLARE_BINARY_OPERATOR( &&, logical_and )
+UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
 
-REACT_DECLARE_OP( &, bitwise_and )
-REACT_DECLARE_OP( |, bitwise_or )
-REACT_DECLARE_OP( ^, bitwise_xor )
-REACT_DECLARE_OP( <<, bitwise_left_shift )
-REACT_DECLARE_OP( >>, bitwise_right_shift )
+UREACT_DECLARE_BINARY_OPERATOR( &, bitwise_and )
+UREACT_DECLARE_BINARY_OPERATOR( |, bitwise_or )
+UREACT_DECLARE_BINARY_OPERATOR( ^, bitwise_xor )
+UREACT_DECLARE_BINARY_OPERATOR( <<, bitwise_left_shift )
+UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
 
-#undef REACT_DECLARE_OP
+#undef UREACT_DECLARE_BINARY_OPERATOR

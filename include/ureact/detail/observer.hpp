@@ -129,6 +129,47 @@ private:
     observer m_obs;
 };
 
+namespace detail
+{
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// add_default_return_value_wrapper
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename F, typename ret_t, ret_t return_value>
+struct add_default_return_value_wrapper
+{
+    add_default_return_value_wrapper( const add_default_return_value_wrapper& ) = default;
+
+    add_default_return_value_wrapper& operator=( const add_default_return_value_wrapper& ) = delete;
+
+    add_default_return_value_wrapper( add_default_return_value_wrapper&& other ) noexcept
+        : my_func( std::move( other.my_func ) )
+    {}
+
+    add_default_return_value_wrapper& operator=(
+        add_default_return_value_wrapper&& ) noexcept = delete;
+
+    template <typename in_f,
+        class = typename std::enable_if<
+            !is_same_decay<in_f, add_default_return_value_wrapper>::value>::type>
+    explicit add_default_return_value_wrapper( in_f&& func )
+        : my_func( std::forward<in_f>( func ) )
+    {}
+
+    ~add_default_return_value_wrapper() = default;
+
+    template <typename... args_t>
+    ret_t operator()( args_t&&... args )
+    {
+        my_func( std::forward<args_t>( args )... );
+        return return_value;
+    }
+
+    F my_func;
+};
+
+} // namespace detail
+
 /// When the signal value S of subject changes, func(s) is called.
 /// The signature of func should be equivalent to:
 /// TRet func(const S&)

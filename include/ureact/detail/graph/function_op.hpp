@@ -10,6 +10,19 @@ namespace detail
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Helper to enable calling a function on each element of an argument pack.
+/// We can't do f(args) ...; because ... expands with a comma.
+/// But we can do nop_func(f(args) ...);
+///////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename... args_t>
+inline void pass( args_t&&... /*unused*/ )
+{}
+
+// Expand args by wrapping them in a dummy function
+// Use comma operator to replace potential void return value with 0
+#define UREACT_EXPAND_PACK( ... ) pass( ( __VA_ARGS__, 0 )... )
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// attach/detach helper functors
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename node_t, typename... deps_t>
@@ -21,7 +34,7 @@ struct attach_functor
 
     void operator()( const deps_t&... deps ) const
     {
-        REACT_EXPAND_PACK( attach( deps ) );
+        UREACT_EXPAND_PACK( attach( deps ) );
     }
 
     template <typename T>
@@ -48,7 +61,7 @@ struct detach_functor
 
     void operator()( const deps_t&... deps ) const
     {
-        REACT_EXPAND_PACK( detach( deps ) );
+        UREACT_EXPAND_PACK( detach( deps ) );
     }
 
     template <typename T>
@@ -65,6 +78,12 @@ struct detach_functor
 
     node_t& my_node;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// dont_move!
+///////////////////////////////////////////////////////////////////////////////////////////////////
+struct dont_move
+{};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// reactive_op_base
@@ -182,6 +201,8 @@ private:
 
     F m_func;
 };
+
+#undef UREACT_EXPAND_PACK
 
 } // namespace detail
 } // namespace ureact

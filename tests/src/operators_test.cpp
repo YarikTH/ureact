@@ -111,49 +111,119 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto lhs = make_var( ctx, 0 );
-        auto rhs = make_var( ctx, 1 );
-
-        // clang-format off
         struct test_data
         {
             const char* test_name;
             ureact::signal<int> division;
             ureact::signal<int> modulo;
-        }
-        test_data_array [] =
-        {
-            { "signal op signal",  lhs  /   rhs,    lhs  %   rhs  },
-            { "  temp op signal",(+lhs) /   rhs,  (+lhs) %   rhs  },
-            { "signal op temp",    lhs  / (+rhs),   lhs  % (+rhs) },
-            { "  temp op temp",  (+lhs) / (+rhs), (+lhs) % (+rhs) },
-        };
-        // clang-format on
-
-        std::initializer_list<std::pair<int, int>> values_to_test = {
-            { 2, 2 },
-            { 3, -3 },
-            { 8, 3 },
         };
 
-        for ( const auto& values : values_to_test )
+        SUBCASE( "both signals" )
         {
-            int left, right;
-            std::tie(left, right) = values;
-            SUBCASE( (std::to_string(left) + std::string(" op ") + std::to_string(right)).c_str() )
+            auto lhs = make_var( ctx, 0 );
+            auto rhs = make_var( ctx, 1 );
+
+            // clang-format off
+            test_data test_data_array [] =
             {
-                ctx.do_transaction( [&]() {
-                    lhs <<= left;
-                    rhs <<= right;
-                } );
-                for( const test_data& data : test_data_array )
+                { "     signal op signal",        lhs  /   rhs,    lhs  %   rhs  },
+                { "temp_signal op signal",      (+lhs) /   rhs,  (+lhs) %   rhs  },
+                { "     signal op temp_signal",   lhs  / (+rhs),   lhs  % (+rhs) },
+                { "temp_signal op temp_signal", (+lhs) / (+rhs), (+lhs) % (+rhs) },
+            };
+            // clang-format on
+
+            std::initializer_list<std::pair<int, int>> values_to_test = {
+                { 2, 2 },
+                { 3, -3 },
+                { 8, 3 },
+            };
+
+            for( const auto& values : values_to_test )
+            {
+                int left, right;
+                std::tie(left, right) = values;
+                SUBCASE( (std::to_string(left) + std::string(" op ") + std::to_string(right)).c_str() )
                 {
-                    SUBCASE( data.test_name )
+                    ctx.do_transaction( [&]() {
+                        lhs <<= left;
+                        rhs <<= right;
+                    } );
+                    for( const test_data& data : test_data_array )
                     {
-                        // clang-format off
-                        CHECK( data.division.value() == (left / right) );
-                        CHECK( data.modulo.value()   == (left % right) );
-                        // clang-format on
+                        SUBCASE( data.test_name )
+                        {
+                            // clang-format off
+                            CHECK( data.division.value() == (left / right) );
+                            CHECK( data.modulo.value()   == (left % right) );
+                            // clang-format on
+                        }
+                    }
+                }
+            }
+        }
+
+        SUBCASE( "signals and values" )
+        {
+            const int val = 32;
+            auto var = make_var( ctx, 1 );
+
+            SUBCASE( "left value" )
+            {
+                // clang-format off
+                test_data test_data_array [] =
+                {
+                    { "      value op signal",        val  /   var ,   val  %   var  },
+                    { "      value op temp_signal",   val  / (+var),   val  % (+var) },
+                };
+                // clang-format on
+
+                for( const auto& right : { -32, -16, -8, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 8, 16, 32 } )
+                {
+                    const int left = val;
+                    SUBCASE( (std::to_string(left) + std::string(" op ") + std::to_string(right)).c_str() )
+                    {
+                        var <<= right;
+                        for( const test_data& data : test_data_array )
+                        {
+                            SUBCASE( data.test_name )
+                            {
+                                // clang-format off
+                                CHECK( data.division.value() == (left / right) );
+                                CHECK( data.modulo.value()   == (left % right) );
+                                // clang-format on
+                            }
+                        }
+                    }
+                }
+            }
+
+            SUBCASE( "right value" )
+            {
+                // clang-format off
+                test_data test_data_array [] =
+                {
+                    { "     signal op value",         var  /   val,    var  %   val  },
+                    { "temp_signal op value",       (+var) /   val,  (+var) %   val  },
+                };
+                // clang-format on
+
+                for( const auto& left : { -32, -16, -8, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 8, 16, 32 } )
+                {
+                    const int right = val;
+                    SUBCASE( (std::to_string(left) + std::string(" op ") + std::to_string(right)).c_str() )
+                    {
+                        var <<= left;
+                        for( const test_data& data : test_data_array )
+                        {
+                            SUBCASE( data.test_name )
+                            {
+                                // clang-format off
+                                CHECK( data.division.value() == (left / right) );
+                                CHECK( data.modulo.value()   == (left % right) );
+                                // clang-format on
+                            }
+                        }
                     }
                 }
             }

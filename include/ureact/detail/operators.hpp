@@ -168,7 +168,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     } /* namespace op_functors */                                                                  \
     } /* namespace detail */
 
-#define UREACT_DECLARE_BINARY_OP_1_SIGNALS( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_1_SIGNALS( op, name )                                             \
     template <typename left_signal_t,                                                              \
         typename right_signal_t,                                                                   \
         typename left_val_t = typename left_signal_t::value_t,                                     \
@@ -190,7 +190,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );                            \
     }
 
-#define UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                        \
     template <typename left_signal_t,                                                              \
         typename right_val_in_t,                                                                   \
         typename left_val_t = typename left_signal_t::value_t,                                     \
@@ -208,7 +208,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );            \
     }
 
-#define UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                        \
     template <typename left_val_in_t,                                                              \
         typename right_signal_t,                                                                   \
         typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
@@ -222,12 +222,11 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
         context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                              \
-            std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
-                context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );         \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );             \
     }
 
-#define UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                           \
+#define UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                               \
     template <typename left_val_t,                                                                 \
         typename left_op_t,                                                                        \
         typename right_val_t,                                                                      \
@@ -241,12 +240,11 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     {                                                                                              \
         context& context = lhs.get_context();                                                      \
         assert( context == rhs.get_context() );                                                    \
-        return detail::temp_signal<S, op_t>(                                                       \
-            std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
-                context, F(), lhs.steal_op(), rhs.steal_op() ) );                                  \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F(), lhs.steal_op(), rhs.steal_op() ) );                                      \
     }
 
-#define UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                         \
     template <typename left_val_t,                                                                 \
         typename left_op_t,                                                                        \
         typename right_signal_t,                                                                   \
@@ -265,7 +263,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             context, F(), lhs.steal_op(), get_node_ptr( rhs ) ) );                                 \
     }
 
-#define UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                         \
     template <typename left_signal_t,                                                              \
         typename right_val_t,                                                                      \
         typename right_op_t,                                                                       \
@@ -284,7 +282,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );                                 \
     }
 
-#define UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                          \
     template <typename left_val_t,                                                                 \
         typename left_op_t,                                                                        \
         typename right_val_in_t,                                                                   \
@@ -301,7 +299,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );                 \
     }
 
-#define UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )                                          \
     template <typename left_val_in_t,                                                              \
         typename right_val_t,                                                                      \
         typename right_op_t,                                                                       \
@@ -314,9 +312,8 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
         context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>(                                              \
-            std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
-                context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() ) );              \
+        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
+            context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() ) );                  \
     }
 
 #define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \

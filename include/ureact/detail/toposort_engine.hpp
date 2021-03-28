@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "ureact/detail/reactive_node_interface.hpp"
 #include "ureact/detail/turn_t.hpp"

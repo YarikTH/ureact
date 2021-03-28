@@ -410,6 +410,13 @@ public:
     }
 };
 
+template <typename S, typename op_t, typename... Args>
+auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t>
+{
+    return temp_signal<S, op_t>(
+        std::make_shared<signal_op_node<S, op_t>>( context, std::forward<Args>( args )... ) );
+}
+
 } // namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -474,9 +481,9 @@ template <typename value_t,
 auto make_signal( const signal<value_t>& arg, in_f&& func ) -> detail::temp_signal<S, op_t>
 {
     context& context = arg.get_context();
-    return detail::temp_signal<S, op_t>(
-        std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(
-            context, std::forward<in_f>( func ), get_node_ptr( arg ) ) );
+
+    return detail::make_temp_signal<S, op_t>(
+        context, std::forward<in_f>( func ), get_node_ptr( arg ) );
 }
 
 // Multiple args
@@ -498,9 +505,8 @@ auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
 
         auto operator()( const signal<values_t>&... args ) -> detail::temp_signal<S, op_t>
         {
-            return detail::temp_signal<S, op_t>(
-                std::make_shared<::ureact::detail::signal_op_node<S, op_t>>(
-                    m_context, std::forward<in_f>( m_my_func ), get_node_ptr( args )... ) );
+            return detail::make_temp_signal<S, op_t>(
+                m_context, std::forward<in_f>( m_my_func ), get_node_ptr( args )... );
         }
 
         context& m_context;

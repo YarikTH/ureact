@@ -41,14 +41,12 @@ TEST_SUITE( "operators" )
         checkValues( { 0, 1, -4, 654 } );
     }
 
-    TEST_CASE( "binary operators" )
+    TEST_CASE( "binary operators (normal)" )
     {
         ureact::context ctx;
 
         auto v1 = make_var( ctx, 0 );
         auto v2 = make_var( ctx, 1 );
-        auto v3 = make_var( ctx, 0 );
-        auto v4 = make_var( ctx, 1 );
 
         // clang-format off
         auto addition            = v1 + v2;
@@ -67,9 +65,6 @@ TEST_SUITE( "operators" )
         auto greater_equal       = v1 >= v2;
         auto logical_and         = v1 && v2;
         auto logical_or          = v1 || v2;
-    
-        auto division            = v3 / v4;
-        auto modulo              = v3 % v4;
         // clang-format on
 
         auto checkValues = [&]( std::initializer_list<std::pair<int, int>> valuesToTest ) {
@@ -101,20 +96,6 @@ TEST_SUITE( "operators" )
             }
         };
 
-        auto checkDivisionValues = [&]( std::initializer_list<std::pair<int, int>> valuesToTest ) {
-            for ( const auto& values : valuesToTest )
-            {
-                ctx.do_transaction( [&]() {
-                    v3 <<= values.first;
-                    v4 <<= values.second;
-                } );
-                // clang-format off
-                CHECK( division.value()            == (values.first /  values.second) );
-                CHECK( modulo.value()              == (values.first %  values.second) );
-                // clang-format on
-            }
-        };
-
         checkValues( {
             { 2, 2 },
             { 3, -3 },
@@ -124,12 +105,59 @@ TEST_SUITE( "operators" )
             { 0, -2 },
             { 5, 0 },
         } );
+    }
 
-        checkDivisionValues( {
+    TEST_CASE( "binary operators (divisible)" )
+    {
+        ureact::context ctx;
+
+        auto lhs = make_var( ctx, 0 );
+        auto rhs = make_var( ctx, 1 );
+
+        // clang-format off
+        struct test_data
+        {
+            const char* test_name;
+            ureact::signal<int> division;
+            ureact::signal<int> modulo;
+        }
+        test_data_array [] =
+        {
+            { "signal op signal",  lhs  /   rhs,    lhs  %   rhs  },
+            { "  temp op signal",(+lhs) /   rhs,  (+lhs) %   rhs  },
+            { "signal op temp",    lhs  / (+rhs),   lhs  % (+rhs) },
+            { "  temp op temp",  (+lhs) / (+rhs), (+lhs) % (+rhs) },
+        };
+        // clang-format on
+
+        std::initializer_list<std::pair<int, int>> values_to_test = {
             { 2, 2 },
             { 3, -3 },
             { 8, 3 },
-        } );
+        };
+
+        for ( const auto& values : values_to_test )
+        {
+            int left, right;
+            std::tie(left, right) = values;
+            SUBCASE( (std::to_string(left) + std::string(" op ") + std::to_string(right)).c_str() )
+            {
+                ctx.do_transaction( [&]() {
+                    lhs <<= left;
+                    rhs <<= right;
+                } );
+                for( const test_data& data : test_data_array )
+                {
+                    SUBCASE( data.test_name )
+                    {
+                        // clang-format off
+                        CHECK( data.division.value() == (left / right) );
+                        CHECK( data.modulo.value()   == (left % right) );
+                        // clang-format on
+                    }
+                }
+            }
+        }
     }
 
     TEST_CASE( "priority" )

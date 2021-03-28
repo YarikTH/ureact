@@ -168,7 +168,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     } /* namespace op_functors */                                                                  \
     } /* namespace detail */
 
-#define UREACT_DECLARE_BINARY_OP_1( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_1_SIGNALS( op, name )                                                     \
     template <typename left_signal_t,                                                              \
         typename right_signal_t,                                                                   \
         typename left_val_t = typename left_signal_t::value_t,                                     \
@@ -183,14 +183,14 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
             detail::signal_node_ptr_t<right_val_t>>>                                               \
     auto operator op( const left_signal_t& lhs, const right_signal_t& rhs )                        \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {/*static_assert(!std::is_same<op_t,op_t>::value, "1");*/                                                                                              \
         context& context = lhs.get_context();                                                      \
         assert( context == rhs.get_context() );                                                    \
         return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
             context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );                            \
     }
 
-#define UREACT_DECLARE_BINARY_OP_2( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                                     \
     template <typename left_signal_t,                                                              \
         typename right_val_in_t,                                                                   \
         typename left_val_t = typename left_signal_t::value_t,                                     \
@@ -202,13 +202,13 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>          \
     auto operator op( const left_signal_t& lhs, right_val_in_t&& rhs )                             \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {/*static_assert(!std::is_same<op_t,op_t>::value, "2");*/                                                                                              \
         context& context = lhs.get_context();                                                      \
         return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
             context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );            \
     }
 
-#define UREACT_DECLARE_BINARY_OP_3( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                                     \
     template <typename left_val_in_t,                                                              \
         typename right_signal_t,                                                                   \
         typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
@@ -220,14 +220,14 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>         \
     auto operator op( left_val_in_t&& lhs, const right_signal_t& rhs )                             \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {static_assert(!std::is_same<op_t,op_t>::value, "3");                                                                                              \
         context& context = rhs.get_context();                                                      \
         return detail::temp_signal<S, op_t>( context,                                              \
             std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
                 context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );         \
     }
 
-#define UREACT_DECLARE_BINARY_OP_4( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                           \
     template <typename left_val_t,                                                                 \
         typename left_op_t,                                                                        \
         typename right_val_t,                                                                      \
@@ -238,15 +238,15 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs,                            \
         detail::temp_signal<right_val_t, right_op_t>&& rhs )                                       \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {/*static_assert(!std::is_same<op_t,op_t>::value, "4");*/                                                                                              \
         context& context = lhs.get_context();                                                      \
         assert( context == rhs.get_context() );                                                    \
-        return detail::temp_signal<S, op_t>( context,                                              \
+        return detail::temp_signal<S, op_t>(                                                       \
             std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
                 context, F(), lhs.steal_op(), rhs.steal_op() ) );                                  \
     }
 
-#define UREACT_DECLARE_BINARY_OP_5( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                                     \
     template <typename left_val_t,                                                                 \
         typename left_op_t,                                                                        \
         typename right_signal_t,                                                                   \
@@ -259,13 +259,13 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op(                                                                              \
         detail::temp_signal<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )              \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {/*static_assert(!std::is_same<op_t,op_t>::value, "5");*/                                                                                              \
         context& context = rhs.get_context();                                                      \
         return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
             context, F(), lhs.steal_op(), get_node_ptr( rhs ) ) );                                 \
     }
 
-#define UREACT_DECLARE_BINARY_OP_6( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                                     \
     template <typename left_signal_t,                                                              \
         typename right_val_t,                                                                      \
         typename right_op_t,                                                                       \
@@ -278,13 +278,13 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op(                                                                              \
         const left_signal_t& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )             \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {/*static_assert(!std::is_same<op_t,op_t>::value, "6");*/                                                                                              \
         context& context = lhs.get_context();                                                      \
         return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
             context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );                                 \
     }
 
-#define UREACT_DECLARE_BINARY_OP_7( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                                     \
     template <typename left_val_t,                                                                 \
         typename left_op_t,                                                                        \
         typename right_val_in_t,                                                                   \
@@ -295,13 +295,13 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         typename op_t = detail::function_op<S, F, left_op_t>>                                      \
     auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )     \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {/*static_assert(!std::is_same<op_t,op_t>::value, "7");*/                                                                                              \
         context& context = lhs.get_context();                                                      \
         return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
             context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );                 \
     }
 
-#define UREACT_DECLARE_BINARY_OP_8( op, name )                                                     \
+#define UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )                                                     \
     template <typename left_val_in_t,                                                              \
         typename right_val_t,                                                                      \
         typename right_op_t,                                                                       \
@@ -312,7 +312,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         typename op_t = detail::function_op<S, F, right_op_t>>                                     \
     auto operator op( left_val_in_t&& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )    \
         ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
+    {static_assert(!std::is_same<op_t,op_t>::value, "8");                                                                                              \
         context& context = rhs.get_context();                                                      \
         return detail::temp_signal<S, op_t>( context,                                              \
             std::make_shared<detail::signal_op_node<S, op_t>>(                                     \
@@ -323,14 +323,14 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
     UREACT_DECLARE_BINARY_OP_R_FUNCTOR( op, name )                                                 \
     UREACT_DECLARE_BINARY_OP_L_FUNCTOR( op, name )                                                 \
-    UREACT_DECLARE_BINARY_OP_1( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_2( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_3( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_4( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_5( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_6( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_7( op, name )                                                         \
-    UREACT_DECLARE_BINARY_OP_8( op, name )
+    UREACT_DECLARE_BINARY_OP_1_SIGNALS( op, name )                                                 \
+    UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                            \
+    UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                            \
+    UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                                   \
+    UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                             \
+    UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                             \
+    UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                              \
+    UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )
 
 UREACT_DECLARE_BINARY_OPERATOR( +, addition )
 UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )

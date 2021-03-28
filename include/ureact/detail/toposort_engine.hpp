@@ -6,7 +6,6 @@
 #include <algorithm>
 
 #include "ureact/detail/reactive_node_interface.hpp"
-#include "ureact/detail/turn_t.hpp"
 #include "ureact/detail/util.hpp"
 
 namespace ureact

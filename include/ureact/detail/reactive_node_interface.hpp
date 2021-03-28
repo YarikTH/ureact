@@ -1,8 +1,7 @@
 #pragma once
 
 #include <vector>
-
-#include "ureact/detail/turn_t.hpp"
+#include <limits>
 
 namespace ureact
 {
@@ -36,6 +35,26 @@ private:
         }
         return node_vector::end();
     }
+};
+
+using turn_id_t = unsigned int;
+
+class turn_t
+{
+public:
+    turn_t() = default;
+
+    turn_t( turn_id_t id )
+        : m_id( id )
+    {}
+
+    turn_id_t id() const
+    {
+        return m_id;
+    }
+
+private:
+    turn_id_t m_id = std::numeric_limits<turn_id_t>::max();
 };
 
 struct reactive_node_interface

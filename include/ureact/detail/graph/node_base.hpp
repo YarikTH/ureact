@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ureact/detail/turn_t.hpp"
 #include "ureact/detail/reactive_node_interface.hpp"
 #include "ureact/detail/context.hpp"
 

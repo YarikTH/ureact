@@ -1,5 +1,6 @@
 #include "doctest/doctest.h"
 #include "ureact/ureact.hpp"
+#include <string>
 
 TEST_SUITE( "operators" )
 {

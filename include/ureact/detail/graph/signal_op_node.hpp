@@ -24,7 +24,6 @@ public:
     {
         this->m_value = m_op.evaluate();
 
-        signal_op_node::get_context().on_node_create( *this );
         m_op.attach( *this );
     }
 
@@ -39,10 +38,9 @@ public:
         {
             m_op.detach( *this );
         }
-        signal_op_node::get_context().on_node_destroy( *this );
     }
 
-    void tick( turn_t& turn ) override
+    void tick() override
     {
         bool changed = false;
 
@@ -57,9 +55,9 @@ public:
         } // ~timer
 
         if ( changed )
-            signal_op_node::get_context().on_node_pulse( *this, turn );
-        else
-            signal_op_node::get_context().on_node_idle_pulse( *this, turn );
+        {
+            signal_op_node::get_context().on_node_pulse( *this );
+        }
     }
 
     op_t steal_op()

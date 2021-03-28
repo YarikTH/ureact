@@ -16,7 +16,6 @@ public:
     using input_manager_t = ::ureact::detail::input_manager;
     using engine_t = input_manager_t::engine_t;
     using node_t = input_manager_t::node_t;
-    using turn_t = ::ureact::detail::turn_t;
 
     context()
         : m_input_manager( new input_manager_t() )
@@ -38,34 +37,9 @@ public:
         get_input_manager().do_transaction( std::forward<F>( func ) );
     }
 
-    void on_turn_admission_start( turn_t& turn )
+    void on_input_change( node_t& node )
     {
-        get_engine().on_turn_admission_start( turn );
-    }
-
-    void on_turn_admission_end( turn_t& turn )
-    {
-        get_engine().on_turn_admission_end( turn );
-    }
-
-    void on_input_change( node_t& node, turn_t& turn )
-    {
-        get_engine().on_input_change( node, turn );
-    }
-
-    void propagate( turn_t& turn )
-    {
-        get_engine().propagate( turn );
-    }
-
-    void on_node_create( node_t& node )
-    {
-        get_engine().on_node_create( node );
-    }
-
-    void on_node_destroy( node_t& node )
-    {
-        get_engine().on_node_destroy( node );
+        get_engine().on_input_change( node );
     }
 
     void on_node_attach( node_t& node, node_t& parent )
@@ -78,24 +52,19 @@ public:
         get_engine().on_node_detach( node, parent );
     }
 
-    void on_node_pulse( node_t& node, turn_t& turn )
+    void on_node_pulse( node_t& node )
     {
-        get_engine().on_node_pulse( node, turn );
+        get_engine().on_node_pulse( node );
     }
 
-    void on_node_idle_pulse( node_t& node, turn_t& turn )
+    void on_dynamic_node_attach( node_t& node, node_t& parent )
     {
-        get_engine().on_node_idle_pulse( node, turn );
+        get_engine().on_dynamic_node_attach( node, parent );
     }
 
-    void on_dynamic_node_attach( node_t& node, node_t& parent, turn_t& turn )
+    void on_dynamic_node_detach( node_t& node, node_t& parent )
     {
-        get_engine().on_dynamic_node_attach( node, parent, turn );
-    }
-
-    void on_dynamic_node_detach( node_t& node, node_t& parent, turn_t& turn )
-    {
-        get_engine().on_dynamic_node_detach( node, parent, turn );
+        get_engine().on_dynamic_node_detach( node, parent );
     }
 
     bool operator==( const context& rsh )

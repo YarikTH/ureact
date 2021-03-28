@@ -29,7 +29,6 @@ public:
         , m_subject( subject )
         , m_func( std::forward<F>( func ) )
     {
-        get_context().on_node_create( *this );
         get_context().on_node_attach( *this, *subject );
     }
 
@@ -38,12 +37,7 @@ public:
     signal_observer_node( signal_observer_node&& ) noexcept = delete;
     signal_observer_node& operator=( signal_observer_node&& ) noexcept = delete;
 
-    ~signal_observer_node() override
-    {
-        get_context().on_node_destroy( *this );
-    }
-
-    void tick( turn_t& /*turn*/ ) override
+    void tick() override
     {
         bool should_detach = false;
 

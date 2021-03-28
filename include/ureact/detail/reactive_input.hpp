@@ -42,21 +42,7 @@ public:
 
         // Phase 1 - Input admission
         ++m_transaction_level;
-
-        turn_t current_turn;
-
-        if ( is_top_transaction )
-        {
-            current_turn = next_turn_id();
-            get_engine().on_turn_admission_start( current_turn );
-            func();
-            get_engine().on_turn_admission_end( current_turn );
-        }
-        else
-        {
-            func();
-        }
-
+        func();
         --m_transaction_level;
 
         if ( is_top_transaction )
@@ -64,13 +50,13 @@ public:
             // Phase 2 - apply_helper input node changes
             bool should_propagate = false;
             for ( auto* p : m_changed_inputs )
-                if ( p->apply_input( current_turn ) )
+                if ( p->apply_input() )
                     should_propagate = true;
             m_changed_inputs.clear();
 
             // Phase 3 - propagate changes
             if ( should_propagate )
-                get_engine().propagate( current_turn );
+                get_engine().propagate();
 
             detach_queued_observers();
         }
@@ -113,11 +99,6 @@ public:
     }
 
 private:
-    turn_id_t next_turn_id()
-    {
-        return m_next_turn_id++;
-    }
-
     bool is_transaction_active() const
     {
         return m_transaction_level > 0;
@@ -134,13 +115,10 @@ private:
     template <typename R, typename V>
     void add_simple_input( R& r, V&& v )
     {
-        turn_t turn( next_turn_id() );
-        get_engine().on_turn_admission_start( turn );
         r.add_input( std::forward<V>( v ) );
-        get_engine().on_turn_admission_end( turn );
 
-        if ( r.apply_input( turn ) )
-            get_engine().propagate( turn );
+        if ( r.apply_input() )
+            get_engine().propagate();
 
         detach_queued_observers();
     }
@@ -148,15 +126,12 @@ private:
     template <typename R, typename F>
     void modify_simple_input( R& r, const F& func )
     {
-        turn_t turn( next_turn_id() );
-        get_engine().on_turn_admission_start( turn );
         r.modify_input( func );
-        get_engine().on_turn_admission_end( turn );
 
         // Return value, will always be true
-        r.apply_input( turn );
+        r.apply_input();
 
-        get_engine().propagate( turn );
+        get_engine().propagate();
 
         detach_queued_observers();
     }
@@ -177,8 +152,6 @@ private:
     }
 
     std::unique_ptr<engine_t> m_engine;
-
-    turn_id_t m_next_turn_id{ 0 };
 
     int m_transaction_level = 0;
 

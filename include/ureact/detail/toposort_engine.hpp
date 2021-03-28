@@ -126,91 +126,32 @@ struct get_level_functor
     }
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// reactive_engine_interface
-///////////////////////////////////////////////////////////////////////////////////////////////////
-struct reactive_engine_interface
+class toposort_engine
 {
+public:
     using node_t = reactive_node;
+    using topo_queue_t = topo_queue<node_t*, get_level_functor<node_t>>;
 
-    virtual void on_turn_admission_start( turn_t& /*turn*/ ) = 0;
-    virtual void on_turn_admission_end( turn_t& /*turn*/ ) = 0;
+    void propagate();
 
-    virtual void on_input_change( node_t& /*node*/, turn_t& /*turn*/ ) = 0;
+    void on_node_attach( node_t& node, node_t& parent );
+    void on_node_detach( node_t& node, node_t& parent );
 
-    virtual void propagate( turn_t& /*turn*/ ) = 0;
+    void on_input_change( node_t& node );
+    void on_node_pulse( node_t& node );
 
-    virtual void on_node_create( node_t& /*node*/ ) = 0;
-    virtual void on_node_destroy( node_t& /*node*/ ) = 0;
-
-    virtual void on_node_attach( node_t& /*node*/, node_t& /*parent*/ ) = 0;
-    virtual void on_node_detach( node_t& /*node*/, node_t& /*parent*/ ) = 0;
-
-    virtual void on_node_pulse( node_t& /*node*/, turn_t& /*turn*/ ) = 0;
-    virtual void on_node_idle_pulse( node_t& /*node*/, turn_t& /*turn*/ ) = 0;
-
-    virtual void on_dynamic_node_attach( node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/ )
-        = 0;
-    virtual void on_dynamic_node_detach( node_t& /*node*/, node_t& /*parent*/, turn_t& /*turn*/ )
-        = 0;
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// engine_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
-class engine_base : public reactive_engine_interface
-{
-public:
-    void on_node_attach( node_t& node, node_t& parent ) override;
-    void on_node_detach( node_t& node, node_t& parent ) override;
-
-    void on_input_change( node_t& node, turn_t& turn ) override;
-    void on_node_pulse( node_t& node, turn_t& turn ) override;
-
-protected:
-    virtual void process_children( node_t& node, turn_t& turn ) = 0;
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// seq_engine_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
-class seq_engine_base final : public engine_base
-{
-public:
-    using topo_queue_t = topo_queue<reactive_node*, get_level_functor<reactive_node>>;
-
-    void propagate( turn_t& turn ) override;
-
-    void on_dynamic_node_attach(
-        reactive_node& node, reactive_node& parent, turn_t& turn ) override;
-    void on_dynamic_node_detach(
-        reactive_node& node, reactive_node& parent, turn_t& turn ) override;
-
-    void on_turn_admission_start( turn_t& /*turn*/ ) override
-    {}
-    void on_turn_admission_end( turn_t& /*turn*/ ) override
-    {}
-
-    void on_node_create( node_t& /*node*/ ) override
-    {}
-    void on_node_destroy( node_t& /*node*/ ) override
-    {}
-
-    void on_node_idle_pulse( node_t& /*node*/, turn_t& /*turn*/ ) override
-    {}
+    void on_dynamic_node_attach( node_t& node, node_t& parent );
+    void on_dynamic_node_detach( node_t& node, node_t& parent );
 
 private:
-    static void invalidate_successors( reactive_node& node );
+    static void invalidate_successors( node_t& node );
 
-    void process_children( reactive_node& node, turn_t& turn ) override;
+    void process_children( node_t& node );
 
     topo_queue_t m_scheduled_nodes;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// engine_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
-inline void engine_base::on_node_attach( node_t& node, node_t& parent )
+inline void toposort_engine::on_node_attach( node_t& node, node_t& parent )
 {
     parent.successors.add( node );
 
@@ -218,25 +159,22 @@ inline void engine_base::on_node_attach( node_t& node, node_t& parent )
         node.level = parent.level + 1;
 }
 
-inline void engine_base::on_node_detach( node_t& node, node_t& parent )
+inline void toposort_engine::on_node_detach( node_t& node, node_t& parent )
 {
     parent.successors.remove( node );
 }
 
-inline void engine_base::on_input_change( node_t& node, turn_t& turn )
+inline void toposort_engine::on_input_change( node_t& node )
 {
-    process_children( node, turn );
+    process_children( node );
 }
 
-inline void engine_base::on_node_pulse( node_t& node, turn_t& turn )
+inline void toposort_engine::on_node_pulse( node_t& node )
 {
-    process_children( node, turn );
+    process_children( node );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// seq_engine_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
-inline void seq_engine_base::propagate( turn_t& turn )
+inline void toposort_engine::propagate()
 {
     while ( m_scheduled_nodes.fetch_next() )
     {
@@ -251,13 +189,12 @@ inline void seq_engine_base::propagate( turn_t& turn )
             }
 
             cur_node->queued = false;
-            cur_node->tick( turn );
+            cur_node->tick();
         }
     }
 }
 
-inline void seq_engine_base::on_dynamic_node_attach(
-    reactive_node& node, reactive_node& parent, turn_t& /*turn*/ )
+inline void toposort_engine::on_dynamic_node_attach( reactive_node& node, reactive_node& parent )
 {
     this->on_node_attach( node, parent );
 
@@ -268,13 +205,12 @@ inline void seq_engine_base::on_dynamic_node_attach(
     m_scheduled_nodes.push( &node );
 }
 
-inline void seq_engine_base::on_dynamic_node_detach(
-    reactive_node& node, reactive_node& parent, turn_t& /*turn*/ )
+inline void toposort_engine::on_dynamic_node_detach( reactive_node& node, reactive_node& parent )
 {
     this->on_node_detach( node, parent );
 }
 
-inline void seq_engine_base::process_children( reactive_node& node, turn_t& /*turn*/ )
+inline void toposort_engine::process_children( reactive_node& node )
 {
     // add children to queue
     for ( auto* succ : node.successors )
@@ -287,7 +223,7 @@ inline void seq_engine_base::process_children( reactive_node& node, turn_t& /*tu
     }
 }
 
-inline void seq_engine_base::invalidate_successors( reactive_node& node )
+inline void toposort_engine::invalidate_successors( reactive_node& node )
 {
     for ( auto* succ : node.successors )
     {
@@ -298,7 +234,7 @@ inline void seq_engine_base::invalidate_successors( reactive_node& node )
 
 } // namespace toposort
 
-using toposort_engine = ::ureact::detail::toposort::seq_engine_base;
+using toposort_engine = ::ureact::detail::toposort::toposort_engine;
 
 } // namespace detail
 } // namespace ureact

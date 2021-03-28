@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <limits>
 
 namespace ureact
 {
@@ -37,31 +36,11 @@ private:
     }
 };
 
-using turn_id_t = unsigned int;
-
-class turn_t
-{
-public:
-    turn_t() = default;
-
-    turn_t( turn_id_t id )
-        : m_id( id )
-    {}
-
-    turn_id_t id() const
-    {
-        return m_id;
-    }
-
-private:
-    turn_id_t m_id = std::numeric_limits<turn_id_t>::max();
-};
-
 struct reactive_node_interface
 {
     virtual ~reactive_node_interface() = default;
 
-    virtual void tick( turn_t& turn ) = 0;
+    virtual void tick() = 0;
 };
 
 class reactive_node : public reactive_node_interface
@@ -78,7 +57,7 @@ struct input_node_interface
 {
     virtual ~input_node_interface() = default;
 
-    virtual bool apply_input( turn_t& turn ) = 0;
+    virtual bool apply_input() = 0;
 };
 
 } // namespace detail

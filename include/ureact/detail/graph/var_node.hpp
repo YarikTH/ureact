@@ -22,22 +22,15 @@ public:
     explicit var_node( context& context, T&& value )
         : var_node::signal_node( context, std::forward<T>( value ) )
         , m_new_value( value )
-    {
-        var_node::signal_node::get_context().on_node_create( *this );
-    }
+    {}
 
     var_node( const var_node& ) = delete;
     var_node& operator=( const var_node& ) = delete;
     var_node( var_node&& ) noexcept = delete;
     var_node& operator=( var_node&& ) noexcept = delete;
 
-    ~var_node() override
-    {
-        var_node::signal_node::get_context().on_node_destroy( *this );
-    }
-
     // LCOV_EXCL_START
-    void tick( turn_t& /*turn*/ ) override
+    void tick() override
     {
         assert( false && "Ticked var_node" );
     }
@@ -89,7 +82,7 @@ public:
         }
     }
 
-    bool apply_input( turn_t& turn ) override
+    bool apply_input() override
     {
         if ( m_is_input_added )
         {
@@ -98,7 +91,7 @@ public:
             if ( !equals( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
-                var_node::get_context().on_input_change( *this, turn );
+                var_node::get_context().on_input_change( *this );
                 return true;
             }
             return false;
@@ -107,7 +100,7 @@ public:
         {
             m_is_input_modified = false;
 
-            var_node::get_context().on_input_change( *this, turn );
+            var_node::get_context().on_input_change( *this );
             return true;
         }
         return false;

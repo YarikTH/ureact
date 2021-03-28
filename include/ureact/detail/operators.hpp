@@ -40,6 +40,10 @@ auto unary_operator_impl( temp_signal<val_t, op_in_t>&& arg ) -> temp_signal<S, 
 }
 
 template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_signal_t,
     typename right_signal_t,
     typename left_val_t = typename left_signal_t::value_t,
@@ -61,7 +65,11 @@ auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
         context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );
 }
 
-template <template <typename, typename> class functor_op_l,
+template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_signal_t,
     typename right_val_in_t,
     typename left_val_t = typename left_signal_t::value_t,
@@ -79,7 +87,11 @@ auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
         context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );
 }
 
-template <template <typename, typename> class functor_op_r,
+template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_val_in_t,
     typename right_signal_t,
     typename left_val_t = typename std::decay<left_val_in_t>::type,
@@ -98,6 +110,10 @@ auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
 }
 
 template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_val_t,
     typename left_op_t,
     typename right_val_t,
@@ -115,6 +131,10 @@ auto binary_operator_impl( detail::temp_signal<left_val_t, left_op_t>&& lhs,
 }
 
 template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_val_t,
     typename left_op_t,
     typename right_signal_t,
@@ -132,6 +152,10 @@ auto binary_operator_impl( detail::temp_signal<left_val_t, left_op_t>&& lhs,
 }
 
 template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_signal_t,
     typename right_val_t,
     typename right_op_t,
@@ -148,7 +172,11 @@ auto binary_operator_impl( const left_signal_t& lhs,
         context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );
 }
 
-template <template <typename, typename> class functor_op_l,
+template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_val_t,
     typename left_op_t,
     typename right_val_in_t,
@@ -165,7 +193,11 @@ auto binary_operator_impl( detail::temp_signal<left_val_t, left_op_t>&& lhs, rig
         context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );
 }
 
-template <template <typename, typename> class functor_op_r,
+template <template <typename, typename> class functor_op,
+    template <typename, typename>
+    class functor_op_l,
+    template <typename, typename>
+    class functor_op_r,
     typename left_val_in_t,
     typename right_val_t,
     typename right_op_t,
@@ -206,7 +238,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
     auto operator op( arg_t&& arg )                                                                \
         ->decltype( detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) ) )        \
     {                                                                                              \
-        return detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) );              \
+        return detail::unary_operator_impl<functor_op>( std::forward<arg_t&&>( arg ) );            \
     }
 
 #define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
@@ -245,9 +277,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     template <typename L, typename R>                                                              \
     struct op_r_functor_##name                                                                     \
     {                                                                                              \
-        op_r_functor_##name( op_r_functor_##name&& other ) noexcept                                \
-            : m_left_val( std::move( other.m_left_val ) )                                          \
-        {}                                                                                         \
+        op_r_functor_##name( op_r_functor_##name&& other ) noexcept = default;                     \
                                                                                                    \
         op_r_functor_##name& operator=( op_r_functor_##name&& other ) noexcept = delete;           \
                                                                                                    \
@@ -282,9 +312,7 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     template <typename L, typename R>                                                              \
     struct op_l_functor_##name                                                                     \
     {                                                                                              \
-        op_l_functor_##name( op_l_functor_##name&& other ) noexcept                                \
-            : m_right_val( std::move( other.m_right_val ) )                                        \
-        {}                                                                                         \
+        op_l_functor_##name( op_l_functor_##name&& other ) noexcept = default;                     \
                                                                                                    \
         op_l_functor_##name& operator=( op_l_functor_##name&& other ) noexcept = delete;           \
                                                                                                    \
@@ -311,162 +339,27 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     } /* namespace op_functors */                                                                  \
     } /* namespace detail */
 
-#define UREACT_DECLARE_BINARY_OP_1_SIGNALS( op, name )                                             \
-    template <typename left_signal_t,                                                              \
-        typename right_signal_t,                                                                   \
-        typename left_val_t = typename left_signal_t::value_t,                                     \
-        typename right_val_t = typename right_signal_t::value_t,                                   \
-        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
-        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
-        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t = detail::function_op<S,                                                     \
-            F,                                                                                     \
-            detail::signal_node_ptr_t<left_val_t>,                                                 \
-            detail::signal_node_ptr_t<right_val_t>>>                                               \
-    auto operator op( const left_signal_t& lhs, const right_signal_t& rhs )                        \
-        ->detail::temp_signal<S, op_t>                                                             \
+#define UREACT_DECLARE_BINARY_OP( op, name )                                                       \
+    template <typename lhs_t,                                                                      \
+        typename rhs_t,                                                                            \
+        template <typename, typename> class functor_op = detail::op_functors::op_functor_##name,   \
+        template <typename, typename> class functor_op_l                                           \
+        = detail::op_functors::op_l_functor_##name,                                                \
+        template <typename, typename> class functor_op_r                                           \
+        = detail::op_functors::op_r_functor_##name>                                                \
+    auto operator op( lhs_t&& lhs, rhs_t&& rhs )                                                   \
+        ->decltype( detail::binary_operator_impl<functor_op, functor_op_l, functor_op_r>(          \
+            std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) ) )                         \
     {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
-            std::forward<const left_signal_t&>( lhs ),                                             \
-            std::forward<const right_signal_t&>( rhs ) );                                          \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                        \
-    template <typename left_signal_t,                                                              \
-        typename right_val_in_t,                                                                   \
-        typename left_val_t = typename left_signal_t::value_t,                                     \
-        typename right_val_t = typename std::decay<right_val_in_t>::type,                          \
-        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
-        class = typename std::enable_if<!is_signal<right_val_t>::value>::type,                     \
-        typename F = detail::op_functors::op_l_functor_##name<left_val_t, right_val_t>,            \
-        typename S = typename std::result_of<F( left_val_t )>::type,                               \
-        typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>          \
-    auto operator op( const left_signal_t& lhs, right_val_in_t&& rhs )                             \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_l_functor_##name>(             \
-            std::forward<const left_signal_t&>( lhs ), std::forward<right_val_in_t&&>( rhs ) );    \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                        \
-    template <typename left_val_in_t,                                                              \
-        typename right_signal_t,                                                                   \
-        typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
-        typename right_val_t = typename right_signal_t::value_t,                                   \
-        class = typename std::enable_if<!is_signal<left_val_t>::value>::type,                      \
-        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
-        typename F = detail::op_functors::op_r_functor_##name<left_val_t, right_val_t>,            \
-        typename S = typename std::result_of<F( right_val_t )>::type,                              \
-        typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>         \
-    auto operator op( left_val_in_t&& lhs, const right_signal_t& rhs )                             \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_r_functor_##name>(             \
-            std::forward<left_val_in_t&&>( lhs ), std::forward<const right_signal_t&>( rhs ) );    \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                               \
-    template <typename left_val_t,                                                                 \
-        typename left_op_t,                                                                        \
-        typename right_val_t,                                                                      \
-        typename right_op_t,                                                                       \
-        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t = detail::function_op<S, F, left_op_t, right_op_t>>                          \
-    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs,                            \
-        detail::temp_signal<right_val_t, right_op_t>&& rhs )                                       \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
-            std::forward<detail::temp_signal<left_val_t, left_op_t>&&>( lhs ),                     \
-            std::forward<detail::temp_signal<right_val_t, right_op_t>&&>( rhs ) );                 \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                         \
-    template <typename left_val_t,                                                                 \
-        typename left_op_t,                                                                        \
-        typename right_signal_t,                                                                   \
-        typename right_val_t = typename right_signal_t::value_t,                                   \
-        class = typename std::enable_if<is_signal<right_signal_t>::value>::type,                   \
-        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t                                                                              \
-        = detail::function_op<S, F, left_op_t, detail::signal_node_ptr_t<right_val_t>>>            \
-    auto operator op(                                                                              \
-        detail::temp_signal<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )              \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
-            std::forward<detail::temp_signal<left_val_t, left_op_t>&&>( lhs ),                     \
-            std::forward<const right_signal_t&>( rhs ) );                                          \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                         \
-    template <typename left_signal_t,                                                              \
-        typename right_val_t,                                                                      \
-        typename right_op_t,                                                                       \
-        typename left_val_t = typename left_signal_t::value_t,                                     \
-        class = typename std::enable_if<is_signal<left_signal_t>::value>::type,                    \
-        typename F = detail::op_functors::op_functor_##name<left_val_t, right_val_t>,              \
-        typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,                  \
-        typename op_t                                                                              \
-        = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>, right_op_t>>            \
-    auto operator op(                                                                              \
-        const left_signal_t& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )             \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
-            std::forward<const left_signal_t&>( lhs ),                                             \
-            std::forward<detail::temp_signal<right_val_t, right_op_t>&&>( rhs ) );                 \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                          \
-    template <typename left_val_t,                                                                 \
-        typename left_op_t,                                                                        \
-        typename right_val_in_t,                                                                   \
-        typename right_val_t = typename std::decay<right_val_in_t>::type,                          \
-        class = typename std::enable_if<!is_signal<right_val_t>::value>::type,                     \
-        typename F = detail::op_functors::op_l_functor_##name<left_val_t, right_val_t>,            \
-        typename S = typename std::result_of<F( left_val_t )>::type,                               \
-        typename op_t = detail::function_op<S, F, left_op_t>>                                      \
-    auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )     \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_l_functor_##name>(             \
-            std::forward<detail::temp_signal<left_val_t, left_op_t>&&>( lhs ),                     \
-            std::forward<right_val_in_t&&>( rhs ) );                                               \
-    }
-
-#define UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )                                          \
-    template <typename left_val_in_t,                                                              \
-        typename right_val_t,                                                                      \
-        typename right_op_t,                                                                       \
-        typename left_val_t = typename std::decay<left_val_in_t>::type,                            \
-        class = typename std::enable_if<!is_signal<left_val_t>::value>::type,                      \
-        typename F = detail::op_functors::op_r_functor_##name<left_val_t, right_val_t>,            \
-        typename S = typename std::result_of<F( right_val_t )>::type,                              \
-        typename op_t = detail::function_op<S, F, right_op_t>>                                     \
-    auto operator op( left_val_in_t&& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )    \
-        ->detail::temp_signal<S, op_t>                                                             \
-    {                                                                                              \
-        return detail::binary_operator_impl<detail::op_functors::op_r_functor_##name>(             \
-            std::forward<left_val_in_t&&>( lhs ),                                                  \
-            std::forward<detail::temp_signal<right_val_t, right_op_t>&&>( rhs ) );                 \
+        return detail::binary_operator_impl<functor_op, functor_op_l, functor_op_r>(               \
+            std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) );                          \
     }
 
 #define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
     UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
     UREACT_DECLARE_BINARY_OP_R_FUNCTOR( op, name )                                                 \
     UREACT_DECLARE_BINARY_OP_L_FUNCTOR( op, name )                                                 \
-    UREACT_DECLARE_BINARY_OP_1_SIGNALS( op, name )                                                 \
-    UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                            \
-    UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                            \
-    UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                                   \
-    UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                             \
-    UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                             \
-    UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                              \
-    UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )
+    UREACT_DECLARE_BINARY_OP( op, name )
 
 UREACT_DECLARE_BINARY_OPERATOR( +, addition )
 UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )

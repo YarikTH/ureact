@@ -39,6 +39,149 @@ auto unary_operator_impl( temp_signal<val_t, op_in_t>&& arg ) -> temp_signal<S, 
     return make_unary_operator_signal<S, op_t, F>( arg.get_context(), arg.steal_op() );
 }
 
+template <template <typename, typename> class functor_op,
+    typename left_signal_t,
+    typename right_signal_t,
+    typename left_val_t = typename left_signal_t::value_t,
+    typename right_val_t = typename right_signal_t::value_t,
+    class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
+    class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
+    typename F = functor_op<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename op_t = detail::function_op<S,
+        F,
+        detail::signal_node_ptr_t<left_val_t>,
+        detail::signal_node_ptr_t<right_val_t>>>
+auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
+    -> detail::temp_signal<S, op_t>
+{
+    context& context = lhs.get_context();
+    assert( context == rhs.get_context() );
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );
+}
+
+template <template <typename, typename> class functor_op_l,
+    typename left_signal_t,
+    typename right_val_in_t,
+    typename left_val_t = typename left_signal_t::value_t,
+    typename right_val_t = typename std::decay<right_val_in_t>::type,
+    class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
+    class = typename std::enable_if<!is_signal<right_val_t>::value>::type,
+    typename F = functor_op_l<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( left_val_t )>::type,
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>
+auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
+    -> detail::temp_signal<S, op_t>
+{
+    context& context = lhs.get_context();
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );
+}
+
+template <template <typename, typename> class functor_op_r,
+    typename left_val_in_t,
+    typename right_signal_t,
+    typename left_val_t = typename std::decay<left_val_in_t>::type,
+    typename right_val_t = typename right_signal_t::value_t,
+    class = typename std::enable_if<!is_signal<left_val_t>::value>::type,
+    class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
+    typename F = functor_op_r<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( right_val_t )>::type,
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>
+auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
+    -> detail::temp_signal<S, op_t>
+{
+    context& context = rhs.get_context();
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );
+}
+
+template <template <typename, typename> class functor_op,
+    typename left_val_t,
+    typename left_op_t,
+    typename right_val_t,
+    typename right_op_t,
+    typename F = functor_op<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename op_t = detail::function_op<S, F, left_op_t, right_op_t>>
+auto binary_operator_impl( detail::temp_signal<left_val_t, left_op_t>&& lhs,
+    detail::temp_signal<right_val_t, right_op_t>&& rhs ) -> detail::temp_signal<S, op_t>
+{
+    context& context = lhs.get_context();
+    assert( context == rhs.get_context() );
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F(), lhs.steal_op(), rhs.steal_op() ) );
+}
+
+template <template <typename, typename> class functor_op,
+    typename left_val_t,
+    typename left_op_t,
+    typename right_signal_t,
+    typename right_val_t = typename right_signal_t::value_t,
+    class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
+    typename F = functor_op<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename op_t = detail::function_op<S, F, left_op_t, detail::signal_node_ptr_t<right_val_t>>>
+auto binary_operator_impl( detail::temp_signal<left_val_t, left_op_t>&& lhs,
+    const right_signal_t& rhs ) -> detail::temp_signal<S, op_t>
+{
+    context& context = rhs.get_context();
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F(), lhs.steal_op(), get_node_ptr( rhs ) ) );
+}
+
+template <template <typename, typename> class functor_op,
+    typename left_signal_t,
+    typename right_val_t,
+    typename right_op_t,
+    typename left_val_t = typename left_signal_t::value_t,
+    class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
+    typename F = functor_op<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>, right_op_t>>
+auto binary_operator_impl( const left_signal_t& lhs,
+    detail::temp_signal<right_val_t, right_op_t>&& rhs ) -> detail::temp_signal<S, op_t>
+{
+    context& context = lhs.get_context();
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );
+}
+
+template <template <typename, typename> class functor_op_l,
+    typename left_val_t,
+    typename left_op_t,
+    typename right_val_in_t,
+    typename right_val_t = typename std::decay<right_val_in_t>::type,
+    class = typename std::enable_if<!is_signal<right_val_t>::value>::type,
+    typename F = functor_op_l<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( left_val_t )>::type,
+    typename op_t = detail::function_op<S, F, left_op_t>>
+auto binary_operator_impl( detail::temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )
+    -> detail::temp_signal<S, op_t>
+{
+    context& context = lhs.get_context();
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );
+}
+
+template <template <typename, typename> class functor_op_r,
+    typename left_val_in_t,
+    typename right_val_t,
+    typename right_op_t,
+    typename left_val_t = typename std::decay<left_val_in_t>::type,
+    class = typename std::enable_if<!is_signal<left_val_t>::value>::type,
+    typename F = functor_op_r<left_val_t, right_val_t>,
+    typename S = typename std::result_of<F( right_val_t )>::type,
+    typename op_t = detail::function_op<S, F, right_op_t>>
+auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )
+    -> detail::temp_signal<S, op_t>
+{
+    context& context = rhs.get_context();
+    return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(
+        context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() ) );
+}
+
 } // namespace detail
 
 #define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
@@ -184,10 +327,9 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op( const left_signal_t& lhs, const right_signal_t& rhs )                        \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        assert( context == rhs.get_context() );                                                    \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) ) );                            \
+        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
+            std::forward<const left_signal_t&>( lhs ),                                             \
+            std::forward<const right_signal_t&>( rhs ) );                                          \
     }
 
 #define UREACT_DECLARE_BINARY_OP_2_SIGNAL_VALUE( op, name )                                        \
@@ -203,9 +345,8 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op( const left_signal_t& lhs, right_val_in_t&& rhs )                             \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) ) );            \
+        return detail::binary_operator_impl<detail::op_functors::op_l_functor_##name>(             \
+            std::forward<const left_signal_t&>( lhs ), std::forward<right_val_in_t&&>( rhs ) );    \
     }
 
 #define UREACT_DECLARE_BINARY_OP_3_VALUE_SIGNAL( op, name )                                        \
@@ -221,9 +362,8 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op( left_val_in_t&& lhs, const right_signal_t& rhs )                             \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) ) );             \
+        return detail::binary_operator_impl<detail::op_functors::op_r_functor_##name>(             \
+            std::forward<left_val_in_t&&>( lhs ), std::forward<const right_signal_t&>( rhs ) );    \
     }
 
 #define UREACT_DECLARE_BINARY_OP_4_TEMPS( op, name )                                               \
@@ -238,10 +378,9 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         detail::temp_signal<right_val_t, right_op_t>&& rhs )                                       \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        assert( context == rhs.get_context() );                                                    \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F(), lhs.steal_op(), rhs.steal_op() ) );                                      \
+        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
+            std::forward<detail::temp_signal<left_val_t, left_op_t>&&>( lhs ),                     \
+            std::forward<detail::temp_signal<right_val_t, right_op_t>&&>( rhs ) );                 \
     }
 
 #define UREACT_DECLARE_BINARY_OP_5_TEMP_SIGNAL( op, name )                                         \
@@ -258,9 +397,9 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         detail::temp_signal<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )              \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F(), lhs.steal_op(), get_node_ptr( rhs ) ) );                                 \
+        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
+            std::forward<detail::temp_signal<left_val_t, left_op_t>&&>( lhs ),                     \
+            std::forward<const right_signal_t&>( rhs ) );                                          \
     }
 
 #define UREACT_DECLARE_BINARY_OP_6_SIGNAL_TEMP( op, name )                                         \
@@ -277,9 +416,9 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
         const left_signal_t& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )             \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F(), get_node_ptr( lhs ), rhs.steal_op() ) );                                 \
+        return detail::binary_operator_impl<detail::op_functors::op_functor_##name>(               \
+            std::forward<const left_signal_t&>( lhs ),                                             \
+            std::forward<detail::temp_signal<right_val_t, right_op_t>&&>( rhs ) );                 \
     }
 
 #define UREACT_DECLARE_BINARY_OP_7_TEMP_VALUE( op, name )                                          \
@@ -294,9 +433,9 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op( detail::temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )     \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = lhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() ) );                 \
+        return detail::binary_operator_impl<detail::op_functors::op_l_functor_##name>(             \
+            std::forward<detail::temp_signal<left_val_t, left_op_t>&&>( lhs ),                     \
+            std::forward<right_val_in_t&&>( rhs ) );                                               \
     }
 
 #define UREACT_DECLARE_BINARY_OP_8_VALUE_TEMP( op, name )                                          \
@@ -311,9 +450,9 @@ UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
     auto operator op( left_val_in_t&& lhs, detail::temp_signal<right_val_t, right_op_t>&& rhs )    \
         ->detail::temp_signal<S, op_t>                                                             \
     {                                                                                              \
-        context& context = rhs.get_context();                                                      \
-        return detail::temp_signal<S, op_t>( std::make_shared<detail::signal_op_node<S, op_t>>(    \
-            context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() ) );                  \
+        return detail::binary_operator_impl<detail::op_functors::op_r_functor_##name>(             \
+            std::forward<left_val_in_t&&>( lhs ),                                                  \
+            std::forward<detail::temp_signal<right_val_t, right_op_t>&&>( rhs ) );                 \
     }
 
 #define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \

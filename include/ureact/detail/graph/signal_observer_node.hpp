@@ -41,26 +41,26 @@ public:
     {
         bool should_detach = false;
 
-        if ( auto p = m_subject.lock() )
+        if( auto p = m_subject.lock() )
         { // timer
-            if ( m_func( p->value_ref() ) == observer_action::stop_and_detach )
+            if( m_func( p->value_ref() ) == observer_action::stop_and_detach )
                 should_detach = true;
         } // ~timer
 
-        if ( should_detach )
+        if( should_detach )
             get_context().get_input_manager().queue_observer_for_detach( *this );
     }
 
     void unregister_self() override
     {
-        if ( auto p = m_subject.lock() )
+        if( auto p = m_subject.lock() )
             p->unregister_observer( this );
     }
 
 private:
     void detach_observer() override
     {
-        if ( auto p = m_subject.lock() )
+        if( auto p = m_subject.lock() )
         {
             get_context().on_node_detach( *this, *p );
             m_subject.reset();

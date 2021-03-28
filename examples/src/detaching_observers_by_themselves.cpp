@@ -14,7 +14,7 @@ int main()
     auto x = make_var( ctx, 1 );
 
     ureact::observer obs = observe( x, []( int value ) {
-        if ( value < 0 )
+        if( value < 0 )
         {
             std::cout << value << " [detaching observer]\n";
             return ureact::observer_action::stop_and_detach;

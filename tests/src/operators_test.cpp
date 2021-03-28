@@ -26,7 +26,7 @@ enum class binary_operator_type
         ureact::context& ctx, binary_operator_type type, const left_t& lhs, const right_t& rhs )   \
         ->ureact::signal<ret_t>                                                                    \
     {                                                                                              \
-        switch ( type )                                                                            \
+        switch( type )                                                                             \
         {                                                                                          \
             case binary_operator_type::signal_op_signal:                                           \
                 return make_var( ctx, lhs ) OPERATOR make_var( ctx, rhs );                         \
@@ -78,7 +78,7 @@ BINARY_OPERATOR( +, addition )
             -> ureact::signal<typename decltype( std::declval<ureact::signal<left_t>>()            \
                     OPERATOR std::declval<ureact::signal<right_t>>() )::value_t>                   \
         {                                                                                          \
-            switch ( type )                                                                        \
+            switch( type )                                                                         \
             {                                                                                      \
                 case binary_operator_type::signal_op_signal:                                       \
                     return make_var( ctx, lhs ) OPERATOR make_var( ctx, rhs );                     \
@@ -112,7 +112,7 @@ BINARY_OPERATOR( +, addition )
             const binary_operator_type type, const left_t& lhs, const right_t& rhs )               \
         {                                                                                          \
             std::ostringstream ss;                                                                 \
-            switch ( type )                                                                        \
+            switch( type )                                                                         \
             {                                                                                      \
                 case binary_operator_type::signal_op_signal:                                       \
                     ss << "signal(" << lhs << ") " #OPERATOR " signal(" << rhs << ")";             \
@@ -181,14 +181,14 @@ void test_binary_operator_impl( binary_operator_type type, const left_t& lhs, co
 template <typename traits, typename left_t, typename right_t>
 void test_binary_operator( const left_t& lhs, const right_t& rhs )
 {
-    for ( auto type : { binary_operator_type::signal_op_signal,
-              binary_operator_type::temp_signal_op_signal,
-              binary_operator_type::signal_op_temp_signal,
-              binary_operator_type::temp_signal_op_temp_signal,
-              binary_operator_type::value_op_signal,
-              binary_operator_type::value_op_temp_signal,
-              binary_operator_type::signal_op_value,
-              binary_operator_type::temp_signal_op_value } )
+    for( auto type : { binary_operator_type::signal_op_signal,
+             binary_operator_type::temp_signal_op_signal,
+             binary_operator_type::signal_op_temp_signal,
+             binary_operator_type::temp_signal_op_temp_signal,
+             binary_operator_type::value_op_signal,
+             binary_operator_type::value_op_temp_signal,
+             binary_operator_type::signal_op_value,
+             binary_operator_type::temp_signal_op_value } )
     {
         SUBCASE( traits::get_test_name( type, lhs, rhs ).c_str() )
         {
@@ -219,7 +219,7 @@ TEST_SUITE( "operators" )
         // clang-format on
 
         auto checkValues = [&]( std::initializer_list<int> valuesToTest ) {
-            for ( const int& value : valuesToTest )
+            for( const int& value : valuesToTest )
             {
                 v1 <<= value;
 
@@ -275,7 +275,7 @@ TEST_SUITE( "operators" )
             { 5, 0 },
         };
 
-        for ( const auto& values : values_to_test )
+        for( const auto& values : values_to_test )
         {
             int left, right;
             std::tie( left, right ) = values;
@@ -328,7 +328,7 @@ TEST_SUITE( "operators" )
             { 8, 3 },
         };
 
-        for ( const auto& values : values_to_test )
+        for( const auto& values : values_to_test )
         {
             int left, right;
             std::tie( left, right ) = values;

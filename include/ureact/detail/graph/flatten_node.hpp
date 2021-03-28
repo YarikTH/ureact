@@ -44,7 +44,7 @@ public:
     {
         const auto& new_inner = get_node_ptr( m_outer->value_ref() );
 
-        if ( new_inner != m_inner )
+        if( new_inner != m_inner )
         {
             // Topology has been changed
             auto old_inner = m_inner;
@@ -56,7 +56,7 @@ public:
             return;
         }
 
-        if ( !equals( this->m_value, m_inner->value_ref() ) )
+        if( !equals( this->m_value, m_inner->value_ref() ) )
         {
             this->m_value = m_inner->value_ref();
             flatten_node::get_context().on_node_pulse( *this );

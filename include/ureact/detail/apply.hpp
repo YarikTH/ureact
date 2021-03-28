@@ -7,7 +7,7 @@ namespace ureact
 namespace detail
 {
 
-#if ( defined( __cplusplus ) && __cplusplus >= 201703L )                                           \
+#if( defined( __cplusplus ) && __cplusplus >= 201703L )                                            \
     || ( defined( _HAS_CXX17 ) && _HAS_CXX17 == 1 )
 using std::apply;
 #else

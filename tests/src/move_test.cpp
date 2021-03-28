@@ -37,7 +37,7 @@ struct CopyCounter
 
     CopyCounter& operator=( const CopyCounter& other )
     {
-        if ( &other != this )
+        if( &other != this )
         {
             v = other.v;
             stats = other.stats;
@@ -48,7 +48,7 @@ struct CopyCounter
 
     CopyCounter& operator=( CopyCounter&& other ) noexcept
     {
-        if ( &other != this )
+        if( &other != this )
         {
             v = other.v;
             stats = other.stats;

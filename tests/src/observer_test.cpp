@@ -23,7 +23,7 @@ TEST_CASE( "detach" )
     auto obs1 = observe( result, [&]( int v ) {
         observeCount1++;
 
-        if ( phase == 0 )
+        if( phase == 0 )
             CHECK( v == 3 );
         else
             FAIL( "We shouldn't be here" );
@@ -32,9 +32,9 @@ TEST_CASE( "detach" )
     auto obs2 = observe( result, [&]( int v ) {
         observeCount2++;
 
-        if ( phase == 0 )
+        if( phase == 0 )
             CHECK( v == 3 );
-        else if ( phase == 1 )
+        else if( phase == 1 )
             CHECK( v == 4 );
         else
             FAIL( "We shouldn't be here" );
@@ -43,9 +43,9 @@ TEST_CASE( "detach" )
     auto obs3 = observe( result, [&]( int v ) {
         observeCount3++;
 
-        if ( phase == 0 )
+        if( phase == 0 )
             CHECK( v == 3 );
-        else if ( phase == 1 )
+        else if( phase == 1 )
             CHECK( v == 4 );
         else
             FAIL( "We shouldn't be here" );
@@ -164,7 +164,7 @@ TEST_CASE( "SelfObserverDetachTest" )
     auto in = make_var( ctx, 0 );
 
     ureact::observer obs = observe( in, [&]( int v ) {
-        if ( v < 0 )
+        if( v < 0 )
         {
             return ureact::observer_action::stop_and_detach;
         }

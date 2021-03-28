@@ -19,7 +19,7 @@ int main()
 
     data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "World" ); } );
 
-    for ( const auto& s : data.value() )
+    for( const auto& s : data.value() )
         std::cout << s << " ";
     std::cout << "\n";
     // output: Hello World

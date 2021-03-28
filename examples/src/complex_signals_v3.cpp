@@ -22,7 +22,7 @@ ExprPairT makeExprPair( const std::string& s, int v )
 void printExpressions( const ExprVectT& expressions )
 {
     std::cout << "Expressions:\n";
-    for ( const auto& p : expressions )
+    for( const auto& p : expressions )
     {
         std::cout << "\t" << p.first << " is " << p.second << "\n";
     }

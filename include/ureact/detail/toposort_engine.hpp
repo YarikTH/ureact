@@ -50,8 +50,8 @@ public:
 
         // Find min level of nodes in queue data
         m_min_level = ( std::numeric_limits<int>::max )();
-        for ( const auto& e : m_queue_data )
-            if ( m_min_level > e.m_level )
+        for( const auto& e : m_queue_data )
+            if( m_min_level > e.m_level )
                 m_min_level = e.m_level;
 
         // Swap entries with min level to the end
@@ -63,7 +63,7 @@ public:
         m_next_data.reserve( to_reserve );
 
         // Move min level values to next data
-        for ( auto it = p; it != m_queue_data.end(); ++it )
+        for( auto it = p; it != m_queue_data.end(); ++it )
             m_next_data.push_back( std::move( it->m_value ) );
 
         // Truncate moved entries
@@ -155,7 +155,7 @@ inline void toposort_engine::on_node_attach( node_t& node, node_t& parent )
 {
     parent.successors.add( node );
 
-    if ( node.level <= parent.level )
+    if( node.level <= parent.level )
         node.level = parent.level + 1;
 }
 
@@ -176,11 +176,11 @@ inline void toposort_engine::on_node_pulse( node_t& node )
 
 inline void toposort_engine::propagate()
 {
-    while ( m_scheduled_nodes.fetch_next() )
+    while( m_scheduled_nodes.fetch_next() )
     {
-        for ( auto* cur_node : m_scheduled_nodes.next_values() )
+        for( auto* cur_node : m_scheduled_nodes.next_values() )
         {
-            if ( cur_node->level < cur_node->new_level )
+            if( cur_node->level < cur_node->new_level )
             {
                 cur_node->level = cur_node->new_level;
                 invalidate_successors( *cur_node );
@@ -213,9 +213,9 @@ inline void toposort_engine::on_dynamic_node_detach( reactive_node& node, reacti
 inline void toposort_engine::process_children( reactive_node& node )
 {
     // add children to queue
-    for ( auto* succ : node.successors )
+    for( auto* succ : node.successors )
     {
-        if ( !succ->queued )
+        if( !succ->queued )
         {
             succ->queued = true;
             m_scheduled_nodes.push( succ );
@@ -225,9 +225,9 @@ inline void toposort_engine::process_children( reactive_node& node )
 
 inline void toposort_engine::invalidate_successors( reactive_node& node )
 {
-    for ( auto* succ : node.successors )
+    for( auto* succ : node.successors )
     {
-        if ( succ->new_level <= node.level )
+        if( succ->new_level <= node.level )
             succ->new_level = node.level + 1;
     }
 }

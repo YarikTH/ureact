@@ -25,9 +25,9 @@ private:
     // To prevent including <algorithm> just to use std::find
     typename node_vector::const_iterator find( const node_t& node ) const
     {
-        for ( auto it = node_vector::begin(), ite = node_vector::end(); it != ite; ++it )
+        for( auto it = node_vector::begin(), ite = node_vector::end(); it != ite; ++it )
         {
-            if ( *it == &node )
+            if( *it == &node )
             {
                 return it;
             }

@@ -67,7 +67,7 @@ public:
     void modify_input( F& func )
     {
         // There hasn't been any set(...) input yet, modify.
-        if ( !m_is_input_added )
+        if( !m_is_input_added )
         {
             func( this->m_value );
 
@@ -84,11 +84,11 @@ public:
 
     bool apply_input() override
     {
-        if ( m_is_input_added )
+        if( m_is_input_added )
         {
             m_is_input_added = false;
 
-            if ( !equals( this->m_value, m_new_value ) )
+            if( !equals( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
                 var_node::get_context().on_input_change( *this );
@@ -96,7 +96,7 @@ public:
             }
             return false;
         }
-        if ( m_is_input_modified )
+        if( m_is_input_modified )
         {
             m_is_input_modified = false;
 

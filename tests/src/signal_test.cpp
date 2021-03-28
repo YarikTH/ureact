@@ -104,7 +104,7 @@ TEST_CASE( "Signals2" )
 
     observe( result, [&observeCount]( int v ) {
         observeCount++;
-        if ( observeCount == 1 )
+        if( observeCount == 1 )
             CHECK( v == 9 );
         else
             CHECK( v == 12 );

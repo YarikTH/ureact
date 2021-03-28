@@ -42,8 +42,8 @@ public:
 
     ~observable()
     {
-        for ( const auto& p : m_observers )
-            if ( p != nullptr )
+        for( const auto& p : m_observers )
+            if( p != nullptr )
                 p->detach_observer();
     }
 
@@ -54,9 +54,9 @@ public:
 
     void unregister_observer( observer_interface* raw_obs_ptr )
     {
-        for ( auto it = m_observers.begin(); it != m_observers.end(); ++it )
+        for( auto it = m_observers.begin(); it != m_observers.end(); ++it )
         {
-            if ( it->get() == raw_obs_ptr )
+            if( it->get() == raw_obs_ptr )
             {
                 it->get()->detach_observer();
                 m_observers.erase( it );

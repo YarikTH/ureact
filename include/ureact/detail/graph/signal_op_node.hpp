@@ -34,7 +34,7 @@ public:
 
     ~signal_op_node() override
     {
-        if ( !m_was_op_stolen )
+        if( !m_was_op_stolen )
         {
             m_op.detach( *this );
         }
@@ -47,14 +47,14 @@ public:
         { // timer
             S new_value = m_op.evaluate();
 
-            if ( !equals( this->m_value, new_value ) )
+            if( !equals( this->m_value, new_value ) )
             {
                 this->m_value = std::move( new_value );
                 changed = true;
             }
         } // ~timer
 
-        if ( changed )
+        if( changed )
         {
             signal_op_node::get_context().on_node_pulse( *this );
         }

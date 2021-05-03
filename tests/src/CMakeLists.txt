@@ -1,0 +1,21 @@
+add_executable(ureact_test)
+
+target_sources(
+    ureact_test
+    PRIVATE
+        main.cpp
+        examples/signal_examples.cpp
+        details/move_test.cpp
+        details/observer_test.cpp
+        details/signal_test.cpp
+        details/operators_test.cpp
+        details/dynamic_signals_test.cpp
+)
+
+target_include_directories(ureact_test PRIVATE include)
+
+target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)
+
+target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
+
+add_test(NAME ureact_test COMMAND ureact_test)

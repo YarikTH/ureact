@@ -1,13 +1,16 @@
 add_subdirectory(thirdparty/doctest)
 
-add_executable(
+add_executable(ureact_test)
+
+target_sources(
     ureact_test
-    src/main.cpp
-    src/move_test.cpp
-    src/observer_test.cpp
-    src/signal_test.cpp
-    src/operators_test.cpp
-    src/dynamic_signals_test.cpp
+    PRIVATE
+        main.cpp
+        details/move_test.cpp
+        details/observer_test.cpp
+        details/signal_test.cpp
+        details/operators_test.cpp
+        details/dynamic_signals_test.cpp
 )
 
 target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)

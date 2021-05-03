@@ -5,13 +5,13 @@ add_executable(ureact_test)
 target_sources(
     ureact_test
     PRIVATE
-        main.cpp
-        examples/signal_examples.cpp
-        details/move_test.cpp
-        details/observer_test.cpp
-        details/signal_test.cpp
-        details/operators_test.cpp
-        details/dynamic_signals_test.cpp
+        src/main.cpp
+        src/examples/signal_examples.cpp
+        src/details/move_test.cpp
+        src/details/observer_test.cpp
+        src/details/signal_test.cpp
+        src/details/operators_test.cpp
+        src/details/dynamic_signals_test.cpp
 )
 
 target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)

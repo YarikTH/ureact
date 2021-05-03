@@ -10,11 +10,7 @@ add_executable(
     src/dynamic_signals_test.cpp
 )
 
-target_link_libraries(
-    ureact_test
-    ureact::ureact
-    ureact::doctest
-)
+target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)
 
 target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
 

@@ -1,6 +1,6 @@
 #include <string>
 
-#include "doctest/doctest.h"
+#include <doctest.h>
 #include "ureact/ureact.hpp"
 
 TEST_SUITE_BEGIN( "ObserverTest" );

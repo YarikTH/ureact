@@ -1,7 +1,31 @@
 #include <doctest.h>
 #include <string>
+#include <vector>
+#include <sstream>
 
 #include "ureact/ureact.hpp"
+
+namespace std
+{
+template <class T, class Allocator>
+doctest::String toString( const std::vector<T, Allocator>& value )
+{
+    std::stringstream ss;
+
+    ss << "[";
+    for( auto it = value.begin(), ite = value.end(); it != ite; ++it )
+    {
+        ss << *it;
+        if( it + 1 != ite )
+        {
+            ss << ", ";
+        }
+    }
+    ss << "]";
+
+    return ss.str().c_str();
+}
+} // namespace std
 
 TEST_SUITE( "Examples" )
 {
@@ -47,5 +71,23 @@ TEST_SUITE( "Examples" )
         secondWord <<= std::string( "World!" );
 
         CHECK( bothWords.value() == "Hello World!" );
+    }
+
+    TEST_CASE( "Modifying signal values in place" )
+    {
+        ureact::context ctx;
+
+        ureact::var_signal<std::vector<std::string>> data
+            = make_var( ctx, std::vector<std::string>{} );
+
+        CHECK( data.value() == std::vector<std::string>{} );
+
+        data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "Hello" ); } );
+
+        CHECK( data.value() == std::vector<std::string>{ "Hello" } );
+
+        data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "World!" ); } );
+
+        CHECK( data.value() == std::vector<std::string>{ "Hello", "World!" } );
     }
 }

@@ -4,8 +4,6 @@ function(ureact_add_example name)
     target_compile_options(example_${name} PRIVATE ${UREACT_WARNING_OPTION})
 endfunction()
 
-ureact_add_example( hello_world_operators )
-ureact_add_example( hello_world_make_signal )
 ureact_add_example( modifying_signal_values_in_place )
 ureact_add_example( changing_multiple_inputs )
 ureact_add_example( reacting_to_value_changes )

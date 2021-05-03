@@ -1,5 +1,4 @@
 add_subdirectory(thirdparty/doctest)
-add_subdirectory(thirdparty/ApprovalTests.cpp)
 
 add_executable(
     ureact_test
@@ -15,7 +14,6 @@ target_link_libraries(
     ureact_test
     ureact::ureact
     ureact::doctest
-    ureact::ApprovalTests
 )
 
 target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})

@@ -20,7 +20,6 @@ option(
 )
 
 # Options that control generation of various targets.
-option(UREACT_EXAMPLES "Generate example targets." ${UREACT_MASTER_PROJECT})
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
 
 # Get version from core.h
@@ -72,11 +71,6 @@ target_include_directories(
 )
 
 target_compile_features(ureact INTERFACE cxx_std_11)
-
-### examples/
-if(UREACT_EXAMPLES)
-    add_subdirectory(examples)
-endif()
 
 ### tests/
 if(UREACT_TEST)

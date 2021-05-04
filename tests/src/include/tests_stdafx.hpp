@@ -11,7 +11,7 @@ namespace std // NOLINT
 template <class T, class Allocator>
 doctest::String toString( const std::vector<T, Allocator>& value )
 {
-    std::stringstream ss;
+    std::ostringstream ss;
 
     ss << "[";
     for( auto it = value.begin(), ite = value.end(); it != ite; ++it )

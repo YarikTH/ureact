@@ -5,6 +5,7 @@ target_sources(
     PRIVATE
         main.cpp
         examples/signal_examples.cpp
+        examples/complex_signal_examples.cpp
         details/move_test.cpp
         details/observer_test.cpp
         details/signal_test.cpp

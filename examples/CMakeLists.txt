@@ -4,10 +4,6 @@ function(ureact_add_example name)
     target_compile_options(example_${name} PRIVATE ${UREACT_WARNING_OPTION})
 endfunction()
 
-ureact_add_example( complex_signals_v1 )
-ureact_add_example( complex_signals_v2 )
-ureact_add_example( complex_signals_v3 )
-
 ureact_add_example( creating_subject_bound_observers_v1 )
 ureact_add_example( creating_subject_bound_observers_v2 )
 ureact_add_example( detaching_observers_manually )

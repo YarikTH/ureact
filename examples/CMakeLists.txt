@@ -4,10 +4,6 @@ function(ureact_add_example name)
     target_compile_options(example_${name} PRIVATE ${UREACT_WARNING_OPTION})
 endfunction()
 
-ureact_add_example( detaching_observers_manually )
-ureact_add_example( detaching_observers_by_themselves )
-ureact_add_example( using_scoped_observers )
-
 ureact_add_example( reactive_class_members )
 ureact_add_example( signals_of_references )
 ureact_add_example( dynamic_signal_references )

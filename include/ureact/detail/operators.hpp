@@ -307,6 +307,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunknown-warning-option"
 #    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
 #endif
 

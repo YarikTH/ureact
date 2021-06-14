@@ -145,6 +145,7 @@ BINARY_OPERATOR( +, addition )
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunknown-warning-option"
 #    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
 #endif
 

@@ -23,13 +23,13 @@ jobs:
         working-directory: ${{runner.workspace}}/build
         run: ctest -j 10 -C Release --output-on-failure
 
-  clang10:
+  clang12:
     runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v1
       - name: Install Clang
-        run: curl -fsSL -o LLVM10.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe ; 7z x LLVM10.exe -y -o"C:/Program Files/LLVM"
+        run: curl -fsSL -o LLVM12.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/LLVM-12.0.0-win64.exe ; 7z x LLVM12.exe -y -o"C:/Program Files/LLVM"
       - name: Configure
         run: cmake -S . \
           -B ${{runner.workspace}}/build \

@@ -26,45 +26,41 @@ private:
     struct entry;
 
 public:
-    // Store the level as part of the entry for cheap comparisons
-    using queue_data_t = std::vector<entry>;
-    using next_data_t = std::vector<T>;
-
     topo_queue() = default;
-
-    template <typename in_f,
-        class = typename std::enable_if<!is_same_decay<in_f, topo_queue>::value>::type>
-    explicit topo_queue( in_f&& level_func )
-        : m_level_func( std::forward<in_f>( level_func ) )
-    {}
 
     void push( const T& value )
     {
-        m_queue_data.emplace_back( value, m_level_func( value ) );
+        m_queue_data.emplace_back( value, level_func_t()( value ) );
     }
 
-    bool fetch_next()
+    [[nodiscard]] bool fetch_next()
     {
         // Throw away previous values
         m_next_data.clear();
 
         // Find min level of nodes in queue data
-        m_min_level = ( std::numeric_limits<int>::max )();
+        int minimal_level = std::numeric_limits<int>::max();
         for( const auto& e : m_queue_data )
-            if( m_min_level > e.m_level )
-                m_min_level = e.m_level;
+        {
+            if( minimal_level > e.level )
+            {
+                minimal_level = e.level;
+            }
+        }
 
         // Swap entries with min level to the end
-        auto p = std::partition(
-            m_queue_data.begin(), m_queue_data.end(), level_comp_functor{ m_min_level } );
+        const auto p = std::partition(
+            m_queue_data.begin(), m_queue_data.end(), level_comp_functor{ minimal_level } );
 
         // Reserve once to avoid multiple re-allocations
         const auto to_reserve = static_cast<size_t>( std::distance( p, m_queue_data.end() ) );
         m_next_data.reserve( to_reserve );
 
         // Move min level values to next data
-        for( auto it = p; it != m_queue_data.end(); ++it )
-            m_next_data.push_back( std::move( it->m_value ) );
+        for( auto it = p, ite = m_queue_data.end(); it != ite; ++it )
+        {
+            m_next_data.push_back( std::move( it->value ) );
+        }
 
         // Truncate moved entries
         const auto to_resize = static_cast<size_t>( std::distance( m_queue_data.begin(), p ) );
@@ -73,45 +69,47 @@ public:
         return !m_next_data.empty();
     }
 
-    const next_data_t& next_values() const
+    [[nodiscard]] const std::vector<T>& next_values() const
     {
         return m_next_data;
     }
 
 private:
+    // Store the level as part of the entry for cheap comparisons
     struct entry
     {
         entry() = default;
 
         entry( const T& value, int level ) noexcept
-            : m_value( value )
-            , m_level( level )
+            : value( value )
+            , level( level )
         {}
 
-        T m_value{};
-        int m_level{};
+        T value{};
+        int level{};
+
+        friend bool operator<( const entry& lhs, const entry& rhs )
+        {
+            return lhs.level < rhs.level;
+        }
     };
 
     struct level_comp_functor
     {
         explicit level_comp_functor( int level )
-            : m_level( level )
+            : level( level )
         {}
 
         bool operator()( const entry& e ) const
         {
-            return e.m_level != m_level;
+            return e.level != level;
         }
 
-        const int m_level;
+        const int level;
     };
 
-    next_data_t m_next_data;
-    queue_data_t m_queue_data;
-
-    level_func_t m_level_func;
-
-    int m_min_level = ( std::numeric_limits<int>::max )();
+    std::vector<T> m_next_data;
+    std::vector<entry> m_queue_data;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

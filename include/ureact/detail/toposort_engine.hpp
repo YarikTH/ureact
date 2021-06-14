@@ -33,7 +33,7 @@ public:
         m_queue_data.emplace_back( value, level_func_t()( value ) );
     }
 
-    [[nodiscard]] bool fetch_next()
+    bool fetch_next()
     {
         // Throw away previous values
         m_next_data.clear();
@@ -69,7 +69,7 @@ public:
         return !m_next_data.empty();
     }
 
-    [[nodiscard]] const std::vector<T>& next_values() const
+    const std::vector<T>& next_values() const
     {
         return m_next_data;
     }

@@ -22,3 +22,7 @@ target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)
 target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
 
 add_test(NAME ureact_test COMMAND ureact_test)
+
+if(UREACT_PLAYGROUND)
+    add_subdirectory(playground)
+endif()

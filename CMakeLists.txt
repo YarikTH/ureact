@@ -21,6 +21,11 @@ option(
 
 # Options that control generation of various targets.
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
+option(
+    UREACT_PLAYGROUND
+    "Generate the playground target."
+    ${UREACT_MASTER_PROJECT}
+)
 
 # Get version from core.h
 file(

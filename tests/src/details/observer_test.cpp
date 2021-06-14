@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 
 #include <doctest.h>
 #include "ureact/ureact.hpp"

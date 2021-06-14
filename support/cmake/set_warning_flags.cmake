@@ -267,7 +267,10 @@ endfunction()
 function(set_warning_flags result_var_name)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set_gcc_warning_flags(WARNING_OPTIONS)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    elseif(
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+        OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+    )
         set_clang_warning_flags(WARNING_OPTIONS)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set_msvc_warning_flags(WARNING_OPTIONS)
@@ -281,7 +284,10 @@ endfunction()
 function(set_werror_flag result_var_name)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         list(APPEND ${result_var_name} "-Werror")
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    elseif(
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+        OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+    )
         list(APPEND ${result_var_name} "-Werror")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         list(APPEND ${result_var_name} "/WX")

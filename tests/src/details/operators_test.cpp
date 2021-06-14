@@ -143,6 +143,11 @@ BINARY_OPERATOR( +, addition )
         }                                                                                          \
     };
 
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
+
 DECLARE_BINARY_OPERATOR_TRAITS( +, addition )
 DECLARE_BINARY_OPERATOR_TRAITS( -, subtraction )
 DECLARE_BINARY_OPERATOR_TRAITS( *, multiplication )
@@ -164,6 +169,10 @@ DECLARE_BINARY_OPERATOR_TRAITS( |, bitwise_or )
 DECLARE_BINARY_OPERATOR_TRAITS( ^, bitwise_xor )
 DECLARE_BINARY_OPERATOR_TRAITS( <<, bitwise_left_shift )
 DECLARE_BINARY_OPERATOR_TRAITS( >>, bitwise_right_shift )
+
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic pop
+#endif
 
 template <typename traits, typename left_t, typename right_t>
 void test_binary_operator_impl( binary_operator_type type, const left_t& lhs, const right_t& rhs )

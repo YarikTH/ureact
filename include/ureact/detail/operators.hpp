@@ -305,6 +305,11 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
     UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
     UREACT_DECLARE_BINARY_OP( op, name )
 
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
+
 UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
 UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )
 UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
@@ -331,6 +336,10 @@ UREACT_DECLARE_BINARY_OPERATOR( |, bitwise_or )
 UREACT_DECLARE_BINARY_OPERATOR( ^, bitwise_xor )
 UREACT_DECLARE_BINARY_OPERATOR( <<, bitwise_left_shift )
 UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
+
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic pop
+#endif
 
 #undef UREACT_DECLARE_UNARY_OPERATOR
 #undef UREACT_DECLARE_UNARY_OP_FUNCTOR

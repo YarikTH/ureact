@@ -31,6 +31,16 @@ public:
         return m_context;
     }
 
+    react_graph& get_graph()
+    {
+        return _get_internals( m_context ).get_graph();
+    }
+
+    const react_graph& get_graph() const
+    {
+        return _get_internals( m_context ).get_graph();
+    }
+
 private:
     context& m_context;
 };

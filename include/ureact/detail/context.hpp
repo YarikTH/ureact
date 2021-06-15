@@ -11,7 +11,7 @@ public:
     template <typename F>
     void do_transaction( F&& func )
     {
-        m_graph->do_transaction( std::forward<F>( func ) );
+        get_graph().do_transaction( std::forward<F>( func ) );
     }
 
     bool operator==( const context& rsh )

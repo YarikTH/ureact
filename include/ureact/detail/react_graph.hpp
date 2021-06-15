@@ -106,26 +106,26 @@ private:
         using value_type = reactive_node*;
 
         topological_queue() = default;
-    
+
         void push( const value_type& value, const int level )
         {
             m_queue_data.emplace_back( value, level );
         }
-    
+
         bool fetch_next();
-    
+
         const std::vector<value_type>& next_values() const
         {
             return m_next_data;
         }
-    
+
     private:
         using entry = std::pair<value_type, int>;
-    
+
         std::vector<value_type> m_next_data;
         std::vector<entry> m_queue_data;
     };
-    
+
     void detach_queued_observers()
     {
         for( auto* o : m_detached_observers )
@@ -178,7 +178,7 @@ private:
 
         m_changed_inputs.push_back( &r );
     }
-    
+
     static void invalidate_successors( reactive_node& node );
 
     void process_children( reactive_node& node );

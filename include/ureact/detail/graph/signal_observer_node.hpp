@@ -29,7 +29,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<F>( func ) )
     {
-        _get_internals( get_context() ).on_node_attach( *this, *subject );
+        get_graph().on_node_attach( *this, *subject );
     }
 
     signal_observer_node( const signal_observer_node& ) = delete;
@@ -51,14 +51,16 @@ public:
 
         if( should_detach )
         {
-            _get_internals( get_context() ).queue_observer_for_detach( *this );
+            get_graph().queue_observer_for_detach( *this );
         }
     }
 
     void unregister_self() override
     {
         if( auto p = m_subject.lock() )
+        {
             p->unregister_observer( this );
+        }
     }
 
 private:
@@ -66,7 +68,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            _get_internals( get_context() ).on_node_detach( *this, *p );
+            get_graph().on_node_detach( *this, *p );
             m_subject.reset();
         }
     }

@@ -56,7 +56,7 @@ public:
 
         if( changed )
         {
-            _get_internals( signal_op_node::get_context() ).on_node_pulse( *this );
+            signal_op_node::get_graph().on_node_pulse( *this );
         }
     }
 

@@ -39,15 +39,13 @@ public:
     template <typename V>
     void request_add_input( V&& new_value )
     {
-        _get_internals( var_node::signal_node::get_context() )
-            .add_input( *this, std::forward<V>( new_value ) );
+        var_node::get_graph().add_input( *this, std::forward<V>( new_value ) );
     }
 
     template <typename F>
     void request_modify_input( F& func )
     {
-        _get_internals( var_node::signal_node::get_context() )
-            .modify_input( *this, std::forward<F>( func ) );
+        var_node::get_graph().modify_input( *this, std::forward<F>( func ) );
     }
 
     template <typename V>
@@ -91,7 +89,7 @@ public:
             if( !equals( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
-                _get_internals( var_node::get_context() ).on_input_change( *this );
+                var_node::get_graph().on_input_change( *this );
                 return true;
             }
             return false;
@@ -100,7 +98,7 @@ public:
         {
             m_is_input_modified = false;
 
-            _get_internals( var_node::get_context() ).on_input_change( *this );
+            var_node::get_graph().on_input_change( *this );
             return true;
         }
         return false;

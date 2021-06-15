@@ -12,46 +12,38 @@ namespace detail
 class context_internals
 {
 public:
-    using engine_t = react_graph::engine_t;
-    using node_t = react_graph::node_t;
-
     context_internals()
         : m_graph( new react_graph() )
     {}
 
-    engine_t& get_engine()
+    void on_input_change( reactive_node& node )
     {
-        return m_graph->get_engine();
+        m_graph->on_input_change( node );
     }
 
-    void on_input_change( node_t& node )
+    void on_node_attach( reactive_node& node, reactive_node& parent )
     {
-        get_engine().on_input_change( node );
+        m_graph->on_node_attach( node, parent );
     }
 
-    void on_node_attach( node_t& node, node_t& parent )
+    void on_node_detach( reactive_node& node, reactive_node& parent )
     {
-        get_engine().on_node_attach( node, parent );
+        m_graph->on_node_detach( node, parent );
     }
 
-    void on_node_detach( node_t& node, node_t& parent )
+    void on_node_pulse( reactive_node& node )
     {
-        get_engine().on_node_detach( node, parent );
+        m_graph->on_node_pulse( node );
     }
 
-    void on_node_pulse( node_t& node )
+    void on_dynamic_node_attach( reactive_node& node, reactive_node& parent )
     {
-        get_engine().on_node_pulse( node );
+        m_graph->on_dynamic_node_attach( node, parent );
     }
 
-    void on_dynamic_node_attach( node_t& node, node_t& parent )
+    void on_dynamic_node_detach( reactive_node& node, reactive_node& parent )
     {
-        get_engine().on_dynamic_node_attach( node, parent );
-    }
-
-    void on_dynamic_node_detach( node_t& node, node_t& parent )
-    {
-        get_engine().on_dynamic_node_detach( node, parent );
+        m_graph->on_dynamic_node_detach( node, parent );
     }
 
     void queue_observer_for_detach( observer_interface& obs )

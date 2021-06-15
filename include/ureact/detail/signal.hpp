@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ureact/detail/reactive_input.hpp"
 #include "ureact/detail/graph/signal_node.hpp"
 #include "ureact/detail/graph/signal_op_node.hpp"
 #include "ureact/detail/graph/function_op.hpp"

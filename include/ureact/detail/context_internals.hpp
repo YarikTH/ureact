@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "ureact/detail/reactive_input.hpp"
+#include "ureact/detail/react_graph.hpp"
 
 namespace ureact
 {
@@ -12,17 +12,16 @@ namespace detail
 class context_internals
 {
 public:
-    using input_manager_t = ::ureact::detail::input_manager;
-    using engine_t = input_manager_t::engine_t;
-    using node_t = input_manager_t::node_t;
+    using engine_t = react_graph::engine_t;
+    using node_t = react_graph::node_t;
 
     context_internals()
-        : m_input_manager( new input_manager_t() )
+        : m_graph( new react_graph() )
     {}
 
     engine_t& get_engine()
     {
-        return m_input_manager->get_engine();
+        return m_graph->get_engine();
     }
 
     void on_input_change( node_t& node )
@@ -57,23 +56,23 @@ public:
 
     void queue_observer_for_detach( observer_interface& obs )
     {
-        m_input_manager->queue_observer_for_detach( obs );
+        m_graph->queue_observer_for_detach( obs );
     }
 
     template <typename R, typename V>
     void add_input( R& r, V&& v )
     {
-        m_input_manager->add_input( r, std::forward<V>( v ) );
+        m_graph->add_input( r, std::forward<V>( v ) );
     }
 
     template <typename R, typename F>
     void modify_input( R& r, const F& func )
     {
-        m_input_manager->modify_input( r, func );
+        m_graph->modify_input( r, func );
     }
 
 protected:
-    std::unique_ptr<input_manager_t> m_input_manager;
+    std::unique_ptr<react_graph> m_graph;
 };
 
 } // namespace detail

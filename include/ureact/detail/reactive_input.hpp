@@ -38,34 +38,40 @@ public:
     template <typename F>
     void do_transaction( F&& func )
     {
-        const bool is_top_transaction = m_transaction_level == 0;
-
         // Phase 1 - Input admission
         ++m_transaction_level;
         func();
         --m_transaction_level;
 
-        if( is_top_transaction )
+        if( m_transaction_level != 0 )
         {
-            // Phase 2 - apply_helper input node changes
-            bool should_propagate = false;
-            for( auto* p : m_changed_inputs )
-                if( p->apply_input() )
-                    should_propagate = true;
-            m_changed_inputs.clear();
-
-            // Phase 3 - propagate changes
-            if( should_propagate )
-                get_engine().propagate();
-
-            detach_queued_observers();
+            return;
         }
+
+        // Phase 2 - apply_helper input node changes
+        bool should_propagate = false;
+        for( auto* p : m_changed_inputs )
+        {
+            if( p->apply_input() )
+            {
+                should_propagate = true;
+            }
+        }
+        m_changed_inputs.clear();
+
+        // Phase 3 - propagate changes
+        if( should_propagate )
+        {
+            get_engine().propagate();
+        }
+
+        detach_queued_observers();
     }
 
     template <typename R, typename V>
     void add_input( R& r, V&& v )
     {
-        if( is_transaction_active() )
+        if( m_transaction_level > 0 )
         {
             add_transaction_input( r, std::forward<V>( v ) );
         }
@@ -78,7 +84,7 @@ public:
     template <typename R, typename F>
     void modify_input( R& r, const F& func )
     {
-        if( is_transaction_active() )
+        if( m_transaction_level > 0 )
         {
             modify_transaction_input( r, func );
         }
@@ -99,15 +105,12 @@ public:
     }
 
 private:
-    bool is_transaction_active() const
-    {
-        return m_transaction_level > 0;
-    }
-
     void detach_queued_observers()
     {
         for( auto* o : m_detached_observers )
+        {
             o->unregister_self();
+        }
         m_detached_observers.clear();
     }
 
@@ -118,7 +121,9 @@ private:
         r.add_input( std::forward<V>( v ) );
 
         if( r.apply_input() )
+        {
             get_engine().propagate();
+        }
 
         detach_queued_observers();
     }
@@ -128,10 +133,10 @@ private:
     {
         r.modify_input( func );
 
-        // Return value, will always be true
-        r.apply_input();
-
-        get_engine().propagate();
+        if( r.apply_input() )
+        {
+            get_engine().propagate();
+        }
 
         detach_queued_observers();
     }
@@ -141,6 +146,7 @@ private:
     void add_transaction_input( R& r, V&& v )
     {
         r.add_input( std::forward<V>( v ) );
+
         m_changed_inputs.push_back( &r );
     }
 
@@ -148,6 +154,7 @@ private:
     void modify_transaction_input( R& r, const F& func )
     {
         r.modify_input( func );
+
         m_changed_inputs.push_back( &r );
     }
 

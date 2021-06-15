@@ -16,21 +16,15 @@ namespace detail
 namespace toposort
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// topo_queue - Sequential
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename T, typename level_func_t>
+template <typename T>
 class topo_queue
 {
-private:
-    struct entry;
-
 public:
     topo_queue() = default;
 
-    void push( const T& value )
+    void push( const T& value, const int level )
     {
-        m_queue_data.emplace_back( value, level_func_t()( value ) );
+        m_queue_data.emplace_back( value, level );
     }
 
     bool fetch_next()
@@ -42,15 +36,16 @@ public:
         int minimal_level = std::numeric_limits<int>::max();
         for( const auto& e : m_queue_data )
         {
-            if( minimal_level > e.level )
+            if( minimal_level > e.second )
             {
-                minimal_level = e.level;
+                minimal_level = e.second;
             }
         }
 
         // Swap entries with min level to the end
-        const auto p = std::partition(
-            m_queue_data.begin(), m_queue_data.end(), level_comp_functor{ minimal_level } );
+        const auto p = std::partition( m_queue_data.begin(),
+            m_queue_data.end(),
+            [minimal_level]( const entry& e ) { return e.second != minimal_level; } );
 
         // Reserve once to avoid multiple re-allocations
         const auto to_reserve = static_cast<size_t>( std::distance( p, m_queue_data.end() ) );
@@ -59,7 +54,7 @@ public:
         // Move min level values to next data
         for( auto it = p, ite = m_queue_data.end(); it != ite; ++it )
         {
-            m_next_data.push_back( std::move( it->value ) );
+            m_next_data.push_back( std::move( it->first ) );
         }
 
         // Truncate moved entries
@@ -75,60 +70,17 @@ public:
     }
 
 private:
-    // Store the level as part of the entry for cheap comparisons
-    struct entry
-    {
-        entry() = default;
-
-        entry( const T& value, int level ) noexcept
-            : value( value )
-            , level( level )
-        {}
-
-        T value{};
-        int level{};
-
-        friend bool operator<( const entry& lhs, const entry& rhs )
-        {
-            return lhs.level < rhs.level;
-        }
-    };
-
-    struct level_comp_functor
-    {
-        explicit level_comp_functor( int level )
-            : level( level )
-        {}
-
-        bool operator()( const entry& e ) const
-        {
-            return e.level != level;
-        }
-
-        const int level;
-    };
+    using entry = std::pair<T, int>;
 
     std::vector<T> m_next_data;
     std::vector<entry> m_queue_data;
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Functors
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename T>
-struct get_level_functor
-{
-    int operator()( const T* x ) const
-    {
-        return x->level;
-    }
 };
 
 class toposort_engine
 {
 public:
     using node_t = reactive_node;
-    using topo_queue_t = topo_queue<node_t*, get_level_functor<node_t>>;
+    using topo_queue_t = topo_queue<node_t*>;
 
     void propagate();
 
@@ -154,7 +106,9 @@ inline void toposort_engine::on_node_attach( node_t& node, node_t& parent )
     parent.successors.add( node );
 
     if( node.level <= parent.level )
+    {
         node.level = parent.level + 1;
+    }
 }
 
 inline void toposort_engine::on_node_detach( node_t& node, node_t& parent )
@@ -182,7 +136,7 @@ inline void toposort_engine::propagate()
             {
                 cur_node->level = cur_node->new_level;
                 invalidate_successors( *cur_node );
-                m_scheduled_nodes.push( cur_node );
+                m_scheduled_nodes.push( cur_node, cur_node->level );
                 continue;
             }
 
@@ -194,18 +148,18 @@ inline void toposort_engine::propagate()
 
 inline void toposort_engine::on_dynamic_node_attach( reactive_node& node, reactive_node& parent )
 {
-    this->on_node_attach( node, parent );
+    on_node_attach( node, parent );
 
     invalidate_successors( node );
 
     // Re-schedule this node
     node.queued = true;
-    m_scheduled_nodes.push( &node );
+    m_scheduled_nodes.push( &node, node.level );
 }
 
 inline void toposort_engine::on_dynamic_node_detach( reactive_node& node, reactive_node& parent )
 {
-    this->on_node_detach( node, parent );
+    on_node_detach( node, parent );
 }
 
 inline void toposort_engine::process_children( reactive_node& node )
@@ -216,7 +170,7 @@ inline void toposort_engine::process_children( reactive_node& node )
         if( !succ->queued )
         {
             succ->queued = true;
-            m_scheduled_nodes.push( succ );
+            m_scheduled_nodes.push( succ, succ->level );
         }
     }
 }
@@ -226,7 +180,9 @@ inline void toposort_engine::invalidate_successors( reactive_node& node )
     for( auto* succ : node.successors )
     {
         if( succ->new_level <= node.level )
+        {
             succ->new_level = node.level + 1;
+        }
     }
 }
 

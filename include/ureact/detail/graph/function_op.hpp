@@ -46,7 +46,7 @@ struct attach_functor
     template <typename T>
     void attach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        my_node.get_context().on_node_attach( my_node, *dep_ptr );
+        _get_internals( my_node.get_context() ).on_node_attach( my_node, *dep_ptr );
     }
 
     node_t& my_node;
@@ -73,7 +73,7 @@ struct detach_functor
     template <typename T>
     void detach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        my_node.get_context().on_node_detach( my_node, *dep_ptr );
+        _get_internals( my_node.get_context() ).on_node_detach( my_node, *dep_ptr );
     }
 
     node_t& my_node;

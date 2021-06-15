@@ -29,7 +29,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<F>( func ) )
     {
-        get_context().on_node_attach( *this, *subject );
+        _get_internals( get_context() ).on_node_attach( *this, *subject );
     }
 
     signal_observer_node( const signal_observer_node& ) = delete;
@@ -42,13 +42,17 @@ public:
         bool should_detach = false;
 
         if( auto p = m_subject.lock() )
-        { // timer
+        {
             if( m_func( p->value_ref() ) == observer_action::stop_and_detach )
+            {
                 should_detach = true;
-        } // ~timer
+            }
+        }
 
         if( should_detach )
-            get_context().get_input_manager().queue_observer_for_detach( *this );
+        {
+            _get_internals( get_context() ).queue_observer_for_detach( *this );
+        }
     }
 
     void unregister_self() override
@@ -62,7 +66,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            get_context().on_node_detach( *this, *p );
+            _get_internals( get_context() ).on_node_detach( *this, *p );
             m_subject.reset();
         }
     }

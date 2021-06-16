@@ -1,3 +1,19 @@
+// ureact.hpp - minimalistic C++ single-header reactive library
+//
+// MIT License
+//
+// Copyright (c) 2020 - present Krylov Yaroslav
+//
+// Distributed under the MIT Software License
+// See accompanying file LICENSE.txt or copy at
+// https://opensource.org/licenses/MIT
+//
+// =================================================================================================
+//
+// The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
+// which uses the Boost Software License - Version 1.0
+// see here - https://github.com/snakster/cpp.react/blob/master/LICENSE_1_0.txt
+
 #ifndef UREACT_UREACT_H_
 #define UREACT_UREACT_H_
 

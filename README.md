@@ -1,6 +1,6 @@
 # µReact
 
-Minimalistic reactive library for c++
+Minimalistic C++ single-header reactive library
 
 ## Design goals
 

@@ -487,12 +487,12 @@ public:
         get_graph().do_transaction( std::forward<F>( func ) );
     }
 
-    bool operator==( const context& rsh )
+    bool operator==( const context& rsh ) const
     {
         return this == &rsh;
     }
 
-    bool operator!=( const context& rsh )
+    bool operator!=( const context& rsh ) const
     {
         return this != &rsh;
     }

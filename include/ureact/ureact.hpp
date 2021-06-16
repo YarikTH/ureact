@@ -8,16 +8,78 @@
 #include <utility>
 #include <vector>
 
-// The ureact library version in the form major * 10000 + minor * 100 + patch.
-#define UREACT_VERSION 00100
-
 #ifdef UREACT_USE_STD_ALGORITHM
 #    include <algorithm>
 #endif
 
+//==================================================================================================
+// [[section]] Preprocessor feature detections
+// Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
+//==================================================================================================
 
-namespace ureact
-{
+// The ureact library version in the form major * 10000 + minor * 100 + patch.
+#define UREACT_VERSION 00100
+
+#ifdef __clang__
+#    define UREACT_CLANG_VERSION ( __clang_major__ * 100 + __clang_minor__ )
+#else
+#    define UREACT_CLANG_VERSION 0
+#endif
+
+#if defined( __GNUC__ ) && !defined( __clang__ )
+#    define UREACT_GCC_VERSION ( __GNUC__ * 100 + __GNUC_MINOR__ )
+#    define UREACT_GCC_PRAGMA( arg ) _Pragma( arg )
+#else
+#    define UREACT_GCC_VERSION 0
+#    define UREACT_GCC_PRAGMA( arg )
+#endif
+
+#ifdef _MSC_VER
+#    define UREACT_MSC_VER _MSC_VER
+#    define UREACT_MSC_WARNING( ... ) __pragma( warning( __VA_ARGS__ ) )
+#else
+#    define UREACT_MSC_VER 0
+#    define UREACT_MSC_WARNING( ... )
+#endif
+
+#ifdef __has_feature
+#    define UREACT_HAS_FEATURE( x ) __has_feature( x )
+#else
+#    define UREACT_HAS_FEATURE( x ) 0
+#endif
+
+#ifndef UREACT_USE_INLINE_NAMESPACES
+#    if UREACT_HAS_FEATURE( cxx_inline_namespaces ) || UREACT_GCC_VERSION >= 404                   \
+        || ( UREACT_MSC_VER >= 1900 && ( !defined( _MANAGED ) || !_MANAGED ) )
+#        define UREACT_USE_INLINE_NAMESPACES 1
+#    else
+#        define UREACT_USE_INLINE_NAMESPACES 0
+#    endif
+#endif
+
+#define UREACT_VERSION_NAMESPACE_NAME v0
+
+#ifndef UREACT_BEGIN_NAMESPACE
+#    if UREACT_USE_INLINE_NAMESPACES
+#        define UREACT_INLINE_NAMESPACE inline namespace
+#        define UREACT_END_NAMESPACE                                                               \
+            } /* namespace ureact */                                                               \
+            } /* namespace UREACT_VERSION_NAMESPACE_NAME */
+#    else
+#        define UREACT_INLINE_NAMESPACE namespace
+#        define UREACT_END_NAMESPACE                                                               \
+            }                                                                                      \
+            using namespace UREACT_VERSION_NAMESPACE_NAME;                                         \
+            }
+#    endif
+#    define UREACT_BEGIN_NAMESPACE                                                                 \
+        namespace ureact                                                                           \
+        {                                                                                          \
+        UREACT_INLINE_NAMESPACE UREACT_VERSION_NAMESPACE_NAME                                      \
+        {
+#endif
+
+UREACT_BEGIN_NAMESPACE
 
 //==================================================================================================
 // [[section]] Forward declarations
@@ -2325,4 +2387,4 @@ public:
     }
 };
 
-} // namespace ureact
+UREACT_END_NAMESPACE

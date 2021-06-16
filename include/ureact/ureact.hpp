@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <memory>
@@ -12,13 +11,31 @@
 // The ureact library version in the form major * 10000 + minor * 100 + patch.
 #define UREACT_VERSION 00100
 
+#ifdef UREACT_USE_STD_ALGORITHM
+#    include <algorithm>
+#endif
+
 namespace ureact
 {
 namespace detail
 {
 
-template <typename input_iterator, typename T>
-inline input_iterator find( input_iterator first, input_iterator last, const T& val )
+#if defined( UREACT_USE_STD_ALGORITHM )
+
+using std::find;
+using std::partition;
+
+#else
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Partial alternative to <algorithm> is provided and used by default because library requires
+/// only a few algorithms while standard <algorithm> is quite bloated
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Code based on possible implementation at
+// https://en.cppreference.com/w/cpp/algorithm/find
+template <typename forward_it, typename T>
+inline forward_it find( forward_it first, forward_it last, const T& val )
 {
     for( auto it = first, ite = last; it != ite; ++it )
     {
@@ -29,6 +46,54 @@ inline input_iterator find( input_iterator first, input_iterator last, const T& 
     }
     return last;
 }
+
+// Code based on possible implementation at
+// https://en.cppreference.com/w/cpp/algorithm/find
+template <class forward_it, class unary_predicate>
+forward_it find_if_not( forward_it first, forward_it last, unary_predicate q )
+{
+    for( ; first != last; ++first )
+    {
+        if( !q( *first ) )
+        {
+            return first;
+        }
+    }
+    return last;
+}
+
+// Code based on possible implementation at
+// https://en.cppreference.com/w/cpp/algorithm/iter_swap
+template <class forward_it_1, class forward_it_2>
+void iter_swap( forward_it_1 a, forward_it_2 b )
+{
+    using std::swap;
+    swap( *a, *b );
+}
+
+// Code based on possible implementation at
+// https://en.cppreference.com/w/cpp/algorithm/partition
+template <class forward_it, class unary_predicate>
+forward_it partition( forward_it first, forward_it last, unary_predicate p )
+{
+    first = ureact::detail::find_if_not( first, last, p );
+    if( first == last )
+    {
+        return first;
+    }
+
+    for( forward_it i = std::next( first ); i != last; ++i )
+    {
+        if( p( *i ) )
+        {
+            ureact::detail::iter_swap( i, first );
+            ++first;
+        }
+    }
+    return first;
+}
+
+#endif
 
 #if( defined( __cplusplus ) && __cplusplus >= 201703L )                                            \
     || ( defined( _HAS_CXX17 ) && _HAS_CXX17 == 1 )
@@ -347,7 +412,7 @@ inline bool react_graph::topological_queue::fetch_next()
     }
 
     // Swap entries with min level to the end
-    const auto p = std::partition( m_queue_data.begin(),
+    const auto p = ureact::detail::partition( m_queue_data.begin(),
         m_queue_data.end(),
         [minimal_level]( const entry& e ) { return e.second != minimal_level; } );
 

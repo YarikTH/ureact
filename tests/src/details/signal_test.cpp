@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <queue>
 
 #include <doctest.h>

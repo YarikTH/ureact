@@ -68,7 +68,7 @@ KeepEmptyLinesAtTheStartOfBlocks: true
 Language:        Cpp
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
-MaxEmptyLinesToKeep: 1
+MaxEmptyLinesToKeep: 3
 NamespaceIndentation: None
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 19

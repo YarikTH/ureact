@@ -17,6 +17,25 @@
 
 namespace ureact
 {
+
+// Forward declarations
+template <typename S>
+class signal;
+
+template <typename S>
+class var_signal;
+
+template <typename inner_value_t>
+auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>;
+
+/// Observer functions can return values of this type to control further processing.
+enum class observer_action
+{
+    next,           ///< Need to continue observing
+    stop_and_detach ///< Need to stop observing
+};
+
+
 namespace detail
 {
 
@@ -93,6 +112,7 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 
 #endif
 
+
 #if( defined( __cplusplus ) && __cplusplus >= 201703L )                                            \
     || ( defined( _HAS_CXX17 ) && _HAS_CXX17 == 1 )
 using std::apply;
@@ -140,6 +160,197 @@ inline auto apply( F&& f, T&& t )
 
 #endif
 
+
+template <typename T1, typename T2>
+using is_same_decay = std::is_same<typename std::decay<T1>::type, typename std::decay<T2>::type>;
+
+
+/// Helper to enable calling a function on each element of an argument pack.
+/// We can't do f(args) ...; because ... expands with a comma.
+/// But we can do nop_func(f(args) ...);
+template <typename... args_t>
+inline void pass( args_t&&... /*unused*/ )
+{}
+
+// Expand args by wrapping them in a dummy function
+// Use comma operator to replace potential void return value with 0
+#define UREACT_EXPAND_PACK( ... ) pass( ( __VA_ARGS__, 0 )... )
+
+
+/// type_identity (workaround to enable enable decltype()::X)
+/// See https://en.cppreference.com/w/cpp/types/type_identity
+template <typename T>
+struct type_identity
+{
+    using type = T;
+};
+
+
+// Got from https://stackoverflow.com/a/34672753
+// std::is_base_of for template classes
+template <template <typename...> class base, typename derived>
+struct is_base_of_template_impl
+{
+    template <typename... Ts>
+    static constexpr std::true_type test( const base<Ts...>* )
+    {
+        return {};
+    }
+    static constexpr std::false_type test( ... )
+    {
+        return {};
+    }
+    using type = decltype( test( std::declval<derived*>() ) );
+};
+
+template <template <typename...> class base, typename derived>
+using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
+
+
+// Full analog of std::bind1st that removed in c++17
+// See https://en.cppreference.com/w/cpp/utility/functional/bind12
+template <template <typename, typename> class functor_binary_op,
+    typename lhs_t,
+    typename rhs_t,
+    typename F = functor_binary_op<lhs_t, rhs_t>>
+struct bind_left
+{
+    bind_left( bind_left&& other ) noexcept = default;
+
+    bind_left& operator=( bind_left&& other ) noexcept = delete;
+
+    template <typename T,
+        class = typename std::enable_if<!is_same_decay<T, bind_left>::value>::type>
+    explicit bind_left( T&& val )
+        : m_left_val( std::forward<T>( val ) )
+    {}
+
+    bind_left( const bind_left& other ) = delete;
+
+    bind_left& operator=( const bind_left& other ) = delete;
+
+    ~bind_left() = default;
+
+    auto operator()( const rhs_t& rhs ) const
+        -> decltype( std::declval<F>()( std::declval<lhs_t>(), std::declval<rhs_t>() ) )
+    {
+        return F()( m_left_val, rhs );
+    }
+
+    lhs_t m_left_val;
+};
+
+
+// Full analog of std::bind2nd that removed in c++17
+// See https://en.cppreference.com/w/cpp/utility/functional/bind12
+template <template <typename, typename> class functor_binary_op,
+    typename lhs_t,
+    typename rhs_t,
+    typename F = functor_binary_op<lhs_t, rhs_t>>
+struct bind_right
+{
+    bind_right( bind_right&& other ) noexcept = default;
+
+    bind_right& operator=( bind_right&& other ) noexcept = delete;
+
+    template <typename T,
+        class = typename std::enable_if<!is_same_decay<T, bind_right>::value>::type>
+    explicit bind_right( T&& val )
+        : m_right_val( std::forward<T>( val ) )
+    {}
+
+    bind_right( const bind_right& other ) = delete;
+
+    bind_right& operator=( const bind_right& other ) = delete;
+
+    ~bind_right() = default;
+
+    auto operator()( const lhs_t& lhs ) const
+        -> decltype( std::declval<F>()( std::declval<lhs_t>(), std::declval<rhs_t>() ) )
+    {
+        return F()( lhs, m_right_val );
+    }
+
+    rhs_t m_right_val;
+};
+
+
+/// Special wrapper to add specific return type to the void function
+template <typename F, typename ret_t, ret_t return_value>
+struct add_default_return_value_wrapper
+{
+    add_default_return_value_wrapper( const add_default_return_value_wrapper& ) = default;
+
+    add_default_return_value_wrapper& operator=( const add_default_return_value_wrapper& ) = delete;
+
+    add_default_return_value_wrapper( add_default_return_value_wrapper&& other ) noexcept
+        : m_func( std::move( other.m_func ) )
+    {}
+
+    add_default_return_value_wrapper& operator=(
+        add_default_return_value_wrapper&& ) noexcept = delete;
+
+    template <typename in_f,
+        class = typename std::enable_if<
+            !is_same_decay<in_f, add_default_return_value_wrapper>::value>::type>
+    explicit add_default_return_value_wrapper( in_f&& func )
+        : m_func( std::forward<in_f>( func ) )
+    {}
+
+    ~add_default_return_value_wrapper() = default;
+
+    template <typename... args_t>
+    ret_t operator()( args_t&&... args )
+    {
+        m_func( std::forward<args_t>( args )... );
+        return return_value;
+    }
+
+    F m_func;
+};
+
+
+template <typename T>
+struct decay_input
+{
+    using type = T;
+};
+
+template <typename T>
+struct decay_input<var_signal<T>>
+{
+    using type = signal<T>;
+};
+
+
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
+template <typename L, typename R>
+bool equals( const L& lhs, const R& rhs )
+{
+    return lhs == rhs;
+}
+
+template <typename L, typename R>
+bool equals( const std::reference_wrapper<L>& lhs, const std::reference_wrapper<R>& rhs )
+{
+    return lhs.get() == rhs.get();
+}
+
+template <typename L, typename R>
+bool equals( const signal<L>& lhs, const signal<R>& rhs )
+{
+    return lhs.equals( rhs );
+}
+
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic pop
+#endif
+
+
 class reactive_node
 {
 public:
@@ -154,12 +365,14 @@ public:
     virtual void tick() = 0;
 };
 
+
 struct input_node_interface
 {
     virtual ~input_node_interface() = default;
 
     virtual bool apply_input() = 0;
 };
+
 
 class observer_interface
 {
@@ -173,6 +386,7 @@ private:
 
     friend class observable;
 };
+
 
 class observable
 {
@@ -212,6 +426,7 @@ public:
 private:
     std::vector<std::unique_ptr<observer_interface>> m_observers;
 };
+
 
 class react_graph
 {
@@ -386,6 +601,7 @@ private:
     std::vector<observer_interface*> m_detached_observers;
 };
 
+
 inline bool react_graph::topological_queue::fetch_next()
 {
     // Throw away previous values
@@ -533,6 +749,13 @@ private:
 
 } // namespace detail
 
+
+/// Return if type is signal or its inheritor
+template <typename T>
+struct is_signal : detail::is_base_of_template<signal, T>
+{};
+
+
 class context : protected detail::context_internals
 {
 public:
@@ -556,46 +779,11 @@ public:
     {
         return ctx;
     }
-
-    friend const detail::context_internals& _get_internals( const context& ctx )
-    {
-        return ctx;
-    }
 };
 
-// Forward declaration to break cyclic dependency
-template <typename S>
-class signal;
 
 namespace detail
 {
-
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-
-template <typename L, typename R>
-bool equals( const L& lhs, const R& rhs )
-{
-    return lhs == rhs;
-}
-
-template <typename L, typename R>
-bool equals( const std::reference_wrapper<L>& lhs, const std::reference_wrapper<R>& rhs )
-{
-    return lhs.get() == rhs.get();
-}
-
-template <typename L, typename R>
-bool equals( const signal<L>& lhs, const signal<R>& rhs )
-{
-    return lhs.equals( rhs );
-}
-
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic pop
-#endif
 
 class node_base : public reactive_node
 {
@@ -631,6 +819,7 @@ private:
     context& m_context;
 };
 
+
 class observer_node
     : public node_base
     , public observer_interface
@@ -641,6 +830,7 @@ public:
     {}
 };
 
+
 class observable_node
     : public node_base
     , public observable
@@ -650,6 +840,7 @@ public:
         : node_base( context )
     {}
 };
+
 
 template <typename S>
 class signal_node : public observable_node
@@ -674,8 +865,10 @@ protected:
     S m_value;
 };
 
+
 template <typename S>
 using signal_node_ptr_t = std::shared_ptr<signal_node<S>>;
+
 
 template <typename S>
 class var_node
@@ -775,16 +968,6 @@ private:
     bool m_is_input_modified = false;
 };
 
-/// Helper to enable calling a function on each element of an argument pack.
-/// We can't do f(args) ...; because ... expands with a comma.
-/// But we can do nop_func(f(args) ...);
-template <typename... args_t>
-inline void pass( args_t&&... /*unused*/ )
-{}
-
-// Expand args by wrapping them in a dummy function
-// Use comma operator to replace potential void return value with 0
-#define UREACT_EXPAND_PACK( ... ) pass( ( __VA_ARGS__, 0 )... )
 
 template <typename S, typename F, typename... deps_t>
 class function_op
@@ -927,7 +1110,6 @@ private:
     F m_func;
 };
 
-#undef UREACT_EXPAND_PACK
 
 template <typename S, typename op_t>
 class signal_op_node : public signal_node<S>
@@ -989,6 +1171,7 @@ private:
     bool m_was_op_stolen = false;
 };
 
+
 template <typename outer_t, typename inner_t>
 class flatten_node : public signal_node<inner_t>
 {
@@ -1044,12 +1227,6 @@ private:
     std::shared_ptr<signal_node<inner_t>> m_inner;
 };
 
-/// Observer functions can return values of this type to control further processing.
-enum class observer_action
-{
-    next,           ///< Need to continue observing
-    stop_and_detach ///< Need to stop observing
-};
 
 template <typename S, typename func_t>
 class signal_observer_node : public observer_node
@@ -1110,18 +1287,6 @@ private:
     func_t m_func;
 };
 
-} // namespace detail
-
-// Forward declaration to break cyclic dependency
-template <typename S>
-class signal;
-template <typename S>
-class var_signal;
-template <typename inner_value_t>
-auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>;
-
-namespace detail
-{
 
 template <typename node_t>
 class reactive_base
@@ -1155,11 +1320,13 @@ protected:
     friend const std::shared_ptr<node_t_>& get_node_ptr( const reactive_base<node_t_>& node );
 };
 
+
 template <typename node_t>
 const std::shared_ptr<node_t>& get_node_ptr( const reactive_base<node_t>& node )
 {
     return node.m_ptr;
 }
+
 
 template <typename S>
 class signal_base : public reactive_base<signal_node<S>>
@@ -1197,32 +1364,8 @@ protected:
     }
 };
 
-// Got from https://stackoverflow.com/a/34672753
-// std::is_base_of for template classes
-template <template <typename...> class base, typename derived>
-struct is_base_of_template_impl
-{
-    template <typename... Ts>
-    static constexpr std::true_type test( const base<Ts...>* )
-    {
-        return {};
-    }
-    static constexpr std::false_type test( ... )
-    {
-        return {};
-    }
-    using type = decltype( test( std::declval<derived*>() ) );
-};
-
-template <template <typename...> class base, typename derived>
-using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
-
 } // namespace detail
 
-/// Return if type is signal or its inheritor
-template <typename T>
-struct is_signal : detail::is_base_of_template<signal, T>
-{};
 
 /**
  * A signal is a reactive variable that can propagate its changes to dependents
@@ -1271,6 +1414,7 @@ public:
     }
 };
 
+
 /**
  * A signal is a reactive variable that can propagate its changes to dependents
  * and react to changes of its dependencies.
@@ -1310,6 +1454,7 @@ public:
         return signal::get_value();
     }
 };
+
 
 /**
  * This class extends the immutable signal interface with functions that support
@@ -1385,6 +1530,7 @@ public:
     }
 };
 
+
 /**
  * This class extends the immutable signal interface with functions that support
  * imperative value input. In the dataflow graph, input signals are sources.
@@ -1439,6 +1585,7 @@ public:
     }
 };
 
+
 namespace detail
 {
 
@@ -1471,12 +1618,14 @@ auto make_var_impl( context& context, V&& value ) -> var_signal<signal<inner_t>>
 
 } // namespace detail
 
+
 template <typename V>
 auto make_var( context& context, V&& value )
     -> decltype( detail::make_var_impl( context, std::forward<V>( value ) ) )
 {
     return detail::make_var_impl( context, std::forward<V>( value ) );
 }
+
 
 namespace detail
 {
@@ -1513,6 +1662,7 @@ public:
     }
 };
 
+
 template <typename S, typename op_t, typename... Args>
 auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t>
 {
@@ -1520,7 +1670,9 @@ auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t
         std::make_shared<signal_op_node<S, op_t>>( context, std::forward<Args>( args )... ) );
 }
 
+
 } // namespace detail
+
 
 /// Proxy class that wraps several nodes into a tuple.
 template <typename... values_t>
@@ -1540,12 +1692,14 @@ public:
     std::tuple<const signal<values_t>&...> data;
 };
 
+
 /// Utility function to create a signal_pack from given signals.
 template <typename... values_t>
 auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
 {
     return signal_pack<values_t...>( deps... );
 }
+
 
 /// Comma operator overload to create signal pack from two signals.
 template <typename left_val_t, typename right_val_t>
@@ -1562,6 +1716,7 @@ auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_val
 {
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
+
 
 /// Free function to connect a signal to a function and return the resulting signal.
 template <typename value_t,
@@ -1610,6 +1765,7 @@ auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
         arg_pack.data );
 }
 
+
 /// operator->* overload to connect a signal to a function and return the resulting signal.
 template <typename F,
     template <typename>
@@ -1630,6 +1786,7 @@ auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
     return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
 }
 
+
 template <typename inner_value_t>
 auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
 {
@@ -1639,28 +1796,6 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
             context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );
 }
 
-namespace detail
-{
-
-template <typename T>
-struct decay_input
-{
-    using type = T;
-};
-
-template <typename T>
-struct decay_input<var_signal<T>>
-{
-    using type = signal<T>;
-};
-
-/// type_identity (workaround to enable enable decltype()::X)
-/// See https://en.cppreference.com/w/cpp/types/type_identity
-template <typename T>
-struct type_identity
-{
-    using type = T;
-};
 
 #define UREACT_REACTIVE_REF( obj, name )                                                           \
     flatten( make_signal( obj,                                                                     \
@@ -1679,12 +1814,6 @@ struct type_identity
             return static_cast<S>( r->name );                                                      \
         } ) )
 
-template <typename T1, typename T2>
-using is_same_decay = std::is_same<typename std::decay<T1>::type, typename std::decay<T2>::type>;
-
-} // namespace detail
-
-using detail::observer_action;
 
 /// An instance of this class provides a unique handle to an observer which can
 /// be used to detach it explicitly. It also holds a strong reference to
@@ -1757,6 +1886,7 @@ private:
     subject_ptr_t m_subject_ptr = nullptr;
 };
 
+
 /// Takes ownership of an observer and automatically detaches it on scope exit.
 class scoped_observer
 {
@@ -1799,43 +1929,6 @@ private:
     observer m_obs;
 };
 
-namespace detail
-{
-
-template <typename F, typename ret_t, ret_t return_value>
-struct add_default_return_value_wrapper
-{
-    add_default_return_value_wrapper( const add_default_return_value_wrapper& ) = default;
-
-    add_default_return_value_wrapper& operator=( const add_default_return_value_wrapper& ) = delete;
-
-    add_default_return_value_wrapper( add_default_return_value_wrapper&& other ) noexcept
-        : my_func( std::move( other.my_func ) )
-    {}
-
-    add_default_return_value_wrapper& operator=(
-        add_default_return_value_wrapper&& ) noexcept = delete;
-
-    template <typename in_f,
-        class = typename std::enable_if<
-            !is_same_decay<in_f, add_default_return_value_wrapper>::value>::type>
-    explicit add_default_return_value_wrapper( in_f&& func )
-        : my_func( std::forward<in_f>( func ) )
-    {}
-
-    ~add_default_return_value_wrapper() = default;
-
-    template <typename... args_t>
-    ret_t operator()( args_t&&... args )
-    {
-        my_func( std::forward<args_t>( args )... );
-        return return_value;
-    }
-
-    F my_func;
-};
-
-} // namespace detail
 
 /// When the signal value S of subject changes, func(s) is called.
 /// The signature of func should be equivalent to:
@@ -1873,70 +1966,9 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
     return observer( raw_node_ptr, subject_ptr );
 }
 
+
 namespace detail
 {
-
-template <template <typename, typename> class functor_binary_op,
-    typename lhs_t,
-    typename rhs_t,
-    typename F = functor_binary_op<lhs_t, rhs_t>>
-struct bind_left
-{
-    bind_left( bind_left&& other ) noexcept = default;
-
-    bind_left& operator=( bind_left&& other ) noexcept = delete;
-
-    template <typename T,
-        class = typename std::enable_if<!is_same_decay<T, bind_left>::value>::type>
-    explicit bind_left( T&& val )
-        : m_left_val( std::forward<T>( val ) )
-    {}
-
-    bind_left( const bind_left& other ) = delete;
-
-    bind_left& operator=( const bind_left& other ) = delete;
-
-    ~bind_left() = default;
-
-    auto operator()( const rhs_t& rhs ) const
-        -> decltype( std::declval<F>()( std::declval<lhs_t>(), std::declval<rhs_t>() ) )
-    {
-        return F()( m_left_val, rhs );
-    }
-
-    lhs_t m_left_val;
-};
-
-template <template <typename, typename> class functor_binary_op,
-    typename lhs_t,
-    typename rhs_t,
-    typename F = functor_binary_op<lhs_t, rhs_t>>
-struct bind_right
-{
-    bind_right( bind_right&& other ) noexcept = default;
-
-    bind_right& operator=( bind_right&& other ) noexcept = delete;
-
-    template <typename T,
-        class = typename std::enable_if<!is_same_decay<T, bind_right>::value>::type>
-    explicit bind_right( T&& val )
-        : m_right_val( std::forward<T>( val ) )
-    {}
-
-    bind_right( const bind_right& other ) = delete;
-
-    bind_right& operator=( const bind_right& other ) = delete;
-
-    ~bind_right() = default;
-
-    auto operator()( const lhs_t& lhs ) const
-        -> decltype( std::declval<F>()( std::declval<lhs_t>(), std::declval<rhs_t>() ) )
-    {
-        return F()( lhs, m_right_val );
-    }
-
-    rhs_t m_right_val;
-};
 
 template <template <typename> class functor_op,
     typename signal_t,
@@ -2110,6 +2142,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
 
 } // namespace detail
 
+
 #define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
     namespace detail                                                                               \
     {                                                                                              \
@@ -2125,6 +2158,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
     };                                                                                             \
     } /* namespace op_functors */                                                                  \
     } /* namespace detail */
+
 
 #define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
     namespace detail                                                                               \
@@ -2143,6 +2177,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
     } /* namespace op_functors */                                                                  \
     } /* namespace detail */
 
+
 #define UREACT_DECLARE_UNARY_OP( op, name )                                                        \
     template <typename arg_t,                                                                      \
         template <typename> class functor_op = detail::op_functors::op_functor_##name>             \
@@ -2151,6 +2186,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
     {                                                                                              \
         return detail::unary_operator_impl<functor_op>( std::forward<arg_t&&>( arg ) );            \
     }
+
 
 #define UREACT_DECLARE_BINARY_OP( op, name )                                                       \
     template <typename lhs_t,                                                                      \
@@ -2164,13 +2200,16 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
             std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) );                          \
     }
 
+
 #define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
     UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
     UREACT_DECLARE_UNARY_OP( op, name )
 
+
 #define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
     UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
     UREACT_DECLARE_BINARY_OP( op, name )
+
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
@@ -2215,5 +2254,8 @@ UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
 #undef UREACT_DECLARE_BINARY_OPERATOR
 #undef UREACT_DECLARE_BINARY_OP_FUNCTOR
 #undef UREACT_DECLARE_BINARY_OP
+
+
+#undef UREACT_EXPAND_PACK
 
 } // namespace ureact

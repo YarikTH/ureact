@@ -27,10 +27,8 @@ using std::partition;
 
 #else
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Partial alternative to <algorithm> is provided and used by default because library requires
-/// only a few algorithms while standard <algorithm> is quite bloated
-///////////////////////////////////////////////////////////////////////////////////////////////////
+// Partial alternative to <algorithm> is provided and used by default because library requires
+// only a few algorithms while standard <algorithm> is quite bloated
 
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/find
@@ -100,10 +98,8 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 using std::apply;
 #else
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Unpack tuple - see
+// Code based on code at
 /// http://stackoverflow.com/questions/687490/how-do-i-expand-a-tuple-into-variadic-template-functions-arguments
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <size_t N>
 struct apply_helper
@@ -165,9 +161,6 @@ struct input_node_interface
     virtual bool apply_input() = 0;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// observer_interface
-///////////////////////////////////////////////////////////////////////////////////////////////////
 class observer_interface
 {
 public:
@@ -181,9 +174,6 @@ private:
     friend class observable;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// observable
-///////////////////////////////////////////////////////////////////////////////////////////////////
 class observable
 {
 public:
@@ -607,9 +597,6 @@ bool equals( const signal<L>& lhs, const signal<R>& rhs )
 #    pragma clang diagnostic pop
 #endif
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// node_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
 class node_base : public reactive_node
 {
 public:
@@ -644,9 +631,6 @@ private:
     context& m_context;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// observer_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 class observer_node
     : public node_base
     , public observer_interface
@@ -657,9 +641,6 @@ public:
     {}
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// observable_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 class observable_node
     : public node_base
     , public observable
@@ -670,9 +651,6 @@ public:
     {}
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// signal_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename S>
 class signal_node : public observable_node
 {
@@ -699,9 +677,6 @@ protected:
 template <typename S>
 using signal_node_ptr_t = std::shared_ptr<signal_node<S>>;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// var_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename S>
 class var_node
     : public signal_node<S>
@@ -800,11 +775,9 @@ private:
     bool m_is_input_modified = false;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Helper to enable calling a function on each element of an argument pack.
 /// We can't do f(args) ...; because ... expands with a comma.
 /// But we can do nop_func(f(args) ...);
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename... args_t>
 inline void pass( args_t&&... /*unused*/ )
 {}
@@ -813,9 +786,6 @@ inline void pass( args_t&&... /*unused*/ )
 // Use comma operator to replace potential void return value with 0
 #define UREACT_EXPAND_PACK( ... ) pass( ( __VA_ARGS__, 0 )... )
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// function_op
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename S, typename F, typename... deps_t>
 class function_op
 {
@@ -959,9 +929,6 @@ private:
 
 #undef UREACT_EXPAND_PACK
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// signal_op_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename S, typename op_t>
 class signal_op_node : public signal_node<S>
 {
@@ -1022,9 +989,6 @@ private:
     bool m_was_op_stolen = false;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// flatten_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename outer_t, typename inner_t>
 class flatten_node : public signal_node<inner_t>
 {
@@ -1087,9 +1051,6 @@ enum class observer_action
     stop_and_detach ///< Need to stop observing
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// signal_observer_node
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename S, typename func_t>
 class signal_observer_node : public observer_node
 {
@@ -1162,9 +1123,6 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
 namespace detail
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// reactive_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename node_t>
 class reactive_base
 {
@@ -1203,9 +1161,6 @@ const std::shared_ptr<node_t>& get_node_ptr( const reactive_base<node_t>& node )
     return node.m_ptr;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// signal_base
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename S>
 class signal_base : public reactive_base<signal_node<S>>
 {
@@ -1567,9 +1522,7 @@ auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t
 
 } // namespace detail
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// signal_pack - Wraps several nodes in a tuple. Create with comma operator.
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Proxy class that wraps several nodes into a tuple.
 template <typename... values_t>
 class signal_pack
 {
@@ -1587,18 +1540,14 @@ public:
     std::tuple<const signal<values_t>&...> data;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// with - Utility function to create a signal_pack
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Utility function to create a signal_pack from given signals.
 template <typename... values_t>
 auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
 {
     return signal_pack<values_t...>( deps... );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Comma operator overload to create signal pack from 2 signals.
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Comma operator overload to create signal pack from two signals.
 template <typename left_val_t, typename right_val_t>
 auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
                   -> signal_pack<left_val_t, right_val_t>
@@ -1606,9 +1555,7 @@ auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
     return signal_pack<left_val_t, right_val_t>( a, b );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Comma operator overload to append node to existing signal pack.
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename... cur_values_t, typename append_value_t>
 auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
                   -> signal_pack<cur_values_t..., append_value_t>
@@ -1616,10 +1563,7 @@ auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_val
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// make_signal
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Single arg
+/// Free function to connect a signal to a function and return the resulting signal.
 template <typename value_t,
     typename in_f,
     typename F = typename std::decay<in_f>::type,
@@ -1634,7 +1578,7 @@ auto make_signal( const signal<value_t>& arg, in_f&& func ) -> detail::temp_sign
         context, std::forward<in_f>( func ), get_node_ptr( arg ) );
 }
 
-// Multiple args
+/// Free function to connect multiple signals to a function and return the resulting signal.
 template <typename... values_t,
     typename in_f,
     typename F = typename std::decay<in_f>::type,
@@ -1666,10 +1610,7 @@ auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
         arg_pack.data );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// operator->* overload to connect signals to a function and return the resulting signal.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Single arg
+/// operator->* overload to connect a signal to a function and return the resulting signal.
 template <typename F,
     template <typename>
     class signal_t,
@@ -1681,7 +1622,7 @@ auto operator->*( const signal_t<value_t>& arg, F&& func )
     return ::ureact::make_signal( arg, std::forward<F>( func ) );
 }
 
-// Multiple args
+/// operator->* overload to connect multiple signals to a function and return the resulting signal.
 template <typename F, typename... values_t>
 auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
     -> signal<typename std::result_of<F( values_t... )>::type>
@@ -1689,9 +1630,6 @@ auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
     return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// flatten
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename inner_value_t>
 auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
 {
@@ -1716,22 +1654,17 @@ struct decay_input<var_signal<T>>
     using type = signal<T>;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// identity (workaround to enable enable decltype()::X)
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/// type_identity (workaround to enable enable decltype()::X)
+/// See https://en.cppreference.com/w/cpp/types/type_identity
 template <typename T>
-struct identity
+struct type_identity
 {
     using type = T;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// flatten macros
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 #define REACTIVE_REF( obj, name )                                                                  \
-    flatten( make_signal(                                                                          \
-        obj, []( const typename ::ureact::detail::identity<decltype( obj )>::type::value_t& r ) {  \
+    flatten( make_signal( obj,                                                                     \
+        []( const typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t& r ) {  \
             using T = decltype( r.name );                                                          \
             using S = typename ::ureact::detail::decay_input<T>::type;                             \
             return static_cast<S>( r.name );                                                       \
@@ -1739,7 +1672,7 @@ struct identity
 
 #define REACTIVE_PTR( obj, name )                                                                  \
     flatten( make_signal(                                                                          \
-        obj, []( typename ::ureact::detail::identity<decltype( obj )>::type::value_t r ) {         \
+        obj, []( typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t r ) {    \
             assert( r != nullptr );                                                                \
             using T = decltype( r->name );                                                         \
             using S = typename ::ureact::detail::decay_input<T>::type;                             \
@@ -1869,9 +1802,6 @@ private:
 namespace detail
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// add_default_return_value_wrapper
-///////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename F, typename ret_t, ret_t return_value>
 struct add_default_return_value_wrapper
 {

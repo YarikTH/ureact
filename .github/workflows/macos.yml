@@ -28,8 +28,10 @@ jobs:
 
       - name: Build
         working-directory: ${{runner.workspace}}/build
-        run: cmake --build . --config ${{matrix.build_type}}
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cmake --build . --config ${{matrix.build_type}} --parallel $threads
 
       - name: Test
         working-directory: ${{runner.workspace}}/build
-        run: ctest -j 10 -C ${{matrix.build_type}}  --output-on-failure
+        run: ctest -C ${{matrix.build_type}} --output-on-failure

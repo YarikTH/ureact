@@ -231,7 +231,7 @@ inline bool react_graph::topological_queue::fetch_next()
 
 inline void react_graph::on_node_attach( reactive_node& node, reactive_node& parent )
 {
-    parent.successors.add( node );
+    parent.successors.push_back( &node );
 
     if( node.level <= parent.level )
     {
@@ -239,9 +239,24 @@ inline void react_graph::on_node_attach( reactive_node& node, reactive_node& par
     }
 }
 
+template <typename input_iterator, typename T>
+inline input_iterator find( input_iterator first, input_iterator last, const T& val )
+{
+    for( auto it = first, ite = last; it != ite; ++it )
+    {
+        if( *it == val )
+        {
+            return it;
+        }
+    }
+    return last;
+}
+
 inline void react_graph::on_node_detach( reactive_node& node, reactive_node& parent )
 {
-    parent.successors.remove( node );
+    const auto it
+        = ureact::detail::find( parent.successors.begin(), parent.successors.end(), &node );
+    parent.successors.erase( it );
 }
 
 inline void react_graph::on_input_change( reactive_node& node )

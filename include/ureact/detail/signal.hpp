@@ -558,10 +558,9 @@ auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value
             context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// decay_input
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// @todo understand its meaning and document it
+namespace detail
+{
+
 template <typename T>
 struct decay_input
 {
@@ -573,9 +572,6 @@ struct decay_input<var_signal<T>>
 {
     using type = signal<T>;
 };
-
-namespace detail
-{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // identity (workaround to enable enable decltype()::X)
@@ -596,7 +592,7 @@ struct identity
     flatten( make_signal(                                                                          \
         obj, []( const typename ::ureact::detail::identity<decltype( obj )>::type::value_t& r ) {  \
             using T = decltype( r.name );                                                          \
-            using S = typename ::ureact::decay_input<T>::type;                                     \
+            using S = typename ::ureact::detail::decay_input<T>::type;                                     \
             return static_cast<S>( r.name );                                                       \
         } ) )
 
@@ -605,7 +601,7 @@ struct identity
         obj, []( typename ::ureact::detail::identity<decltype( obj )>::type::value_t r ) {         \
             assert( r != nullptr );                                                                \
             using T = decltype( r->name );                                                         \
-            using S = typename ::ureact::decay_input<T>::type;                                     \
+            using S = typename ::ureact::detail::decay_input<T>::type;                                     \
             return static_cast<S>( r->name );                                                      \
         } ) )
 

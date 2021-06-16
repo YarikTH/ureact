@@ -1245,7 +1245,7 @@ private:
 public:
     using value_t = S;
 
-    /// Default constructor that needed for REACTIVE_REF for some reason
+    /// Default constructor that needed for UREACT_REACTIVE_REF for some reason
     /// @todo investigate and remove it if possible
     signal() = default;
 
@@ -1292,7 +1292,7 @@ private:
 public:
     using value_t = S;
 
-    /// Default constructor that needed for REACTIVE_REF for some reason
+    /// Default constructor that needed for UREACT_REACTIVE_REF for some reason
     /// @todo investigate and remove it if possible
     signal() = default;
 
@@ -1662,7 +1662,7 @@ struct type_identity
     using type = T;
 };
 
-#define REACTIVE_REF( obj, name )                                                                  \
+#define UREACT_REACTIVE_REF( obj, name )                                                           \
     flatten( make_signal( obj,                                                                     \
         []( const typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t& r ) {  \
             using T = decltype( r.name );                                                          \
@@ -1670,7 +1670,7 @@ struct type_identity
             return static_cast<S>( r.name );                                                       \
         } ) )
 
-#define REACTIVE_PTR( obj, name )                                                                  \
+#define UREACT_REACTIVE_PTR( obj, name )                                                           \
     flatten( make_signal(                                                                          \
         obj, []( typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t r ) {    \
             assert( r != nullptr );                                                                \

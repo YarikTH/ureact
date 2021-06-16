@@ -15,18 +15,33 @@
 #    include <algorithm>
 #endif
 
+
 namespace ureact
 {
 
-// Forward declarations
+//==================================================================================================
+// [[section]] Forward declarations
+//==================================================================================================
+class context;
+
 template <typename S>
 class signal;
 
 template <typename S>
 class var_signal;
 
+
+namespace detail
+{
+
+class context_internals;
+
+} // namespace detail
+
 template <typename inner_value_t>
 auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>;
+
+inline detail::context_internals& _get_internals( context& ctx );
 
 /// Observer functions can return values of this type to control further processing.
 enum class observer_action
@@ -35,7 +50,41 @@ enum class observer_action
     stop_and_detach ///< Need to stop observing
 };
 
+namespace detail
+{
 
+// Got from https://stackoverflow.com/a/34672753
+// std::is_base_of for template classes
+template <template <typename...> class base, typename derived>
+struct is_base_of_template_impl
+{
+    template <typename... Ts>
+    static constexpr std::true_type test( const base<Ts...>* )
+    {
+        return {};
+    }
+    static constexpr std::false_type test( ... )
+    {
+        return {};
+    }
+    using type = decltype( test( std::declval<derived*>() ) );
+};
+
+template <template <typename...> class base, typename derived>
+using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
+
+} // namespace detail
+
+/// Return if type is signal or its inheritor
+template <typename T>
+struct is_signal : detail::is_base_of_template<signal, T>
+{};
+
+
+
+//==================================================================================================
+// [[section]] General purpose utilities
+//==================================================================================================
 namespace detail
 {
 
@@ -186,27 +235,6 @@ struct type_identity
 };
 
 
-// Got from https://stackoverflow.com/a/34672753
-// std::is_base_of for template classes
-template <template <typename...> class base, typename derived>
-struct is_base_of_template_impl
-{
-    template <typename... Ts>
-    static constexpr std::true_type test( const base<Ts...>* )
-    {
-        return {};
-    }
-    static constexpr std::false_type test( ... )
-    {
-        return {};
-    }
-    using type = decltype( test( std::declval<derived*>() ) );
-};
-
-template <template <typename...> class base, typename derived>
-using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
-
-
 // Full analog of std::bind1st that removed in c++17
 // See https://en.cppreference.com/w/cpp/utility/functional/bind12
 template <template <typename, typename> class functor_binary_op,
@@ -309,6 +337,15 @@ struct add_default_return_value_wrapper
     F m_func;
 };
 
+} // namespace detail
+
+
+
+//==================================================================================================
+// [[section]] Ureact specific utilities
+//==================================================================================================
+namespace detail
+{
 
 template <typename T>
 struct decay_input
@@ -350,6 +387,15 @@ bool equals( const signal<L>& lhs, const signal<R>& rhs )
 #    pragma clang diagnostic pop
 #endif
 
+} // namespace detail
+
+
+
+//==================================================================================================
+// [[section]] Ureact engine
+//==================================================================================================
+namespace detail
+{
 
 class reactive_node
 {
@@ -750,38 +796,10 @@ private:
 } // namespace detail
 
 
-/// Return if type is signal or its inheritor
-template <typename T>
-struct is_signal : detail::is_base_of_template<signal, T>
-{};
 
-
-class context : protected detail::context_internals
-{
-public:
-    template <typename F>
-    void do_transaction( F&& func )
-    {
-        get_graph().do_transaction( std::forward<F>( func ) );
-    }
-
-    bool operator==( const context& rsh ) const
-    {
-        return this == &rsh;
-    }
-
-    bool operator!=( const context& rsh ) const
-    {
-        return this != &rsh;
-    }
-
-    friend detail::context_internals& _get_internals( context& ctx )
-    {
-        return ctx;
-    }
-};
-
-
+//==================================================================================================
+// [[section]] Reactive nodes
+//==================================================================================================
 namespace detail
 {
 
@@ -1287,6 +1305,15 @@ private:
     func_t m_func;
 };
 
+} // namespace detail
+
+
+
+//==================================================================================================
+// [[section]] Reactive signals and observers
+//==================================================================================================
+namespace detail
+{
 
 template <typename node_t>
 class reactive_base
@@ -1586,45 +1613,23 @@ public:
 };
 
 
-namespace detail
+/// Proxy class that wraps several nodes into a tuple.
+template <typename... values_t>
+class signal_pack
 {
+public:
+    explicit signal_pack( const signal<values_t>&... deps )
+        : data( std::tie( deps... ) )
+    {}
 
-template <typename V,
-    typename S = typename std::decay<V>::type,
-    class = typename std::enable_if<!is_signal<S>::value>::type>
-auto make_var_impl( context& context, V&& value ) -> var_signal<S>
-{
-    return var_signal<S>(
-        std::make_shared<::ureact::detail::var_node<S>>( context, std::forward<V>( value ) ) );
-}
+    template <typename... cur_values_t, typename append_value_t>
+    signal_pack(
+        const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
+        : data( std::tuple_cat( cur_args.data, std::tie( new_arg ) ) )
+    {}
 
-template <typename S>
-auto make_var_impl( context& context, std::reference_wrapper<S> value ) -> var_signal<S&>
-{
-    return var_signal<S&>(
-        std::make_shared<::ureact::detail::var_node<std::reference_wrapper<S>>>( context, value ) );
-}
-
-template <typename V,
-    typename S = typename std::decay<V>::type,
-    typename inner_t = typename S::value_t,
-    class = typename std::enable_if<is_signal<S>::value>::type>
-auto make_var_impl( context& context, V&& value ) -> var_signal<signal<inner_t>>
-{
-    return var_signal<signal<inner_t>>(
-        std::make_shared<::ureact::detail::var_node<signal<inner_t>>>(
-            context, std::forward<V>( value ) ) );
-}
-
-} // namespace detail
-
-
-template <typename V>
-auto make_var( context& context, V&& value )
-    -> decltype( detail::make_var_impl( context, std::forward<V>( value ) ) )
-{
-    return detail::make_var_impl( context, std::forward<V>( value ) );
-}
+    std::tuple<const signal<values_t>&...> data;
+};
 
 
 namespace detail
@@ -1663,6 +1668,34 @@ public:
 };
 
 
+template <typename V,
+    typename S = typename std::decay<V>::type,
+    class = typename std::enable_if<!is_signal<S>::value>::type>
+auto make_var_impl( context& context, V&& value ) -> var_signal<S>
+{
+    return var_signal<S>(
+        std::make_shared<::ureact::detail::var_node<S>>( context, std::forward<V>( value ) ) );
+}
+
+template <typename S>
+auto make_var_impl( context& context, std::reference_wrapper<S> value ) -> var_signal<S&>
+{
+    return var_signal<S&>(
+        std::make_shared<::ureact::detail::var_node<std::reference_wrapper<S>>>( context, value ) );
+}
+
+template <typename V,
+    typename S = typename std::decay<V>::type,
+    typename inner_t = typename S::value_t,
+    class = typename std::enable_if<is_signal<S>::value>::type>
+auto make_var_impl( context& context, V&& value ) -> var_signal<signal<inner_t>>
+{
+    return var_signal<signal<inner_t>>(
+        std::make_shared<::ureact::detail::var_node<signal<inner_t>>>(
+            context, std::forward<V>( value ) ) );
+}
+
+
 template <typename S, typename op_t, typename... Args>
 auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t>
 {
@@ -1670,149 +1703,7 @@ auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t
         std::make_shared<signal_op_node<S, op_t>>( context, std::forward<Args>( args )... ) );
 }
 
-
 } // namespace detail
-
-
-/// Proxy class that wraps several nodes into a tuple.
-template <typename... values_t>
-class signal_pack
-{
-public:
-    explicit signal_pack( const signal<values_t>&... deps )
-        : data( std::tie( deps... ) )
-    {}
-
-    template <typename... cur_values_t, typename append_value_t>
-    signal_pack(
-        const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
-        : data( std::tuple_cat( cur_args.data, std::tie( new_arg ) ) )
-    {}
-
-    std::tuple<const signal<values_t>&...> data;
-};
-
-
-/// Utility function to create a signal_pack from given signals.
-template <typename... values_t>
-auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
-{
-    return signal_pack<values_t...>( deps... );
-}
-
-
-/// Comma operator overload to create signal pack from two signals.
-template <typename left_val_t, typename right_val_t>
-auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
-                  -> signal_pack<left_val_t, right_val_t>
-{
-    return signal_pack<left_val_t, right_val_t>( a, b );
-}
-
-/// Comma operator overload to append node to existing signal pack.
-template <typename... cur_values_t, typename append_value_t>
-auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
-                  -> signal_pack<cur_values_t..., append_value_t>
-{
-    return signal_pack<cur_values_t..., append_value_t>( cur, append );
-}
-
-
-/// Free function to connect a signal to a function and return the resulting signal.
-template <typename value_t,
-    typename in_f,
-    typename F = typename std::decay<in_f>::type,
-    typename S = typename std::result_of<F( value_t )>::type,
-    typename op_t
-    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
-auto make_signal( const signal<value_t>& arg, in_f&& func ) -> detail::temp_signal<S, op_t>
-{
-    context& context = arg.get_context();
-
-    return detail::make_temp_signal<S, op_t>(
-        context, std::forward<in_f>( func ), get_node_ptr( arg ) );
-}
-
-/// Free function to connect multiple signals to a function and return the resulting signal.
-template <typename... values_t,
-    typename in_f,
-    typename F = typename std::decay<in_f>::type,
-    typename S = typename std::result_of<F( values_t... )>::type,
-    typename op_t
-    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
-auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
-    -> detail::temp_signal<S, op_t>
-{
-    struct node_builder
-    {
-        explicit node_builder( context& context, in_f&& func )
-            : m_context( context )
-            , m_my_func( std::forward<in_f>( func ) )
-        {}
-
-        auto operator()( const signal<values_t>&... args ) -> detail::temp_signal<S, op_t>
-        {
-            return detail::make_temp_signal<S, op_t>(
-                m_context, std::forward<in_f>( m_my_func ), get_node_ptr( args )... );
-        }
-
-        context& m_context;
-        in_f m_my_func;
-    };
-
-    return apply(
-        node_builder( std::get<0>( arg_pack.data ).get_context(), std::forward<in_f>( func ) ),
-        arg_pack.data );
-}
-
-
-/// operator->* overload to connect a signal to a function and return the resulting signal.
-template <typename F,
-    template <typename>
-    class signal_t,
-    typename value_t,
-    class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
-auto operator->*( const signal_t<value_t>& arg, F&& func )
-    -> signal<typename std::result_of<F( value_t )>::type>
-{
-    return ::ureact::make_signal( arg, std::forward<F>( func ) );
-}
-
-/// operator->* overload to connect multiple signals to a function and return the resulting signal.
-template <typename F, typename... values_t>
-auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
-    -> signal<typename std::result_of<F( values_t... )>::type>
-{
-    return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
-}
-
-
-template <typename inner_value_t>
-auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
-{
-    context& context = outer.get_context();
-    return signal<inner_value_t>(
-        std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
-            context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );
-}
-
-
-#define UREACT_REACTIVE_REF( obj, name )                                                           \
-    flatten( make_signal( obj,                                                                     \
-        []( const typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t& r ) {  \
-            using T = decltype( r.name );                                                          \
-            using S = typename ::ureact::detail::decay_input<T>::type;                             \
-            return static_cast<S>( r.name );                                                       \
-        } ) )
-
-#define UREACT_REACTIVE_PTR( obj, name )                                                           \
-    flatten( make_signal(                                                                          \
-        obj, []( typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t r ) {    \
-            assert( r != nullptr );                                                                \
-            using T = decltype( r->name );                                                         \
-            using S = typename ::ureact::detail::decay_input<T>::type;                             \
-            return static_cast<S>( r->name );                                                      \
-        } ) )
 
 
 /// An instance of this class provides a unique handle to an observer which can
@@ -1930,43 +1821,10 @@ private:
 };
 
 
-/// When the signal value S of subject changes, func(s) is called.
-/// The signature of func should be equivalent to:
-/// TRet func(const S&)
-/// TRet can be either observer_action or void.
-/// By returning observer_action::stop_and_detach, the observer function can request
-/// its own detachment. Returning observer_action::next keeps the observer attached.
-/// Using a void return type is the same as always returning observer_action::next.
-template <typename in_f, typename S>
-auto observe( const signal<S>& subject, in_f&& func ) -> observer
-{
-    using ::ureact::detail::observer_interface;
-    using observer_node = ::ureact::detail::observer_node;
-    using ::ureact::detail::add_default_return_value_wrapper;
-    using ::ureact::detail::signal_observer_node;
 
-    using F = typename std::decay<in_f>::type;
-    using R = typename std::result_of<in_f( S )>::type;
-    using wrapper_t = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
-
-    // If return value of passed function is void, add observer_action::next as
-    // default return value.
-    using node_t = typename std::conditional<std::is_same<void, R>::value,
-        signal_observer_node<S, wrapper_t>,
-        signal_observer_node<S, F>>::type;
-
-    const auto& subject_ptr = get_node_ptr( subject );
-
-    std::unique_ptr<observer_node> node_ptr(
-        new node_t( subject.get_context(), subject_ptr, std::forward<in_f>( func ) ) );
-    observer_node* raw_node_ptr = node_ptr.get();
-
-    subject_ptr->register_observer( std::move( node_ptr ) );
-
-    return observer( raw_node_ptr, subject_ptr );
-}
-
-
+//==================================================================================================
+// [[section]] Operator overloads for signals for simplified signal creation
+//==================================================================================================
 namespace detail
 {
 
@@ -2257,5 +2115,214 @@ UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
 
 
 #undef UREACT_EXPAND_PACK
+
+
+
+//==================================================================================================
+// [[section]] Free functions for fun and profit
+//==================================================================================================
+template <typename V>
+auto make_var( context& context, V&& value )
+    -> decltype( detail::make_var_impl( context, std::forward<V>( value ) ) )
+{
+    return detail::make_var_impl( context, std::forward<V>( value ) );
+}
+
+
+/// Utility function to create a signal_pack from given signals.
+template <typename... values_t>
+auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
+{
+    return signal_pack<values_t...>( deps... );
+}
+
+
+/// Comma operator overload to create signal pack from two signals.
+template <typename left_val_t, typename right_val_t>
+auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b )
+                  -> signal_pack<left_val_t, right_val_t>
+{
+    return signal_pack<left_val_t, right_val_t>( a, b );
+}
+
+/// Comma operator overload to append node to existing signal pack.
+template <typename... cur_values_t, typename append_value_t>
+auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
+                  -> signal_pack<cur_values_t..., append_value_t>
+{
+    return signal_pack<cur_values_t..., append_value_t>( cur, append );
+}
+
+
+/// Free function to connect a signal to a function and return the resulting signal.
+template <typename value_t,
+    typename in_f,
+    typename F = typename std::decay<in_f>::type,
+    typename S = typename std::result_of<F( value_t )>::type,
+    typename op_t
+    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
+auto make_signal( const signal<value_t>& arg, in_f&& func ) -> detail::temp_signal<S, op_t>
+{
+    context& context = arg.get_context();
+
+    return detail::make_temp_signal<S, op_t>(
+        context, std::forward<in_f>( func ), get_node_ptr( arg ) );
+}
+
+/// Free function to connect multiple signals to a function and return the resulting signal.
+template <typename... values_t,
+    typename in_f,
+    typename F = typename std::decay<in_f>::type,
+    typename S = typename std::result_of<F( values_t... )>::type,
+    typename op_t
+    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
+auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
+    -> detail::temp_signal<S, op_t>
+{
+    struct node_builder
+    {
+        explicit node_builder( context& context, in_f&& func )
+            : m_context( context )
+            , m_my_func( std::forward<in_f>( func ) )
+        {}
+
+        auto operator()( const signal<values_t>&... args ) -> detail::temp_signal<S, op_t>
+        {
+            return detail::make_temp_signal<S, op_t>(
+                m_context, std::forward<in_f>( m_my_func ), get_node_ptr( args )... );
+        }
+
+        context& m_context;
+        in_f m_my_func;
+    };
+
+    return apply(
+        node_builder( std::get<0>( arg_pack.data ).get_context(), std::forward<in_f>( func ) ),
+        arg_pack.data );
+}
+
+
+/// operator->* overload to connect a signal to a function and return the resulting signal.
+template <typename F,
+    template <typename>
+    class signal_t,
+    typename value_t,
+    class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
+auto operator->*( const signal_t<value_t>& arg, F&& func )
+    -> signal<typename std::result_of<F( value_t )>::type>
+{
+    return ::ureact::make_signal( arg, std::forward<F>( func ) );
+}
+
+/// operator->* overload to connect multiple signals to a function and return the resulting signal.
+template <typename F, typename... values_t>
+auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
+    -> signal<typename std::result_of<F( values_t... )>::type>
+{
+    return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
+}
+
+
+template <typename inner_value_t>
+auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>
+{
+    context& context = outer.get_context();
+    return signal<inner_value_t>(
+        std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
+            context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );
+}
+
+
+/// When the signal value S of subject changes, func(s) is called.
+/// The signature of func should be equivalent to:
+/// TRet func(const S&)
+/// TRet can be either observer_action or void.
+/// By returning observer_action::stop_and_detach, the observer function can request
+/// its own detachment. Returning observer_action::next keeps the observer attached.
+/// Using a void return type is the same as always returning observer_action::next.
+template <typename in_f, typename S>
+auto observe( const signal<S>& subject, in_f&& func ) -> observer
+{
+    using ::ureact::detail::observer_interface;
+    using observer_node = ::ureact::detail::observer_node;
+    using ::ureact::detail::add_default_return_value_wrapper;
+    using ::ureact::detail::signal_observer_node;
+
+    using F = typename std::decay<in_f>::type;
+    using R = typename std::result_of<in_f( S )>::type;
+    using wrapper_t = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
+
+    // If return value of passed function is void, add observer_action::next as
+    // default return value.
+    using node_t = typename std::conditional<std::is_same<void, R>::value,
+        signal_observer_node<S, wrapper_t>,
+        signal_observer_node<S, F>>::type;
+
+    const auto& subject_ptr = get_node_ptr( subject );
+
+    std::unique_ptr<observer_node> node_ptr(
+        new node_t( subject.get_context(), subject_ptr, std::forward<in_f>( func ) ) );
+    observer_node* raw_node_ptr = node_ptr.get();
+
+    subject_ptr->register_observer( std::move( node_ptr ) );
+
+    return observer( raw_node_ptr, subject_ptr );
+}
+
+
+#define UREACT_REACTIVE_REF( obj, name )                                                           \
+    flatten( make_signal( obj,                                                                     \
+        []( const typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t& r ) {  \
+            using T = decltype( r.name );                                                          \
+            using S = typename ::ureact::detail::decay_input<T>::type;                             \
+            return static_cast<S>( r.name );                                                       \
+        } ) )
+
+#define UREACT_REACTIVE_PTR( obj, name )                                                           \
+    flatten( make_signal(                                                                          \
+        obj, []( typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t r ) {    \
+            assert( r != nullptr );                                                                \
+            using T = decltype( r->name );                                                         \
+            using S = typename ::ureact::detail::decay_input<T>::type;                             \
+            return static_cast<S>( r->name );                                                      \
+        } ) )
+
+
+
+//==================================================================================================
+// [[section]] Context class
+//==================================================================================================
+class context : protected detail::context_internals
+{
+public:
+    /// Perform several changes atomically
+    template <typename F>
+    void do_transaction( F&& func )
+    {
+        get_graph().do_transaction( std::forward<F>( func ) );
+    }
+
+    /// Factory to create var signal in current context.
+    template <typename V>
+    auto make_var( V&& value ) -> decltype( ureact::make_var( *this, std::forward<V>( value ) ) )
+    {
+        return ureact::make_var( *this, std::forward<V>( value ) );
+    }
+
+    bool operator==( const context& rsh ) const
+    {
+        return this == &rsh;
+    }
+
+    bool operator!=( const context& rsh ) const
+    {
+        return this != &rsh;
+    }
+
+    friend detail::context_internals& _get_internals( context& ctx )
+    {
+        return ctx;
+    }
+};
 
 } // namespace ureact

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UREACT_UREACT_H_
+#define UREACT_UREACT_H_
 
 #include <cassert>
 #include <limits>
@@ -2388,3 +2389,5 @@ public:
 };
 
 UREACT_END_NAMESPACE
+
+#endif // UREACT_UREACT_H_

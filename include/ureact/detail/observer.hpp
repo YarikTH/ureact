@@ -8,8 +8,7 @@
 #include "ureact/detail/util.hpp"
 #include "ureact/detail/reactive_node_interface.hpp"
 #include "ureact/detail/observer_base.hpp"
-#include "ureact/detail/graph/observable_node.hpp"
-#include "ureact/detail/graph/signal_observer_node.hpp"
+#include "ureact/detail/signal_node.hpp"
 
 namespace ureact
 {

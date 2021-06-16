@@ -1,10 +1,6 @@
 #pragma once
 
-#include "ureact/detail/graph/signal_node.hpp"
-#include "ureact/detail/graph/signal_op_node.hpp"
-#include "ureact/detail/graph/function_op.hpp"
-#include "ureact/detail/graph/flatten_node.hpp"
-#include "ureact/detail/graph/var_node.hpp"
+#include "ureact/detail/signal_node.hpp"
 
 namespace ureact
 {
@@ -592,7 +588,7 @@ struct identity
     flatten( make_signal(                                                                          \
         obj, []( const typename ::ureact::detail::identity<decltype( obj )>::type::value_t& r ) {  \
             using T = decltype( r.name );                                                          \
-            using S = typename ::ureact::detail::decay_input<T>::type;                                     \
+            using S = typename ::ureact::detail::decay_input<T>::type;                             \
             return static_cast<S>( r.name );                                                       \
         } ) )
 
@@ -601,7 +597,7 @@ struct identity
         obj, []( typename ::ureact::detail::identity<decltype( obj )>::type::value_t r ) {         \
             assert( r != nullptr );                                                                \
             using T = decltype( r->name );                                                         \
-            using S = typename ::ureact::detail::decay_input<T>::type;                                     \
+            using S = typename ::ureact::detail::decay_input<T>::type;                             \
             return static_cast<S>( r->name );                                                      \
         } ) )
 

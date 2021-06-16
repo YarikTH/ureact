@@ -104,6 +104,7 @@ class context_internals;
 template <typename inner_value_t>
 auto flatten( const signal<signal<inner_value_t>>& outer ) -> signal<inner_value_t>;
 
+/// Return internals. Not intended to use in user code.
 inline detail::context_internals& _get_internals( context& ctx );
 
 /// Observer functions can return values of this type to control further processing.
@@ -1457,17 +1458,17 @@ protected:
 } // namespace detail
 
 
-/**
- * A signal is a reactive variable that can propagate its changes to dependents
- * and react to changes of its dependencies.
+/*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
+ * its dependencies. (Specialization for non-reference types.)
  *
- * Instances of this class act as a proxies to signal nodes. It takes shared
- * ownership of the node, so while it exists, the node will not be destroyed.
- * Copy, move and assignment semantics are similar to std::shared_ptr.
+ *  A signal is a reactive variable that can propagate its changes to dependents
+ *  and react to changes of its dependencies.
  *
- * signals are created by constructor functions, i.e. make_signal.
+ *  Instances of this class act as a proxies to signal nodes. It takes shared
+ *  ownership of the node, so while it exists, the node will not be destroyed.
+ *  Copy, move and assignment semantics are similar to std::shared_ptr.
  *
- * Specialization for non-reference types.
+ *  signals are created by constructor functions, i.e. make_signal.
  */
 template <typename S>
 class signal : public detail::signal_base<S>
@@ -1505,17 +1506,17 @@ public:
 };
 
 
-/**
- * A signal is a reactive variable that can propagate its changes to dependents
- * and react to changes of its dependencies.
+/*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
+ * its dependencies. (Specialization for references.)
  *
- * Instances of this class act as a proxies to signal nodes. It takes shared
- * ownership of the node, so while it exists, the node will not be destroyed.
- * Copy, move and assignment semantics are similar to std::shared_ptr.
+ *  A signal is a reactive variable that can propagate its changes to dependents
+ *  and react to changes of its dependencies.
  *
- * signals are created by constructor functions, i.e. make_signal.
+ *  Instances of this class act as a proxies to signal nodes. It takes shared
+ *  ownership of the node, so while it exists, the node will not be destroyed.
+ *  Copy, move and assignment semantics are similar to std::shared_ptr.
  *
- * Specialization for references.
+ *  signals are created by constructor functions, i.e. make_signal.
  */
 template <typename S>
 class signal<S&> : public detail::signal_base<std::reference_wrapper<S>>
@@ -1546,14 +1547,14 @@ public:
 };
 
 
-/**
- * This class extends the immutable signal interface with functions that support
- * imperative value input. In the dataflow graph, input signals are sources.
- * As such, they don't have any predecessors.
+/*! @brief Source signals which values can be manually changed.
+ * (Specialization for non-reference types.)
  *
- * var_signal is created by constructor function make_var.
+ *  This class extends the immutable signal interface with functions that support
+ *  imperative value input. In the dataflow graph, input signals are sources.
+ *  As such, they don't have any predecessors.
  *
- * Specialization for non-reference types.
+ *  var_signal is created by constructor function make_var.
  */
 template <typename S>
 class var_signal : public signal<S>
@@ -1621,14 +1622,14 @@ public:
 };
 
 
-/**
- * This class extends the immutable signal interface with functions that support
- * imperative value input. In the dataflow graph, input signals are sources.
- * As such, they don't have any predecessors.
+/*! @brief Source signals which values can be manually changed.
+ * (Specialization for references.)
  *
- * var_signal is created by constructor function make_var.
+ *  This class extends the immutable signal interface with functions that support
+ *  imperative value input. In the dataflow graph, input signals are sources.
+ *  As such, they don't have any predecessors.
  *
- * Specialization for references.
+ *  var_signal is created by constructor function make_var.
  */
 template <typename S>
 class var_signal<S&> : public signal<std::reference_wrapper<S>>
@@ -1769,13 +1770,16 @@ auto make_temp_signal( context& context, Args&&... args ) -> temp_signal<S, op_t
 } // namespace detail
 
 
-/// An instance of this class provides a unique handle to an observer which can
-/// be used to detach it explicitly. It also holds a strong reference to
-/// the observed subject, so while it exists the subject and therefore
-/// the observer will not be destroyed.
-///
-/// If the handle is destroyed without calling detach(), the lifetime of
-/// the observer is tied to the subject.
+/*! @brief Shared pointer like object that holds a strong reference to the observed subject
+ *
+ *  An instance of this class provides a unique handle to an observer which can
+ *  be used to detach it explicitly. It also holds a strong reference to
+ *  the observed subject, so while it exists the subject and therefore
+ *  the observer will not be destroyed.
+ *
+ *  If the handle is destroyed without calling detach(), the lifetime of
+ *  the observer is tied to the subject.
+ */
 class observer
 {
 private:
@@ -2063,80 +2067,82 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
 
 } // namespace detail
 
+#if !defined( UREACT_DOC )
 
-#define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
-    namespace detail                                                                               \
-    {                                                                                              \
-    namespace op_functors                                                                          \
-    {                                                                                              \
-    template <typename T>                                                                          \
-    struct op_functor_##name                                                                       \
-    {                                                                                              \
-        auto operator()( const T& v ) const -> decltype( op std::declval<T>() )                    \
+#    define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                            \
+        namespace detail                                                                           \
         {                                                                                          \
-            return op v;                                                                           \
-        }                                                                                          \
-    };                                                                                             \
-    } /* namespace op_functors */                                                                  \
-    } /* namespace detail */
-
-
-#define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
-    namespace detail                                                                               \
-    {                                                                                              \
-    namespace op_functors                                                                          \
-    {                                                                                              \
-    template <typename L, typename R>                                                              \
-    struct op_functor_##name                                                                       \
-    {                                                                                              \
-        auto operator()( const L& lhs, const R& rhs ) const                                        \
-            -> decltype( std::declval<L>() op std::declval<R>() )                                  \
+        namespace op_functors                                                                      \
         {                                                                                          \
-            return lhs op rhs;                                                                     \
-        }                                                                                          \
-    };                                                                                             \
-    } /* namespace op_functors */                                                                  \
-    } /* namespace detail */
+        template <typename T>                                                                      \
+        struct op_functor_##name                                                                   \
+        {                                                                                          \
+            auto operator()( const T& v ) const -> decltype( op std::declval<T>() )                \
+            {                                                                                      \
+                return op v;                                                                       \
+            }                                                                                      \
+        };                                                                                         \
+        } /* namespace op_functors */                                                              \
+        } /* namespace detail */
 
 
-#define UREACT_DECLARE_UNARY_OP( op, name )                                                        \
-    template <typename arg_t,                                                                      \
-        template <typename> class functor_op = detail::op_functors::op_functor_##name>             \
-    auto operator op( arg_t&& arg )                                                                \
-        ->decltype( detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) ) )        \
-    {                                                                                              \
-        return detail::unary_operator_impl<functor_op>( std::forward<arg_t&&>( arg ) );            \
-    }
+#    define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                           \
+        namespace detail                                                                           \
+        {                                                                                          \
+        namespace op_functors                                                                      \
+        {                                                                                          \
+        template <typename L, typename R>                                                          \
+        struct op_functor_##name                                                                   \
+        {                                                                                          \
+            auto operator()( const L& lhs, const R& rhs ) const                                    \
+                -> decltype( std::declval<L>() op std::declval<R>() )                              \
+            {                                                                                      \
+                return lhs op rhs;                                                                 \
+            }                                                                                      \
+        };                                                                                         \
+        } /* namespace op_functors */                                                              \
+        } /* namespace detail */
 
 
-#define UREACT_DECLARE_BINARY_OP( op, name )                                                       \
-    template <typename lhs_t,                                                                      \
-        typename rhs_t,                                                                            \
-        template <typename, typename> class functor_op = detail::op_functors::op_functor_##name>   \
-    auto operator op( lhs_t&& lhs, rhs_t&& rhs )                                                   \
-        ->decltype( detail::binary_operator_impl<functor_op>(                                      \
-            std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) ) )                         \
-    {                                                                                              \
-        return detail::binary_operator_impl<functor_op>(                                           \
-            std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) );                          \
-    }
+#    define UREACT_DECLARE_UNARY_OP( op, name )                                                    \
+        template <typename arg_t,                                                                  \
+            template <typename> class functor_op = detail::op_functors::op_functor_##name>         \
+        auto operator op( arg_t&& arg )                                                            \
+            ->decltype( detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) ) )    \
+        {                                                                                          \
+            return detail::unary_operator_impl<functor_op>( std::forward<arg_t&&>( arg ) );        \
+        }
 
 
-#define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
-    UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
-    UREACT_DECLARE_UNARY_OP( op, name )
+#    define UREACT_DECLARE_BINARY_OP( op, name )                                                   \
+        template <typename lhs_t,                                                                  \
+            typename rhs_t,                                                                        \
+            template <typename, typename> class functor_op                                         \
+            = detail::op_functors::op_functor_##name>                                              \
+        auto operator op( lhs_t&& lhs, rhs_t&& rhs )                                               \
+            ->decltype( detail::binary_operator_impl<functor_op>(                                  \
+                std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) ) )                     \
+        {                                                                                          \
+            return detail::binary_operator_impl<functor_op>(                                       \
+                std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) );                      \
+        }
 
 
-#define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
-    UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
-    UREACT_DECLARE_BINARY_OP( op, name )
+#    define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                              \
+        UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
+        UREACT_DECLARE_UNARY_OP( op, name )
 
 
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wunknown-warning-option"
-#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
-#endif
+#    define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                             \
+        UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
+        UREACT_DECLARE_BINARY_OP( op, name )
+
+
+#    if defined( __clang__ ) && defined( __clang_minor__ )
+#        pragma clang diagnostic push
+#        pragma clang diagnostic ignored "-Wunknown-warning-option"
+#        pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+#    endif
 
 UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
 UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )
@@ -2165,25 +2171,26 @@ UREACT_DECLARE_BINARY_OPERATOR( ^, bitwise_xor )
 UREACT_DECLARE_BINARY_OPERATOR( <<, bitwise_left_shift )
 UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
 
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic pop
-#endif
+#    if defined( __clang__ ) && defined( __clang_minor__ )
+#        pragma clang diagnostic pop
+#    endif
 
-#undef UREACT_DECLARE_UNARY_OPERATOR
-#undef UREACT_DECLARE_UNARY_OP_FUNCTOR
-#undef UREACT_DECLARE_UNARY_OP
-#undef UREACT_DECLARE_BINARY_OPERATOR
-#undef UREACT_DECLARE_BINARY_OP_FUNCTOR
-#undef UREACT_DECLARE_BINARY_OP
+#    undef UREACT_DECLARE_UNARY_OPERATOR
+#    undef UREACT_DECLARE_UNARY_OP_FUNCTOR
+#    undef UREACT_DECLARE_UNARY_OP
+#    undef UREACT_DECLARE_BINARY_OPERATOR
+#    undef UREACT_DECLARE_BINARY_OP_FUNCTOR
+#    undef UREACT_DECLARE_BINARY_OP
 
-
-#undef UREACT_EXPAND_PACK
+#endif // !defined(UREACT_DOC)
 
 
 
 //==================================================================================================
 // [[section]] Free functions for fun and profit
 //==================================================================================================
+
+/// Factory function to create var signal in the given context.
 template <typename V>
 auto make_var( context& context, V&& value )
     -> decltype( detail::make_var_impl( context, std::forward<V>( value ) ) )
@@ -2355,6 +2362,12 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
 //==================================================================================================
 // [[section]] Context class
 //==================================================================================================
+
+/*! @brief Core class that connects all reactive nodes together.
+ *
+ *  Each signal and node belongs to a single ureact context.
+ *  Signals from different contexts can't interact with each other.
+ */
 class context : protected detail::context_internals
 {
 public:
@@ -2365,7 +2378,7 @@ public:
         get_graph().do_transaction( std::forward<F>( func ) );
     }
 
-    /// Factory to create var signal in current context.
+    /// Factory function to create var signal in the current context.
     template <typename V>
     auto make_var( V&& value ) -> decltype( ureact::make_var( *this, std::forward<V>( value ) ) )
     {
@@ -2382,11 +2395,14 @@ public:
         return this != &rsh;
     }
 
+    /// Return internals. Not intended to use in user code.
     friend detail::context_internals& _get_internals( context& ctx )
     {
         return ctx;
     }
 };
+
+#undef UREACT_EXPAND_PACK
 
 UREACT_END_NAMESPACE
 

@@ -28,13 +28,9 @@ option(
 )
 
 # Get version from core.h
-file(
-    READ
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/ureact/detail/version.hpp
-        version_hpp
-)
-if(NOT version_hpp MATCHES "UREACT_VERSION ([0-9]+)([0-9][0-9])([0-9][0-9])")
-    message(FATAL_ERROR "Cannot get UREACT_VERSION from version_hpp.")
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/include/ureact/ureact.hpp ureact_hpp)
+if(NOT ureact_hpp MATCHES "UREACT_VERSION ([0-9]+)([0-9][0-9])([0-9][0-9])")
+    message(FATAL_ERROR "Cannot get UREACT_VERSION from ureact.hpp.")
 endif()
 # Use math to skip leading zeros if any.
 math(EXPR UREACT_VERSION_MAJOR ${CMAKE_MATCH_1})
@@ -71,8 +67,7 @@ add_library(ureact::ureact ALIAS ureact)
 
 target_include_directories(
     ureact
-    INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
 target_compile_features(ureact INTERFACE cxx_std_11)

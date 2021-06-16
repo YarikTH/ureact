@@ -1,9 +1,10 @@
 #pragma once
 
-#include <doctest.h>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
+
+#include <doctest.h>
 
 namespace std // NOLINT
 {

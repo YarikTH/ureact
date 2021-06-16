@@ -1,7 +1,8 @@
-#include <string>
 #include <iostream>
+#include <string>
 
 #include <doctest.h>
+
 #include "ureact/ureact.hpp"
 
 TEST_SUITE_BEGIN( "ObserverTest" );

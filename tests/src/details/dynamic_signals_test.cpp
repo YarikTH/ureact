@@ -1,6 +1,8 @@
-#include <doctest.h>
-#include "ureact/ureact.hpp"
 #include <string>
+
+#include <doctest.h>
+
+#include "ureact/ureact.hpp"
 
 namespace
 {

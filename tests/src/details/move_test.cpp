@@ -1,4 +1,5 @@
 #include <doctest.h>
+
 #include "ureact/ureact.hpp"
 
 namespace

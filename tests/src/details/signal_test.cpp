@@ -1,6 +1,8 @@
-#include <doctest.h>
-#include "ureact/ureact.hpp"
 #include <queue>
+
+#include <doctest.h>
+
+#include "ureact/ureact.hpp"
 
 namespace
 {

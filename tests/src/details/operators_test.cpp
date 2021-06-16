@@ -1,7 +1,9 @@
-#include <doctest.h>
-#include "ureact/ureact.hpp"
-#include <string>
 #include <sstream>
+#include <string>
+
+#include <doctest.h>
+
+#include "ureact/ureact.hpp"
 
 namespace
 {

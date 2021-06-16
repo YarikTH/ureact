@@ -1,5 +1,6 @@
-#include "ureact/ureact.hpp"
 #include <iostream>
+
+#include "ureact/ureact.hpp"
 
 int main()
 {

@@ -1,4 +1,4 @@
-name: macos
+name: "MacOS"
 
 on: [push, pull_request]
 

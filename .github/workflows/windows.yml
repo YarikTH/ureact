@@ -1,4 +1,4 @@
-name: windows
+name: "Windows"
 # based on https://github.com/nlohmann/json/blob/develop/.github/workflows/windows.yml
 
 on: [push, pull_request]

@@ -7,6 +7,8 @@
 [![windows](https://github.com/YarikTH/ureact/workflows/windows/badge.svg)](https://github.com/ureact/workflows/actions?query=workflow%windows)
 [![macos](https://github.com/YarikTH/ureact/workflows/macos/badge.svg)](https://github.com/ureact/workflows/actions?query=workflow%macos)
 [![CodeQL](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7ad08869b5a948bb917deda4ae004064)](https://www.codacy.com/gh/YarikTH/ureact/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=YarikTH/ureact&amp;utm_campaign=Badge_Grade)
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/YarikTH/ureact.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/YarikTH/ureact/context:cpp)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/main/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/YarikTH/ureact/total)](https://github.com/YarikTH/ureact/releases)

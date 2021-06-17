@@ -1,5 +1,18 @@
 # µReact
 
+<p align="center"><img src="support/data/logo/logo_1.svg"></p>
+
+[![Standard](https://img.shields.io/badge/c%2B%2B-11/14/17/20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
+[![linux](https://github.com/YarikTH/ureact/workflows/linux/badge.svg)](https://github.com/ureact/workflows/actions?query=workflow%linux)
+[![windows](https://github.com/YarikTH/ureact/workflows/windows/badge.svg)](https://github.com/ureact/workflows/actions?query=workflow%windows)
+[![macos](https://github.com/YarikTH/ureact/workflows/macos/badge.svg)](https://github.com/ureact/workflows/actions?query=workflow%macos)
+[![CodeQL](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/main/LICENSE.MIT)
+[![GitHub Releases](https://img.shields.io/github/release/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/YarikTH/ureact/total)](https://github.com/YarikTH/ureact/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.) 
+
 Minimalistic C++ single-header reactive library
 
 ## Design goals

@@ -18,31 +18,33 @@
 
 Minimalistic C++ single-header reactive library
 
-## Copyright notice
+## License
 
-The project has started as some kind of global redesign of the
-[cpp.react](https://github.com/schlangster/cpp.react) that was created by
-Sebastian Jeckel. All of the code is derivative work of the initial project.
-So if you see some classes or architecture solutions then it's most likely they
-were taken directly from the origin with some little tweaks.
+<img align="right" src="https://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 
-For convenience reasons I removed copyright notice from the headers because the
-header structure is subject to change and it's easier to change if I don't have
-to include boilerplate text to every single header.
+The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 
-Original copyright notice: 
-```
-//          Copyright Sebastian Jeckel 2014.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
-```
+Copyright &copy; 2020 - present [Krylov Yaroslav](https://github.com/YarikTH)
 
-The code structure is also subject to change, so I don't mark any code as taken
-from Sebastian Jeckel's cpp.react. I'll do it if I have to, but only for the
-release version
-when the code won't be altered so often.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-Even in the final version, I expect that 80-90% of the code would be from the
-initial project, so it's easier to say it in the readme and call it a day.
-Because all the code will be overwhelmed with copyright notices otherwise.
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+* * *
+
+This software started as a fork of the [cpp.react](https://github.com/schlangster/cpp.react) by [Sebastian Jeckel](https://github.com/snakster) (schlangster@gmail.com), [BSL 1.0 licensed](http://www.boost.org/LICENSE_1_0.txt).
+
+## Used third-party tools
+
+The library itself consists of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
+
+- [**CMake**](https://cmake.org) for build automation
+- [**ClangFormat**](https://clang.llvm.org/docs/ClangFormat.html) for automatic source code indentation
+- [**gersemi**](https://github.com/blankspruce/gersemi) for automatic CMake code indentation
+- [**doctest**](https://github.com/onqtam/doctest) for the unit tests
+
+## Contact
+
+If you have questions regarding the library, I would like to invite you to [open an issue at GitHub](https://github.com/YarikTH/ureact/issues/new/choose). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at GitHub allows other users and contributors to this library to collaborate.

@@ -40,10 +40,10 @@ This software started as a fork of the [cpp.react](https://github.com/schlangste
 
 The library itself consists of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
 
-- [**CMake**](https://cmake.org) for build automation
-- [**ClangFormat**](https://clang.llvm.org/docs/ClangFormat.html) for automatic source code indentation
-- [**gersemi**](https://github.com/blankspruce/gersemi) for automatic CMake code indentation
-- [**doctest**](https://github.com/onqtam/doctest) for the unit tests
+* [**CMake**](https://cmake.org) for build automation
+* [**ClangFormat**](https://clang.llvm.org/docs/ClangFormat.html) for automatic source code indentation
+* [**gersemi**](https://github.com/blankspruce/gersemi) for automatic CMake code indentation
+* [**doctest**](https://github.com/onqtam/doctest) for the unit tests
 
 ## Contact
 

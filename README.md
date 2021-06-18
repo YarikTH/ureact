@@ -37,7 +37,7 @@
   permissive MIT [license](LICENSE.MIT)
 * Really easy to get started: it's just 1 header file - see the [tutorial](doc/tutorial.md)
 * Reliability: the library has an extensive set of [tests](tests/src)
-* Very [**portable**](doc/features.md#portable) C++11
+* Portability: continuously tested under Windows, MacOS and Ubuntu using **MSVC**/**GCC**/**Clang**
 * Clean warning-free codebase even on the [**most aggressive**](support/cmake/set_warning_flags.cmake) warning levels for **MSVC**/**GCC**/**Clang**
 * Doesn't pollute the global namespace (everything is in namespace ```ureact```) and doesn't drag **any** headers with it
 

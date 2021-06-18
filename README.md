@@ -19,9 +19,27 @@
 [![GitHub Issues](https://img.shields.io/github/issues/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.)
 
-Minimalistic C++ single-header reactive library
+**µReact** is an open-source minimalistic single-header [reactive programming](https://en.wikipedia.org/wiki/Reactive_programming) library for C++11.
+
+❗️ **This library is a work-in-progress. It should not be considered release quality yet and its API might still change.** \
+**However, it works perfectly fine and can be already used with small future changes in mind.** \
+**Feedback is strongly required and appreciated to stabilize the API and achieve the first major release.**
 
 [Documentation](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
+
+## Features
+
+* Update minimality: nothing is re-calculated or processed unnecessarily
+* Glitch freedom: no transiently inconsistent data sets
+* Externally synchronized (not thread-safe) by design: it allows not to pay
+  for what you don't use and to have very determined consistent behaviour
+* Ease of use: small self-contained single header code base, no external dependencies,
+  permissive MIT [license](LICENSE.MIT)
+* Really easy to get started: it's just 1 header file - see the [tutorial](doc/tutorial.md)
+* Reliability: the library has an extensive set of [tests](tests/src)
+* Very [**portable**](doc/features.md#portable) C++11
+* Clean warning-free codebase even on the [**most aggressive**](support/cmake/set_warning_flags.cmake) warning levels for **MSVC**/**GCC**/**Clang**
+* Doesn't pollute the global namespace (everything is in namespace ```ureact```) and doesn't drag **any** headers with it
 
 ## Examples
 

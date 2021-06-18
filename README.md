@@ -10,13 +10,18 @@
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/YarikTH/ureact.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/YarikTH/ureact/context:cpp)
 
 [![Standard](https://img.shields.io/badge/c%2B%2B-11/14/17/20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
+[![Type](https://img.shields.io/badge/type-single--header-blue.svg)](.)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/main/LICENSE.MIT)
+[![download](https://img.shields.io/badge/download%20%20-link-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/master/include/ureact/ureact.hpp)
+[![Docs](https://img.shields.io/badge/docs-markdown-blue.svg)](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
 [![GitHub Releases](https://img.shields.io/github/release/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/YarikTH/ureact/total)](https://github.com/YarikTH/ureact/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/issues)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.) 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.)
 
 Minimalistic C++ single-header reactive library
+
+[Documentation](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
 
 ## License
 

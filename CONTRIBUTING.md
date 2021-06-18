@@ -10,3 +10,7 @@ Code should be formatted with a recent-enough ```clang-format``` using the confi
 file in the root of the repo (use `make pretty` to do so)
 
 Thanks for contributing!
+
+---------------
+
+[Home](doc/readme.md#reference)

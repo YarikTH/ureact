@@ -23,6 +23,137 @@ Minimalistic C++ single-header reactive library
 
 [Documentation](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
 
+## Examples
+
+**Basic usage** ([run](https://godbolt.org/z/WEbKWojz5))
+
+```cpp
+ureact::context ctx;
+
+// Declaring reactive variables. We can reassign their values later
+ureact::var_signal<int> b = ctx.make_var(1);
+ureact::var_signal<int> c = ctx.make_var(2);
+
+// Declaring reactive signal using overloaded operator
+// Its value will be updated each time its dependencies are changed
+ureact::signal<int> a = b + c;
+
+std::cout << "a (init): " << a.value() << "\n"; // 3
+
+// Assign a new value to 'b'. Value of 'a' is recalculated automatically
+b <<= 10;
+std::cout << "a  (new): " << a.value() << "\n"; // 12
+```
+
+**Complex signals** ([run](https://godbolt.org/z/ns1rPM7eK))
+
+```cpp
+ureact::context ctx;
+
+ureact::var_signal<int> base = ctx.make_var(1);
+ureact::var_signal<int> exp = ctx.make_var(3);
+
+// Declaring reactive signal with formula
+// Its value will be recalculated according to the given function
+ureact::signal<double> result = make_signal( with(base, exp) , std::pow<int, int> );
+
+// Alternative form of make_signal using operator ->*
+ureact::signal<std::string> expression = with(base, exp, result) ->*
+    []( int base, int exp, int result ){
+        return std::to_string(base) + "^" + std::to_string(exp)
+            + " == " + std::to_string(result);
+    };
+
+std::cout << expression.value() << "\n"; // 1^3 == 1
+
+base <<= 2;
+std::cout << expression.value() << "\n"; // 2^3 == 8
+
+exp <<= 0;
+std::cout << expression.value() << "\n"; // 2^0 == 1
+```
+
+**Observers** ([run](https://godbolt.org/z/fYYMaTdPj))
+
+```cpp
+ureact::context ctx;
+
+ureact::var_signal<int> a = ctx.make_var(1);
+ureact::signal<int> abs_a = with(a) ->* [](int a){ return std::abs(a); };
+ureact::signal<int> abs_a_x2 = abs_a * 2;
+
+// Declaring reactive observers
+// They execute given functor only when the observed value is changed
+observe(a,        []( int a ){        std::cout << "  a -> "        << a << "\n"; });
+observe(abs_a,    []( int abs_a ){    std::cout << "  abs(a) -> "    << abs_a << "\n"; });
+observe(abs_a_x2, []( int abs_a_x2 ){ std::cout << "  abs(a)*2 -> " << abs_a_x2 << "\n"; });
+
+// All values change their values so all of them is notified
+std::cout << "a <<= 3\n";
+a <<= 3;
+
+// Only change of 'a' is notified
+// Value of 'abs_a' is not changed after recalculation, so it is not notified
+// Value 'abs_a_x2' is not even recalculated because the value of 'abs_a' is not changed
+std::cout << "a <<= -3\n";
+a <<= -3;
+```
+
+Output:
+```
+a <<= 3
+  a -> 3
+  abs(a) -> 3
+  abs(a)*2 -> 6
+a <<= -3
+  a -> -3
+```
+
+**Transaction** ([run](https://godbolt.org/z/1T8fG69r8))
+
+```cpp
+ureact::context ctx;
+
+ureact::var_signal<int> b = ctx.make_var(1);
+ureact::var_signal<int> c = ctx.make_var(1);
+ureact::signal<int> a = b + c;
+
+observe(a, []( int a ){ std::cout << "  a -> " << a << "\n"; });
+
+// Normally values are recalculated each change of their dependencies
+std::cout << "without transaction\n";
+std::cout << "b <<= 2\n";
+b <<= 2;
+std::cout << "c <<= 2\n";
+c <<= 2;
+
+// To perform several changes atomically they should be grouped into a transaction
+std::cout << "\nwith transaction\n";
+ctx.do_transaction([&]()
+{
+    std::cout << "b <<= 3\n";
+    b <<= 3;
+    std::cout << "c <<= 3\n";
+    c <<= 3;
+});
+```
+
+Output:
+```
+without transaction
+b <<= 2
+  a -> 3
+c <<= 2
+  a -> 4
+
+with transaction
+b <<= 3
+c <<= 3
+  a -> 6
+```
+
+See other examples at the [examples](tests/src/examples) folder.
+
 ## License
 
 <img align="right" src="https://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">

@@ -11,6 +11,8 @@ Project:
 
 Usage:
 
+<!--
 * [Tutorial](tutorial.md) - make sure you have read it before the other parts of the documentation
+-->
 * [Integration](integration.md) - how to get and link this library
 * [Examples](../tests/src/examples)

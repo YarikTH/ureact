@@ -24,6 +24,6 @@ Fill in any extra information that might be important for your issue.
 
 If your issue is a bugreport, definitely fill out at least the following.
 -->
-* µReact version: **v42.42.42**
+* µReact version: **42.42.42**
 * Operating System: **Joe's discount operating system**
 * Compiler+version: **Hidden Dragon v1.2.3**

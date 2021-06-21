@@ -112,4 +112,4 @@ The ```CMakeLists.txt``` file of the **µReact** repository has ```install()``` 
 
 ---------------
 
-[Home](readme.md#reference)
+[Home](../../doc/readme.md#reference)

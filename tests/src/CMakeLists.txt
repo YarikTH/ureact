@@ -1,18 +1,15 @@
-add_executable(ureact_test)
-
-target_sources(
+add_executable(
     ureact_test
-    PRIVATE
-        main.cpp
-        examples/signal_examples.cpp
-        examples/complex_signal_examples.cpp
-        examples/composition_examples.cpp
-        examples/observer_examples.cpp
-        details/move_test.cpp
-        details/observer_test.cpp
-        details/signal_test.cpp
-        details/operators_test.cpp
-        details/dynamic_signals_test.cpp
+    main.cpp
+    examples/signal_examples.cpp
+    examples/complex_signal_examples.cpp
+    examples/composition_examples.cpp
+    examples/observer_examples.cpp
+    details/move_test.cpp
+    details/observer_test.cpp
+    details/signal_test.cpp
+    details/operators_test.cpp
+    details/dynamic_signals_test.cpp
 )
 
 target_include_directories(ureact_test PRIVATE include)

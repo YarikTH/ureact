@@ -1,0 +1,48 @@
+name: "CMake tests"
+
+on: [push, pull_request]
+
+jobs:
+  cmake-3-1:
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++-10]
+        build_type: [Release]
+        std: [11]
+        cmake_version: [3.8.0]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install specific CMake
+      env:
+        CMAKE_VERSION: ${{matrix.cmake_version}}
+        CMAKE_INSTALL_FILE: cmake-${{matrix.cmake_version}}-Linux-x86_64.sh
+      run: |
+        wget --no-clobber https://github.com/Kitware/CMake/releases/download/v${{env.CMAKE_VERSION}}/${{env.CMAKE_INSTALL_FILE}}
+        chmod 775 ./${{env.CMAKE_INSTALL_FILE}}
+        sudo ./${{env.CMAKE_INSTALL_FILE}} --skip-license --prefix=/usr/local
+        rm -f ./${{env.CMAKE_INSTALL_FILE}}
+    - name: Create Build Environment
+      run: |
+        ${{matrix.install}}
+        cmake -E make_directory ${{runner.workspace}}/build
+    - name: Configure
+      working-directory: ${{runner.workspace}}/build
+      env:
+        CXX: ${{matrix.cxx}}
+      run: |
+        cmake --warn-uninitialized \
+              -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
+              -D CMAKE_CXX_STANDARD=${{matrix.std}} \
+              -D UREACT_PEDANTIC:BOOL=y \
+              -D UREACT_WERROR:BOOL=y \
+              $GITHUB_WORKSPACE
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config ${{matrix.build_type}}
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure

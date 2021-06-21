@@ -24,7 +24,7 @@
 **However, it works perfectly fine and can be already used with small future changes in mind.** \
 **Feedback is strongly required and appreciated to stabilize the API and achieve the first major release.**
 
-[Documentation](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
+[Documentation](doc/readme.md)
 
 ## Features
 

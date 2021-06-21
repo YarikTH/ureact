@@ -3,10 +3,10 @@
 ##########################################################################
 
 # the list of CMakeLists.txt
-CMAKE_FILES_TO_FORMAT=$(shell find . -type f -name CMakeLists.txt -o -name '*.cmake' | grep -v './cmake-build' | sort)
+CMAKE_FILES_TO_FORMAT=$(shell find . -type f -name CMakeLists.txt -o -name '*.cmake' | grep -v './cmake-build' | grep -v 'integration_main.cmake' | sort)
 
 INCLUDE_FILES_TO_FORMAT=$(shell find ./include -type f -name '*.hpp' | sort)
-TEST_FILES_TO_FORMAT=$(shell find ./tests/src -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | sort)
+TEST_FILES_TO_FORMAT=$(shell find ./tests -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | grep -v 'thirdparty' | sort)
 CPP_FILES_TO_FORMAT=${INCLUDE_FILES_TO_FORMAT} ${TEST_FILES_TO_FORMAT}
 
 FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT} ${CPP_FILES_TO_FORMAT}
@@ -20,6 +20,8 @@ all:
 	@echo "pretty_version - output version of formatting tools"
 	@echo "pretty_check - check if all cmake and c++ files are properly formatted"
 	@echo "pretty - prettify all cmake and c++ files"
+	@echo "integration_check - check library integrations"
+	@echo "integration_update - generate integration files"
 
 ##########################################################################
 # Prettify
@@ -36,3 +38,15 @@ pretty_check:
 # prettify all cmake and c++ files
 pretty:
 	@./support/pretty.sh $(FILES_TO_FORMAT)
+
+##########################################################################
+# Integration
+##########################################################################
+
+# check library integrations
+integration_check:
+	@cmake -P ./tests/integration/test_integration.cmake
+
+# generate integration files
+integration_update:
+	@cmake -P ./support/integration_generation/generate.cmake

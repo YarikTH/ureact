@@ -1,9 +1,9 @@
-name: "CMake tests"
+name: "Support"
 
 on: [push, pull_request]
 
 jobs:
-  cmake-3-1:
+  support:
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -11,7 +11,9 @@ jobs:
         cxx: [g++-10]
         build_type: [Release]
         std: [11]
-        cmake_version: [3.8.0]
+        cmake_version: [3.8.0, 3.11.0]
+    # CMake 3.8 version is minimal that should work
+    # CMake 3.11 is the first version in which FetchContent is supported
 
     steps:
     - uses: actions/checkout@v2
@@ -46,3 +48,7 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure
+
+    - name: Check library integrations
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: make integration_check

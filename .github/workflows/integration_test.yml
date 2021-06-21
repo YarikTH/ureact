@@ -1,0 +1,30 @@
+name: "Integration tests"
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++-10]
+        build_type: [Release]
+        std: [11]
+        cmake_version: [3.8.0, 3.11.0]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install specific CMake
+      env:
+        CMAKE_VERSION: ${{matrix.cmake_version}}
+        CMAKE_INSTALL_FILE: cmake-${{matrix.cmake_version}}-Linux-x86_64.sh
+      run: |
+        wget --no-clobber https://github.com/Kitware/CMake/releases/download/v${{env.CMAKE_VERSION}}/${{env.CMAKE_INSTALL_FILE}}
+        chmod 775 ./${{env.CMAKE_INSTALL_FILE}}
+        sudo ./${{env.CMAKE_INSTALL_FILE}} --skip-license --prefix=/usr/local
+        rm -f ./${{env.CMAKE_INSTALL_FILE}}
+    - name: Check library integrations
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: make integration_check

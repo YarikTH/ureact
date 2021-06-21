@@ -26,7 +26,7 @@ You can use the `ureact::ureact` interface target in CMake.  This target populat
 **µReact** is easiest to use as a single file inside your own repository. Then the following minimal example will work:
 
 ```cmake
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.8)
 project(cmake_test VERSION 0.0.1 LANGUAGES CXX)
 
 # Prepare ureact for other targets to use

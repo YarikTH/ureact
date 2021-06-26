@@ -1,3 +1,11 @@
+#
+#         Copyright (C) 2020-2021 Krylov Yaroslav.
+#
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+#
+#
 ##########################################################################
 # source files
 ##########################################################################
@@ -17,11 +25,13 @@ FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT} ${CPP_FILES_TO_FORMAT}
 
 # main target
 all:
-	@echo "pretty_version - output version of formatting tools"
-	@echo "pretty_check - check if all cmake and c++ files are properly formatted"
-	@echo "pretty - prettify all cmake and c++ files"
-	@echo "integration_check - check library integrations"
-	@echo "integration_update - generate integration files"
+	@echo "This Makefile is for the maintenance of the repository, not for building."
+	@echo "Supported targets:"
+	@echo "* pretty_version - output version of formatting tools"
+	@echo "* pretty_check - check if all cmake and c++ files are properly formatted"
+	@echo "* pretty - prettify all cmake and c++ files"
+	@echo "* integration_check - check library integrations"
+	@echo "* integration_update - generate integration files"
 
 ##########################################################################
 # Prettify

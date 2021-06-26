@@ -1,3 +1,12 @@
+#
+#         Copyright (C) 2020-2021 Krylov Yaroslav.
+#
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+#
+# Based on the work of Alexey Ochapov (https://github.com/alexezeder)
+#
 function(set_gcc_warning_flags result_var_name)
     set(GCC_WARNING_OPTIONS)
 

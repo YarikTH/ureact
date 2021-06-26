@@ -7,6 +7,13 @@
 #
 #
 ##########################################################################
+# configuration
+##########################################################################
+
+# find GNU sed to use `-i` parameter
+SED:=$(shell command -v gsed || which sed)
+
+##########################################################################
 # source files
 ##########################################################################
 
@@ -32,6 +39,7 @@ all:
 	@echo "* pretty - prettify all cmake and c++ files"
 	@echo "* integration_check - check library integrations"
 	@echo "* integration_update - generate integration files"
+	@echo "* changelog - generate ChangeLog file"
 
 ##########################################################################
 # Prettify
@@ -60,3 +68,20 @@ integration_check:
 # generate integration files
 integration_update:
 	@cmake -P ./support/integration_generation/generate.cmake
+
+
+##########################################################################
+# ChangeLog
+##########################################################################
+
+# Create a ChangeLog based on the git log using the GitHub Changelog Generator
+# (<https://github.com/github-changelog-generator/github-changelog-generator>).
+
+# variable to control the diffs between the last released version and the current repository state
+NEXT_VERSION ?= "unreleased"
+
+changelog:
+	github_changelog_generator -o CHANGELOG.md --user YarikTH --project ureact --simple-list --release-url https://github.com/YarikTH/ureact/releases/tag/%s --release-branch dev --future-release $(NEXT_VERSION)
+	@$(SED) -i 's|https://github.com/YarikTH/ureact/releases/tag/HEAD|https://github.com/YarikTH/ureact/tree/HEAD|' CHANGELOG.md
+	@$(SED) -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' CHANGELOG.md
+

@@ -14,5 +14,6 @@ Usage:
 <!--
 * [Tutorial](tutorial.md) - make sure you have read it before the other parts of the documentation
 -->
+* [Signals vs callbacks](signals_vs_callbacks.md)
 * [Integration](../tests/integration/) - how to get and link this library
 * [Examples](../tests/src/examples)

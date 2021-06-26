@@ -34,7 +34,7 @@ TEST_SUITE( "Examples" )
             }
             // ~Inner scope
 
-            x <<= 2; // no ouput
+            x <<= 2; // no output
 
             CHECK( x_values == std::vector<int>{ 1 } );
         }
@@ -74,7 +74,7 @@ TEST_SUITE( "Examples" )
             // -> the signal node is no longer owned by anything and is destroyed
             // -> the observer node is destroyed as it was bound to the subject
 
-            x <<= 3; // no ouput
+            x <<= 3; // no output
 
             CHECK( x_values == std::vector<int>{ 1, 2 } );
         }

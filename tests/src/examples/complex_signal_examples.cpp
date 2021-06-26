@@ -76,7 +76,7 @@ TEST_SUITE( "Examples" )
             ureact::signal<int> diff = a - b;
             ureact::signal<int> prod = a * b;
 
-            // std::stringified expressions
+            // stringified expressions
             ureact::signal<std::string> sumExpr = make_signal( with( a, b ),
                 []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "+" ); } );
 

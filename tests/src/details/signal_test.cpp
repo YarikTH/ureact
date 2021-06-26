@@ -8,15 +8,15 @@
 namespace
 {
 
-int myfunc( int a, int b )
+int add( int a, int b )
 {
     return a + b;
 }
-float myfunc2( int a )
+float halve( int a )
 {
     return static_cast<float>( a ) / 2.0f;
 }
-float myfunc3( float a, float b )
+float multiply( float a, float b )
 {
     return a * b;
 }
@@ -260,9 +260,9 @@ TEST_CASE( "FunctionBind2" )
     auto a = make_var( ctx, 1 );
     auto b = make_var( ctx, 1 );
 
-    auto c = ( ( a + b ), ( a + 100 ) )->*&myfunc;
-    auto d = c->*&myfunc2;
-    auto e = ( d, d )->*&myfunc3;
+    auto c = ( ( a + b ), ( a + 100 ) )->*&add;
+    auto d = c->*&halve;
+    auto e = ( d, d )->*&multiply;
     auto f = -e + 100.f;
 
     CHECK( c.value() == 103 );
@@ -555,11 +555,11 @@ TEST_CASE( "Modify3" )
 {
     ureact::context ctx;
 
-    auto vect = make_var( ctx, std::vector<int>{} );
+    auto value = make_var( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
-    observe( vect, [&]( const std::vector<int>& v ) {
+    observe( value, [&]( const std::vector<int>& v ) {
         CHECK( v[0] == 30 );
         CHECK( v[1] == 50 );
         CHECK( v[2] == 70 );
@@ -568,9 +568,9 @@ TEST_CASE( "Modify3" )
     } );
 
     ctx.do_transaction( [&] {
-        vect.set( std::vector<int>{ 30, 50 } );
+        value.set( std::vector<int>{ 30, 50 } );
 
-        vect.modify( []( std::vector<int>& v ) { v.push_back( 70 ); } );
+        value.modify( []( std::vector<int>& v ) { v.push_back( 70 ); } );
     } );
 
     CHECK( obsCount == 1 );

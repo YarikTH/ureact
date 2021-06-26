@@ -27,7 +27,7 @@ function(make_temp_dir)
 endfunction()
 
 # Based on https://stackoverflow.com/a/43073402
-# evals the specified cmake code.
+# evaluates the specified cmake code.
 # WARNING: there is no way to set(<var> <value> PARENT_SCOPE)
 # because of the extra function scope defined by eval.
 # WARNING: allowing eval can of course be dangerous.
@@ -36,7 +36,7 @@ function(eval __eval_code)
 
     # one file per execution of cmake (if this file were in memory it would probably be faster...)
     # this is where the temporary eval file will be stored.  it will only be used once per eval
-    # and since cmake is not multithreaded no race conditions should occur.  however, if you start
+    # and since cmake is not multi-threaded no race conditions should occur.  however, if you start
     # two cmake processes in the same project this could lead to collisions
     set(__eval_temp_file "${EVAL_DIR}/eval_temp.cmake")
 

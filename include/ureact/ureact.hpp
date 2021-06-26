@@ -857,23 +857,23 @@ inline void react_graph::on_dynamic_node_detach( reactive_node& node, reactive_n
 inline void react_graph::process_children( reactive_node& node )
 {
     // add children to queue
-    for( auto* succ : node.successors )
+    for( auto* successor : node.successors )
     {
-        if( !succ->queued )
+        if( !successor->queued )
         {
-            succ->queued = true;
-            m_scheduled_nodes.push( succ, succ->level );
+            successor->queued = true;
+            m_scheduled_nodes.push( successor, successor->level );
         }
     }
 }
 
 inline void react_graph::invalidate_successors( reactive_node& node )
 {
-    for( auto* succ : node.successors )
+    for( auto* successor : node.successors )
     {
-        if( succ->new_level <= node.level )
+        if( successor->new_level <= node.level )
         {
-            succ->new_level = node.level + 1;
+            successor->new_level = node.level + 1;
         }
     }
 }

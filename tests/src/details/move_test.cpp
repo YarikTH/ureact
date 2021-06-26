@@ -84,7 +84,7 @@ TEST_CASE( "Copy1" )
     auto d = ureact::make_var( ctx, CopyCounter{ 1000, &stats1 } );
 
     // 4x move to m_value_
-    // 4x copy to m_new_value (can't be unitialized for references)
+    // 4x copy to m_new_value (can't be uninitialized for references)
     CHECK( stats1.copyCount == 4 );
     CHECK( stats1.moveCount == 4 );
 

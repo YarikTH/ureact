@@ -50,6 +50,7 @@ option(
     ${UREACT_MASTER_PROJECT}
 )
 option(UREACT_INSTALL "Generate install target." ${UREACT_MASTER_PROJECT})
+option(UREACT_СTEST "Generate the CTest targets for CI." n)
 
 message(STATUS "ureact version: ${UREACT_VERSION}")
 
@@ -89,7 +90,11 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 ################################################################################
 
 if(UREACT_TEST)
-    enable_testing()
+    if(UREACT_СTEST)
+        include(CTest)
+    else()
+        enable_testing()
+    endif()
     add_subdirectory(tests)
 endif()
 

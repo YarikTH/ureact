@@ -590,17 +590,19 @@ public:
     template <typename F>
     void do_transaction( F&& func )
     {
-        // Phase 1 - Input admission
         ++m_transaction_level;
         func();
         --m_transaction_level;
 
-        if( m_transaction_level != 0 )
+        if( m_transaction_level == 0 )
         {
-            return;
+            finalize_transaction();
         }
+    }
 
-        // Phase 2 - apply_helper input node changes
+    void finalize_transaction()
+    {
+        // apply input node changes
         bool should_propagate = false;
         for( auto* p : m_changed_inputs )
         {
@@ -611,7 +613,7 @@ public:
         }
         m_changed_inputs.clear();
 
-        // Phase 3 - propagate changes
+        // propagate changes
         if( should_propagate )
         {
             propagate();
@@ -620,29 +622,17 @@ public:
         detach_queued_observers();
     }
 
-    template <typename R, typename V>
-    void add_input( R& r, V&& v )
+    template <typename F>
+    void push_input( input_node_interface* node, F&& inputCallback )
     {
-        if( m_transaction_level > 0 )
-        {
-            add_transaction_input( r, std::forward<V>( v ) );
-        }
-        else
-        {
-            add_simple_input( r, std::forward<V>( v ) );
-        }
-    }
+        m_changed_inputs.push_back( node );
 
-    template <typename R, typename F>
-    void modify_input( R& r, const F& func )
-    {
-        if( m_transaction_level > 0 )
+        // This writes to the input buffer of the respective node.
+        std::forward<F>( inputCallback )();
+
+        if( m_transaction_level == 0 )
         {
-            modify_transaction_input( r, func );
-        }
-        else
-        {
-            modify_simple_input( r, func );
+            finalize_transaction();
         }
     }
 
@@ -698,51 +688,7 @@ private:
         m_detached_observers.clear();
     }
 
-    // Create a turn with a single input
-    template <typename R, typename V>
-    void add_simple_input( R& r, V&& v )
-    {
-        r.add_input( std::forward<V>( v ) );
-
-        if( r.apply_input() )
-        {
-            propagate();
-        }
-
-        detach_queued_observers();
-    }
-
-    template <typename R, typename F>
-    void modify_simple_input( R& r, const F& func )
-    {
-        r.modify_input( func );
-
-        if( r.apply_input() )
-        {
-            propagate();
-        }
-
-        detach_queued_observers();
-    }
-
-    // This input is part of an active transaction
-    template <typename R, typename V>
-    void add_transaction_input( R& r, V&& v )
-    {
-        r.add_input( std::forward<V>( v ) );
-
-        m_changed_inputs.push_back( &r );
-    }
-
-    template <typename R, typename F>
-    void modify_transaction_input( R& r, const F& func )
-    {
-        r.modify_input( func );
-
-        m_changed_inputs.push_back( &r );
-    }
-
-    static void invalidate_successors( reactive_node& node );
+    static void recalculate_successor_levels( reactive_node& node );
 
     void process_children( reactive_node& node );
 
@@ -829,7 +775,7 @@ inline void react_graph::propagate()
             if( cur_node->level < cur_node->new_level )
             {
                 cur_node->level = cur_node->new_level;
-                invalidate_successors( *cur_node );
+                recalculate_successor_levels( *cur_node );
                 m_scheduled_nodes.push( cur_node, cur_node->level );
                 continue;
             }
@@ -844,7 +790,7 @@ inline void react_graph::on_dynamic_node_attach( reactive_node& node, reactive_n
 {
     on_node_attach( node, parent );
 
-    invalidate_successors( node );
+    recalculate_successor_levels( node );
 
     // Re-schedule this node
     node.queued = true;
@@ -869,7 +815,7 @@ inline void react_graph::process_children( reactive_node& node )
     }
 }
 
-inline void react_graph::invalidate_successors( reactive_node& node )
+inline void react_graph::recalculate_successor_levels( reactive_node& node )
 {
     for( auto* successor : node.successors )
     {
@@ -1021,19 +967,7 @@ public:
     // LCOV_EXCL_STOP
 
     template <typename V>
-    void request_add_input( V&& new_value )
-    {
-        var_node::get_graph().add_input( *this, std::forward<V>( new_value ) );
-    }
-
-    template <typename F>
-    void request_modify_input( F& func )
-    {
-        var_node::get_graph().modify_input( *this, std::forward<F>( func ) );
-    }
-
-    template <typename V>
-    void add_input( V&& new_value )
+    void set_value( V&& new_value )
     {
         m_new_value = std::forward<V>( new_value );
 
@@ -1046,7 +980,7 @@ public:
 
     // This is signal-specific
     template <typename F>
-    void modify_input( F& func )
+    void modify_value( F& func )
     {
         // There hasn't been any set(...) input yet, modify.
         if( !m_is_input_added )
@@ -1491,13 +1425,20 @@ protected:
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        get_var_node()->request_add_input( std::forward<T>( new_value ) );
+        auto node_ptr = get_var_node();
+        auto& graph_ref = node_ptr->get_graph();
+
+        graph_ref.push_input( node_ptr,
+            [node_ptr, &new_value] { node_ptr->set_value( std::forward<T>( new_value ) ); } );
     }
 
     template <typename F>
     void modify_value( const F& func ) const
     {
-        get_var_node()->request_modify_input( func );
+        auto node_ptr = get_var_node();
+        auto& graph_ref = node_ptr->get_graph();
+
+        graph_ref.push_input( node_ptr, [node_ptr, &func] { node_ptr->modify_value( func ); } );
     }
 };
 

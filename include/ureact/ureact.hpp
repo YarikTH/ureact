@@ -2138,7 +2138,6 @@ auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_signal<right_val_t,
 UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
 UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )
 UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
-UREACT_DECLARE_UNARY_OPERATOR( ~, bitwise_complement )
 
 UREACT_DECLARE_BINARY_OPERATOR( +, addition )
 UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )
@@ -2155,12 +2154,6 @@ UREACT_DECLARE_BINARY_OPERATOR( >=, greater_equal )
 
 UREACT_DECLARE_BINARY_OPERATOR( &&, logical_and )
 UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
-
-UREACT_DECLARE_BINARY_OPERATOR( &, bitwise_and )
-UREACT_DECLARE_BINARY_OPERATOR( |, bitwise_or )
-UREACT_DECLARE_BINARY_OPERATOR( ^, bitwise_xor )
-UREACT_DECLARE_BINARY_OPERATOR( <<, bitwise_left_shift )
-UREACT_DECLARE_BINARY_OPERATOR( >>, bitwise_right_shift )
 
 #    if defined( __clang__ ) && defined( __clang_minor__ )
 #        pragma clang diagnostic pop

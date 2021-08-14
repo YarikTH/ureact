@@ -230,11 +230,9 @@ TEST_SUITE( "operators" )
         auto unary_plus           = +v1;
         auto unary_minus          = -v1;
         auto logical_negation     = !v1;
-        auto bitwise_complement   = ~v1;
         auto unary_plus_2         = +(+v1);
         auto unary_minus_2        = -(+v1);
         auto logical_negation_2   = !(+v1);
-        auto bitwise_complement_2 = ~(+v1);
         // clang-format on
 
         auto checkValues = [&]( std::initializer_list<int> valuesToTest ) {
@@ -246,11 +244,9 @@ TEST_SUITE( "operators" )
                 CHECK( unary_plus.value()           == (+value) );
                 CHECK( unary_minus.value()          == (-value) );
                 CHECK( logical_negation.value()     == (!value) );
-                CHECK( bitwise_complement.value()   == (~value) );
                 CHECK( unary_plus_2.value()         == (+value) );
                 CHECK( unary_minus_2.value()        == (-value) );
                 CHECK( logical_negation_2.value()   == (!value) );
-                CHECK( bitwise_complement_2.value() == (~value) );
                 // clang-format on
             }
         };
@@ -269,11 +265,6 @@ TEST_SUITE( "operators" )
         auto addition            = lhs +  rhs;
         auto subtraction         = lhs -  rhs;
         auto multiplication      = lhs *  rhs;
-        auto bitwise_and         = lhs &  rhs;
-        auto bitwise_or          = lhs |  rhs;
-        auto bitwise_xor         = lhs ^  rhs;
-        auto bitwise_left_shift  = lhs << rhs;
-        auto bitwise_right_shift = lhs >> rhs;
         auto equal               = lhs == rhs;
         auto not_equal           = lhs != rhs;
         auto less                = lhs <  rhs;
@@ -319,11 +310,6 @@ TEST_SUITE( "operators" )
                 CHECK( greater_equal.value()       == (left >= right) );
                 CHECK( logical_and.value()         == (left && right) );
                 CHECK( logical_or.value()          == (left || right) );
-                CHECK( bitwise_and.value()         == (left &  right) );
-                CHECK( bitwise_or.value()          == (left |  right) );
-                CHECK( bitwise_xor.value()         == (left ^  right) );
-                CHECK( bitwise_left_shift.value()  == (left << right) );
-                CHECK( bitwise_right_shift.value() == (left >> right) );
                 // clang-format on
             }
         }
@@ -392,14 +378,10 @@ TEST_SUITE( "operators" )
         //     ! ~            Logical NOT and bitwise NOT
         // 5.  a*b  a/b  a%b  Multiplication, division, and remainder
         // 6.  a+b  a-b       Addition and subtraction
-        // 7.  <<  >>         Bitwise left shift and right shift
         // 8.  <=>            Three-way comparison operator (since C++20)
         // 9.  <  <=          For relational operators < and ≤ respectively
         //     >  >=          For relational operators > and ≥ respectively
         // 10. ==  !=         For equality operators = and ≠ respectively
-        // 11. &              Bitwise AND
-        // 12. ^              Bitwise XOR (exclusive or)
-        // 13. |              Bitwise OR (inclusive or)
         // 14. &&             Logical AND
         // 15. ||             Logical OR
 

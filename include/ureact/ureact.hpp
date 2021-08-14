@@ -347,7 +347,7 @@ inline void pass( args_t&&... /*unused*/ )
 
 // Expand args by wrapping them in a dummy function
 // Use comma operator to replace potential void return value with 0
-#define UREACT_EXPAND_PACK( ... ) pass( ( (void) __VA_ARGS__, 0 )... )
+#define UREACT_EXPAND_PACK( ... ) pass( ( (void)__VA_ARGS__, 0 )... )
 
 
 /// type_identity (workaround to enable enable decltype()::X)
@@ -2274,24 +2274,47 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
 }
 
 
-/// operator->* overload to connect a signal to a function and return the resulting signal.
+/// operator| overload to connect a signal to a function and return the resulting signal.
 template <typename F,
     template <typename>
     class signal_t,
     typename value_t,
     class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
-UREACT_WARN_UNUSED_RESULT auto operator->*( const signal_t<value_t>& arg, F&& func )
+UREACT_WARN_UNUSED_RESULT auto operator|( const signal_t<value_t>& arg, F&& func )
     -> signal<typename std::result_of<F( value_t )>::type>
 {
     return ::ureact::make_signal( arg, std::forward<F>( func ) );
 }
 
-/// operator->* overload to connect multiple signals to a function and return the resulting signal.
+/// operator| overload to connect multiple signals to a function and return the resulting signal.
 template <typename F, typename... values_t>
-UREACT_WARN_UNUSED_RESULT auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func )
+UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
     -> signal<typename std::result_of<F( values_t... )>::type>
 {
     return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
+}
+
+
+/// operator->* overload to connect a signal to a function and return the resulting signal.
+/// Deprecated. Use operetor| instead.
+template <typename F,
+    template <typename>
+    class signal_t,
+    typename value_t,
+    class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
+UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*(
+    const signal_t<value_t>& arg, F&& func ) -> decltype( arg | func )
+{
+    return arg | func;
+}
+
+/// operator->* overload to connect multiple signals to a function and return the resulting signal.
+/// Deprecated. Use operetor| instead.
+template <typename F, typename... values_t>
+UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*(
+    const signal_pack<values_t...>& arg_pack, F&& func ) -> decltype( arg_pack | func )
+{
+    return arg_pack | func;
 }
 
 

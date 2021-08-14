@@ -74,6 +74,9 @@
 #    define UREACT_HAS_CPP_ATTRIBUTE( x ) 0
 #endif
 
+#define UREACT_HAS_CPP14_ATTRIBUTE( attribute )                                                    \
+    ( __cplusplus >= 201402L && UREACT_HAS_CPP_ATTRIBUTE( attribute ) )
+
 #define UREACT_HAS_CPP17_ATTRIBUTE( attribute )                                                    \
     ( __cplusplus >= 201703L && UREACT_HAS_CPP_ATTRIBUTE( attribute ) )
 
@@ -89,6 +92,20 @@
 #else
 #    define UREACT_WARN_UNUSED_RESULT
 #    define UREACT_WARN_UNUSED_RESULT_MSG( msg )
+#endif
+
+#ifndef UREACT_DEPRECATED
+#    if UREACT_HAS_CPP14_ATTRIBUTE( deprecated ) || UREACT_MSC_VER >= 1900
+#        define UREACT_DEPRECATED [[deprecated]]
+#    else
+#        if( defined( __GNUC__ ) && !defined( __LCC__ ) ) || defined( __clang__ )
+#            define UREACT_DEPRECATED __attribute__( ( deprecated ) )
+#        elif UREACT_MSC_VER
+#            define UREACT_DEPRECATED __declspec( deprecated )
+#        else
+#            define UREACT_DEPRECATED /* deprecated */
+#        endif
+#    endif
 #endif
 
 #ifndef UREACT_USE_INLINE_NAMESPACES

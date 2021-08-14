@@ -330,7 +330,7 @@ inline void pass( args_t&&... /*unused*/ )
 
 // Expand args by wrapping them in a dummy function
 // Use comma operator to replace potential void return value with 0
-#define UREACT_EXPAND_PACK( ... ) pass( ( __VA_ARGS__, 0 )... )
+#define UREACT_EXPAND_PACK( ... ) pass( ( (void) __VA_ARGS__, 0 )... )
 
 
 /// type_identity (workaround to enable enable decltype()::X)

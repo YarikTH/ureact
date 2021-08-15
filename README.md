@@ -62,7 +62,7 @@ b <<= 10;
 std::cout << "a  (new): " << a.value() << "\n"; // 12
 ```
 
-**Complex signals** ([run](https://godbolt.org/z/ns1rPM7eK))
+**Complex signals** ([run](https://godbolt.org/z/sh36WaYbh))
 
 ```cpp
 ureact::context ctx;
@@ -74,8 +74,8 @@ ureact::var_signal<int> exp = ctx.make_var(3);
 // Its value will be recalculated according to the given function
 ureact::signal<double> result = make_signal( with(base, exp) , std::pow<int, int> );
 
-// Alternative form of make_signal using operator ->*
-ureact::signal<std::string> expression = with(base, exp, result) ->*
+// Alternative form of make_signal using operator |
+ureact::signal<std::string> expression = with(base, exp, result) |
     []( int base, int exp, int result ){
         return std::to_string(base) + "^" + std::to_string(exp)
             + " == " + std::to_string(result);
@@ -90,13 +90,13 @@ exp <<= 0;
 std::cout << expression.value() << "\n"; // 2^0 == 1
 ```
 
-**Observers** ([run](https://godbolt.org/z/fYYMaTdPj))
+**Observers** ([run](https://godbolt.org/z/f5e3Te9Gj))
 
 ```cpp
 ureact::context ctx;
 
 ureact::var_signal<int> a = ctx.make_var(1);
-ureact::signal<int> abs_a = with(a) ->* [](int a){ return std::abs(a); };
+ureact::signal<int> abs_a = with(a) | [](int a){ return std::abs(a); };
 ureact::signal<int> abs_a_x2 = abs_a * 2;
 
 // Declaring reactive observers

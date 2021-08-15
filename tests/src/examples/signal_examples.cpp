@@ -35,10 +35,10 @@ TEST_SUITE( "Examples" )
             bothWords = make_signal( with( firstWord, secondWord ), concatFunc );
         }
 
-        SUBCASE( "operators , and ->*" )
+        SUBCASE( "operators , and |" )
         {
             // operator "," can be used instead of function with()
-            // operator "->*" can be used instead of make_signal()
+            // operator "|" can be used instead of make_signal()
             bothWords = /*with*/ ( firstWord, secondWord ) | concatFunc;
         }
 

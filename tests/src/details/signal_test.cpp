@@ -285,6 +285,32 @@ TEST_CASE( "FunctionBind2" )
     CHECK( f.value() == -3560.25f );
 }
 
+TEST_CASE( "Compose signals" )
+{
+    ureact::context ctx;
+
+    auto a = make_var( ctx, 1 );
+    auto b = make_var( ctx, 1 );
+    auto inverse_value = []( int i ) { return -i; };
+    auto double_value = []( int i ) { return i * 2; };
+    auto sum_values = []( int i, int j ) { return i + j; };
+
+    // x = a * 2 * 2 * 2 == a * 8
+    auto x = a | double_value | double_value | double_value;
+
+    // y = (2 * a + (-1) * b) * 2
+    auto y = ( a | double_value, b | inverse_value ) | sum_values | double_value;
+
+    CHECK( x.value() == 1 * 2 * 2 * 2 );
+    CHECK( y.value() == ( 2 * 1 + ( -1 ) * 1 ) * 2 );
+
+    a <<= 7;
+    b <<= 5;
+
+    CHECK( x.value() == 7 * 2 * 2 * 2 );
+    CHECK( y.value() == ( 2 * 7 + ( -1 ) * 5 ) * 2 );
+}
+
 TEST_CASE( "Flatten1" )
 {
     ureact::context ctx;

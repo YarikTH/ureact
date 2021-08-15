@@ -490,20 +490,6 @@ TEST_CASE( "Flatten5" )
     CHECK( results.empty() );
 }
 
-TEST_CASE( "Member1" )
-{
-    ureact::context ctx;
-
-    auto outer = make_var( ctx, 10 );
-    auto inner = make_var( ctx, outer );
-
-    auto flattened = inner.flatten();
-
-    observe( flattened, []( int v ) { CHECK( v == 30 ); } );
-
-    outer <<= 30;
-}
-
 TEST_CASE( "Modify1" )
 {
     ureact::context ctx;

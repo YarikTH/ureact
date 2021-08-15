@@ -8,7 +8,6 @@ Descriptions of concrete classes are not the subject of this reference.
 * TODO: rename `var_signal` to `value`
 * TODO: make return value of set value operators `void`
 * TODO: remove inheritance from `signal<S>`, replace with inheritance from `signal_base<S>` or something 
-* TODO: remove `signal<S>::flatten()` method
 * TODO: modify method for `var_signal<S&>`?
 * TODO: operator version of `var_signal::modify()`?
 * TODO: functional version of `var_signal::value()`?
@@ -68,12 +67,6 @@ void var_signal<S>::modify( const F& func ) const;
 ```
 
 ### Other
-
-Shortcut for free function flatten() (inherited from signal)
-
-```cpp
-S var_signal<S>::flatten() const;
-```
 
 Tests if this instance is linked to a node
 
@@ -136,7 +129,6 @@ Both versions are functionally equivalent
 ## `signal` related
 
 * TODO: rename `signal` to `function`
-* TODO: remove `signal<S>::flatten()` method
 * TODO: functional version of `signal::value()`?
 * TODO: convert `operator|` to return `detail::temp_signal<S, op_t>`
 
@@ -204,12 +196,6 @@ const S& signal<S&>::value() const;
 ```
 
 ### Other
-
-Shortcut for free function flatten()
-
-```cpp
-S signal<S>::flatten() const;
-```
 
 Tests if this instance is linked to a node
 

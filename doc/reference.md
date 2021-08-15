@@ -129,7 +129,6 @@ Both versions are functionally equivalent
 
 * TODO: rename `signal` to `function`
 * TODO: functional version of `signal::value()`?
-* TODO: convert `operator|` to return `detail::temp_signal<S, op_t>`
 
 ### Creation
 
@@ -146,23 +145,23 @@ auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func ) -> det
 Operator overload to construct signals
 
 ```cpp
-auto operator|( const signal_t<value_t>& arg, F&& func ) -> signal<auto>
-auto operator|( const signal_pack<values_t...>& arg_pack, F&& func ) -> signal<auto>
+auto operator|( const signal_t<value_t>& arg, F&& func ) -> detail::temp_signal<S, op_t>;
+auto operator|( const signal_pack<values_t...>& arg_pack, F&& func ) -> detail::temp_signal<S, op_t>;
 ```
 
 Deprecated operator overload to construct signals
 
 ```cpp
-auto operator->*( const signal_t<value_t>& arg, F&& func ) -> signal<auto>
-auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func ) -> signal<auto>
+auto operator->*( const signal_t<value_t>& arg, F&& func ) -> detail::temp_signal<S, op_t>;
+auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func ) -> detail::temp_signal<S, op_t>;
 ```
 
 Unary operator overloads to create signals from expressions
 
 ```cpp
-auto operator+(arg_t&& arg) -> decltype(detail::temp_signal<S, op_t>)
-auto operator-(arg_t&& arg) -> decltype(detail::temp_signal<S, op_t>)
-auto operator!(arg_t&& arg) -> decltype(detail::temp_signal<S, op_t>)
+auto operator+(arg_t&& arg) -> decltype(detail::temp_signal<S, op_t>);
+auto operator-(arg_t&& arg) -> decltype(detail::temp_signal<S, op_t>);
+auto operator!(arg_t&& arg) -> decltype(detail::temp_signal<S, op_t>);
 ```
 
 Binary operator overloads to create signals from expressions

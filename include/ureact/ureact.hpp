@@ -2269,13 +2269,9 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
 
 
 /// operator| overload to connect a signal to a function and return the resulting signal.
-template <typename F,
-    template <typename>
-    class signal_t,
-    typename value_t,
-    class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
-UREACT_WARN_UNUSED_RESULT auto operator|( const signal_t<value_t>& arg, F&& func )
-    -> signal<typename std::result_of<F( value_t )>::type>
+template <typename F, typename T, class = typename std::enable_if<is_signal<T>::value>::type>
+UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
+    -> decltype( ::ureact::make_signal( arg, std::forward<F>( func ) ) )
 {
     return ::ureact::make_signal( arg, std::forward<F>( func ) );
 }
@@ -2283,7 +2279,7 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const signal_t<value_t>& arg, F&& func
 /// operator| overload to connect multiple signals to a function and return the resulting signal.
 template <typename F, typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
-    -> signal<typename std::result_of<F( values_t... )>::type>
+    -> decltype( ::ureact::make_signal( arg_pack, std::forward<F>( func ) ) )
 {
     return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
 }
@@ -2291,13 +2287,9 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pa
 
 /// operator->* overload to connect a signal to a function and return the resulting signal.
 /// Deprecated. Use operetor| instead.
-template <typename F,
-    template <typename>
-    class signal_t,
-    typename value_t,
-    class = typename std::enable_if<is_signal<signal_t<value_t>>::value>::type>
-UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*(
-    const signal_t<value_t>& arg, F&& func ) -> decltype( arg | func )
+template <typename F, typename T, class = typename std::enable_if<is_signal<T>::value>::type>
+UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*( const T& arg, F&& func )
+    -> decltype( arg | func )
 {
     return arg | func;
 }

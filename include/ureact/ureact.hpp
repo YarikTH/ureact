@@ -1595,17 +1595,19 @@ public:
      *
      * Semantically equivalent to set().
      */
-    const var_signal& operator<<=( const S& new_value ) const
+    void operator<<=( const S& new_value ) const
     {
         var_signal::set_value( new_value );
-        return *this;
     }
 
-    /// @copydoc operator<<=
-    const var_signal& operator<<=( S&& new_value ) const
+    /**
+     * @brief Operator version of set()
+     *
+     * Semantically equivalent to set().
+     */
+    void operator<<=( S&& new_value ) const
     {
         var_signal::set_value( std::move( new_value ) );
-        return *this;
     }
 
     /**
@@ -1666,10 +1668,9 @@ public:
      *
      * Semantically equivalent to set().
      */
-    const var_signal& operator<<=( std::reference_wrapper<S> new_value ) const
+    void operator<<=( std::reference_wrapper<S> new_value ) const
     {
         var_signal::set_value( new_value );
-        return *this;
     }
 };
 

@@ -6,7 +6,6 @@ Descriptions of concrete classes are not the subject of this reference.
 ## `var_signal` related
 
 * TODO: rename `var_signal` to `value`
-* TODO: make return value of set value operators `void`
 * TODO: remove inheritance from `signal<S>`, replace with inheritance from `signal_base<S>` or something 
 * TODO: modify method for `var_signal<S&>`?
 * TODO: operator version of `var_signal::modify()`?
@@ -52,9 +51,9 @@ void var_signal<S&>::set( std::reference_wrapper<S> new_value ) const;
 Set value operator
 
 ```cpp
-const var_signal& var_signal<S>::operator<<=( const S& new_value ) const;
-const var_signal& var_signal<S>::operator<<=( S&& new_value ) const;
-const var_signal& var_signal<S&>::operator<<=( std::reference_wrapper<S> new_value ) const;
+void var_signal<S>::operator<<=( const S& new_value ) const;
+void var_signal<S>::operator<<=( S&& new_value ) const;
+void var_signal<S&>::operator<<=( std::reference_wrapper<S> new_value ) const;
 ```
 
 Both versions (method and operator) are functionally equivalent.

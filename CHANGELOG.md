@@ -1,11 +1,24 @@
 # Changelog
-All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
+
+## [0.3.0](https://github.com/YarikTH/ureact/releases/tag/0.3.0) (2021-08-15)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.2.0...0.3.0)
+
+- Convert operator| to return detail::temp\_signal\<S, op\_t\> [\#81](https://github.com/YarikTH/ureact/issues/81)
+- Remove returned value from `var_signal::operator<<=` [\#79](https://github.com/YarikTH/ureact/issues/79)
+- Remove `signal<S>::flatten()` method [\#77](https://github.com/YarikTH/ureact/issues/77)
+- Replace operator-\>\* with operator| to make signals [\#74](https://github.com/YarikTH/ureact/issues/74)
+- Remove bitwise operators overloads for signals [\#72](https://github.com/YarikTH/ureact/issues/72)
+- Add -stdlib=libc++ configuration for clang builds [\#50](https://github.com/YarikTH/ureact/issues/50)
+- Use gitlab-changelog-generator [\#43](https://github.com/YarikTH/ureact/issues/43)
+- Use sanitizers build [\#42](https://github.com/YarikTH/ureact/issues/42)
 
 ## [0.2.0](https://github.com/YarikTH/ureact/releases/tag/0.2.0) (2021-06-26)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.1.0...0.2.0)
 
 - Add \[\[nodiscard\]\] attribute to prevent misuse of the library [\#34](https://github.com/YarikTH/ureact/issues/34)
+- \#43 gitlab-changelog-generator usage is added [\#66](https://github.com/YarikTH/ureact/pull/66) ([YarikTH](https://github.com/YarikTH))
 
 - Add test to check if minimal version CMake can process CMake scripts without errors [\#40](https://github.com/YarikTH/ureact/issues/40)
 - Test integration ways described in integration.md and fix them [\#37](https://github.com/YarikTH/ureact/issues/37)

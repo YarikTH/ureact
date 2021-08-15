@@ -1007,7 +1007,7 @@ public:
             m_is_input_modified = true;
         }
         // There's a new_value, modify new_value instead.
-        // The modified new_value will handled like before, i.e. it'll be compared to m_value
+        // The modified new_value will be handled like before, i.e. it'll be compared to m_value
         // in apply_input
         else
         {
@@ -2286,7 +2286,7 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pa
 
 
 /// operator->* overload to connect a signal to a function and return the resulting signal.
-/// Deprecated. Use operetor| instead.
+/// Deprecated. Use operator| instead.
 template <typename F, typename T, class = typename std::enable_if<is_signal<T>::value>::type>
 UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*( const T& arg, F&& func )
     -> decltype( arg | func )
@@ -2295,7 +2295,7 @@ UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*( const T& arg, F&& 
 }
 
 /// operator->* overload to connect multiple signals to a function and return the resulting signal.
-/// Deprecated. Use operetor| instead.
+/// Deprecated. Use operator| instead.
 template <typename F, typename... values_t>
 UREACT_DEPRECATED UREACT_WARN_UNUSED_RESULT auto operator->*(
     const signal_pack<values_t...>& arg_pack, F&& func ) -> decltype( arg_pack | func )

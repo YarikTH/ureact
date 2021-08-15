@@ -1500,13 +1500,6 @@ public:
     {
         return signal::get_value();
     }
-
-    /// Semantically equivalent to the respective free function in namespace ureact.
-    UREACT_WARN_UNUSED_RESULT S flatten() const
-    {
-        static_assert( is_signal<S>::value, "flatten requires a signal value type." );
-        return ::ureact::flatten( *this );
-    }
 };
 
 

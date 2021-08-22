@@ -5,7 +5,6 @@ Descriptions of concrete classes are not the subject of this reference.
 
 ## `value` related
 
-* TODO: remove inheritance from `function<S>`, replace with inheritance from `signal_base<S>` or something 
 * TODO: modify method for `value<S&>`?
 * TODO: operator version of `value::modify()`?
 
@@ -29,14 +28,14 @@ Both versions are functionally equivalent.
 
 ### Reading
 
-Get value method (inherited from the function)
+Get value method
 
 ```cpp
 const S& value<S>::get() const;
 const S& value<S&>::get() const;
 ```
 
-Get value operator (inherited from the function)
+Get value operator
 
 ```cpp
 const S& value<S>::operator()() const;
@@ -87,7 +86,7 @@ Free function to construct observers
 ```cpp
 // in_f is either void(const S&) or observer_action(const S&)
 template <typename in_f, typename S>
-auto observe( const function<S>& subject, in_f&& func ) -> observer;
+auto observe( const signal<S>& subject, in_f&& func ) -> observer;
 ```
 
 Move constructor to create a scoped_observer from an observer
@@ -118,14 +117,14 @@ bool scoped_observer::is_valid() const;
 Free function to construct signal_pack
 
 ```cpp
-auto with( const function<values_t>&... deps ) -> signal_pack<auto>;
+auto with( const signal<values_t>&... deps ) -> signal_pack<auto>;
 ```
 
 Operator overload to construct signal_pack
 
 ```cpp
-auto operator,( const function<left_val_t>& a, const function<right_val_t>& b ) -> signal_pack<auto>;
-auto operator,( const signal_pack<cur_values_t...>& cur, const function<append_value_t>& append ) -> signal_pack<auto>;
+auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b ) -> signal_pack<auto>;
+auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append ) -> signal_pack<auto>;
 ```
 
 Both versions are functionally equivalent
@@ -140,7 +139,7 @@ Note: all creation functions return `detail::temp_function<S, op_t>` which inher
 Free function to construct signals
 
 ```cpp
-auto make_function( const function<value_t>& arg, in_f&& func ) -> detail::temp_function<S, op_t>
+auto make_function( const signal<value_t>& arg, in_f&& func ) -> detail::temp_function<S, op_t>
 auto make_function( const signal_pack<values_t...>& arg_pack, in_f&& func ) -> detail::temp_function<S, op_t>
 ```
 
@@ -212,17 +211,17 @@ template<typename F>
 void context::do_transaction( F&& func );
 ```
 
-Return if the type is function or its inheritor
+Return if the type is signal or its inheritor
 
 ```cpp
 template<class T>
 struct is_signal;
 ```
 
-Algorithm to create a function that points to the inner function's value.
+Algorithm to create a function that points to the inner signal's value.
 
 ```cpp
-auto flatten( const function<function<inner_value_t>>& outer ) -> function<inner_value_t>;
+auto flatten( const signal<signal<inner_value_t>>& outer ) -> function<inner_value_t>;
 ```
 
 

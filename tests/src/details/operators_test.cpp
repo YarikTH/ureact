@@ -33,7 +33,7 @@ enum class binary_operator_type
         typename ret_t = decltype( std::declval<left_t>() OPERATOR std::declval<right_t>() )>      \
     auto make_binary_operator_signal_##NAME(                                                       \
         ureact::context& ctx, binary_operator_type type, const left_t& lhs, const right_t& rhs )   \
-        ->ureact::signal<ret_t>                                                                    \
+        ->ureact::function<ret_t>                                                                    \
     {                                                                                              \
         switch( type )                                                                             \
         {                                                                                          \
@@ -82,12 +82,12 @@ BINARY_OPERATOR( +, addition )
         }                                                                                          \
                                                                                                    \
         template <typename left_t, typename right_t>                                               \
-        static auto make_signal( ureact::context& ctx,                                             \
+        static auto make_function( ureact::context& ctx,                                             \
             const binary_operator_type type,                                                       \
             const left_t& lhs,                                                                     \
             const right_t& rhs )                                                                   \
-            -> ureact::signal<typename decltype( std::declval<ureact::signal<left_t>>()            \
-                    OPERATOR std::declval<ureact::signal<right_t>>() )::value_t>                   \
+            -> ureact::function<typename decltype( std::declval<ureact::function<left_t>>()            \
+                    OPERATOR std::declval<ureact::function<right_t>>() )::value_t>                   \
         {                                                                                          \
             switch( type )                                                                         \
             {                                                                                      \
@@ -190,7 +190,7 @@ template <typename traits, typename left_t, typename right_t>
 void test_binary_operator_impl( binary_operator_type type, const left_t& lhs, const right_t& rhs )
 {
     ureact::context ctx;
-    auto signal_to_test = traits::make_signal( ctx, type, lhs, rhs );
+    auto signal_to_test = traits::make_function( ctx, type, lhs, rhs );
     auto value_from_signal = signal_to_test.get();
     auto value_from_operator = traits::execute_operator( lhs, rhs );
     static_assert(

@@ -66,7 +66,7 @@ TEST_SUITE( "Examples" )
             ureact::value<int> width;
             ureact::value<int> height;
 
-            ureact::signal<int> size;
+            ureact::function<int> size;
         };
 
         Shape my_shape( ctx );

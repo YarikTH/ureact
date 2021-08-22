@@ -202,7 +202,7 @@ public:
 
     ureact::value<int>  width;
     ureact::value<int>  height;
-    ureact::signal<int> size;
+    ureact::function<int> size;
 };
 ```
 

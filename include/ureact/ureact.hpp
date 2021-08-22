@@ -2300,17 +2300,17 @@ UREACT_WARN_UNUSED_RESULT auto make_function(
     {
         explicit node_builder( context& context, in_f&& func )
             : m_context( context )
-            , m_my_func( std::forward<in_f>( func ) )
+            , m_func( std::forward<in_f>( func ) )
         {}
 
         auto operator()( const signal<values_t>&... args ) -> detail::temp_function<S, op_t>
         {
             return detail::make_temp_signal<S, op_t>(
-                m_context, std::forward<in_f>( m_my_func ), get_node_ptr( args )... );
+                m_context, std::forward<in_f>( m_func ), get_node_ptr( args )... );
         }
 
         context& m_context;
-        in_f m_my_func;
+        in_f m_func;
     };
 
     return apply(

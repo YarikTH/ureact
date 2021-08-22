@@ -18,7 +18,7 @@ TEST_SUITE( "Examples" )
         ureact::value<std::string> firstWord = make_value( ctx, std::string( "Change" ) );
         ureact::value<std::string> secondWord = ctx.make_value( std::string( "me!" ) );
 
-        ureact::signal<std::string> bothWords;
+        ureact::function<std::string> bothWords;
 
         auto concatFunc = []( const std::string& first, const std::string& second ) -> std::string {
             return first + " " + second;
@@ -30,15 +30,15 @@ TEST_SUITE( "Examples" )
             bothWords = firstWord + " " + secondWord;
         }
 
-        SUBCASE( "using make_signal()" )
+        SUBCASE( "using make_function()" )
         {
-            bothWords = make_signal( with( firstWord, secondWord ), concatFunc );
+            bothWords = make_function( with( firstWord, secondWord ), concatFunc );
         }
 
         SUBCASE( "operators , and |" )
         {
             // operator "," can be used instead of function with()
-            // operator "|" can be used instead of make_signal()
+            // operator "|" can be used instead of make_function()
             bothWords = /*with*/ ( firstWord, secondWord ) | concatFunc;
         }
 
@@ -80,9 +80,9 @@ TEST_SUITE( "Examples" )
         ureact::value<int> a = make_value( ctx, 1 );
         ureact::value<int> b = make_value( ctx, 1 );
 
-        ureact::signal<int> x = a + b;
-        ureact::signal<int> y = a + b;
-        ureact::signal<int> z = x + y; // 2*(a+b)
+        ureact::function<int> x = a + b;
+        ureact::function<int> y = a + b;
+        ureact::function<int> z = x + y; // 2*(a+b)
 
         //  a b  //
         //  /X\  //
@@ -112,7 +112,7 @@ TEST_SUITE( "Examples" )
         ureact::context ctx;
 
         ureact::value<int> x = make_value( ctx, 1 );
-        ureact::signal<int> xAbs = make_signal( x, []( int value ) { return abs( value ); } );
+        ureact::function<int> xAbs = make_function( x, []( int value ) { return abs( value ); } );
 
         std::vector<int> xAbs_values;
         observe( xAbs, [&]( int new_value ) { xAbs_values.push_back( new_value ); } );

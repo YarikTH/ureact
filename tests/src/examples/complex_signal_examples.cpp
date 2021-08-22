@@ -35,25 +35,25 @@ std::string makeExpressionsString( const ExprVectT& expressions )
     return ss.str();
 }
 
-ureact::signal<ExprVectT> createExpressionSignal(
-    const ureact::signal<int>& a, const ureact::signal<int>& b )
+ureact::function<ExprVectT> createExpressionSignal(
+    const ureact::function<int>& a, const ureact::function<int>& b )
 {
     // Inside a function, we can use auto
-    const auto sumExpr = make_signal(
+    const auto sumExpr = make_function(
         with( a, b ), []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "+" ); } );
 
-    const auto diffExpr = make_signal(
+    const auto diffExpr = make_function(
         with( a, b ), []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "-" ); } );
 
-    const auto prodExpr = make_signal(
+    const auto prodExpr = make_function(
         with( a, b ), []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "*" ); } );
 
-    return make_signal(
+    return make_function(
         // clang-format off
             with(
-                make_signal( with( sumExpr,  a + b  ), &makeExprPair ),
-                make_signal( with( diffExpr, a - b ),  &makeExprPair ),
-                make_signal( with( prodExpr, a * b ),  &makeExprPair )
+                make_function( with( sumExpr,  a + b  ), &makeExprPair ),
+                make_function( with( diffExpr, a - b ),  &makeExprPair ),
+                make_function( with( prodExpr, a * b ),  &makeExprPair )
             ),
         // clang-format on
         []( const ExprPairT& sumP, const ExprPairT& diffP, const ExprPairT& prodP ) {
@@ -73,32 +73,32 @@ TEST_SUITE( "Examples" )
         ureact::value<int> b = make_value( ctx, 2 );
 
         // The expression std::vector
-        ureact::signal<ExprVectT> expressions;
+        ureact::function<ExprVectT> expressions;
 
         // Several alternative variants that do exactly the same
         SUBCASE( "intermediate signals" )
         {
             // Calculations
-            ureact::signal<int> sum = a + b;
-            ureact::signal<int> diff = a - b;
-            ureact::signal<int> prod = a * b;
+            ureact::function<int> sum = a + b;
+            ureact::function<int> diff = a - b;
+            ureact::function<int> prod = a * b;
 
             // stringified expressions
-            ureact::signal<std::string> sumExpr = make_signal( with( a, b ),
+            ureact::function<std::string> sumExpr = make_function( with( a, b ),
                 []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "+" ); } );
 
-            ureact::signal<std::string> diffExpr = make_signal( with( a, b ),
+            ureact::function<std::string> diffExpr = make_function( with( a, b ),
                 []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "-" ); } );
 
-            ureact::signal<std::string> prodExpr = make_signal( with( a, b ),
+            ureact::function<std::string> prodExpr = make_function( with( a, b ),
                 []( const int lhs, const int rhs ) { return makeExprStr( lhs, rhs, "*" ); } );
 
-            expressions = make_signal(
+            expressions = make_function(
                 // clang-format off
                 with(
-                    make_signal( with( sumExpr,  sum  ), &makeExprPair ),
-                    make_signal( with( diffExpr, diff ), &makeExprPair ),
-                    make_signal( with( prodExpr, prod ), &makeExprPair )
+                    make_function( with( sumExpr,  sum  ), &makeExprPair ),
+                    make_function( with( diffExpr, diff ), &makeExprPair ),
+                    make_function( with( prodExpr, prod ), &makeExprPair )
                 ),
                 // clang-format on
                 []( const ExprPairT& sumP, const ExprPairT& diffP, const ExprPairT& prodP ) {
@@ -113,7 +113,7 @@ TEST_SUITE( "Examples" )
 
         SUBCASE( "imperative function" )
         {
-            expressions = make_signal( with( a, b ), []( int a_, int b_ ) {
+            expressions = make_function( with( a, b ), []( int a_, int b_ ) {
                 return ExprVectT{
                     make_pair( makeExprStr( a_, b_, "+" ), a_ + b_ ),
                     make_pair( makeExprStr( a_, b_, "-" ), a_ - b_ ),
@@ -124,8 +124,8 @@ TEST_SUITE( "Examples" )
 
         REQUIRE( expressions.is_valid() );
 
-        ureact::signal<std::string> expressionsString
-            = make_signal( expressions, &makeExpressionsString );
+        ureact::function<std::string> expressionsString
+            = make_function( expressions, &makeExpressionsString );
 
         CHECK( expressionsString.get() ==
                R"(Expressions:

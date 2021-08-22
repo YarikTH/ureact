@@ -66,9 +66,9 @@ TEST_CASE( "Signals1" )
     auto v3 = make_value( ctx, 3 );
     auto v4 = make_value( ctx, 4 );
 
-    auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) { return a + b; } );
+    auto s1 = make_function( with( v1, v2 ), []( int a, int b ) { return a + b; } );
 
-    auto s2 = make_signal( with( v3, v4 ), []( int a, int b ) { return a + b; } );
+    auto s2 = make_function( with( v3, v4 ), []( int a, int b ) { return a + b; } );
 
     auto s3 = s1 + s2;
 

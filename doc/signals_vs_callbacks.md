@@ -195,14 +195,14 @@ class Shape
 {
 public:
     Shape( ureact::context& ctx )
-        : width( ctx.make_var( 1 ) )
-        , height( ctx.make_var( 1 ) )
+        : width(  ctx.make_value( 1 ) )
+        , height( ctx.make_value( 1 ) )
         , size( width * height )
     {}
 
-    ureact::var_signal<int> width;
-    ureact::var_signal<int> height;
-    ureact::signal<int>     size;
+    ureact::value<int>  width;
+    ureact::value<int>  height;
+    ureact::signal<int> size;
 };
 ```
 
@@ -220,7 +220,7 @@ myShape.width.set( 20 );
 myShape.height.set( 20 );
 
 // Get size
-const auto curSize = myShape.size.value();
+const auto curSize = myShape.size.get();
 ```
 
 Every reactive value automatically supports registration of callbacks (they are called observers):

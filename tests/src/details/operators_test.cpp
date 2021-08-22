@@ -38,19 +38,21 @@ enum class binary_operator_type
         switch( type )                                                                             \
         {                                                                                          \
             case binary_operator_type::signal_op_signal:                                           \
-                return make_var( ctx, lhs ) OPERATOR make_var( ctx, rhs );                         \
+                return make_value( ctx, lhs ) OPERATOR make_value( ctx, rhs );                     \
             case binary_operator_type::temp_signal_op_signal:                                      \
-                return (+make_var( ctx, lhs ))OPERATOR make_var( ctx, rhs );                       \
+                return (+make_value( ctx, lhs ))OPERATOR make_value( ctx, rhs );                   \
             case binary_operator_type::signal_op_temp_signal:                                      \
-                return make_var( ctx, lhs ) OPERATOR( +make_var( ctx, rhs ) );                     \
+                return make_value( ctx, lhs ) OPERATOR( +make_value( ctx, rhs ) );                 \
             case binary_operator_type::temp_signal_op_temp_signal:                                 \
-                return (+make_var( ctx, lhs ))OPERATOR( +make_var( ctx, rhs ) );                   \
-            case binary_operator_type::value_op_signal: return lhs OPERATOR make_var( ctx, rhs );  \
+                return (+make_value( ctx, lhs ))OPERATOR( +make_value( ctx, rhs ) );               \
+            case binary_operator_type::value_op_signal:                                            \
+                return lhs OPERATOR make_value( ctx, rhs );                                        \
             case binary_operator_type::value_op_temp_signal:                                       \
-                return lhs OPERATOR( +make_var( ctx, rhs ) );                                      \
-            case binary_operator_type::signal_op_value: return make_var( ctx, lhs ) OPERATOR rhs;  \
+                return lhs OPERATOR( +make_value( ctx, rhs ) );                                    \
+            case binary_operator_type::signal_op_value:                                            \
+                return make_value( ctx, lhs ) OPERATOR rhs;                                        \
             case binary_operator_type::temp_signal_op_value:                                       \
-                return (+make_var( ctx, lhs ))OPERATOR rhs;                                        \
+                return (+make_value( ctx, lhs ))OPERATOR rhs;                                      \
         }                                                                                          \
         return {};                                                                                 \
     }
@@ -90,21 +92,21 @@ BINARY_OPERATOR( +, addition )
             switch( type )                                                                         \
             {                                                                                      \
                 case binary_operator_type::signal_op_signal:                                       \
-                    return make_var( ctx, lhs ) OPERATOR make_var( ctx, rhs );                     \
+                    return make_value( ctx, lhs ) OPERATOR make_value( ctx, rhs );                 \
                 case binary_operator_type::temp_signal_op_signal:                                  \
-                    return (+make_var( ctx, lhs ))OPERATOR make_var( ctx, rhs );                   \
+                    return (+make_value( ctx, lhs ))OPERATOR make_value( ctx, rhs );               \
                 case binary_operator_type::signal_op_temp_signal:                                  \
-                    return make_var( ctx, lhs ) OPERATOR( +make_var( ctx, rhs ) );                 \
+                    return make_value( ctx, lhs ) OPERATOR( +make_value( ctx, rhs ) );             \
                 case binary_operator_type::temp_signal_op_temp_signal:                             \
-                    return (+make_var( ctx, lhs ))OPERATOR( +make_var( ctx, rhs ) );               \
+                    return (+make_value( ctx, lhs ))OPERATOR( +make_value( ctx, rhs ) );           \
                 case binary_operator_type::value_op_signal:                                        \
-                    return lhs OPERATOR make_var( ctx, rhs );                                      \
+                    return lhs OPERATOR make_value( ctx, rhs );                                    \
                 case binary_operator_type::value_op_temp_signal:                                   \
-                    return lhs OPERATOR( +make_var( ctx, rhs ) );                                  \
+                    return lhs OPERATOR( +make_value( ctx, rhs ) );                                \
                 case binary_operator_type::signal_op_value:                                        \
-                    return make_var( ctx, lhs ) OPERATOR rhs;                                      \
+                    return make_value( ctx, lhs ) OPERATOR rhs;                                    \
                 case binary_operator_type::temp_signal_op_value:                                   \
-                    return (+make_var( ctx, lhs ))OPERATOR rhs;                                    \
+                    return (+make_value( ctx, lhs ))OPERATOR rhs;                                  \
             }                                                                                      \
             return {};                                                                             \
         }                                                                                          \
@@ -189,7 +191,7 @@ void test_binary_operator_impl( binary_operator_type type, const left_t& lhs, co
 {
     ureact::context ctx;
     auto signal_to_test = traits::make_signal( ctx, type, lhs, rhs );
-    auto value_from_signal = signal_to_test.value();
+    auto value_from_signal = signal_to_test.get();
     auto value_from_operator = traits::execute_operator( lhs, rhs );
     static_assert(
         std::is_same<decltype( value_from_signal ), decltype( value_from_operator )>::value,
@@ -224,7 +226,7 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto v1 = make_var( ctx, 1 );
+        auto v1 = make_value( ctx, 1 );
 
         // clang-format off
         auto unary_plus           = +v1;
@@ -241,12 +243,12 @@ TEST_SUITE( "operators" )
                 v1 <<= value;
 
                 // clang-format off
-                CHECK( unary_plus.value()           == (+value) );
-                CHECK( unary_minus.value()          == (-value) );
-                CHECK( logical_negation.value()     == (!value) );
-                CHECK( unary_plus_2.value()         == (+value) );
-                CHECK( unary_minus_2.value()        == (-value) );
-                CHECK( logical_negation_2.value()   == (!value) );
+                CHECK( unary_plus.get()           == (+value) );
+                CHECK( unary_minus.get()          == (-value) );
+                CHECK( logical_negation.get()     == (!value) );
+                CHECK( unary_plus_2.get()         == (+value) );
+                CHECK( unary_minus_2.get()        == (-value) );
+                CHECK( logical_negation_2.get()   == (!value) );
                 // clang-format on
             }
         };
@@ -258,8 +260,8 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto lhs = make_var( ctx, 0 );
-        auto rhs = make_var( ctx, 1 );
+        auto lhs = make_value( ctx, 0 );
+        auto rhs = make_value( ctx, 1 );
 
         // clang-format off
         auto addition            = lhs +  rhs;
@@ -299,17 +301,17 @@ TEST_SUITE( "operators" )
                 } );
 
                 // clang-format off
-                CHECK( addition.value()            == (left +  right) );
-                CHECK( subtraction.value()         == (left -  right) );
-                CHECK( multiplication.value()      == (left *  right) );
-                CHECK( equal.value()               == (left == right) );
-                CHECK( not_equal.value()           == (left != right) );
-                CHECK( less.value()                == (left <  right) );
-                CHECK( less_equal.value()          == (left <= right) );
-                CHECK( greater.value()             == (left >  right) );
-                CHECK( greater_equal.value()       == (left >= right) );
-                CHECK( logical_and.value()         == (left && right) );
-                CHECK( logical_or.value()          == (left || right) );
+                CHECK( addition.get()            == (left +  right) );
+                CHECK( subtraction.get()         == (left -  right) );
+                CHECK( multiplication.get()      == (left *  right) );
+                CHECK( equal.get()               == (left == right) );
+                CHECK( not_equal.get()           == (left != right) );
+                CHECK( less.get()                == (left <  right) );
+                CHECK( less_equal.get()          == (left <= right) );
+                CHECK( greater.get()             == (left >  right) );
+                CHECK( greater_equal.get()       == (left >= right) );
+                CHECK( logical_and.get()         == (left && right) );
+                CHECK( logical_or.get()          == (left || right) );
                 // clang-format on
             }
         }
@@ -319,8 +321,8 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto lhs = make_var( ctx, 0 );
-        auto rhs = make_var( ctx, 1 );
+        auto lhs = make_value( ctx, 0 );
+        auto rhs = make_value( ctx, 1 );
 
         // clang-format off
         auto division = lhs / rhs;
@@ -345,8 +347,8 @@ TEST_SUITE( "operators" )
                     rhs <<= right;
                 } );
                 // clang-format off
-                CHECK( division.value() == (left / right) );
-                CHECK( modulo.value()   == (left % right) );
+                CHECK( division.get() == (left / right) );
+                CHECK( modulo.get()   == (left % right) );
                 // clang-format on
             }
         }
@@ -387,13 +389,13 @@ TEST_SUITE( "operators" )
 
         ureact::context ctx;
 
-        auto _2 = make_var( ctx, 2 );
+        auto _2 = make_value( ctx, 2 );
 
         auto result = _2 + _2 * _2;
-        CHECK( result.value() == 6 );
+        CHECK( result.get() == 6 );
 
         auto result2 = ( _2 + _2 ) * _2;
-        CHECK( result2.value() == 8 );
+        CHECK( result2.get() == 8 );
     }
 
 } // TEST_SUITE_END

@@ -18,8 +18,8 @@ TEST_CASE( "detach" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( ctx, 1 );
-    auto a2 = make_var( ctx, 1 );
+    auto a1 = make_value( ctx, 1 );
+    auto a2 = make_value( ctx, 1 );
 
     auto result = a1 + a2;
 
@@ -86,8 +86,8 @@ TEST_CASE( "NoObserveOnNoChanged" )
 {
     ureact::context ctx;
 
-    auto a = make_var( ctx, 1 );
-    auto b = make_var( ctx, 1 );
+    auto a = make_value( ctx, 1 );
+    auto b = make_value( ctx, 1 );
 
     auto product = a * b;
 
@@ -108,19 +108,19 @@ TEST_CASE( "NoObserveOnNoChanged" )
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 0 );
     CHECK( productObserveCount == 0 );
-    CHECK( expressionString.value() == "1 * 1 = 1" );
+    CHECK( expressionString.get() == "1 * 1 = 1" );
 
     b <<= 2;
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 1 );
     CHECK( productObserveCount == 1 );
-    CHECK( expressionString.value() == "1 * 2 = 2" );
+    CHECK( expressionString.get() == "1 * 2 = 2" );
 
     b <<= 2; // Shouldn't change
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 1 );
     CHECK( productObserveCount == 1 );
-    CHECK( expressionString.value() == "1 * 2 = 2" );
+    CHECK( expressionString.get() == "1 * 2 = 2" );
 
     ctx.do_transaction( [&]() {
         b <<= 1;
@@ -129,19 +129,19 @@ TEST_CASE( "NoObserveOnNoChanged" )
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 1 );
     CHECK( productObserveCount == 1 );
-    CHECK( expressionString.value() == "1 * 2 = 2" );
+    CHECK( expressionString.get() == "1 * 2 = 2" );
 
     a <<= 0;
     CHECK( aObserveCount == 1 );
     CHECK( bObserveCount == 1 );
     CHECK( productObserveCount == 2 );
-    CHECK( expressionString.value() == "0 * 2 = 0" );
+    CHECK( expressionString.get() == "0 * 2 = 0" );
 
     b <<= 3;
     CHECK( aObserveCount == 1 );
     CHECK( bObserveCount == 2 );
     CHECK( productObserveCount == 2 ); // Product shouldn't change
-    CHECK( expressionString.value() == "0 * 3 = 0" );
+    CHECK( expressionString.get() == "0 * 3 = 0" );
 }
 
 TEST_CASE( "ScopedObserverTest" )
@@ -150,7 +150,7 @@ TEST_CASE( "ScopedObserverTest" )
 
     std::vector<int> results;
 
-    auto in = make_var( ctx, 1 );
+    auto in = make_value( ctx, 1 );
 
     {
         ureact::scoped_observer obs = observe( in, [&]( int v ) { results.push_back( v ); } );
@@ -170,7 +170,7 @@ TEST_CASE( "SelfObserverDetachTest" )
 
     std::vector<int> results;
 
-    auto in = make_var( ctx, 0 );
+    auto in = make_value( ctx, 0 );
 
     ureact::observer obs = observe( in, [&]( int v ) {
         if( v < 0 )

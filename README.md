@@ -48,8 +48,8 @@
 ureact::context ctx;
 
 // Declaring reactive variables. We can reassign their values later
-ureact::var_signal<int> b = ctx.make_var(1);
-ureact::var_signal<int> c = ctx.make_var(2);
+ureact::value<int> b = ctx.make_value(1);
+ureact::value<int> c = ctx.make_value(2);
 
 // Declaring reactive signal using overloaded operator
 // Its value will be updated each time its dependencies are changed
@@ -67,8 +67,8 @@ std::cout << "a  (new): " << a.value() << "\n"; // 12
 ```cpp
 ureact::context ctx;
 
-ureact::var_signal<int> base = ctx.make_var(1);
-ureact::var_signal<int> exp = ctx.make_var(3);
+ureact::value<int> base = ctx.make_value(1);
+ureact::value<int> exp  = ctx.make_value(3);
 
 // Declaring reactive signal with formula
 // Its value will be recalculated according to the given function
@@ -95,7 +95,7 @@ std::cout << expression.value() << "\n"; // 2^0 == 1
 ```cpp
 ureact::context ctx;
 
-ureact::var_signal<int> a = ctx.make_var(1);
+ureact::value<int> a = ctx.make_value(1);
 ureact::signal<int> abs_a = with(a) | [](int a){ return std::abs(a); };
 ureact::signal<int> abs_a_x2 = abs_a * 2;
 
@@ -131,8 +131,8 @@ a <<= -3
 ```cpp
 ureact::context ctx;
 
-ureact::var_signal<int> b = ctx.make_var(1);
-ureact::var_signal<int> c = ctx.make_var(1);
+ureact::value<int> b = ctx.make_value(1);
+ureact::value<int> c = ctx.make_value(1);
 ureact::signal<int> a = b + c;
 
 observe(a, []( int a ){ std::cout << "  a -> " << a << "\n"; });

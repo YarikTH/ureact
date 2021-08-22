@@ -14,9 +14,9 @@ TEST_SUITE( "Examples" )
     {
         ureact::context ctx;
 
-        // make_var is available as a free function and as context's member function
-        ureact::var_signal<std::string> firstWord = make_var( ctx, std::string( "Change" ) );
-        ureact::var_signal<std::string> secondWord = ctx.make_var( std::string( "me!" ) );
+        // make_value is available as a free function and as context's member function
+        ureact::value<std::string> firstWord = make_value( ctx, std::string( "Change" ) );
+        ureact::value<std::string> secondWord = ctx.make_value( std::string( "me!" ) );
 
         ureact::signal<std::string> bothWords;
 
@@ -43,42 +43,42 @@ TEST_SUITE( "Examples" )
         }
 
         // Imperative value access
-        CHECK( bothWords.value() == "Change me!" );
+        CHECK( bothWords.get() == "Change me!" );
 
         // Imperative value change
         firstWord <<= std::string( "Hello" );
 
-        CHECK( bothWords.value() == "Hello me!" );
+        CHECK( bothWords.get() == "Hello me!" );
 
         secondWord <<= std::string( "World!" );
 
-        CHECK( bothWords.value() == "Hello World!" );
+        CHECK( bothWords.get() == "Hello World!" );
     }
 
     TEST_CASE( "Modifying signal values in place" )
     {
         ureact::context ctx;
 
-        ureact::var_signal<std::vector<std::string>> data
-            = make_var( ctx, std::vector<std::string>{} );
+        ureact::value<std::vector<std::string>> data
+            = make_value( ctx, std::vector<std::string>{} );
 
-        CHECK( data.value() == std::vector<std::string>{} );
+        CHECK( data.get() == std::vector<std::string>{} );
 
         data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "Hello" ); } );
 
-        CHECK( data.value() == std::vector<std::string>{ "Hello" } );
+        CHECK( data.get() == std::vector<std::string>{ "Hello" } );
 
         data.modify( []( std::vector<std::string>& value ) { value.emplace_back( "World!" ); } );
 
-        CHECK( data.value() == std::vector<std::string>{ "Hello", "World!" } );
+        CHECK( data.get() == std::vector<std::string>{ "Hello", "World!" } );
     }
 
     TEST_CASE( "Changing multiple inputs" )
     {
         ureact::context ctx;
 
-        ureact::var_signal<int> a = make_var( ctx, 1 );
-        ureact::var_signal<int> b = make_var( ctx, 1 );
+        ureact::value<int> a = make_value( ctx, 1 );
+        ureact::value<int> b = make_value( ctx, 1 );
 
         ureact::signal<int> x = a + b;
         ureact::signal<int> y = a + b;
@@ -93,7 +93,7 @@ TEST_SUITE( "Examples" )
         std::vector<int> z_values;
         observe( z, [&]( int new_value ) { z_values.push_back( new_value ); } );
 
-        CHECK( z.value() == 4 );
+        CHECK( z.get() == 4 );
         CHECK( z_values == std::vector<int>{} );
 
         a <<= 2; // z is changed to 6
@@ -111,13 +111,13 @@ TEST_SUITE( "Examples" )
     {
         ureact::context ctx;
 
-        ureact::var_signal<int> x = make_var( ctx, 1 );
+        ureact::value<int> x = make_value( ctx, 1 );
         ureact::signal<int> xAbs = make_signal( x, []( int value ) { return abs( value ); } );
 
         std::vector<int> xAbs_values;
         observe( xAbs, [&]( int new_value ) { xAbs_values.push_back( new_value ); } );
 
-        CHECK( xAbs.value() == 1 );
+        CHECK( xAbs.get() == 1 );
         CHECK( xAbs_values == std::vector<int>{} );
 
         x <<= 2;  // xAbs is changed to 2

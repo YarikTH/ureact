@@ -69,8 +69,8 @@ TEST_SUITE( "Examples" )
         ureact::context ctx;
 
         // Input operands
-        ureact::var_signal<int> a = make_var( ctx, 1 );
-        ureact::var_signal<int> b = make_var( ctx, 2 );
+        ureact::value<int> a = make_value( ctx, 1 );
+        ureact::value<int> b = make_value( ctx, 2 );
 
         // The expression std::vector
         ureact::signal<ExprVectT> expressions;
@@ -127,7 +127,7 @@ TEST_SUITE( "Examples" )
         ureact::signal<std::string> expressionsString
             = make_signal( expressions, &makeExpressionsString );
 
-        CHECK( expressionsString.value() ==
+        CHECK( expressionsString.get() ==
                R"(Expressions:
 * 1+2 is 3
 * 1-2 is -1
@@ -136,7 +136,7 @@ TEST_SUITE( "Examples" )
 
         a <<= 10;
 
-        CHECK( expressionsString.value() ==
+        CHECK( expressionsString.get() ==
                R"(Expressions:
 * 10+2 is 12
 * 10-2 is 8
@@ -145,7 +145,7 @@ TEST_SUITE( "Examples" )
 
         b <<= 20;
 
-        CHECK( expressionsString.value() ==
+        CHECK( expressionsString.get() ==
                R"(Expressions:
 * 10+20 is 30
 * 10-20 is -10

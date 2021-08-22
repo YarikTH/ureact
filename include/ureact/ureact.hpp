@@ -150,7 +150,7 @@ template <typename S>
 class signal;
 
 template <typename S>
-class var_signal;
+class value;
 
 
 namespace detail
@@ -478,7 +478,7 @@ struct decay_input
 };
 
 template <typename T>
-struct decay_input<var_signal<T>>
+struct decay_input<value<T>>
 {
     using type = signal<T>;
 };
@@ -960,26 +960,26 @@ using signal_node_ptr_t = std::shared_ptr<signal_node<S>>;
 
 
 template <typename S>
-class var_node
+class value_node
     : public signal_node<S>
     , public input_node_interface
 {
 public:
     template <typename T>
-    explicit var_node( context& context, T&& value )
-        : var_node::signal_node( context, std::forward<T>( value ) )
+    explicit value_node( context& context, T&& value )
+        : value_node::signal_node( context, std::forward<T>( value ) )
         , m_new_value( value )
     {}
 
-    var_node( const var_node& ) = delete;
-    var_node& operator=( const var_node& ) = delete;
-    var_node( var_node&& ) noexcept = delete;
-    var_node& operator=( var_node&& ) noexcept = delete;
+    value_node( const value_node& ) = delete;
+    value_node& operator=( const value_node& ) = delete;
+    value_node( value_node&& ) noexcept = delete;
+    value_node& operator=( value_node&& ) noexcept = delete;
 
     // LCOV_EXCL_START
     void tick() override
     {
-        assert( false && "Ticked var_node" );
+        assert( false && "Ticked value_node" );
     }
     // LCOV_EXCL_STOP
 
@@ -1024,7 +1024,7 @@ public:
             if( !equals( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
-                var_node::get_graph().on_input_change( *this );
+                value_node::get_graph().on_input_change( *this );
                 return true;
             }
             return false;
@@ -1033,7 +1033,7 @@ public:
         {
             m_is_input_modified = false;
 
-            var_node::get_graph().on_input_change( *this );
+            value_node::get_graph().on_input_change( *this );
             return true;
         }
         return false;
@@ -1428,9 +1428,9 @@ public:
     {}
 
 private:
-    UREACT_WARN_UNUSED_RESULT auto get_var_node() const -> var_node<S>*
+    UREACT_WARN_UNUSED_RESULT auto get_var_node() const -> value_node<S>*
     {
-        return static_cast<var_node<S>*>( this->m_ptr.get() );
+        return static_cast<value_node<S>*>( this->m_ptr.get() );
     }
 
 protected:
@@ -1488,15 +1488,15 @@ public:
     signal() = default;
 
     /**
-     * Construct temp_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+     * Construct signal from the given node.
+     * @todo make it private and allow to call it only from make_value function
      */
     explicit signal( std::shared_ptr<node_t>&& node_ptr )
         : signal::signal_base( std::move( node_ptr ) )
     {}
 
     /// Return value of linked node
-    UREACT_WARN_UNUSED_RESULT const S& value() const
+    UREACT_WARN_UNUSED_RESULT const S& get() const
     {
         return signal::get_value();
     }
@@ -1529,8 +1529,8 @@ public:
     signal() = default;
 
     /**
-     * Construct temp_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+     * Construct signal from given node.
+     * @todo make it private and allow to call it only from make_value function
      */
     explicit signal( std::shared_ptr<node_t>&& node_ptr )
         : signal::signal_base( std::move( node_ptr ) )
@@ -1551,27 +1551,27 @@ public:
  *  imperative value input. In the dataflow graph, input signals are sources.
  *  As such, they don't have any predecessors.
  *
- *  var_signal is created by constructor function make_var.
+ *  value is created by constructor function make_value.
  */
 template <typename S>
-class var_signal : public signal<S>
+class value : public signal<S>
 {
 private:
-    using node_t = ::ureact::detail::var_node<S>;
+    using node_t = ::ureact::detail::value_node<S>;
 
 public:
     /**
-     * Construct var_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+     * Construct value from value_node.
+     * @todo make it private and allow to call it only from make_value function
      */
-    explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::signal( std::move( node_ptr ) )
+    explicit value( std::shared_ptr<node_t>&& node_ptr )
+        : value::signal( std::move( node_ptr ) )
     {}
 
     /**
      * @brief Set new signal value
      *
-     * Set the the signal value of the linked variable signal node to a new_value.
+     * Set the the signal value of the linked value signal node to a new_value.
      * If the old value equals the new value, the call has no effect.
      *
      * Furthermore, if set was called inside of a transaction function, it will
@@ -1581,13 +1581,13 @@ public:
      */
     void set( const S& new_value ) const
     {
-        var_signal::set_value( new_value );
+        value::set_value( new_value );
     }
 
     /// @copydoc set
     void set( S&& new_value ) const
     {
-        var_signal::set_value( std::move( new_value ) );
+        value::set_value( std::move( new_value ) );
     }
 
     /**
@@ -1597,7 +1597,7 @@ public:
      */
     void operator<<=( const S& new_value ) const
     {
-        var_signal::set_value( new_value );
+        value::set_value( new_value );
     }
 
     /**
@@ -1607,7 +1607,7 @@ public:
      */
     void operator<<=( S&& new_value ) const
     {
-        var_signal::set_value( std::move( new_value ) );
+        value::set_value( std::move( new_value ) );
     }
 
     /**
@@ -1616,7 +1616,7 @@ public:
     template <typename F>
     void modify( const F& func ) const
     {
-        var_signal::modify_value( func );
+        value::modify_value( func );
     }
 };
 
@@ -1628,29 +1628,29 @@ public:
  *  imperative value input. In the dataflow graph, input signals are sources.
  *  As such, they don't have any predecessors.
  *
- *  var_signal is created by constructor function make_var.
+ *  value is created by constructor function make_value.
  */
 template <typename S>
-class var_signal<S&> : public signal<std::reference_wrapper<S>>
+class value<S&> : public signal<std::reference_wrapper<S>>
 {
 private:
-    using node_t = detail::var_node<std::reference_wrapper<S>>;
+    using node_t = detail::value_node<std::reference_wrapper<S>>;
 
 public:
     using value_t = S;
 
     /**
-     * Construct var_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+     * Construct value from value_node.
+     * @todo make it private and allow to call it only from make_value function
      */
-    explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::signal( std::move( node_ptr ) )
+    explicit value( std::shared_ptr<node_t>&& node_ptr )
+        : value::signal( std::move( node_ptr ) )
     {}
 
     /**
      * @brief Set new signal value
      *
-     * Set the the signal value of the linked variable signal node to a new_value.
+     * Set the the signal value of the linked value signal node to a new_value.
      * If the old value equals the new value, the call has no effect.
      *
      * Furthermore, if set was called inside of a transaction function, it will
@@ -1660,7 +1660,7 @@ public:
      */
     void set( std::reference_wrapper<S> new_value ) const
     {
-        var_signal::set_value( new_value );
+        value::set_value( new_value );
     }
 
     /**
@@ -1670,7 +1670,7 @@ public:
      */
     void operator<<=( std::reference_wrapper<S> new_value ) const
     {
-        var_signal::set_value( new_value );
+        value::set_value( new_value );
     }
 };
 
@@ -1714,8 +1714,8 @@ private:
 
 public:
     /**
-     * Construct temp_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+     * Construct temp_signal from value_node.
+     * @todo make it private and allow to call it only from make_value function
      */
     explicit temp_signal( std::shared_ptr<node_t>&& ptr )
         : temp_signal::signal( std::move( ptr ) )
@@ -1733,30 +1733,28 @@ public:
 template <typename V,
     typename S = typename std::decay<V>::type,
     class = typename std::enable_if<!is_signal<S>::value>::type>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& value ) -> var_signal<S>
+UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<S>
 {
-    return var_signal<S>(
-        std::make_shared<::ureact::detail::var_node<S>>( context, std::forward<V>( value ) ) );
+    return value<S>(
+        std::make_shared<::ureact::detail::value_node<S>>( context, std::forward<V>( v ) ) );
 }
 
 template <typename S>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, std::reference_wrapper<S> value )
-    -> var_signal<S&>
+UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, std::reference_wrapper<S> v )
+    -> value<S&>
 {
-    return var_signal<S&>(
-        std::make_shared<::ureact::detail::var_node<std::reference_wrapper<S>>>( context, value ) );
+    return value<S&>(
+        std::make_shared<::ureact::detail::value_node<std::reference_wrapper<S>>>( context, v ) );
 }
 
 template <typename V,
     typename S = typename std::decay<V>::type,
     typename inner_t = typename S::value_t,
     class = typename std::enable_if<is_signal<S>::value>::type>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& value )
-    -> var_signal<signal<inner_t>>
+UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<signal<inner_t>>
 {
-    return var_signal<signal<inner_t>>(
-        std::make_shared<::ureact::detail::var_node<signal<inner_t>>>(
-            context, std::forward<V>( value ) ) );
+    return value<signal<inner_t>>( std::make_shared<::ureact::detail::value_node<signal<inner_t>>>(
+        context, std::forward<V>( v ) ) );
 }
 
 
@@ -2185,12 +2183,12 @@ UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
 // [[section]] Free functions for fun and profit
 //==================================================================================================
 
-/// Factory function to create var signal in the given context.
+/// Factory function to create ureact::value in the given context.
 template <typename V>
-UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
-    -> decltype( detail::make_var_impl( context, std::forward<V>( value ) ) )
+UREACT_WARN_UNUSED_RESULT auto make_value( context& context, V&& value )
+    -> decltype( detail::make_value_impl( context, std::forward<V>( value ) ) )
 {
-    return detail::make_var_impl( context, std::forward<V>( value ) );
+    return detail::make_value_impl( context, std::forward<V>( value ) );
 }
 
 
@@ -2292,7 +2290,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& out
     context& context = outer.get_context();
     return signal<inner_value_t>(
         std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
-            context, get_node_ptr( outer ), get_node_ptr( outer.value() ) ) );
+            context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
 }
 
 
@@ -2371,12 +2369,12 @@ public:
         get_graph().do_transaction( std::forward<F>( func ) );
     }
 
-    /// Factory function to create var signal in the current context.
+    /// Factory function to create ureact::value in the current context.
     template <typename V>
-    UREACT_WARN_UNUSED_RESULT auto make_var( V&& value )
-        -> decltype( ureact::make_var( *this, std::forward<V>( value ) ) )
+    UREACT_WARN_UNUSED_RESULT auto make_value( V&& value )
+        -> decltype( ureact::make_value( *this, std::forward<V>( value ) ) )
     {
-        return ureact::make_var( *this, std::forward<V>( value ) );
+        return ureact::make_value( *this, std::forward<V>( value ) );
     }
 
     UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const

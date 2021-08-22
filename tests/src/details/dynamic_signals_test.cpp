@@ -18,18 +18,18 @@ class Company
 {
 public:
     int index;
-    ureact::var_signal<std::string> name;
+    ureact::value<std::string> name;
 
     Company( ureact::context& ctx, const int index, const char* name )
         : index( index )
-        , name( make_var( ctx, std::string( name ) ) )
+        , name( make_value( ctx, std::string( name ) ) )
     {}
 
     friend bool operator==( const Company& lhs, const Company& rhs )
     {
         // clang-format off
-        return std::tie( lhs.index, lhs.name.value() )
-            == std::tie( rhs.index, rhs.name.value() );
+        return std::tie( lhs.index, lhs.name.get() )
+            == std::tie( rhs.index, rhs.name.get() );
         // clang-format on
     }
 };
@@ -37,20 +37,20 @@ public:
 class Employee
 {
 public:
-    ureact::var_signal<Company&> company;
+    ureact::value<Company&> company;
 
     Employee( ureact::context& ctx, Company& companyRef )
-        : company( make_var( ctx, std::ref( companyRef ) ) )
+        : company( make_value( ctx, std::ref( companyRef ) ) )
     {}
 };
 
 class Employee2
 {
 public:
-    ureact::var_signal<Company*> company;
+    ureact::value<Company*> company;
 
     Employee2( ureact::context& ctx, Company* companyPtr )
-        : company( make_var( ctx, companyPtr ) )
+        : company( make_value( ctx, companyPtr ) )
     {}
 };
 

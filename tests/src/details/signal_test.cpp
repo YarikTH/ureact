@@ -36,35 +36,35 @@ TEST_CASE( "MakeVars" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( ctx, 1 );
-    auto v2 = make_var( ctx, 2 );
-    auto v3 = make_var( ctx, 3 );
-    auto v4 = make_var( ctx, 4 );
+    auto v1 = make_value( ctx, 1 );
+    auto v2 = make_value( ctx, 2 );
+    auto v3 = make_value( ctx, 3 );
+    auto v4 = make_value( ctx, 4 );
 
-    CHECK( v1.value() == 1 );
-    CHECK( v2.value() == 2 );
-    CHECK( v3.value() == 3 );
-    CHECK( v4.value() == 4 );
+    CHECK( v1.get() == 1 );
+    CHECK( v2.get() == 2 );
+    CHECK( v3.get() == 3 );
+    CHECK( v4.get() == 4 );
 
     v1 <<= 10;
     v2 <<= 20;
     v3 <<= 30;
     v4 <<= 40;
 
-    CHECK( v1.value() == 10 );
-    CHECK( v2.value() == 20 );
-    CHECK( v3.value() == 30 );
-    CHECK( v4.value() == 40 );
+    CHECK( v1.get() == 10 );
+    CHECK( v2.get() == 20 );
+    CHECK( v3.get() == 30 );
+    CHECK( v4.get() == 40 );
 }
 
 TEST_CASE( "Signals1" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( ctx, 1 );
-    auto v2 = make_var( ctx, 2 );
-    auto v3 = make_var( ctx, 3 );
-    auto v4 = make_var( ctx, 4 );
+    auto v1 = make_value( ctx, 1 );
+    auto v2 = make_value( ctx, 2 );
+    auto v3 = make_value( ctx, 3 );
+    auto v4 = make_value( ctx, 4 );
 
     auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) { return a + b; } );
 
@@ -72,18 +72,18 @@ TEST_CASE( "Signals1" )
 
     auto s3 = s1 + s2;
 
-    CHECK( s1.value() == 3 );
-    CHECK( s2.value() == 7 );
-    CHECK( s3.value() == 10 );
+    CHECK( s1.get() == 3 );
+    CHECK( s2.get() == 7 );
+    CHECK( s3.get() == 10 );
 
     v1 <<= 10;
     v2 <<= 20;
     v3 <<= 30;
     v4 <<= 40;
 
-    CHECK( s1.value() == 30 );
-    CHECK( s2.value() == 70 );
-    CHECK( s3.value() == 100 );
+    CHECK( s1.get() == 30 );
+    CHECK( s2.get() == 70 );
+    CHECK( s3.get() == 100 );
 
     CHECK( ureact::is_signal<decltype( v1 )>::value );
 
@@ -98,8 +98,8 @@ TEST_CASE( "Signals2" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( ctx, 1 );
-    auto a2 = make_var( ctx, 1 );
+    auto a1 = make_value( ctx, 1 );
+    auto a2 = make_value( ctx, 1 );
 
     auto b1 = a1 + 0;
     auto b2 = a1 + a2;
@@ -120,57 +120,57 @@ TEST_CASE( "Signals2" )
             CHECK( v == 12 );
     } );
 
-    CHECK( a1.value() == 1 );
-    CHECK( a2.value() == 1 );
+    CHECK( a1.get() == 1 );
+    CHECK( a2.get() == 1 );
 
-    CHECK( b1.value() == 1 );
-    CHECK( b2.value() == 2 );
-    CHECK( b3.value() == 1 );
+    CHECK( b1.get() == 1 );
+    CHECK( b2.get() == 2 );
+    CHECK( b3.get() == 1 );
 
-    CHECK( c1.value() == 3 );
-    CHECK( c2.value() == 3 );
+    CHECK( c1.get() == 3 );
+    CHECK( c2.get() == 3 );
 
-    CHECK( result.value() == 6 );
+    CHECK( result.get() == 6 );
 
     a1 <<= 2;
 
     CHECK( observeCount == 1 );
 
-    CHECK( a1.value() == 2 );
-    CHECK( a2.value() == 1 );
+    CHECK( a1.get() == 2 );
+    CHECK( a2.get() == 1 );
 
-    CHECK( b1.value() == 2 );
-    CHECK( b2.value() == 3 );
-    CHECK( b3.value() == 1 );
+    CHECK( b1.get() == 2 );
+    CHECK( b2.get() == 3 );
+    CHECK( b3.get() == 1 );
 
-    CHECK( c1.value() == 5 );
-    CHECK( c2.value() == 4 );
+    CHECK( c1.get() == 5 );
+    CHECK( c2.get() == 4 );
 
-    CHECK( result.value() == 9 );
+    CHECK( result.get() == 9 );
 
     a2 <<= 2;
 
     CHECK( observeCount == 2 );
 
-    CHECK( a1.value() == 2 );
-    CHECK( a2.value() == 2 );
+    CHECK( a1.get() == 2 );
+    CHECK( a2.get() == 2 );
 
-    CHECK( b1.value() == 2 );
-    CHECK( b2.value() == 4 );
-    CHECK( b3.value() == 2 );
+    CHECK( b1.get() == 2 );
+    CHECK( b2.get() == 4 );
+    CHECK( b3.get() == 2 );
 
-    CHECK( c1.value() == 6 );
-    CHECK( c2.value() == 6 );
+    CHECK( c1.get() == 6 );
+    CHECK( c2.get() == 6 );
 
-    CHECK( result.value() == 12 );
+    CHECK( result.get() == 12 );
 }
 
 TEST_CASE( "Signals3" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( ctx, 1 );
-    auto a2 = make_var( ctx, 1 );
+    auto a1 = make_value( ctx, 1 );
+    auto a2 = make_value( ctx, 1 );
 
     auto b1 = a1 + 0;
     auto b2 = a1 + a2;
@@ -188,17 +188,17 @@ TEST_CASE( "Signals3" )
         CHECK( v == 12 );
     } );
 
-    CHECK( a1.value() == 1 );
-    CHECK( a2.value() == 1 );
+    CHECK( a1.get() == 1 );
+    CHECK( a2.get() == 1 );
 
-    CHECK( b1.value() == 1 );
-    CHECK( b2.value() == 2 );
-    CHECK( b3.value() == 1 );
+    CHECK( b1.get() == 1 );
+    CHECK( b2.get() == 2 );
+    CHECK( b3.get() == 1 );
 
-    CHECK( c1.value() == 3 );
-    CHECK( c2.value() == 3 );
+    CHECK( c1.get() == 3 );
+    CHECK( c2.get() == 3 );
 
-    CHECK( result.value() == 6 );
+    CHECK( result.get() == 6 );
 
     ctx.do_transaction( [&] {
         a1 <<= 2;
@@ -207,90 +207,90 @@ TEST_CASE( "Signals3" )
 
     CHECK( observeCount == 1 );
 
-    CHECK( a1.value() == 2 );
-    CHECK( a2.value() == 2 );
+    CHECK( a1.get() == 2 );
+    CHECK( a2.get() == 2 );
 
-    CHECK( b1.value() == 2 );
-    CHECK( b2.value() == 4 );
-    CHECK( b3.value() == 2 );
+    CHECK( b1.get() == 2 );
+    CHECK( b2.get() == 4 );
+    CHECK( b3.get() == 2 );
 
-    CHECK( c1.value() == 6 );
-    CHECK( c2.value() == 6 );
+    CHECK( c1.get() == 6 );
+    CHECK( c2.get() == 6 );
 
-    CHECK( result.value() == 12 );
+    CHECK( result.get() == 12 );
 }
 
 TEST_CASE( "Signals4" )
 {
     ureact::context ctx;
 
-    auto a1 = make_var( ctx, 1 );
-    auto a2 = make_var( ctx, 1 );
+    auto a1 = make_value( ctx, 1 );
+    auto a2 = make_value( ctx, 1 );
 
     auto b1 = a1 + a2;
     auto b2 = b1 + a2;
 
-    CHECK( a1.value() == 1 );
-    CHECK( a2.value() == 1 );
+    CHECK( a1.get() == 1 );
+    CHECK( a2.get() == 1 );
 
-    CHECK( b1.value() == 2 );
-    CHECK( b2.value() == 3 );
+    CHECK( b1.get() == 2 );
+    CHECK( b2.get() == 3 );
 
     a1 <<= 10;
 
-    CHECK( a1.value() == 10 );
-    CHECK( a2.value() == 1 );
+    CHECK( a1.get() == 10 );
+    CHECK( a2.get() == 1 );
 
-    CHECK( b1.value() == 11 );
-    CHECK( b2.value() == 12 );
+    CHECK( b1.get() == 11 );
+    CHECK( b2.get() == 12 );
 }
 
 TEST_CASE( "FunctionBind1" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( ctx, 2 );
-    auto v2 = make_var( ctx, 30 );
-    auto v3 = make_var( ctx, 10 );
+    auto v1 = make_value( ctx, 2 );
+    auto v2 = make_value( ctx, 30 );
+    auto v3 = make_value( ctx, 10 );
 
     auto signal = ( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
 
-    CHECK( signal.value() == 600 );
+    CHECK( signal.get() == 600 );
     v3 <<= 100;
-    CHECK( signal.value() == 6000 );
+    CHECK( signal.get() == 6000 );
 }
 
 TEST_CASE( "FunctionBind2" )
 {
     ureact::context ctx;
 
-    auto a = make_var( ctx, 1 );
-    auto b = make_var( ctx, 1 );
+    auto a = make_value( ctx, 1 );
+    auto b = make_value( ctx, 1 );
 
     auto c = ( ( a + b ), ( a + 100 ) ) | &add;
     auto d = c | &halve;
     auto e = ( d, d ) | &multiply;
     auto f = -e + 100.f;
 
-    CHECK( c.value() == 103 );
-    CHECK( d.value() == 51.5f );
-    CHECK( e.value() == 2652.25f );
-    CHECK( f.value() == -2552.25f );
+    CHECK( c.get() == 103 );
+    CHECK( d.get() == 51.5f );
+    CHECK( e.get() == 2652.25f );
+    CHECK( f.get() == -2552.25f );
 
     a <<= 10;
 
-    CHECK( c.value() == 121 );
-    CHECK( d.value() == 60.5f );
-    CHECK( e.value() == 3660.25f );
-    CHECK( f.value() == -3560.25f );
+    CHECK( c.get() == 121 );
+    CHECK( d.get() == 60.5f );
+    CHECK( e.get() == 3660.25f );
+    CHECK( f.get() == -3560.25f );
 }
 
 TEST_CASE( "Compose signals" )
 {
     ureact::context ctx;
 
-    auto a = make_var( ctx, 1 );
-    auto b = make_var( ctx, 1 );
+    auto a = make_value( ctx, 1 );
+    auto b = make_value( ctx, 1 );
     auto inverse_value = []( int i ) { return -i; };
     auto double_value = []( int i ) { return i * 2; };
     auto sum_values = []( int i, int j ) { return i + j; };
@@ -301,24 +301,24 @@ TEST_CASE( "Compose signals" )
     // y = (2 * a + (-1) * b) * 2
     auto y = ( a | double_value, b | inverse_value ) | sum_values | double_value;
 
-    CHECK( x.value() == 1 * 2 * 2 * 2 );
-    CHECK( y.value() == ( 2 * 1 + ( -1 ) * 1 ) * 2 );
+    CHECK( x.get() == 1 * 2 * 2 * 2 );
+    CHECK( y.get() == ( 2 * 1 + ( -1 ) * 1 ) * 2 );
 
     a <<= 7;
     b <<= 5;
 
-    CHECK( x.value() == 7 * 2 * 2 * 2 );
-    CHECK( y.value() == ( 2 * 7 + ( -1 ) * 5 ) * 2 );
+    CHECK( x.get() == 7 * 2 * 2 * 2 );
+    CHECK( y.get() == ( 2 * 7 + ( -1 ) * 5 ) * 2 );
 }
 
 TEST_CASE( "Flatten1" )
 {
     ureact::context ctx;
 
-    auto inner1 = make_var( ctx, 123 );
-    auto inner2 = make_var( ctx, 789 );
+    auto inner1 = make_value( ctx, 123 );
+    auto inner2 = make_value( ctx, 789 );
 
-    auto outer = make_var( ctx, inner1 );
+    auto outer = make_value( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -326,12 +326,12 @@ TEST_CASE( "Flatten1" )
 
     observe( flattened, [&]( int v ) { results.push( v ); } );
 
-    CHECK( outer.value().equals( inner1 ) );
-    CHECK( flattened.value() == 123 );
+    CHECK( outer.get().equals( inner1 ) );
+    CHECK( flattened.get() == 123 );
 
     inner1 <<= 456;
 
-    CHECK( flattened.value() == 456 );
+    CHECK( flattened.get() == 456 );
 
     CHECK( results.front() == 456 );
     results.pop();
@@ -339,8 +339,8 @@ TEST_CASE( "Flatten1" )
 
     outer <<= inner2;
 
-    CHECK( outer.value().equals( inner2 ) );
-    CHECK( flattened.value() == 789 );
+    CHECK( outer.get().equals( inner2 ) );
+    CHECK( flattened.get() == 789 );
 
     CHECK( results.front() == 789 );
     results.pop();
@@ -351,11 +351,11 @@ TEST_CASE( "Flatten2" )
 {
     ureact::context ctx;
 
-    auto a0 = make_var( ctx, 100 );
+    auto a0 = make_value( ctx, 100 );
 
-    auto inner1 = make_var( ctx, 200 );
+    auto inner1 = make_value( ctx, 200 );
 
-    auto a1 = make_var( ctx, 300 );
+    auto a1 = make_value( ctx, 300 );
     auto a2 = a1 + 0;
     auto a3 = a2 + 0;
     auto a4 = a3 + 0;
@@ -363,14 +363,14 @@ TEST_CASE( "Flatten2" )
     auto a6 = a5 + 0;
     auto inner2 = a6 + 0;
 
-    CHECK( inner1.value() == 200 );
-    CHECK( inner2.value() == 300 );
+    CHECK( inner1.get() == 200 );
+    CHECK( inner2.get() == 300 );
 
-    auto outer = make_var( ctx, inner1 );
+    auto outer = make_value( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
-    CHECK( flattened.value() == 200 );
+    CHECK( flattened.get() == 200 );
 
     int observeCount = 0;
 
@@ -381,16 +381,16 @@ TEST_CASE( "Flatten2" )
     auto o3 = o2 + 0;
     auto result = o3 + 0;
 
-    CHECK( result.value() == 100 + 200 );
+    CHECK( result.get() == 100 + 200 );
 
     inner1 <<= 1234;
 
-    CHECK( result.value() == 100 + 1234 );
+    CHECK( result.get() == 100 + 1234 );
     CHECK( observeCount == 1 );
 
     outer <<= inner2;
 
-    CHECK( result.value() == 100 + 300 );
+    CHECK( result.get() == 100 + 300 );
     CHECK( observeCount == 2 );
 
     ctx.do_transaction( [&] {
@@ -398,7 +398,7 @@ TEST_CASE( "Flatten2" )
         a1 <<= 6000;
     } );
 
-    CHECK( result.value() == 5000 + 6000 );
+    CHECK( result.get() == 5000 + 6000 );
     CHECK( observeCount == 3 );
 }
 
@@ -406,16 +406,16 @@ TEST_CASE( "Flatten3" )
 {
     ureact::context ctx;
 
-    auto inner1 = make_var( ctx, 10 );
+    auto inner1 = make_value( ctx, 10 );
 
-    auto a1 = make_var( ctx, 20 );
+    auto a1 = make_value( ctx, 20 );
     auto a2 = a1 + 0;
     auto a3 = a2 + 0;
     auto inner2 = a3 + 0;
 
-    auto outer = make_var( ctx, inner1 );
+    auto outer = make_value( ctx, inner1 );
 
-    auto a0 = make_var( ctx, 30 );
+    auto a0 = make_value( ctx, 30 );
 
     auto flattened = flatten( outer );
 
@@ -425,7 +425,7 @@ TEST_CASE( "Flatten3" )
 
     auto result = flattened + a0;
 
-    CHECK( result.value() == 10 + 30 );
+    CHECK( result.get() == 10 + 30 );
     CHECK( observeCount == 0 );
 
     ctx.do_transaction( [&] {
@@ -435,7 +435,7 @@ TEST_CASE( "Flatten3" )
         outer <<= inner2;
     } );
 
-    CHECK( result.value() == 50000 + 200000 );
+    CHECK( result.get() == 50000 + 200000 );
     CHECK( observeCount == 1 );
 
     ctx.do_transaction( [&] {
@@ -443,7 +443,7 @@ TEST_CASE( "Flatten3" )
         a1 <<= 776;
     } );
 
-    CHECK( result.value() == 776 + 667 );
+    CHECK( result.get() == 776 + 667 );
     CHECK( observeCount == 2 );
 
     ctx.do_transaction( [&] {
@@ -451,7 +451,7 @@ TEST_CASE( "Flatten3" )
         a0 <<= 888;
     } );
 
-    CHECK( result.value() == 776 + 888 );
+    CHECK( result.get() == 776 + 888 );
     CHECK( observeCount == 2 );
 }
 
@@ -461,15 +461,15 @@ TEST_CASE( "Flatten4" )
 
     std::vector<int> results;
 
-    auto a1 = make_var( ctx, 100 );
+    auto a1 = make_value( ctx, 100 );
     auto inner1 = a1 + 0;
 
-    auto a2 = make_var( ctx, 200 );
+    auto a2 = make_value( ctx, 200 );
     auto inner2 = a2;
 
-    auto a3 = make_var( ctx, 200 );
+    auto a3 = make_value( ctx, 200 );
 
-    auto outer = make_var( ctx, inner1 );
+    auto outer = make_value( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -491,10 +491,10 @@ TEST_CASE( "Flatten5" )
 {
     ureact::context ctx;
 
-    auto inner1 = make_var( ctx, 123 );
-    auto inner2 = make_var( ctx, 123 );
+    auto inner1 = make_value( ctx, 123 );
+    auto inner2 = make_value( ctx, 123 );
 
-    auto outer = make_var( ctx, inner1 );
+    auto outer = make_value( ctx, inner1 );
 
     auto flattened = flatten( outer );
 
@@ -502,15 +502,15 @@ TEST_CASE( "Flatten5" )
 
     observe( flattened, [&]( int v ) { results.push( v ); } );
 
-    CHECK( outer.value().equals( inner1 ) );
-    CHECK( flattened.value() == 123 );
+    CHECK( outer.get().equals( inner1 ) );
+    CHECK( flattened.get() == 123 );
 
     CHECK( results.empty() );
 
     outer <<= inner2;
 
-    CHECK( outer.value().equals( inner2 ) );
-    CHECK( flattened.value() == 123 );
+    CHECK( outer.get().equals( inner2 ) );
+    CHECK( flattened.get() == 123 );
 
     // flattened observer shouldn't trigger if value isn't changed
     CHECK( results.empty() );
@@ -520,7 +520,7 @@ TEST_CASE( "Modify1" )
 {
     ureact::context ctx;
 
-    auto v = make_var( ctx, std::vector<int>{} );
+    auto v = make_value( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
@@ -546,7 +546,7 @@ TEST_CASE( "Modify2" )
 {
     ureact::context ctx;
 
-    auto v = make_var( ctx, std::vector<int>{} );
+    auto v = make_value( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
@@ -574,7 +574,7 @@ TEST_CASE( "Modify3" )
 {
     ureact::context ctx;
 
-    auto value = make_var( ctx, std::vector<int>{} );
+    auto value = make_value( ctx, std::vector<int>{} );
 
     int obsCount = 0;
 
@@ -599,7 +599,7 @@ TEST_CASE( "Recursive transactions" )
 {
     ureact::context ctx;
 
-    auto v1 = make_var( ctx, 1 );
+    auto v1 = make_value( ctx, 1 );
 
     int observeCount = 0;
 

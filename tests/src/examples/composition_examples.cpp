@@ -14,35 +14,35 @@ class Company
 {
 public:
     int index;
-    ureact::var_signal<std::string> name;
+    ureact::value<std::string> name;
 
     Company( ureact::context& ctx, const int index, const char* name )
         : index( index )
-        , name( make_var( ctx, std::string( name ) ) )
+        , name( make_value( ctx, std::string( name ) ) )
     {}
 
     friend bool operator==( const Company& lhs, const Company& rhs )
     {
         // clang-format off
-            return std::tie( lhs.index, lhs.name.value() )
-                == std::tie( rhs.index, rhs.name.value() );
+            return std::tie( lhs.index, lhs.name.get() )
+                == std::tie( rhs.index, rhs.name.get() );
         // clang-format on
     }
 };
 
 std::ostream& operator<<( std::ostream& os, const Company& company )
 {
-    os << "Company{ index: " << company.index << ", name: \"" << company.name.value() << "\" }";
+    os << "Company{ index: " << company.index << ", name: \"" << company.name.get() << "\" }";
     return os;
 }
 
 class Employee
 {
 public:
-    ureact::var_signal<Company&> company;
+    ureact::value<Company&> company;
 
     Employee( ureact::context& ctx, Company& company )
-        : company( make_var( ctx, std::ref( company ) ) )
+        : company( make_value( ctx, std::ref( company ) ) )
     {}
 };
 
@@ -58,22 +58,22 @@ TEST_SUITE( "Examples" )
         {
         public:
             explicit Shape( ureact::context& ctx )
-                : width( make_var( ctx, 0 ) )
-                , height( make_var( ctx, 0 ) )
+                : width( make_value( ctx, 0 ) )
+                , height( make_value( ctx, 0 ) )
                 , size( width * height )
             {}
 
-            ureact::var_signal<int> width;
-            ureact::var_signal<int> height;
+            ureact::value<int> width;
+            ureact::value<int> height;
 
             ureact::signal<int> size;
         };
 
         Shape my_shape( ctx );
 
-        CHECK( my_shape.width.value() == 0 );
-        CHECK( my_shape.height.value() == 0 );
-        CHECK( my_shape.size.value() == 0 );
+        CHECK( my_shape.width.get() == 0 );
+        CHECK( my_shape.height.get() == 0 );
+        CHECK( my_shape.size.get() == 0 );
 
         std::vector<int> size_values;
 
@@ -92,9 +92,9 @@ TEST_SUITE( "Examples" )
 
         CHECK( size_values == std::vector<int>{ 16 } );
 
-        CHECK( my_shape.width.value() == 4 );
-        CHECK( my_shape.height.value() == 4 );
-        CHECK( my_shape.size.value() == 16 );
+        CHECK( my_shape.width.get() == 4 );
+        CHECK( my_shape.height.get() == 4 );
+        CHECK( my_shape.size.get() == 16 );
     }
 
     TEST_CASE( "Signals of references" )
@@ -106,18 +106,18 @@ TEST_SUITE( "Examples" )
 
         Employee Bob( ctx, company1 );
 
-        CHECK( Bob.company.value().get() == Company( ctx, 1, "MetroTec" ) );
+        CHECK( Bob.company.get().get() == Company( ctx, 1, "MetroTec" ) );
 
         std::vector<std::string> bob_company_names;
 
         observe( Bob.company, [&]( const Company& company ) {
-            bob_company_names.emplace_back( company.name.value() );
+            bob_company_names.emplace_back( company.name.get() );
         } );
 
         // Changing ref of Bob's company to company2
         Bob.company <<= company2;
 
-        CHECK( Bob.company.value().get() == Company( ctx, 2, "ACME" ) );
+        CHECK( Bob.company.get().get() == Company( ctx, 2, "ACME" ) );
 
         CHECK( bob_company_names == std::vector<std::string>{ "ACME" } );
     }
@@ -131,7 +131,7 @@ TEST_SUITE( "Examples" )
 
         Employee Alice( ctx, company1 );
 
-        CHECK( Alice.company.value() == Company( ctx, 1, "MetroTec" ) );
+        CHECK( Alice.company.get() == Company( ctx, 1, "MetroTec" ) );
 
         std::vector<std::string> alice_company_names;
 

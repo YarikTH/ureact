@@ -36,7 +36,7 @@ std::string makeExpressionsString( const ExprVectT& expressions )
 }
 
 ureact::function<ExprVectT> createExpressionSignal(
-    const ureact::function<int>& a, const ureact::function<int>& b )
+    const ureact::signal<int>& a, const ureact::signal<int>& b )
 {
     // Inside a function, we can use auto
     const auto sumExpr = make_function(

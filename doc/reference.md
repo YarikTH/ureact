@@ -149,13 +149,6 @@ auto operator|( const signal_t<value_t>& arg, F&& func ) -> detail::temp_signal<
 auto operator|( const signal_pack<values_t...>& arg_pack, F&& func ) -> detail::temp_signal<S, op_t>;
 ```
 
-Deprecated operator overload to construct signals
-
-```cpp
-auto operator->*( const signal_t<value_t>& arg, F&& func ) -> detail::temp_signal<S, op_t>;
-auto operator->*( const signal_pack<values_t...>& arg_pack, F&& func ) -> detail::temp_signal<S, op_t>;
-```
-
 Unary operator overloads to create signals from expressions
 
 ```cpp

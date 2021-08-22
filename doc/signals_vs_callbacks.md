@@ -200,8 +200,8 @@ public:
         , size( width * height )
     {}
 
-    ureact::value<int>  width;
-    ureact::value<int>  height;
+    ureact::value<int>    width;
+    ureact::value<int>    height;
     ureact::function<int> size;
 };
 ```
@@ -220,7 +220,7 @@ myShape.width.set( 20 );
 myShape.height.set( 20 );
 
 // Get size
-const auto curSize = myShape.size.get();
+const auto curSize = myShape.size();
 ```
 
 Every reactive value automatically supports registration of callbacks (they are called observers):

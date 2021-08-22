@@ -617,4 +617,13 @@ TEST_CASE( "Recursive transactions" )
     CHECK( observeCount == 1 );
 }
 
+TEST_CASE( "Functional get" )
+{
+    ureact::context ctx;
+
+    auto v1 = make_value( ctx, 1 );
+    
+    CHECK( v1() == 1 );
+}
+
 TEST_SUITE_END();

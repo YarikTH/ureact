@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   support:
-    if: false
+    if: true
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false

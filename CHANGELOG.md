@@ -1,17 +1,39 @@
 # Changelog
+All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
+
+## [0.4.0](https://github.com/YarikTH/ureact/releases/tag/0.4.0) (2021-08-22)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.3.0...0.4.0)
+
+- Add value\_base and signal [\#88](https://github.com/YarikTH/ureact/pull/88) ([YarikTH](https://github.com/YarikTH))
+- Add operator version of function::get\(\) [\#87](https://github.com/YarikTH/ureact/pull/87) ([YarikTH](https://github.com/YarikTH))
+- Rename signal to function [\#86](https://github.com/YarikTH/ureact/pull/86) ([YarikTH](https://github.com/YarikTH))
+- Rename var\_signal to value [\#85](https://github.com/YarikTH/ureact/pull/85) ([YarikTH](https://github.com/YarikTH))
+- Remove deprecated operator -\>\* [\#84](https://github.com/YarikTH/ureact/pull/84) ([YarikTH](https://github.com/YarikTH))
 
 ## [0.3.0](https://github.com/YarikTH/ureact/releases/tag/0.3.0) (2021-08-15)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.2.0...0.3.0)
 
+- Use gitlab-changelog-generator [\#43](https://github.com/YarikTH/ureact/issues/43)
 - Convert operator| to return detail::temp\_signal\<S, op\_t\> [\#81](https://github.com/YarikTH/ureact/issues/81)
 - Remove returned value from `var_signal::operator<<=` [\#79](https://github.com/YarikTH/ureact/issues/79)
 - Remove `signal<S>::flatten()` method [\#77](https://github.com/YarikTH/ureact/issues/77)
 - Replace operator-\>\* with operator| to make signals [\#74](https://github.com/YarikTH/ureact/issues/74)
 - Remove bitwise operators overloads for signals [\#72](https://github.com/YarikTH/ureact/issues/72)
 - Add -stdlib=libc++ configuration for clang builds [\#50](https://github.com/YarikTH/ureact/issues/50)
-- Use gitlab-changelog-generator [\#43](https://github.com/YarikTH/ureact/issues/43)
 - Use sanitizers build [\#42](https://github.com/YarikTH/ureact/issues/42)
+- Convert operator| to return detail::temp\_signal\<S, op\_t\> [\#82](https://github.com/YarikTH/ureact/pull/82) ([YarikTH](https://github.com/YarikTH))
+- Remove returned value from var\_signal::operator\<\<= [\#80](https://github.com/YarikTH/ureact/pull/80) ([YarikTH](https://github.com/YarikTH))
+- Remove signal\<S\>::flatten\(\) method [\#78](https://github.com/YarikTH/ureact/pull/78) ([YarikTH](https://github.com/YarikTH))
+- Replace operator-\>\* with operator| to make signals [\#75](https://github.com/YarikTH/ureact/pull/75) ([YarikTH](https://github.com/YarikTH))
+- CI: add sanitizers and valgrind-memcheck build configs [\#70](https://github.com/YarikTH/ureact/pull/70) ([alexezeder](https://github.com/alexezeder))
+- \#50 -stdlib=libc++ configuration is added for clang builds [\#69](https://github.com/YarikTH/ureact/pull/69) ([YarikTH](https://github.com/YarikTH))
+
+- Add a code reference [\#56](https://github.com/YarikTH/ureact/issues/56)
+
+- Remove bitwise operators overloads for signals [\#73](https://github.com/YarikTH/ureact/pull/73) ([YarikTH](https://github.com/YarikTH))
+- Add code reference into documentation [\#76](https://github.com/YarikTH/ureact/pull/76) ([YarikTH](https://github.com/YarikTH))
 
 ## [0.2.0](https://github.com/YarikTH/ureact/releases/tag/0.2.0) (2021-06-26)
 

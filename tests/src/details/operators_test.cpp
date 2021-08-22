@@ -33,7 +33,7 @@ enum class binary_operator_type
         typename ret_t = decltype( std::declval<left_t>() OPERATOR std::declval<right_t>() )>      \
     auto make_binary_operator_signal_##NAME(                                                       \
         ureact::context& ctx, binary_operator_type type, const left_t& lhs, const right_t& rhs )   \
-        ->ureact::function<ret_t>                                                                    \
+        ->ureact::function<ret_t>                                                                  \
     {                                                                                              \
         switch( type )                                                                             \
         {                                                                                          \
@@ -82,12 +82,12 @@ BINARY_OPERATOR( +, addition )
         }                                                                                          \
                                                                                                    \
         template <typename left_t, typename right_t>                                               \
-        static auto make_function( ureact::context& ctx,                                             \
+        static auto make_function( ureact::context& ctx,                                           \
             const binary_operator_type type,                                                       \
             const left_t& lhs,                                                                     \
             const right_t& rhs )                                                                   \
-            -> ureact::function<typename decltype( std::declval<ureact::function<left_t>>()            \
-                    OPERATOR std::declval<ureact::function<right_t>>() )::value_t>                   \
+            -> ureact::function<typename decltype( std::declval<ureact::function<left_t>>()        \
+                    OPERATOR std::declval<ureact::function<right_t>>() )::value_t>                 \
         {                                                                                          \
             switch( type )                                                                         \
             {                                                                                      \

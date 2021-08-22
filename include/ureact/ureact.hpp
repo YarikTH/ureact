@@ -1757,10 +1757,12 @@ template <typename V,
     typename S = typename std::decay<V>::type,
     typename inner_t = typename S::value_t,
     class = typename std::enable_if<is_signal<S>::value>::type>
-UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<function<inner_t>>
+UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v )
+    -> value<function<inner_t>>
 {
-    return value<function<inner_t>>( std::make_shared<::ureact::detail::value_node<function<inner_t>>>(
-        context, std::forward<V>( v ) ) );
+    return value<function<inner_t>>(
+        std::make_shared<::ureact::detail::value_node<function<inner_t>>>(
+            context, std::forward<V>( v ) ) );
 }
 
 
@@ -2043,8 +2045,8 @@ template <template <typename, typename> class functor_op,
     typename F = bind_right<functor_op, left_val_t, right_val_t>,
     typename S = typename std::result_of<F( left_val_t )>::type,
     typename op_t = detail::function_op<S, F, left_op_t>>
-auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )
-    -> detail::temp_function<S, op_t>
+auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
+    right_val_in_t&& rhs ) -> detail::temp_function<S, op_t>
 {
     context& context = lhs.get_context();
 
@@ -2061,8 +2063,8 @@ template <template <typename, typename> class functor_op,
     typename F = bind_left<functor_op, left_val_t, right_val_t>,
     typename S = typename std::result_of<F( right_val_t )>::type,
     typename op_t = detail::function_op<S, F, right_op_t>>
-auto binary_operator_impl( left_val_in_t&& lhs, detail::temp_function<right_val_t, right_op_t>&& rhs )
-    -> detail::temp_function<S, op_t>
+auto binary_operator_impl( left_val_in_t&& lhs,
+    detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
 {
     context& context = rhs.get_context();
 
@@ -2246,8 +2248,8 @@ template <typename... values_t,
     typename S = typename std::result_of<F( values_t... )>::type,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
-UREACT_WARN_UNUSED_RESULT auto make_function( const signal_pack<values_t...>& arg_pack, in_f&& func )
-    -> detail::temp_function<S, op_t>
+UREACT_WARN_UNUSED_RESULT auto make_function(
+    const signal_pack<values_t...>& arg_pack, in_f&& func ) -> detail::temp_function<S, op_t>
 {
     struct node_builder
     {
@@ -2338,7 +2340,7 @@ auto observe( const function<S>& subject, in_f&& func ) -> observer
 
 
 #define UREACT_REACTIVE_REF( obj, name )                                                           \
-    flatten( make_function( obj,                                                                     \
+    flatten( make_function( obj,                                                                   \
         []( const typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t& r ) {  \
             using T = decltype( r.name );                                                          \
             using S = typename ::ureact::detail::decay_input<T>::type;                             \
@@ -2346,7 +2348,7 @@ auto observe( const function<S>& subject, in_f&& func ) -> observer
         } ) )
 
 #define UREACT_REACTIVE_PTR( obj, name )                                                           \
-    flatten( make_function(                                                                          \
+    flatten( make_function(                                                                        \
         obj, []( typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t r ) {    \
             assert( r != nullptr );                                                                \
             using T = decltype( r->name );                                                         \

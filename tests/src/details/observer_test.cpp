@@ -91,11 +91,11 @@ TEST_CASE( "NoObserveOnNoChanged" )
 
     auto product = a * b;
 
-    auto expressionString
-        = make_function( with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
-              return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
-                   + std::to_string( product_ );
-          } );
+    auto expressionString = make_function(
+        with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
+            return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
+                 + std::to_string( product_ );
+        } );
 
     int aObserveCount = 0;
     int bObserveCount = 0;

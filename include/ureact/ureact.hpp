@@ -1500,6 +1500,12 @@ public:
     {
         return function::get_value();
     }
+
+    /// Return value of linked node
+    UREACT_WARN_UNUSED_RESULT const S& operator()() const
+    {
+        return function::get_value();
+    }
 };
 
 

@@ -8,7 +8,6 @@ Descriptions of concrete classes are not the subject of this reference.
 * TODO: remove inheritance from `function<S>`, replace with inheritance from `signal_base<S>` or something 
 * TODO: modify method for `value<S&>`?
 * TODO: operator version of `value::modify()`?
-* TODO: functional version of `value::get()`?
 
 ### Creation
 
@@ -35,6 +34,13 @@ Get value method (inherited from the function)
 ```cpp
 const S& value<S>::get() const;
 const S& value<S&>::get() const;
+```
+
+Get value operator (inherited from the function)
+
+```cpp
+const S& value<S>::operator()() const;
+const S& value<S&>::operator()() const;
 ```
 
 ### Modification
@@ -126,8 +132,6 @@ Both versions are functionally equivalent
 
 ## `function` related
 
-* TODO: functional version of `function::get()`?
-
 ### Creation
 
 Note: all creation functions return `detail::temp_function<S, op_t>` which inherited from
@@ -182,6 +186,13 @@ Get value method
 ```cpp
 const S& function<S>::get() const;
 const S& function<S&>::get() const;
+```
+
+Get value operator
+
+```cpp
+const S& function<S>::operator()() const;
+const S& function<S&>::operator()() const;
 ```
 
 ### Other

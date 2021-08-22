@@ -42,7 +42,7 @@
 
 ## Examples
 
-**Basic usage** ([run](https://godbolt.org/z/WEbKWojz5))
+**Basic usage** ([run](https://godbolt.org/z/8z1T53df3))
 
 ```cpp
 ureact::context ctx;
@@ -55,14 +55,14 @@ ureact::value<int> c = ctx.make_value(2);
 // Its value will be updated each time its dependencies are changed
 ureact::function<int> a = b + c;
 
-std::cout << "a (init): " << a.value() << "\n"; // 3
+std::cout << "a (init): " << a.get() << "\n"; // 3
 
 // Assign a new value to 'b'. Value of 'a' is recalculated automatically
 b <<= 10;
-std::cout << "a  (new): " << a.value() << "\n"; // 12
+std::cout << "a  (new): " << a.get() << "\n"; // 12
 ```
 
-**Complex signals** ([run](https://godbolt.org/z/sh36WaYbh))
+**Complex signals** ([run](https://godbolt.org/z/EbxxrEMEb))
 
 ```cpp
 ureact::context ctx;
@@ -81,16 +81,16 @@ ureact::function<std::string> expression = with(base, exp, result) |
             + " == " + std::to_string(result);
     };
 
-std::cout << expression.value() << "\n"; // 1^3 == 1
+std::cout << expression.get() << "\n"; // 1^3 == 1
 
 base <<= 2;
-std::cout << expression.value() << "\n"; // 2^3 == 8
+std::cout << expression.get() << "\n"; // 2^3 == 8
 
 exp <<= 0;
-std::cout << expression.value() << "\n"; // 2^0 == 1
+std::cout << expression.get() << "\n"; // 2^0 == 1
 ```
 
-**Observers** ([run](https://godbolt.org/z/f5e3Te9Gj))
+**Observers** ([run](https://godbolt.org/z/E69Y794zb))
 
 ```cpp
 ureact::context ctx;
@@ -126,7 +126,7 @@ a <<= -3
   a -> -3
 ```
 
-**Transaction** ([run](https://godbolt.org/z/1T8fG69r8))
+**Transaction** ([run](https://godbolt.org/z/z3znh6M9h))
 
 ```cpp
 ureact::context ctx;

@@ -176,8 +176,6 @@ auto operator&&( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_function<S
 auto operator||( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_function<S, op_t> );
 ```
 
-Note: bitwise operator overloads were removed in 0.3.0 without deprecation. List of removed overloads: `~`, `&`, `|`, `^`, `<<`, `>>`.
-
 ### Reading
 
 Get value method

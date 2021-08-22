@@ -14,7 +14,7 @@ TEST_SUITE( "Examples" )
     {
         ureact::context ctx;
 
-        auto x = make_var( ctx, 0 );
+        auto x = make_value( ctx, 0 );
 
         auto identity = []( const int value ) { return value; };
 

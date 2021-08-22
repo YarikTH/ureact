@@ -11,10 +11,10 @@ int main()
 {
     ureact::context ctx;
 
-    ureact::var_signal<int> b = ctx.make_var( 1 );
-    ureact::var_signal<int> c = ctx.make_var( 2 );
+    ureact::value<int> b = ctx.make_value( 1 );
+    ureact::value<int> c = ctx.make_value( 2 );
     ureact::signal<int> a = b + c;
     b <<= 10;
 
-    return ( a.value() == 12 ) ? 0 : 1;
+    return ( a.get() == 12 ) ? 0 : 1;
 }

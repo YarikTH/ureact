@@ -40,6 +40,8 @@
 // The ureact library version in the form major * 10000 + minor * 100 + patch.
 #define UREACT_VERSION 00400
 
+static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
+
 #ifdef __clang__
 #    define UREACT_CLANG_VERSION ( __clang_major__ * 100 + __clang_minor__ )
 #else

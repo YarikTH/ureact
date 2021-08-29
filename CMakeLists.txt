@@ -83,7 +83,7 @@ target_include_directories(
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 
 ################################################################################
 ## TESTS/EXAMPLES/HELPERS

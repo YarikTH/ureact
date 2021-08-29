@@ -2233,26 +2233,14 @@ template <typename... values_t,
 UREACT_WARN_UNUSED_RESULT auto make_function(
     const signal_pack<values_t...>& arg_pack, in_f&& func )
 {
-    struct node_builder
-    {
-        explicit node_builder( context& context, in_f&& func )
-            : m_context( context )
-            , m_func( std::forward<in_f>( func ) )
-        {}
+    context& context = std::get<0>( arg_pack.data ).get_context();
 
-        auto operator()( const signal<values_t>&... args )
-        {
-            return detail::make_temp_signal<S, op_t>(
-                m_context, std::forward<in_f>( m_func ), get_node_ptr( args )... );
-        }
-
-        context& m_context;
-        in_f m_func;
+    auto node_builder = [&context, &func]( const signal<values_t>&... args ) {
+        return detail::make_temp_signal<S, op_t>(
+            context, std::forward<in_f>( func ), get_node_ptr( args )... );
     };
 
-    return std::apply(
-        node_builder( std::get<0>( arg_pack.data ).get_context(), std::forward<in_f>( func ) ),
-        arg_pack.data );
+    return std::apply( node_builder, arg_pack.data );
 }
 
 

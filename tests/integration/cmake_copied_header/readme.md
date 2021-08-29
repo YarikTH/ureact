@@ -4,7 +4,7 @@ This example contains a "copy" of the `ureact.hpp` header.
 
 To use it properly we define a CMake interface target `ureact::ureact`.
 The target points to its include directory and tells that library or executable
-that want to use it should be compiled with at least c++11 standard.
+that want to use it should be compiled with at least c++17 standard.
 
 Then we can link our target to any target that wants to use **µReact** and that's all.
 

@@ -9,7 +9,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/7ad08869b5a948bb917deda4ae004064)](https://www.codacy.com/gh/YarikTH/ureact/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=YarikTH/ureact&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/YarikTH/ureact.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/YarikTH/ureact/context:cpp)
 
-[![Standard](https://img.shields.io/badge/c%2B%2B-11/14/17/20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
+[![Standard](https://img.shields.io/badge/c%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![Type](https://img.shields.io/badge/type-single--header-blue.svg)](.)
 [![GitHub license](https://img.shields.io/github/license/YarikTH/ureact?color=blue)](https://raw.githubusercontent.com/YarikTH/ureact/main/LICENSE_1_0.txt)
 [![download](https://img.shields.io/badge/download%20%20-link-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/master/include/ureact/ureact.hpp)
@@ -18,7 +18,7 @@
 [![GitHub Issues](https://img.shields.io/github/issues/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.)
 
-**µReact** is an open-source minimalistic single-header [reactive programming](https://en.wikipedia.org/wiki/Reactive_programming) library for C++11.
+**µReact** is an open-source minimalistic single-header [reactive programming](https://en.wikipedia.org/wiki/Reactive_programming) library for C++17.
 
 ❗️ **This library is a work-in-progress. It should not be considered release quality yet and its API might still change.** \
 **However, it works perfectly fine and can be already used with small future changes in mind.** \

@@ -82,7 +82,12 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 #define UREACT_HAS_CPP17_ATTRIBUTE( attribute )                                                    \
     ( __cplusplus >= 201703L && UREACT_HAS_CPP_ATTRIBUTE( attribute ) )
 
-#if( UREACT_HAS_CPP17_ATTRIBUTE( nodiscard ) >= 201907L )
+#if( UREACT_MSC_VER )
+// MSC erroneously warns about discarding return value when it is not discarded.
+// It seems that it doesn't understand that comma operator can be overloaded.
+#    define UREACT_WARN_UNUSED_RESULT
+#    define UREACT_WARN_UNUSED_RESULT_MSG( msg )
+#elif( UREACT_HAS_CPP17_ATTRIBUTE( nodiscard ) >= 201907L )
 #    define UREACT_WARN_UNUSED_RESULT [[nodiscard]]
 #    define UREACT_WARN_UNUSED_RESULT_MSG( msg ) [[nodiscard( msg )]]
 #elif UREACT_HAS_CPP17_ATTRIBUTE( nodiscard )

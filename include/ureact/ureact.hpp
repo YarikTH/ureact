@@ -19,6 +19,14 @@
 #ifndef UREACT_UREACT_H_
 #define UREACT_UREACT_H_
 
+#define UREACT_VERSION_MAJOR 0
+#define UREACT_VERSION_MINOR 4
+#define UREACT_VERSION_PATCH 0
+#define UREACT_VERSION_STR "0.4.0"
+
+#define UREACT_VERSION                                                                             \
+    ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
+
 #include <cassert>
 #include <limits>
 #include <memory>
@@ -36,9 +44,6 @@
 // Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
 // and on https://github.com/nemequ/hedley
 //==================================================================================================
-
-// The ureact library version in the form major * 10000 + minor * 100 + patch.
-#define UREACT_VERSION 00400
 
 static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 

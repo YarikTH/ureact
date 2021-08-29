@@ -2274,15 +2274,11 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& out
 }
 
 
-/// When the signal value S of subject changes, func(s) is called.
-/// The signature of func should be equivalent to:
-/// TRet func(const S&)
-/// TRet can be either observer_action or void.
-/// By returning observer_action::stop_and_detach, the observer function can request
-/// its own detachment. Returning observer_action::next keeps the observer attached.
-/// Using a void return type is the same as always returning observer_action::next.
+namespace detail
+{
+
 template <typename in_f, typename S>
-auto observe( const signal<S>& subject, in_f&& func ) -> observer
+auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
 {
     using ::ureact::detail::observer_interface;
     using observer_node = ::ureact::detail::observer_node;
@@ -2308,6 +2304,30 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
     subject_ptr->register_observer( std::move( node_ptr ) );
 
     return observer( raw_node_ptr, subject_ptr );
+}
+
+}
+
+
+/// When the signal value S of subject changes, func(s) is called.
+/// The signature of func should be equivalent to:
+/// TRet func(const S&)
+/// TRet can be either observer_action or void.
+/// By returning observer_action::stop_and_detach, the observer function can request
+/// its own detachment. Returning observer_action::next keeps the observer attached.
+/// Using a void return type is the same as always returning observer_action::next.
+template <typename in_f, typename S>
+auto observe( const signal<S>& subject, in_f&& func ) -> observer
+{
+    return ::ureact::detail::observe_impl( subject, std::forward<in_f>( func ) );
+}
+
+/// observe overload for temporary subject.
+/// Caller must use result, otherwise observation isn't performed, that is not expected.
+template <typename in_f, typename S>
+UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, in_f&& func ) -> observer
+{
+    return ::ureact::detail::observe_impl( subject, std::forward<in_f>( func ) );
 }
 
 

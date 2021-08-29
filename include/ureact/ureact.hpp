@@ -1757,7 +1757,7 @@ UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v )
 
 
 template <typename S, typename op_t, typename... Args>
-UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... args )
+UREACT_WARN_UNUSED_RESULT auto make_temp_function( context& context, Args&&... args )
 {
     return temp_function<S, op_t>(
         std::make_shared<signal_op_node<S, op_t>>( context, std::forward<Args>( args )... ) );
@@ -1900,7 +1900,7 @@ template <template <typename> class functor_op,
     typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
 auto unary_operator_impl( const signal_t& arg )
 {
-    return make_temp_signal<S, op_t>( arg.get_context(), F(), get_node_ptr( arg ) );
+    return make_temp_function<S, op_t>( arg.get_context(), F(), get_node_ptr( arg ) );
 }
 
 template <template <typename> class functor_op,
@@ -1911,7 +1911,7 @@ template <template <typename> class functor_op,
     typename op_t = function_op<S, F, op_in_t>>
 auto unary_operator_impl( temp_function<val_t, op_in_t>&& arg )
 {
-    return make_temp_signal<S, op_t>( arg.get_context(), F(), arg.steal_op() );
+    return make_temp_function<S, op_t>( arg.get_context(), F(), arg.steal_op() );
 }
 
 template <template <typename, typename> class functor_op,
@@ -1932,7 +1932,7 @@ auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return make_temp_signal<S, op_t>( context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) );
+    return make_temp_function<S, op_t>( context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) );
 }
 
 template <template <typename, typename> class functor_op,
@@ -1949,7 +1949,7 @@ auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
 {
     context& context = lhs.get_context();
 
-    return make_temp_signal<S, op_t>(
+    return make_temp_function<S, op_t>(
         context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) );
 }
 
@@ -1967,7 +1967,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
 {
     context& context = rhs.get_context();
 
-    return make_temp_signal<S, op_t>(
+    return make_temp_function<S, op_t>(
         context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) );
 }
 
@@ -1985,7 +1985,7 @@ auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return make_temp_signal<S, op_t>( context, F(), lhs.steal_op(), rhs.steal_op() );
+    return make_temp_function<S, op_t>( context, F(), lhs.steal_op(), rhs.steal_op() );
 }
 
 template <template <typename, typename> class functor_op,
@@ -2002,7 +2002,7 @@ auto binary_operator_impl(
 {
     context& context = rhs.get_context();
 
-    return make_temp_signal<S, op_t>( context, F(), lhs.steal_op(), get_node_ptr( rhs ) );
+    return make_temp_function<S, op_t>( context, F(), lhs.steal_op(), get_node_ptr( rhs ) );
 }
 
 template <template <typename, typename> class functor_op,
@@ -2019,7 +2019,7 @@ auto binary_operator_impl(
 {
     context& context = lhs.get_context();
 
-    return make_temp_signal<S, op_t>( context, F(), get_node_ptr( lhs ), rhs.steal_op() );
+    return make_temp_function<S, op_t>( context, F(), get_node_ptr( lhs ), rhs.steal_op() );
 }
 
 template <template <typename, typename> class functor_op,
@@ -2036,7 +2036,7 @@ auto binary_operator_impl(
 {
     context& context = lhs.get_context();
 
-    return make_temp_signal<S, op_t>(
+    return make_temp_function<S, op_t>(
         context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() );
 }
 
@@ -2054,7 +2054,7 @@ auto binary_operator_impl(
 {
     context& context = rhs.get_context();
 
-    return make_temp_signal<S, op_t>(
+    return make_temp_function<S, op_t>(
         context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() );
 }
 
@@ -2219,7 +2219,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function( const signal<value_t>& arg, in_f&&
 {
     context& context = arg.get_context();
 
-    return detail::make_temp_signal<S, op_t>(
+    return detail::make_temp_function<S, op_t>(
         context, std::forward<in_f>( func ), get_node_ptr( arg ) );
 }
 
@@ -2236,7 +2236,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function(
     context& context = std::get<0>( arg_pack.data ).get_context();
 
     auto node_builder = [&context, &func]( const signal<values_t>&... args ) {
-        return detail::make_temp_signal<S, op_t>(
+        return detail::make_temp_function<S, op_t>(
             context, std::forward<in_f>( func ), get_node_ptr( args )... );
     };
 

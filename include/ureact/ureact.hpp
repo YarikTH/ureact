@@ -2280,10 +2280,8 @@ namespace detail
 template <typename in_f, typename S>
 auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
 {
-    using ::ureact::detail::observer_interface;
-    using observer_node = ::ureact::detail::observer_node;
-    using ::ureact::detail::add_default_return_value_wrapper;
-    using ::ureact::detail::signal_observer_node;
+    static_assert( std::is_invocable_v<in_f, S>,
+        "Passed functor should be callable with S. See documentation for ureact::observe()" );
 
     using F = std::decay_t<in_f>;
     using R = std::invoke_result_t<in_f, S>;

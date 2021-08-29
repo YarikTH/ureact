@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.0](https://github.com/YarikTH/ureact/releases/tag/0.5.0) (2021-08-29)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.4.0...0.5.0)
+
+The main change is the dropping of c++11 and c++14 support. Now library is c++17
+
+- Make observe method nodiscard, but for rvalue only [\#93](https://github.com/YarikTH/ureact/issues/93)
+- Change version number form [\#92](https://github.com/YarikTH/ureact/issues/92)
+- Raise c++ standard to c++17 [\#90](https://github.com/YarikTH/ureact/issues/90)
+
 ## [0.4.0](https://github.com/YarikTH/ureact/releases/tag/0.4.0) (2021-08-22)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.3.0...0.4.0)

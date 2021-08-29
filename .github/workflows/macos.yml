@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         build_type: [Release]
-        std: [11, 17]
+        std: [17]
 
     steps:
       - uses: actions/checkout@v2

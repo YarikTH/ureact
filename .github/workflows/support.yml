@@ -11,7 +11,7 @@ jobs:
       matrix:
         cxx: [g++-10]
         build_type: [Release]
-        std: [11]
+        std: [17]
         cmake_version: [3.8.0, 3.11.0]
     # CMake 3.8 version is minimal that should work
     # CMake 3.11 is the first version in which FetchContent is supported

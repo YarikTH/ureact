@@ -21,7 +21,7 @@ SED:=$(shell command -v gsed || which sed)
 CMAKE_FILES_TO_FORMAT=$(shell find . -type f -name CMakeLists.txt -o -name '*.cmake' | grep -v './cmake-build' | grep -v 'integration_main.cmake' | sort)
 
 INCLUDE_FILES_TO_FORMAT=$(shell find ./include -type f -name '*.hpp' | sort)
-TEST_FILES_TO_FORMAT=$(shell find ./tests -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | grep -v 'thirdparty' | sort)
+TEST_FILES_TO_FORMAT=$(shell find ./tests -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | grep -v 'thirdparty' | grep -v 'integration' | sort)
 CPP_FILES_TO_FORMAT=${INCLUDE_FILES_TO_FORMAT} ${TEST_FILES_TO_FORMAT}
 
 FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT} ${CPP_FILES_TO_FORMAT}

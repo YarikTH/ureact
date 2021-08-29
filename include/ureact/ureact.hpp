@@ -295,55 +295,6 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 
 #endif
 
-
-#if( defined( __cplusplus ) && __cplusplus >= 201703L )                                            \
-    || ( defined( _HAS_CXX17 ) && _HAS_CXX17 == 1 )
-using std::apply;
-#else
-
-// Code based on code at
-/// http://stackoverflow.com/questions/687490/how-do-i-expand-a-tuple-into-variadic-template-functions-arguments
-
-template <size_t N>
-struct apply_helper
-{
-    template <typename F, typename T, typename... A>
-    static inline auto apply( F&& f, T&& t, A&&... a )
-        -> decltype( apply_helper<N - 1>::apply( std::forward<F>( f ),
-            std::forward<T>( t ),
-            std::get<N - 1>( std::forward<T>( t ) ),
-            std::forward<A>( a )... ) )
-    {
-        return apply_helper<N - 1>::apply( std::forward<F>( f ),
-            std::forward<T>( t ),
-            std::get<N - 1>( std::forward<T>( t ) ),
-            std::forward<A>( a )... );
-    }
-};
-
-template <>
-struct apply_helper<0>
-{
-    template <typename F, typename T, typename... A>
-    static inline auto apply( F&& f, T&& /*unused*/, A&&... a )
-        -> decltype( std::forward<F>( f )( std::forward<A>( a )... ) )
-    {
-        return std::forward<F>( f )( std::forward<A>( a )... );
-    }
-};
-
-template <typename F, typename T>
-inline auto apply( F&& f, T&& t )
-    -> decltype( apply_helper<std::tuple_size<typename std::decay<T>::type>::value>::apply(
-        std::forward<F>( f ), std::forward<T>( t ) ) )
-{
-    return apply_helper<std::tuple_size<typename std::decay<T>::type>::value>::apply(
-        std::forward<F>( f ), std::forward<T>( t ) );
-}
-
-#endif
-
-
 template <typename T1, typename T2>
 using is_same_decay = std::is_same<typename std::decay<T1>::type, typename std::decay<T2>::type>;
 
@@ -1082,32 +1033,32 @@ public:
 
     UREACT_WARN_UNUSED_RESULT S evaluate()
     {
-        return apply( eval_functor( m_func ), m_deps );
+        return std::apply( eval_functor( m_func ), m_deps );
     }
 
     template <typename node_t>
     void attach( node_t& node ) const
     {
-        apply( attach_functor<node_t>{ node }, m_deps );
+        std::apply( attach_functor<node_t>{ node }, m_deps );
     }
 
     template <typename node_t>
     void detach( node_t& node ) const
     {
-        apply( detach_functor<node_t>{ node }, m_deps );
+        std::apply( detach_functor<node_t>{ node }, m_deps );
     }
 
     template <typename node_t, typename functor_t>
     void attach_rec( const functor_t& functor ) const
     {
         // Same memory layout, different func
-        apply( reinterpret_cast<const attach_functor<node_t>&>( functor ), m_deps );
+        std::apply( reinterpret_cast<const attach_functor<node_t>&>( functor ), m_deps );
     }
 
     template <typename node_t, typename functor_t>
     void detach_rec( const functor_t& functor ) const
     {
-        apply( reinterpret_cast<const detach_functor<node_t>&>( functor ), m_deps );
+        std::apply( reinterpret_cast<const detach_functor<node_t>&>( functor ), m_deps );
     }
 
 private:
@@ -2320,7 +2271,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function(
         in_f m_func;
     };
 
-    return apply(
+    return std::apply(
         node_builder( std::get<0>( arg_pack.data ).get_context(), std::forward<in_f>( func ) ),
         arg_pack.data );
 }

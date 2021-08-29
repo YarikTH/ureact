@@ -214,7 +214,8 @@ template <typename T>
 struct is_signal : detail::is_base_of_template<signal, T>
 {};
 
-
+template <typename T>
+inline constexpr bool is_signal_v = is_signal<T>::value;
 
 //==================================================================================================
 // [[section]] General purpose utilities
@@ -296,8 +297,10 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 #endif
 
 template <typename T1, typename T2>
-using is_same_decay = std::is_same<typename std::decay<T1>::type, typename std::decay<T2>::type>;
+using is_same_decay = std::is_same<std::decay_t<T1>, std::decay_t<T2>>;
 
+template <typename T1, typename T2>
+inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
 
 /// Helper to enable calling a function on each element of an argument pack.
 /// We can't do f(args) ...; because ... expands with a comma.
@@ -319,6 +322,9 @@ struct type_identity
     using type = T;
 };
 
+template <typename T>
+using type_identity_t = typename type_identity<T>::type;
+
 
 // Full analog of std::bind1st that removed in c++17
 // See https://en.cppreference.com/w/cpp/utility/functional/bind12
@@ -332,8 +338,7 @@ struct bind_left
 
     bind_left& operator=( bind_left&& other ) noexcept = delete;
 
-    template <typename T,
-        class = typename std::enable_if<!is_same_decay<T, bind_left>::value>::type>
+    template <typename T, class = std::enable_if_t<!is_same_decay_v<T, bind_left>>>
     explicit bind_left( T&& val )
         : m_left_val( std::forward<T>( val ) )
     {}
@@ -366,8 +371,7 @@ struct bind_right
 
     bind_right& operator=( bind_right&& other ) noexcept = delete;
 
-    template <typename T,
-        class = typename std::enable_if<!is_same_decay<T, bind_right>::value>::type>
+    template <typename T, class = std::enable_if_t<!is_same_decay_v<T, bind_right>>>
     explicit bind_right( T&& val )
         : m_right_val( std::forward<T>( val ) )
     {}
@@ -404,8 +408,7 @@ struct add_default_return_value_wrapper
         add_default_return_value_wrapper&& ) noexcept = delete;
 
     template <typename in_f,
-        class = typename std::enable_if<
-            !is_same_decay<in_f, add_default_return_value_wrapper>::value>::type>
+        class = std::enable_if_t<!is_same_decay_v<in_f, add_default_return_value_wrapper>>>
     explicit add_default_return_value_wrapper( in_f&& func )
         : m_func( std::forward<in_f>( func ) )
     {}
@@ -443,6 +446,9 @@ struct decay_input<value<T>>
 {
     using type = signal<T>;
 };
+
+template <typename T>
+using decay_input_t = typename decay_input<T>::type;
 
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
@@ -1741,9 +1747,7 @@ public:
 };
 
 
-template <typename V,
-    typename S = typename std::decay<V>::type,
-    class = typename std::enable_if<!is_signal<S>::value>::type>
+template <typename V, typename S = std::decay_t<V>, class = std::enable_if_t<!is_signal_v<S>>>
 UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<S>
 {
     return value<S>(
@@ -1759,9 +1763,9 @@ UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, std::reference
 }
 
 template <typename V,
-    typename S = typename std::decay<V>::type,
+    typename S = std::decay_t<V>,
     typename inner_t = typename S::value_t,
-    class = typename std::enable_if<is_signal<S>::value>::type>
+    class = std::enable_if_t<is_signal_v<S>>>
 UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<signal<inner_t>>
 {
     return value<signal<inner_t>>( std::make_shared<::ureact::detail::value_node<signal<inner_t>>>(
@@ -1908,7 +1912,7 @@ namespace detail
 template <template <typename> class functor_op,
     typename signal_t,
     typename val_t = typename signal_t::value_t,
-    class = typename std::enable_if<is_signal<signal_t>::value>::type,
+    class = std::enable_if_t<is_signal_v<signal_t>>,
     typename F = functor_op<val_t>,
     typename S = std::invoke_result_t<F, val_t>,
     typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
@@ -1933,8 +1937,8 @@ template <template <typename, typename> class functor_op,
     typename right_signal_t,
     typename left_val_t = typename left_signal_t::value_t,
     typename right_val_t = typename right_signal_t::value_t,
-    class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
-    class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
+    class = std::enable_if_t<is_signal_v<left_signal_t>>,
+    class = std::enable_if_t<is_signal_v<right_signal_t>>,
     typename F = functor_op<left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S,
@@ -1954,9 +1958,9 @@ template <template <typename, typename> class functor_op,
     typename left_signal_t,
     typename right_val_in_t,
     typename left_val_t = typename left_signal_t::value_t,
-    typename right_val_t = typename std::decay<right_val_in_t>::type,
-    class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
-    class = typename std::enable_if<!is_signal<right_val_t>::value>::type,
+    typename right_val_t = std::decay_t<right_val_in_t>,
+    class = std::enable_if_t<is_signal_v<left_signal_t>>,
+    class = std::enable_if_t<!is_signal_v<right_val_t>>,
     typename F = bind_right<functor_op, left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>
@@ -1972,10 +1976,10 @@ auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
 template <template <typename, typename> class functor_op,
     typename left_val_in_t,
     typename right_signal_t,
-    typename left_val_t = typename std::decay<left_val_in_t>::type,
+    typename left_val_t = std::decay_t<left_val_in_t>,
     typename right_val_t = typename right_signal_t::value_t,
-    class = typename std::enable_if<!is_signal<left_val_t>::value>::type,
-    class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
+    class = std::enable_if_t<!is_signal_v<left_val_t>>,
+    class = std::enable_if_t<is_signal_v<right_signal_t>>,
     typename F = bind_left<functor_op, left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, right_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>
@@ -2010,7 +2014,7 @@ template <template <typename, typename> class functor_op,
     typename left_op_t,
     typename right_signal_t,
     typename right_val_t = typename right_signal_t::value_t,
-    class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
+    class = std::enable_if_t<is_signal_v<right_signal_t>>,
     typename F = functor_op<left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t, detail::signal_node_ptr_t<right_val_t>>>
@@ -2027,7 +2031,7 @@ template <template <typename, typename> class functor_op,
     typename right_val_t,
     typename right_op_t,
     typename left_val_t = typename left_signal_t::value_t,
-    class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
+    class = std::enable_if_t<is_signal_v<left_signal_t>>,
     typename F = functor_op<left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>, right_op_t>>
@@ -2043,8 +2047,8 @@ template <template <typename, typename> class functor_op,
     typename left_val_t,
     typename left_op_t,
     typename right_val_in_t,
-    typename right_val_t = typename std::decay<right_val_in_t>::type,
-    class = typename std::enable_if<!is_signal<right_val_t>::value>::type,
+    typename right_val_t = std::decay_t<right_val_in_t>,
+    class = std::enable_if_t<!is_signal_v<right_val_t>>,
     typename F = bind_right<functor_op, left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t>>
@@ -2061,8 +2065,8 @@ template <template <typename, typename> class functor_op,
     typename left_val_in_t,
     typename right_val_t,
     typename right_op_t,
-    typename left_val_t = typename std::decay<left_val_in_t>::type,
-    class = typename std::enable_if<!is_signal<left_val_t>::value>::type,
+    typename left_val_t = std::decay_t<left_val_in_t>,
+    class = std::enable_if_t<!is_signal_v<left_val_t>>,
     typename F = bind_left<functor_op, left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, right_val_t>,
     typename op_t = detail::function_op<S, F, right_op_t>>
@@ -2231,7 +2235,7 @@ UREACT_WARN_UNUSED_RESULT auto operator,( const signal_pack<cur_values_t...>& cu
 /// Free function to connect a signal to a function and return the resulting signal.
 template <typename value_t,
     typename in_f,
-    typename F = typename std::decay<in_f>::type,
+    typename F = std::decay_t<in_f>,
     typename S = std::invoke_result_t<F, value_t>,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
@@ -2247,7 +2251,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function( const signal<value_t>& arg, in_f&&
 /// Free function to connect multiple signals to a function and return the resulting signal.
 template <typename... values_t,
     typename in_f,
-    typename F = typename std::decay<in_f>::type,
+    typename F = std::decay_t<in_f>,
     typename S = std::invoke_result_t<F, values_t...>,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
@@ -2278,7 +2282,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function(
 
 
 /// operator| overload to connect a signal to a function and return the resulting signal.
-template <typename F, typename T, class = typename std::enable_if<is_signal<T>::value>::type>
+template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
 UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
     -> decltype( ::ureact::make_function( arg, std::forward<F>( func ) ) )
 {
@@ -2320,15 +2324,15 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
     using ::ureact::detail::add_default_return_value_wrapper;
     using ::ureact::detail::signal_observer_node;
 
-    using F = typename std::decay<in_f>::type;
+    using F = std::decay_t<in_f>;
     using R = std::invoke_result_t<in_f, S>;
     using wrapper_t = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
 
     // If return value of passed function is void, add observer_action::next as
     // default return value.
-    using node_t = typename std::conditional<std::is_same<void, R>::value,
+    using node_t = std::conditional_t<std::is_same_v<void, R>,
         signal_observer_node<S, wrapper_t>,
-        signal_observer_node<S, F>>::type;
+        signal_observer_node<S, F>>;
 
     const auto& subject_ptr = get_node_ptr( subject );
 
@@ -2343,19 +2347,19 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
 
 
 #define UREACT_REACTIVE_REF( obj, name )                                                           \
-    flatten( make_function( obj,                                                                   \
-        []( const typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t& r ) {  \
+    flatten( make_function(                                                                        \
+        obj, []( const typename ::ureact::detail::type_identity_t<decltype( obj )>::value_t& r ) { \
             using T = decltype( r.name );                                                          \
-            using S = typename ::ureact::detail::decay_input<T>::type;                             \
+            using S = ::ureact::detail::decay_input_t<T>;                                          \
             return static_cast<S>( r.name );                                                       \
         } ) )
 
 #define UREACT_REACTIVE_PTR( obj, name )                                                           \
     flatten( make_function(                                                                        \
-        obj, []( typename ::ureact::detail::type_identity<decltype( obj )>::type::value_t r ) {    \
+        obj, []( typename ::ureact::detail::type_identity_t<decltype( obj )>::value_t r ) {        \
             assert( r != nullptr );                                                                \
             using T = decltype( r->name );                                                         \
-            using S = typename ::ureact::detail::decay_input<T>::type;                             \
+            using S = ::ureact::detail::decay_input_t<T>;                                          \
             return static_cast<S>( r->name );                                                      \
         } ) )
 

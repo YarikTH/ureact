@@ -42,7 +42,7 @@
 
 ## Examples
 
-**Basic usage** ([run](https://godbolt.org/z/8z1T53df3))
+**Basic usage** ([run](https://godbolt.org/z/dYKT7KsqM))
 
 ```cpp
 ureact::context ctx;
@@ -62,7 +62,7 @@ b <<= 10;
 std::cout << "a  (new): " << a.get() << "\n"; // 12
 ```
 
-**Complex signals** ([run](https://godbolt.org/z/EbxxrEMEb))
+**Complex signals** ([run](https://godbolt.org/z/vaKsxWEYP))
 
 ```cpp
 ureact::context ctx;
@@ -90,7 +90,7 @@ exp <<= 0;
 std::cout << expression.get() << "\n"; // 2^0 == 1
 ```
 
-**Observers** ([run](https://godbolt.org/z/E69Y794zb))
+**Observers** ([run](https://godbolt.org/z/84GqMhh5z))
 
 ```cpp
 ureact::context ctx;
@@ -126,7 +126,7 @@ a <<= -3
   a -> -3
 ```
 
-**Transaction** ([run](https://godbolt.org/z/z3znh6M9h))
+**Transaction** ([run](https://godbolt.org/z/cnvonPo79))
 
 ```cpp
 ureact::context ctx;

@@ -296,22 +296,12 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 
 #endif
 
+
 template <typename T1, typename T2>
 using is_same_decay = std::is_same<std::decay_t<T1>, std::decay_t<T2>>;
 
 template <typename T1, typename T2>
 inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
-
-/// Helper to enable calling a function on each element of an argument pack.
-/// We can't do f(args) ...; because ... expands with a comma.
-/// But we can do nop_func(f(args) ...);
-template <typename... args_t>
-inline void pass( args_t&&... /*unused*/ )
-{}
-
-// Expand args by wrapping them in a dummy function
-// Use comma operator to replace potential void return value with 0
-#define UREACT_EXPAND_PACK( ... ) pass( ( (void)__VA_ARGS__, 0 )... )
 
 
 /// type_identity (workaround to enable enable decltype()::X)
@@ -1077,7 +1067,7 @@ private:
 
         void operator()( const deps_t&... deps ) const
         {
-            UREACT_EXPAND_PACK( attach( deps ) );
+            ( attach( deps ), ... );
         }
 
         template <typename T>
@@ -1104,7 +1094,7 @@ private:
 
         void operator()( const deps_t&... deps ) const
         {
-            UREACT_EXPAND_PACK( detach( deps ) );
+            ( detach( deps ), ... );
         }
 
         template <typename T>
@@ -2408,8 +2398,6 @@ public:
         return ctx;
     }
 };
-
-#undef UREACT_EXPAND_PACK
 
 UREACT_END_NAMESPACE
 

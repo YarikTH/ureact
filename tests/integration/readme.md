@@ -15,7 +15,7 @@ You need to add
 #include <ureact/ureact.hpp>
 ```
 
-to the files you want to process use µReact and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
+to the files you want to process use µReact and set the necessary switches to enable C++17 (e.g., `-std=c++17` for GCC and Clang).
 
 See code example used for integration tests [here](../../support/integration_generation/test.cpp).
 

@@ -99,6 +99,6 @@ SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: true
 SpacesInParentheses: true
 SpacesInSquareBrackets: false
-Standard:        c++11
+Standard:        c++17
 TabWidth:        4
 UseTab:          Never

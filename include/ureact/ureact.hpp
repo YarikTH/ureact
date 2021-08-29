@@ -1954,7 +1954,7 @@ template <template <typename> class functor_op,
     typename val_t = typename signal_t::value_t,
     class = typename std::enable_if<is_signal<signal_t>::value>::type,
     typename F = functor_op<val_t>,
-    typename S = typename std::result_of<F( val_t )>::type,
+    typename S = std::invoke_result_t<F, val_t>,
     typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
 auto unary_operator_impl( const signal_t& arg ) -> temp_function<S, op_t>
 {
@@ -1965,7 +1965,7 @@ template <template <typename> class functor_op,
     typename val_t,
     typename op_in_t,
     typename F = functor_op<val_t>,
-    typename S = typename std::result_of<F( val_t )>::type,
+    typename S = std::invoke_result_t<F, val_t>,
     typename op_t = function_op<S, F, op_in_t>>
 auto unary_operator_impl( temp_function<val_t, op_in_t>&& arg ) -> temp_function<S, op_t>
 {
@@ -1980,7 +1980,7 @@ template <template <typename, typename> class functor_op,
     class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
     class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
     typename F = functor_op<left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S,
         F,
         detail::signal_node_ptr_t<left_val_t>,
@@ -2002,7 +2002,7 @@ template <template <typename, typename> class functor_op,
     class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
     class = typename std::enable_if<!is_signal<right_val_t>::value>::type,
     typename F = bind_right<functor_op, left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( left_val_t )>::type,
+    typename S = std::invoke_result_t<F, left_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>
 auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
     -> detail::temp_function<S, op_t>
@@ -2021,7 +2021,7 @@ template <template <typename, typename> class functor_op,
     class = typename std::enable_if<!is_signal<left_val_t>::value>::type,
     class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
     typename F = bind_left<functor_op, left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( right_val_t )>::type,
+    typename S = std::invoke_result_t<F, right_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>
 auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
     -> detail::temp_function<S, op_t>
@@ -2038,7 +2038,7 @@ template <template <typename, typename> class functor_op,
     typename right_val_t,
     typename right_op_t,
     typename F = functor_op<left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t, right_op_t>>
 auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
     detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
@@ -2056,7 +2056,7 @@ template <template <typename, typename> class functor_op,
     typename right_val_t = typename right_signal_t::value_t,
     class = typename std::enable_if<is_signal<right_signal_t>::value>::type,
     typename F = functor_op<left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t, detail::signal_node_ptr_t<right_val_t>>>
 auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
     const right_signal_t& rhs ) -> detail::temp_function<S, op_t>
@@ -2073,7 +2073,7 @@ template <template <typename, typename> class functor_op,
     typename left_val_t = typename left_signal_t::value_t,
     class = typename std::enable_if<is_signal<left_signal_t>::value>::type,
     typename F = functor_op<left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( left_val_t, right_val_t )>::type,
+    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>, right_op_t>>
 auto binary_operator_impl( const left_signal_t& lhs,
     detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
@@ -2090,7 +2090,7 @@ template <template <typename, typename> class functor_op,
     typename right_val_t = typename std::decay<right_val_in_t>::type,
     class = typename std::enable_if<!is_signal<right_val_t>::value>::type,
     typename F = bind_right<functor_op, left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( left_val_t )>::type,
+    typename S = std::invoke_result_t<F, left_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t>>
 auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
     right_val_in_t&& rhs ) -> detail::temp_function<S, op_t>
@@ -2108,7 +2108,7 @@ template <template <typename, typename> class functor_op,
     typename left_val_t = typename std::decay<left_val_in_t>::type,
     class = typename std::enable_if<!is_signal<left_val_t>::value>::type,
     typename F = bind_left<functor_op, left_val_t, right_val_t>,
-    typename S = typename std::result_of<F( right_val_t )>::type,
+    typename S = std::invoke_result_t<F, right_val_t>,
     typename op_t = detail::function_op<S, F, right_op_t>>
 auto binary_operator_impl( left_val_in_t&& lhs,
     detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
@@ -2276,7 +2276,7 @@ UREACT_WARN_UNUSED_RESULT auto operator,( const signal_pack<cur_values_t...>& cu
 template <typename value_t,
     typename in_f,
     typename F = typename std::decay<in_f>::type,
-    typename S = typename std::result_of<F( value_t )>::type,
+    typename S = std::invoke_result_t<F, value_t>,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
 UREACT_WARN_UNUSED_RESULT auto make_function( const signal<value_t>& arg, in_f&& func )
@@ -2292,7 +2292,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function( const signal<value_t>& arg, in_f&&
 template <typename... values_t,
     typename in_f,
     typename F = typename std::decay<in_f>::type,
-    typename S = typename std::result_of<F( values_t... )>::type,
+    typename S = std::invoke_result_t<F, values_t...>,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
 UREACT_WARN_UNUSED_RESULT auto make_function(
@@ -2365,7 +2365,7 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
     using ::ureact::detail::signal_observer_node;
 
     using F = typename std::decay<in_f>::type;
-    using R = typename std::result_of<in_f( S )>::type;
+    using R = std::invoke_result_t<in_f, S>;
     using wrapper_t = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
 
     // If return value of passed function is void, add observer_action::next as

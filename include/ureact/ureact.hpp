@@ -170,10 +170,6 @@ class context_internals;
 
 } // namespace detail
 
-template <typename inner_value_t>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
-    -> function<inner_value_t>;
-
 /// Return internals. Not intended to use in user code.
 UREACT_WARN_UNUSED_RESULT inline detail::context_internals& _get_internals( context& ctx );
 
@@ -340,7 +336,6 @@ struct bind_left
     ~bind_left() = default;
 
     UREACT_WARN_UNUSED_RESULT auto operator()( const rhs_t& rhs ) const
-        -> decltype( std::declval<F>()( std::declval<lhs_t>(), std::declval<rhs_t>() ) )
     {
         return F()( m_left_val, rhs );
     }
@@ -373,7 +368,6 @@ struct bind_right
     ~bind_right() = default;
 
     UREACT_WARN_UNUSED_RESULT auto operator()( const lhs_t& lhs ) const
-        -> decltype( std::declval<F>()( std::declval<lhs_t>(), std::declval<rhs_t>() ) )
     {
         return F()( lhs, m_right_val );
     }
@@ -1514,7 +1508,7 @@ template <typename S>
 class value_base : public signal<S>
 {
 private:
-    UREACT_WARN_UNUSED_RESULT auto get_value_node() const -> value_node<S>*
+    UREACT_WARN_UNUSED_RESULT auto get_value_node() const
     {
         return static_cast<value_node<S>*>( this->m_ptr.get() );
     }
@@ -1738,7 +1732,7 @@ public:
 
 
 template <typename V, typename S = std::decay_t<V>, class = std::enable_if_t<!is_signal_v<S>>>
-UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<S>
+UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v )
 {
     return value<S>(
         std::make_shared<::ureact::detail::value_node<S>>( context, std::forward<V>( v ) ) );
@@ -1746,7 +1740,6 @@ UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> val
 
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, std::reference_wrapper<S> v )
-    -> value<S&>
 {
     return value<S&>(
         std::make_shared<::ureact::detail::value_node<std::reference_wrapper<S>>>( context, v ) );
@@ -1756,7 +1749,7 @@ template <typename V,
     typename S = std::decay_t<V>,
     typename inner_t = typename S::value_t,
     class = std::enable_if_t<is_signal_v<S>>>
-UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> value<signal<inner_t>>
+UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v )
 {
     return value<signal<inner_t>>( std::make_shared<::ureact::detail::value_node<signal<inner_t>>>(
         context, std::forward<V>( v ) ) );
@@ -1765,7 +1758,6 @@ UREACT_WARN_UNUSED_RESULT auto make_value_impl( context& context, V&& v ) -> val
 
 template <typename S, typename op_t, typename... Args>
 UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... args )
-    -> temp_function<S, op_t>
 {
     return temp_function<S, op_t>(
         std::make_shared<signal_op_node<S, op_t>>( context, std::forward<Args>( args )... ) );
@@ -1906,7 +1898,7 @@ template <template <typename> class functor_op,
     typename F = functor_op<val_t>,
     typename S = std::invoke_result_t<F, val_t>,
     typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
-auto unary_operator_impl( const signal_t& arg ) -> temp_function<S, op_t>
+auto unary_operator_impl( const signal_t& arg )
 {
     return make_temp_signal<S, op_t>( arg.get_context(), F(), get_node_ptr( arg ) );
 }
@@ -1917,7 +1909,7 @@ template <template <typename> class functor_op,
     typename F = functor_op<val_t>,
     typename S = std::invoke_result_t<F, val_t>,
     typename op_t = function_op<S, F, op_in_t>>
-auto unary_operator_impl( temp_function<val_t, op_in_t>&& arg ) -> temp_function<S, op_t>
+auto unary_operator_impl( temp_function<val_t, op_in_t>&& arg )
 {
     return make_temp_signal<S, op_t>( arg.get_context(), F(), arg.steal_op() );
 }
@@ -1936,7 +1928,6 @@ template <template <typename, typename> class functor_op,
         detail::signal_node_ptr_t<left_val_t>,
         detail::signal_node_ptr_t<right_val_t>>>
 auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
-    -> detail::temp_function<S, op_t>
 {
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
@@ -1955,7 +1946,6 @@ template <template <typename, typename> class functor_op,
     typename S = std::invoke_result_t<F, left_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>>>
 auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
-    -> detail::temp_function<S, op_t>
 {
     context& context = lhs.get_context();
 
@@ -1974,7 +1964,6 @@ template <template <typename, typename> class functor_op,
     typename S = std::invoke_result_t<F, right_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<right_val_t>>>
 auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
-    -> detail::temp_function<S, op_t>
 {
     context& context = rhs.get_context();
 
@@ -1991,7 +1980,7 @@ template <template <typename, typename> class functor_op,
     typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t, right_op_t>>
 auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
-    detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
+    detail::temp_function<right_val_t, right_op_t>&& rhs )
 {
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
@@ -2008,8 +1997,8 @@ template <template <typename, typename> class functor_op,
     typename F = functor_op<left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t, detail::signal_node_ptr_t<right_val_t>>>
-auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
-    const right_signal_t& rhs ) -> detail::temp_function<S, op_t>
+auto binary_operator_impl(
+    detail::temp_function<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )
 {
     context& context = rhs.get_context();
 
@@ -2025,8 +2014,8 @@ template <template <typename, typename> class functor_op,
     typename F = functor_op<left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<left_val_t>, right_op_t>>
-auto binary_operator_impl( const left_signal_t& lhs,
-    detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
+auto binary_operator_impl(
+    const left_signal_t& lhs, detail::temp_function<right_val_t, right_op_t>&& rhs )
 {
     context& context = lhs.get_context();
 
@@ -2042,8 +2031,8 @@ template <template <typename, typename> class functor_op,
     typename F = bind_right<functor_op, left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, left_val_t>,
     typename op_t = detail::function_op<S, F, left_op_t>>
-auto binary_operator_impl( detail::temp_function<left_val_t, left_op_t>&& lhs,
-    right_val_in_t&& rhs ) -> detail::temp_function<S, op_t>
+auto binary_operator_impl(
+    detail::temp_function<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )
 {
     context& context = lhs.get_context();
 
@@ -2060,8 +2049,8 @@ template <template <typename, typename> class functor_op,
     typename F = bind_left<functor_op, left_val_t, right_val_t>,
     typename S = std::invoke_result_t<F, right_val_t>,
     typename op_t = detail::function_op<S, F, right_op_t>>
-auto binary_operator_impl( left_val_in_t&& lhs,
-    detail::temp_function<right_val_t, right_op_t>&& rhs ) -> detail::temp_function<S, op_t>
+auto binary_operator_impl(
+    left_val_in_t&& lhs, detail::temp_function<right_val_t, right_op_t>&& rhs )
 {
     context& context = rhs.get_context();
 
@@ -2082,7 +2071,6 @@ auto binary_operator_impl( left_val_in_t&& lhs,
         struct op_functor_##name                                                                   \
         {                                                                                          \
             UREACT_WARN_UNUSED_RESULT auto operator()( const T& v ) const                          \
-                -> decltype( op std::declval<T>() )                                                \
             {                                                                                      \
                 return op v;                                                                       \
             }                                                                                      \
@@ -2100,7 +2088,6 @@ auto binary_operator_impl( left_val_in_t&& lhs,
         struct op_functor_##name                                                                   \
         {                                                                                          \
             UREACT_WARN_UNUSED_RESULT auto operator()( const L& lhs, const R& rhs ) const          \
-                -> decltype( std::declval<L>() op std::declval<R>() )                              \
             {                                                                                      \
                 return lhs op rhs;                                                                 \
             }                                                                                      \
@@ -2191,7 +2178,6 @@ UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
 /// Factory function to create ureact::value in the given context.
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto make_value( context& context, V&& value )
-    -> decltype( detail::make_value_impl( context, std::forward<V>( value ) ) )
 {
     return detail::make_value_impl( context, std::forward<V>( value ) );
 }
@@ -2199,7 +2185,7 @@ UREACT_WARN_UNUSED_RESULT auto make_value( context& context, V&& value )
 
 /// Utility function to create a signal_pack from given signals.
 template <typename... values_t>
-UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps ) -> signal_pack<values_t...>
+UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
 {
     return signal_pack<values_t...>( deps... );
 }
@@ -2207,16 +2193,16 @@ UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps ) -> signal
 
 /// Comma operator overload to create signal pack from two signals.
 template <typename left_val_t, typename right_val_t>
-UREACT_WARN_UNUSED_RESULT auto operator,( const signal<left_val_t>& a,
-    const signal<right_val_t>& b ) -> signal_pack<left_val_t, right_val_t>
+UREACT_WARN_UNUSED_RESULT auto operator,(
+    const signal<left_val_t>& a, const signal<right_val_t>& b )
 {
     return signal_pack<left_val_t, right_val_t>( a, b );
 }
 
 /// Comma operator overload to append node to existing signal pack.
 template <typename... cur_values_t, typename append_value_t>
-UREACT_WARN_UNUSED_RESULT auto operator,( const signal_pack<cur_values_t...>& cur,
-    const signal<append_value_t>& append ) -> signal_pack<cur_values_t..., append_value_t>
+UREACT_WARN_UNUSED_RESULT auto operator,(
+    const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
 {
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
@@ -2230,7 +2216,6 @@ template <typename value_t,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
 UREACT_WARN_UNUSED_RESULT auto make_function( const signal<value_t>& arg, in_f&& func )
-    -> detail::temp_function<S, op_t>
 {
     context& context = arg.get_context();
 
@@ -2246,7 +2231,7 @@ template <typename... values_t,
     typename op_t
     = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
 UREACT_WARN_UNUSED_RESULT auto make_function(
-    const signal_pack<values_t...>& arg_pack, in_f&& func ) -> detail::temp_function<S, op_t>
+    const signal_pack<values_t...>& arg_pack, in_f&& func )
 {
     struct node_builder
     {
@@ -2255,7 +2240,7 @@ UREACT_WARN_UNUSED_RESULT auto make_function(
             , m_func( std::forward<in_f>( func ) )
         {}
 
-        auto operator()( const signal<values_t>&... args ) -> detail::temp_function<S, op_t>
+        auto operator()( const signal<values_t>&... args )
         {
             return detail::make_temp_signal<S, op_t>(
                 m_context, std::forward<in_f>( m_func ), get_node_ptr( args )... );
@@ -2274,7 +2259,6 @@ UREACT_WARN_UNUSED_RESULT auto make_function(
 /// operator| overload to connect a signal to a function and return the resulting signal.
 template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
 UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
-    -> decltype( ::ureact::make_function( arg, std::forward<F>( func ) ) )
 {
     return ::ureact::make_function( arg, std::forward<F>( func ) );
 }
@@ -2282,7 +2266,6 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
 /// operator| overload to connect multiple signals to a function and return the resulting signal.
 template <typename F, typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
-    -> decltype( ::ureact::make_function( arg_pack, std::forward<F>( func ) ) )
 {
     return ::ureact::make_function( arg_pack, std::forward<F>( func ) );
 }
@@ -2290,7 +2273,6 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pa
 
 template <typename inner_value_t>
 UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
-    -> function<inner_value_t>
 {
     context& context = outer.get_context();
     return function<inner_value_t>(
@@ -2377,7 +2359,6 @@ public:
     /// Factory function to create ureact::value in the current context.
     template <typename V>
     UREACT_WARN_UNUSED_RESULT auto make_value( V&& value )
-        -> decltype( ureact::make_value( *this, std::forward<V>( value ) ) )
     {
         return ureact::make_value( *this, std::forward<V>( value ) );
     }

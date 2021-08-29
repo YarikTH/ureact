@@ -84,6 +84,10 @@ target_include_directories(
 )
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+if(MSVC)
+    # See https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
+    target_compile_options(${PROJECT_NAME} INTERFACE "/Zc:__cplusplus")
+endif()
 
 ################################################################################
 ## TESTS/EXAMPLES/HELPERS

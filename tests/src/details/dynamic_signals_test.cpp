@@ -67,7 +67,8 @@ TEST_CASE( "DynamicSignalReferences" )
 
     Employee Alice( ctx, company1 );
 
-    ureact::function<std::string> aliceCompanyName = UREACT_REACTIVE_REF( Alice.company, name );
+    ureact::function<std::string> aliceCompanyName
+        = ureact::reactive_ref( Alice.company, &Company::name );
 
     std::vector<std::string> result;
 
@@ -89,7 +90,8 @@ TEST_CASE( "DynamicSignalPointers" )
 
     Employee2 Alice( ctx, &company1 );
 
-    ureact::function<std::string> aliceCompanyName = UREACT_REACTIVE_PTR( Alice.company, name );
+    ureact::function<std::string> aliceCompanyName
+        = ureact::reactive_ptr( Alice.company, &Company::name );
 
     std::vector<std::string> result;
 

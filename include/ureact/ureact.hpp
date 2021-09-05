@@ -305,18 +305,6 @@ template <typename T1, typename T2>
 inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
 
 
-/// type_identity (workaround to enable enable decltype()::X)
-/// See https://en.cppreference.com/w/cpp/types/type_identity
-template <typename T>
-struct type_identity
-{
-    using type = T;
-};
-
-template <typename T>
-using type_identity_t = typename type_identity<T>::type;
-
-
 // Full analog of std::bind1st that removed in c++17
 // See https://en.cppreference.com/w/cpp/utility/functional/bind12
 template <template <typename, typename> class functor_binary_op,

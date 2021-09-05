@@ -424,22 +424,6 @@ struct add_default_return_value_wrapper
 namespace detail
 {
 
-template <typename T>
-struct decay_input
-{
-    using type = T;
-};
-
-template <typename T>
-struct decay_input<value<T>>
-{
-    using type = signal<T>;
-};
-
-template <typename T>
-using decay_input_t = typename decay_input<T>::type;
-
-
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wfloat-equal"
@@ -1414,8 +1398,7 @@ protected:
 public:
     using value_t = S;
 
-    /// Default constructor that needed for UREACT_REACTIVE_REF for some reason
-    /// @todo investigate and remove it if possible
+    /// Default constructor
     signal() = default;
 
     /**
@@ -1461,8 +1444,7 @@ protected:
 public:
     using value_t = S;
 
-    /// Default constructor that needed for UREACT_REACTIVE_REF for some reason
-    /// @todo investigate and remove it if possible
+    /// Default constructor
     signal() = default;
 
     /**
@@ -2329,23 +2311,40 @@ UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, in_f&& func ) -> ob
 }
 
 
-#define UREACT_REACTIVE_REF( obj, name )                                                           \
-    flatten( make_function(                                                                        \
-        obj, []( const typename ::ureact::detail::type_identity_t<decltype( obj )>::value_t& r ) { \
-            using T = decltype( r.name );                                                          \
-            using S = ::ureact::detail::decay_input_t<T>;                                          \
-            return static_cast<S>( r.name );                                                       \
-        } ) )
+namespace detail
+{
 
-#define UREACT_REACTIVE_PTR( obj, name )                                                           \
-    flatten( make_function(                                                                        \
-        obj, []( typename ::ureact::detail::type_identity_t<decltype( obj )>::value_t r ) {        \
-            assert( r != nullptr );                                                                \
-            using T = decltype( r->name );                                                         \
-            using S = ::ureact::detail::decay_input_t<T>;                                          \
-            return static_cast<S>( r->name );                                                      \
-        } ) )
+template <typename T>
+struct decay_input
+{
+    using type = T;
+};
 
+template <typename T>
+struct decay_input<value<T>>
+{
+    using type = signal<T>;
+};
+
+template <typename T>
+using decay_input_t = typename decay_input<T>::type;
+
+} // namespace detail
+
+
+template <typename S, typename R, typename decayed_r = ::ureact::detail::decay_input_t<R>>
+auto reactive_ref( const ureact::signal<std::reference_wrapper<S>>& outer, R S::*attribute )
+{
+    return flatten( make_function(
+        outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
+}
+
+template <typename S, typename R, typename decayed_r = ::ureact::detail::decay_input_t<R>>
+auto reactive_ptr( const ureact::signal<S*>& outer, R S::*attribute )
+{
+    return flatten( make_function(
+        outer, [attribute]( const S* s ) { return static_cast<decayed_r>( s->*attribute ); } ) );
+}
 
 
 //==================================================================================================

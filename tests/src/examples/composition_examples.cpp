@@ -136,7 +136,7 @@ TEST_SUITE( "Examples" )
         std::vector<std::string> alice_company_names;
 
         // Observer isn't bound to long term lived signal. So we need to keep it alive
-        auto obs = observe( UREACT_REACTIVE_REF( Alice.company, name ),
+        auto obs = observe( ureact::reactive_ref( Alice.company, &Company::name ),
             [&]( const std::string& name ) { alice_company_names.emplace_back( name ); } );
 
         company1.name <<= std::string( "ModernTec" );

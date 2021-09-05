@@ -13,7 +13,7 @@ int main()
 
     ureact::value<int> b = ctx.make_value( 1 );
     ureact::value<int> c = ctx.make_value( 2 );
-    ureact::signal<int> a = b + c;
+    ureact::function<int> a = b + c;
     b <<= 10;
 
     return ( a.get() == 12 ) ? 0 : 1;

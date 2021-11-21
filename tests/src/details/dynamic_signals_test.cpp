@@ -18,11 +18,11 @@ class Company
 {
 public:
     int index;
-    ureact::value<std::string> name;
+    ureact::var_signal<std::string> name;
 
     Company( ureact::context& ctx, const int index, const char* name )
         : index( index )
-        , name( make_value( ctx, std::string( name ) ) )
+        , name( make_var( ctx, std::string( name ) ) )
     {}
 
     friend bool operator==( const Company& lhs, const Company& rhs )
@@ -37,20 +37,20 @@ public:
 class Employee
 {
 public:
-    ureact::value<Company&> company;
+    ureact::var_signal<Company&> company;
 
     Employee( ureact::context& ctx, Company& companyRef )
-        : company( make_value( ctx, std::ref( companyRef ) ) )
+        : company( make_var( ctx, std::ref( companyRef ) ) )
     {}
 };
 
 class Employee2
 {
 public:
-    ureact::value<Company*> company;
+    ureact::var_signal<Company*> company;
 
     Employee2( ureact::context& ctx, Company* companyPtr )
-        : company( make_value( ctx, companyPtr ) )
+        : company( make_var( ctx, companyPtr ) )
     {}
 };
 
@@ -67,7 +67,7 @@ TEST_CASE( "DynamicSignalReferences" )
 
     Employee Alice( ctx, company1 );
 
-    ureact::function<std::string> aliceCompanyName
+    ureact::signal<std::string> aliceCompanyName
         = ureact::reactive_ref( Alice.company, &Company::name );
 
     std::vector<std::string> result;
@@ -90,7 +90,7 @@ TEST_CASE( "DynamicSignalPointers" )
 
     Employee2 Alice( ctx, &company1 );
 
-    ureact::function<std::string> aliceCompanyName
+    ureact::signal<std::string> aliceCompanyName
         = ureact::reactive_ptr( Alice.company, &Company::name );
 
     std::vector<std::string> result;

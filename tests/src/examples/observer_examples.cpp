@@ -14,7 +14,7 @@ TEST_SUITE( "Examples" )
     {
         ureact::context ctx;
 
-        auto x = make_value( ctx, 0 );
+        auto x = make_var( ctx, 0 );
 
         auto identity = []( const int value ) { return value; };
 
@@ -29,7 +29,7 @@ TEST_SUITE( "Examples" )
             // Inner scope
             {
                 // Create a signal in the function scope
-                auto my_signal = make_function( x, identity );
+                auto my_signal = make_signal( x, identity );
 
                 // The lifetime of the observer is bound to my_signal.
                 // After scope my_signal is destroyed, and so is the observer
@@ -55,7 +55,7 @@ TEST_SUITE( "Examples" )
 
                 // Inner scope
                 {
-                    auto my_signal = make_function( x, identity );
+                    auto my_signal = make_signal( x, identity );
 
                     // Move-assign to obs
                     obs = observe( my_signal, on_x_value_change );

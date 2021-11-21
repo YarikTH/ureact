@@ -14,11 +14,11 @@ class Company
 {
 public:
     int index;
-    ureact::value<std::string> name;
+    ureact::var_signal<std::string> name;
 
     Company( ureact::context& ctx, const int index, const char* name )
         : index( index )
-        , name( make_value( ctx, std::string( name ) ) )
+        , name( make_var( ctx, std::string( name ) ) )
     {}
 
     friend bool operator==( const Company& lhs, const Company& rhs )
@@ -39,10 +39,10 @@ std::ostream& operator<<( std::ostream& os, const Company& company )
 class Employee
 {
 public:
-    ureact::value<Company&> company;
+    ureact::var_signal<Company&> company;
 
     Employee( ureact::context& ctx, Company& company )
-        : company( make_value( ctx, std::ref( company ) ) )
+        : company( make_var( ctx, std::ref( company ) ) )
     {}
 };
 
@@ -58,15 +58,15 @@ TEST_SUITE( "Examples" )
         {
         public:
             explicit Shape( ureact::context& ctx )
-                : width( make_value( ctx, 0 ) )
-                , height( make_value( ctx, 0 ) )
+                : width( make_var( ctx, 0 ) )
+                , height( make_var( ctx, 0 ) )
                 , size( width * height )
             {}
 
-            ureact::value<int> width;
-            ureact::value<int> height;
+            ureact::var_signal<int> width;
+            ureact::var_signal<int> height;
 
-            ureact::function<int> size;
+            ureact::signal<int> size;
         };
 
         Shape my_shape( ctx );

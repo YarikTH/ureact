@@ -13,12 +13,12 @@ int main()
 {
     ureact::context ctx;
 
-    ureact::value<int> a = make_value( ctx, 1 );
-    ureact::value<int> b = make_value( ctx, 1 );
+    ureact::var_signal<int> a = make_var( ctx, 1 );
+    ureact::var_signal<int> b = make_var( ctx, 1 );
 
-    ureact::function<int> x = a + b;
-    ureact::function<int> y = a + b;
-    ureact::function<int> z = x + y; // 2*(a+b)
+    ureact::signal<int> x = a + b;
+    ureact::signal<int> y = a + b;
+    ureact::signal<int> z = x + y; // 2*(a+b)
 
     //  a b  //
     //  /X\  //

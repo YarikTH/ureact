@@ -195,14 +195,14 @@ class Shape
 {
 public:
     Shape( ureact::context& ctx )
-        : width(  ctx.make_value( 1 ) )
-        , height( ctx.make_value( 1 ) )
+        : width(  ctx.make_var( 1 ) )
+        , height( ctx.make_var( 1 ) )
         , size( width * height )
     {}
 
-    ureact::value<int>    width;
-    ureact::value<int>    height;
-    ureact::function<int> size;
+    ureact::var_signal<int> width;
+    ureact::var_signal<int> height;
+    ureact::signal<int>     size;
 };
 ```
 

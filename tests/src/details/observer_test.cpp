@@ -18,8 +18,8 @@ TEST_CASE( "detach" )
 {
     ureact::context ctx;
 
-    auto a1 = make_value( ctx, 1 );
-    auto a2 = make_value( ctx, 1 );
+    auto a1 = make_var( ctx, 1 );
+    auto a2 = make_var( ctx, 1 );
 
     auto result = a1 + a2;
 
@@ -86,16 +86,16 @@ TEST_CASE( "NoObserveOnNoChanged" )
 {
     ureact::context ctx;
 
-    auto a = make_value( ctx, 1 );
-    auto b = make_value( ctx, 1 );
+    auto a = make_var( ctx, 1 );
+    auto b = make_var( ctx, 1 );
 
     auto product = a * b;
 
-    auto expressionString = make_function(
-        with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
-            return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
-                 + std::to_string( product_ );
-        } );
+    auto expressionString
+        = make_signal( with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
+              return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
+                   + std::to_string( product_ );
+          } );
 
     int aObserveCount = 0;
     int bObserveCount = 0;
@@ -150,7 +150,7 @@ TEST_CASE( "ScopedObserverTest" )
 
     std::vector<int> results;
 
-    auto in = make_value( ctx, 1 );
+    auto in = make_var( ctx, 1 );
 
     {
         ureact::scoped_observer obs = observe( in, [&]( int v ) { results.push_back( v ); } );
@@ -170,7 +170,7 @@ TEST_CASE( "SelfObserverDetachTest" )
 
     std::vector<int> results;
 
-    auto in = make_value( ctx, 0 );
+    auto in = make_var( ctx, 0 );
 
     ureact::observer obs = observe( in, [&]( int v ) {
         if( v < 0 )

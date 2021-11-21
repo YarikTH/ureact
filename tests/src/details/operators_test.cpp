@@ -33,26 +33,24 @@ enum class binary_operator_type
         typename ret_t = decltype( std::declval<left_t>() OPERATOR std::declval<right_t>() )>      \
     auto make_binary_operator_signal_##NAME(                                                       \
         ureact::context& ctx, binary_operator_type type, const left_t& lhs, const right_t& rhs )   \
-        ->ureact::function<ret_t>                                                                  \
+        ->ureact::signal<ret_t>                                                                    \
     {                                                                                              \
         switch( type )                                                                             \
         {                                                                                          \
             case binary_operator_type::signal_op_signal:                                           \
-                return make_value( ctx, lhs ) OPERATOR make_value( ctx, rhs );                     \
+                return make_var( ctx, lhs ) OPERATOR make_var( ctx, rhs );                         \
             case binary_operator_type::temp_signal_op_signal:                                      \
-                return (+make_value( ctx, lhs ))OPERATOR make_value( ctx, rhs );                   \
+                return (+make_var( ctx, lhs ))OPERATOR make_var( ctx, rhs );                       \
             case binary_operator_type::signal_op_temp_signal:                                      \
-                return make_value( ctx, lhs ) OPERATOR( +make_value( ctx, rhs ) );                 \
+                return make_var( ctx, lhs ) OPERATOR( +make_var( ctx, rhs ) );                     \
             case binary_operator_type::temp_signal_op_temp_signal:                                 \
-                return (+make_value( ctx, lhs ))OPERATOR( +make_value( ctx, rhs ) );               \
-            case binary_operator_type::value_op_signal:                                            \
-                return lhs OPERATOR make_value( ctx, rhs );                                        \
+                return (+make_var( ctx, lhs ))OPERATOR( +make_var( ctx, rhs ) );                   \
+            case binary_operator_type::value_op_signal: return lhs OPERATOR make_var( ctx, rhs );  \
             case binary_operator_type::value_op_temp_signal:                                       \
-                return lhs OPERATOR( +make_value( ctx, rhs ) );                                    \
-            case binary_operator_type::signal_op_value:                                            \
-                return make_value( ctx, lhs ) OPERATOR rhs;                                        \
+                return lhs OPERATOR( +make_var( ctx, rhs ) );                                      \
+            case binary_operator_type::signal_op_value: return make_var( ctx, lhs ) OPERATOR rhs;  \
             case binary_operator_type::temp_signal_op_value:                                       \
-                return (+make_value( ctx, lhs ))OPERATOR rhs;                                      \
+                return (+make_var( ctx, lhs ))OPERATOR rhs;                                        \
         }                                                                                          \
         return {};                                                                                 \
     }
@@ -82,31 +80,31 @@ BINARY_OPERATOR( +, addition )
         }                                                                                          \
                                                                                                    \
         template <typename left_t, typename right_t>                                               \
-        static auto make_function( ureact::context& ctx,                                           \
+        static auto make_signal( ureact::context& ctx,                                             \
             const binary_operator_type type,                                                       \
             const left_t& lhs,                                                                     \
             const right_t& rhs )                                                                   \
-            -> ureact::function<typename decltype( std::declval<ureact::function<left_t>>()        \
-                    OPERATOR std::declval<ureact::function<right_t>>() )::value_t>                 \
+            -> ureact::signal<typename decltype( std::declval<ureact::signal<left_t>>()            \
+                    OPERATOR std::declval<ureact::signal<right_t>>() )::value_t>                   \
         {                                                                                          \
             switch( type )                                                                         \
             {                                                                                      \
                 case binary_operator_type::signal_op_signal:                                       \
-                    return make_value( ctx, lhs ) OPERATOR make_value( ctx, rhs );                 \
+                    return make_var( ctx, lhs ) OPERATOR make_var( ctx, rhs );                     \
                 case binary_operator_type::temp_signal_op_signal:                                  \
-                    return (+make_value( ctx, lhs ))OPERATOR make_value( ctx, rhs );               \
+                    return (+make_var( ctx, lhs ))OPERATOR make_var( ctx, rhs );                   \
                 case binary_operator_type::signal_op_temp_signal:                                  \
-                    return make_value( ctx, lhs ) OPERATOR( +make_value( ctx, rhs ) );             \
+                    return make_var( ctx, lhs ) OPERATOR( +make_var( ctx, rhs ) );                 \
                 case binary_operator_type::temp_signal_op_temp_signal:                             \
-                    return (+make_value( ctx, lhs ))OPERATOR( +make_value( ctx, rhs ) );           \
+                    return (+make_var( ctx, lhs ))OPERATOR( +make_var( ctx, rhs ) );               \
                 case binary_operator_type::value_op_signal:                                        \
-                    return lhs OPERATOR make_value( ctx, rhs );                                    \
+                    return lhs OPERATOR make_var( ctx, rhs );                                      \
                 case binary_operator_type::value_op_temp_signal:                                   \
-                    return lhs OPERATOR( +make_value( ctx, rhs ) );                                \
+                    return lhs OPERATOR( +make_var( ctx, rhs ) );                                  \
                 case binary_operator_type::signal_op_value:                                        \
-                    return make_value( ctx, lhs ) OPERATOR rhs;                                    \
+                    return make_var( ctx, lhs ) OPERATOR rhs;                                      \
                 case binary_operator_type::temp_signal_op_value:                                   \
-                    return (+make_value( ctx, lhs ))OPERATOR rhs;                                  \
+                    return (+make_var( ctx, lhs ))OPERATOR rhs;                                    \
             }                                                                                      \
             return {};                                                                             \
         }                                                                                          \
@@ -176,12 +174,6 @@ DECLARE_BINARY_OPERATOR_TRAITS( >=, greater_equal )
 DECLARE_BINARY_OPERATOR_TRAITS( &&, logical_and )
 DECLARE_BINARY_OPERATOR_TRAITS( ||, logical_or )
 
-DECLARE_BINARY_OPERATOR_TRAITS( &, bitwise_and )
-DECLARE_BINARY_OPERATOR_TRAITS( |, bitwise_or )
-DECLARE_BINARY_OPERATOR_TRAITS( ^, bitwise_xor )
-DECLARE_BINARY_OPERATOR_TRAITS( <<, bitwise_left_shift )
-DECLARE_BINARY_OPERATOR_TRAITS( >>, bitwise_right_shift )
-
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic pop
 #endif
@@ -190,7 +182,7 @@ template <typename traits, typename left_t, typename right_t>
 void test_binary_operator_impl( binary_operator_type type, const left_t& lhs, const right_t& rhs )
 {
     ureact::context ctx;
-    auto signal_to_test = traits::make_function( ctx, type, lhs, rhs );
+    auto signal_to_test = traits::make_signal( ctx, type, lhs, rhs );
     auto value_from_signal = signal_to_test.get();
     auto value_from_operator = traits::execute_operator( lhs, rhs );
     static_assert(
@@ -226,7 +218,7 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto v1 = make_value( ctx, 1 );
+        auto v1 = make_var( ctx, 1 );
 
         // clang-format off
         auto unary_plus           = +v1;
@@ -260,8 +252,8 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto lhs = make_value( ctx, 0 );
-        auto rhs = make_value( ctx, 1 );
+        auto lhs = make_var( ctx, 0 );
+        auto rhs = make_var( ctx, 1 );
 
         // clang-format off
         auto addition            = lhs +  rhs;
@@ -321,8 +313,8 @@ TEST_SUITE( "operators" )
     {
         ureact::context ctx;
 
-        auto lhs = make_value( ctx, 0 );
-        auto rhs = make_value( ctx, 1 );
+        auto lhs = make_var( ctx, 0 );
+        auto rhs = make_var( ctx, 1 );
 
         // clang-format off
         auto division = lhs / rhs;
@@ -389,7 +381,7 @@ TEST_SUITE( "operators" )
 
         ureact::context ctx;
 
-        auto _2 = make_value( ctx, 2 );
+        auto _2 = make_var( ctx, 2 );
 
         auto result = _2 + _2 * _2;
         CHECK( result.get() == 6 );

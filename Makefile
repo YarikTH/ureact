@@ -14,19 +14,6 @@
 SED:=$(shell command -v gsed || which sed)
 
 ##########################################################################
-# source files
-##########################################################################
-
-# the list of CMakeLists.txt
-CMAKE_FILES_TO_FORMAT=$(shell find . -type f -name CMakeLists.txt -o -name '*.cmake' | grep -v './cmake-build' | grep -v 'integration_main.cmake' | sort)
-
-INCLUDE_FILES_TO_FORMAT=$(shell find ./include -type f -name '*.hpp' | sort)
-TEST_FILES_TO_FORMAT=$(shell find ./tests -type f -name '*.h' -or -name '*.hpp' -or -name '*.c' -or -name '*.cpp' | grep -v 'thirdparty' | grep -v 'integration' | sort)
-CPP_FILES_TO_FORMAT=${INCLUDE_FILES_TO_FORMAT} ${TEST_FILES_TO_FORMAT}
-
-FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT} ${CPP_FILES_TO_FORMAT}
-
-##########################################################################
 # documentation of the Makefile's targets
 ##########################################################################
 
@@ -34,28 +21,33 @@ FILES_TO_FORMAT=${CMAKE_FILES_TO_FORMAT} ${CPP_FILES_TO_FORMAT}
 all:
 	@echo "This Makefile is for the maintenance of the repository, not for building."
 	@echo "Supported targets:"
-	@echo "* pretty_version - output version of formatting tools"
 	@echo "* pretty_check - check if all cmake and c++ files are properly formatted"
 	@echo "* pretty - prettify all cmake and c++ files"
 	@echo "* integration_check - check library integrations"
 	@echo "* integration_update - generate integration files"
 	@echo "* changelog - generate ChangeLog file"
 
+
 ##########################################################################
 # Prettify
 ##########################################################################
-
-# output version of formatting tools
-pretty_version:
-	@./support/pretty.sh --version
+PRETTY_PY_COMMAND = /usr/bin/env python3 ./support/thirdparty/pretty.py/pretty.py
+PRETTY_PY_OPTIONS = --clang-format clang-format-11
+PRETTY_PY_OPTIONS += --exclude='tests/thirdparty'
+PRETTY_PY_OPTIONS += --exclude='tests/integration'
+PRETTY_PY_OPTIONS += --exclude='support/thirdparty'
+#TODO: support adding of additional path after excluding
+#PRETTY_PY_OPTIONS += "--include='tests/integration/test_integration.cmake'"
+#PRETTY_PY_OPTIONS += "--include='tests/thirdparty/doctest/CMakeLists.txt'"
 
 # check if all cmake and c++ files are properly formatted
 pretty_check:
-	@./support/pretty.sh --check $(FILES_TO_FORMAT)
+	@$(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) --check -
 
 # prettify all cmake and c++ files
 pretty:
-	@./support/pretty.sh $(FILES_TO_FORMAT)
+	@$(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) -
+
 
 ##########################################################################
 # Integration

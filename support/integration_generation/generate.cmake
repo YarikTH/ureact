@@ -11,7 +11,7 @@ function(generate_integration_cmake name cmake_min_ver)
     set(CMAKE_MIN_VER ${cmake_min_ver})
     file(READ ${CMAKE_CURRENT_LIST_DIR}/${name}.cmake CMAKE_LISTS_TXT_BODY)
     configure_file(
-        ${CMAKE_CURRENT_LIST_DIR}/integration_main.cmake
+        ${CMAKE_CURRENT_LIST_DIR}/integration_main.cmake.in
         ${DEST_DIR}/${name}/CMakeLists.txt
         @ONLY
     )

@@ -44,11 +44,6 @@ option(
     OFF
 )
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
-option(
-    UREACT_PLAYGROUND
-    "Generate the playground target."
-    ${UREACT_MASTER_PROJECT}
-)
 option(UREACT_INSTALL "Generate install target." ${UREACT_MASTER_PROJECT})
 option(UREACT_СTEST "Generate the CTest targets for CI." n)
 

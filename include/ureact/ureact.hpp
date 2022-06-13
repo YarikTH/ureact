@@ -1185,7 +1185,7 @@ public:
     {
         bool changed = false;
 
-        { // timer
+        {
             S new_value = m_op.evaluate();
 
             if( !equals( this->m_value, new_value ) )
@@ -1193,7 +1193,7 @@ public:
                 this->m_value = std::move( new_value );
                 changed = true;
             }
-        } // ~timer
+        }
 
         if( changed )
         {

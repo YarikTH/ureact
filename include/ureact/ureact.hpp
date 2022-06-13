@@ -477,6 +477,9 @@ private:
 };
 
 
+using turn_type = unsigned;
+
+
 class reactive_node
 {
 public:
@@ -488,7 +491,7 @@ public:
 
     virtual ~reactive_node() = default;
 
-    virtual void tick() = 0;
+    virtual void tick( turn_type& turn ) = 0;
 };
 
 
@@ -496,7 +499,7 @@ struct input_node_interface
 {
     virtual ~input_node_interface() = default;
 
-    virtual bool apply_input() = 0;
+    virtual bool apply_input( turn_type& turn ) = 0;
 };
 
 
@@ -574,11 +577,13 @@ public:
 
     void finalize_transaction()
     {
+        turn_type turn( next_turn_id() );
+
         // apply input node changes
         bool should_propagate = false;
         for( auto* p : m_changed_inputs )
         {
-            if( p->apply_input() )
+            if( p->apply_input( turn ) )
             {
                 should_propagate = true;
             }
@@ -588,7 +593,7 @@ public:
         // propagate changes
         if( should_propagate )
         {
-            propagate();
+            propagate( turn );
         }
 
         detach_queued_observers();
@@ -613,7 +618,7 @@ public:
         m_detached_observers.push_back( &obs );
     }
 
-    void propagate();
+    void propagate( turn_type& turn );
 
     void on_node_attach( reactive_node& node, reactive_node& parent );
     void on_node_detach( reactive_node& node, reactive_node& parent );
@@ -664,7 +669,14 @@ private:
 
     void process_children( reactive_node& node );
 
+    turn_type next_turn_id()
+    {
+        return m_next_turn_id++;
+    }
+
     topological_queue m_scheduled_nodes;
+
+    turn_type m_next_turn_id{ 0 };
 
     int m_transaction_level = 0;
 
@@ -736,7 +748,7 @@ inline void react_graph::on_node_pulse( reactive_node& node )
     process_children( node );
 }
 
-inline void react_graph::propagate()
+inline void react_graph::propagate( turn_type& turn )
 {
     while( m_scheduled_nodes.fetch_next() )
     {
@@ -751,7 +763,7 @@ inline void react_graph::propagate()
             }
 
             cur_node->queued = false;
-            cur_node->tick();
+            cur_node->tick( turn );
         }
     }
 }
@@ -930,7 +942,7 @@ public:
     var_node& operator=( var_node&& ) noexcept = delete;
 
     // LCOV_EXCL_START
-    void tick() override
+    void tick( turn_type& ) override
     {
         assert( false && "Ticked var_node" );
     }
@@ -968,7 +980,7 @@ public:
         }
     }
 
-    bool apply_input() override
+    bool apply_input( turn_type& ) override
     {
         if( m_is_input_added )
         {
@@ -1169,7 +1181,7 @@ public:
         }
     }
 
-    void tick() override
+    void tick( turn_type& ) override
     {
         bool changed = false;
 
@@ -1230,7 +1242,7 @@ public:
     flatten_node( flatten_node&& ) noexcept = delete;
     flatten_node& operator=( flatten_node&& ) noexcept = delete;
 
-    void tick() override
+    void tick( turn_type& ) override
     {
         const auto& new_inner = get_node_ptr( m_outer->value_ref() );
 
@@ -1278,7 +1290,7 @@ public:
     signal_observer_node( signal_observer_node&& ) noexcept = delete;
     signal_observer_node& operator=( signal_observer_node&& ) noexcept = delete;
 
-    void tick() override
+    void tick( turn_type& ) override
     {
         bool should_detach = false;
 

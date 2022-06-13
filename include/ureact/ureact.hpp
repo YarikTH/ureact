@@ -1124,13 +1124,13 @@ private:
     struct eval_functor
     {
         explicit eval_functor( F& f )
-            : func( f )
+            : m_func( f )
         {}
 
         template <typename... T>
         UREACT_WARN_UNUSED_RESULT S operator()( T&&... args )
         {
-            return func( eval( args )... );
+            return m_func( eval( args )... );
         }
 
         template <typename T>
@@ -1146,7 +1146,7 @@ private:
             return dep_ptr->value_ref();
         }
 
-        F& func;
+        F& m_func;
     };
 
     dep_holder_t m_deps;

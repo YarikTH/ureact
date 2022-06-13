@@ -42,11 +42,11 @@ PRETTY_PY_OPTIONS += --exclude='support/thirdparty'
 
 # check if all cmake and c++ files are properly formatted
 pretty_check:
-	@$(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) --check -
+	@./support/venv.sh $(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) --check -
 
 # prettify all cmake and c++ files
 pretty:
-	@$(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) -
+	@./support/venv.sh $(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) -
 
 
 ##########################################################################

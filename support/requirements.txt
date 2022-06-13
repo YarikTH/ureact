@@ -1,0 +1,8 @@
+appdirs==1.4.4
+dataclasses==0.6
+gersemi==0.8.0
+gitdb~=4.0.0
+GitPython~=3.1.20
+lark==1.1.2
+PyYAML==5.4.1
+smmap~=5.0.0

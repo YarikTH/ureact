@@ -16,7 +16,7 @@ TEST_SUITE( "Examples" )
 
         // make_var is available as a free function and as context's member function
         ureact::var_signal<std::string> firstWord = make_var( ctx, std::string( "Change" ) );
-        ureact::var_signal<std::string> secondWord = ctx.make_var( std::string( "me!" ) );
+        ureact::var_signal<std::string> secondWord = make_var( ctx, std::string( "me!" ) );
 
         ureact::signal<std::string> bothWords;
 

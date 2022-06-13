@@ -2376,13 +2376,6 @@ public:
         get_graph().do_transaction( std::forward<F>( func ) );
     }
 
-    /// Factory function to create var signal in the current context.
-    template <typename V>
-    UREACT_WARN_UNUSED_RESULT auto make_var( V&& value )
-    {
-        return ureact::make_var( *this, std::forward<V>( value ) );
-    }
-
     UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
     {
         return this == &rsh;

@@ -447,6 +447,36 @@ UREACT_WARN_UNUSED_RESULT bool equals( const signal<L>& lhs, const signal<R>& rh
 namespace detail
 {
 
+template <typename node_type>
+class node_vector
+{
+public:
+    void add( node_type& node )
+    {
+        m_data.push_back( &node );
+    }
+
+    void remove( const node_type& node )
+    {
+        const auto it = detail::find( m_data.begin(), m_data.end(), &node );
+        m_data.erase( it );
+    }
+
+    auto begin()
+    {
+        return m_data.begin();
+    }
+
+    auto end()
+    {
+        return m_data.end();
+    }
+
+private:
+    std::vector<node_type*> m_data;
+};
+
+
 class reactive_node
 {
 public:
@@ -454,7 +484,7 @@ public:
     int new_level{ 0 };
     bool queued{ false };
 
-    std::vector<reactive_node*> successors;
+    node_vector<reactive_node> successors;
 
     virtual ~reactive_node() = default;
 
@@ -683,7 +713,7 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
 
 inline void react_graph::on_node_attach( reactive_node& node, reactive_node& parent )
 {
-    parent.successors.push_back( &node );
+    parent.successors.add( node );
 
     if( node.level <= parent.level )
     {
@@ -693,9 +723,7 @@ inline void react_graph::on_node_attach( reactive_node& node, reactive_node& par
 
 inline void react_graph::on_node_detach( reactive_node& node, reactive_node& parent )
 {
-    const auto it
-        = ureact::detail::find( parent.successors.begin(), parent.successors.end(), &node );
-    parent.successors.erase( it );
+    parent.successors.remove( node );
 }
 
 inline void react_graph::on_input_change( reactive_node& node )

@@ -1162,62 +1162,6 @@ private:
     bool m_was_op_stolen = false;
 };
 
-
-template <typename outer_t, typename inner_t>
-class flatten_node : public signal_node<inner_t>
-{
-public:
-    flatten_node( context& context,
-        std::shared_ptr<signal_node<outer_t>> outer,
-        const std::shared_ptr<signal_node<inner_t>>& inner )
-        : flatten_node::signal_node( context, inner->value_ref() )
-        , m_outer( std::move( outer ) )
-        , m_inner( inner )
-    {
-        this->get_graph().on_node_attach( *this, *m_outer );
-        this->get_graph().on_node_attach( *this, *m_inner );
-    }
-
-    ~flatten_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_inner );
-        this->get_graph().on_node_detach( *this, *m_outer );
-    }
-
-    // Nodes can't be copied
-    flatten_node( const flatten_node& ) = delete;
-    flatten_node& operator=( const flatten_node& ) = delete;
-    flatten_node( flatten_node&& ) noexcept = delete;
-    flatten_node& operator=( flatten_node&& ) noexcept = delete;
-
-    void tick( turn_type& ) override
-    {
-        const auto& new_inner = get_node_ptr( m_outer->value_ref() );
-
-        if( new_inner != m_inner )
-        {
-            // Topology has been changed
-            auto old_inner = m_inner;
-            m_inner = new_inner;
-
-            this->get_graph().on_dynamic_node_detach( *this, *old_inner );
-            this->get_graph().on_dynamic_node_attach( *this, *new_inner );
-
-            return;
-        }
-
-        if( !equals( this->m_value, m_inner->value_ref() ) )
-        {
-            this->m_value = m_inner->value_ref();
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    std::shared_ptr<signal_node<outer_t>> m_outer;
-    std::shared_ptr<signal_node<inner_t>> m_inner;
-};
-
 } // namespace detail
 
 
@@ -2233,21 +2177,6 @@ private:
     observer m_obs;
 };
 
-//==================================================================================================
-// [[section]] Free functions for fun and profit
-//==================================================================================================
-
-
-template <typename inner_value_t>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
-{
-    context& context = outer.get_context();
-    return signal<inner_value_t>(
-        std::make_shared<detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
-            context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
-}
-
-
 namespace detail
 {
 
@@ -2305,6 +2234,56 @@ UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, in_f&& func ) -> ob
 namespace detail
 {
 
+template <typename outer_t, typename inner_t>
+class flatten_node : public signal_node<inner_t>
+{
+public:
+    flatten_node( context& context,
+        std::shared_ptr<signal_node<outer_t>> outer,
+        const std::shared_ptr<signal_node<inner_t>>& inner )
+        : flatten_node::signal_node( context, inner->value_ref() )
+        , m_outer( std::move( outer ) )
+        , m_inner( inner )
+    {
+        this->get_graph().on_node_attach( *this, *m_outer );
+        this->get_graph().on_node_attach( *this, *m_inner );
+    }
+
+    ~flatten_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_inner );
+        this->get_graph().on_node_detach( *this, *m_outer );
+    }
+
+    void tick( turn_type& ) override
+    {
+        const auto& new_inner = get_node_ptr( m_outer->value_ref() );
+
+        if( new_inner != m_inner )
+        {
+            // Topology has been changed
+            auto old_inner = m_inner;
+            m_inner = new_inner;
+
+            this->get_graph().on_dynamic_node_detach( *this, *old_inner );
+            this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+
+            return;
+        }
+
+        if( !equals( this->m_value, m_inner->value_ref() ) )
+        {
+            this->m_value = m_inner->value_ref();
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    std::shared_ptr<signal_node<outer_t>> m_outer;
+    std::shared_ptr<signal_node<inner_t>> m_inner;
+};
+
+
 template <typename T>
 struct decay_input
 {
@@ -2322,6 +2301,14 @@ using decay_input_t = typename decay_input<T>::type;
 
 } // namespace detail
 
+template <typename inner_value_t>
+UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
+{
+    context& context = outer.get_context();
+    return signal<inner_value_t>(
+        std::make_shared<detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
+            context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
+}
 
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 auto reactive_ref( const ureact::signal<std::reference_wrapper<S>>& outer, R S::*attribute )

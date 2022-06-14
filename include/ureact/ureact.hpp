@@ -175,13 +175,6 @@ class context_internals;
 /// Return internals. Not intended to use in user code.
 UREACT_WARN_UNUSED_RESULT inline detail::context_internals& _get_internals( context& ctx );
 
-/// Observer functions can return values of this type to control further processing.
-enum class observer_action
-{
-    next,           ///< Need to continue observing
-    stop_and_detach ///< Need to stop observing
-};
-
 namespace detail
 {
 
@@ -305,40 +298,6 @@ using is_same_decay = std::is_same<std::decay_t<T1>, std::decay_t<T2>>;
 
 template <typename T1, typename T2>
 inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
-
-
-/// Special wrapper to add specific return type to the void function
-template <typename F, typename ret_t, ret_t return_value>
-struct add_default_return_value_wrapper
-{
-    add_default_return_value_wrapper( const add_default_return_value_wrapper& ) = default;
-
-    add_default_return_value_wrapper& operator=( const add_default_return_value_wrapper& ) = delete;
-
-    add_default_return_value_wrapper( add_default_return_value_wrapper&& other ) noexcept
-        : m_func( std::move( other.m_func ) )
-    {}
-
-    add_default_return_value_wrapper& operator=(
-        add_default_return_value_wrapper&& ) noexcept = delete;
-
-    template <typename in_f,
-        class = std::enable_if_t<!is_same_decay_v<in_f, add_default_return_value_wrapper>>>
-    explicit add_default_return_value_wrapper( in_f&& func )
-        : m_func( std::forward<in_f>( func ) )
-    {}
-
-    ~add_default_return_value_wrapper() = default;
-
-    template <typename... args_t>
-    UREACT_WARN_UNUSED_RESULT ret_t operator()( args_t&&... args )
-    {
-        m_func( std::forward<args_t>( args )... );
-        return return_value;
-    }
-
-    F m_func;
-};
 
 } // namespace detail
 
@@ -1259,66 +1218,6 @@ private:
     std::shared_ptr<signal_node<inner_t>> m_inner;
 };
 
-
-template <typename S, typename func_t>
-class signal_observer_node : public observer_node
-{
-public:
-    template <typename F>
-    signal_observer_node(
-        context& context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
-        : signal_observer_node::observer_node( context )
-        , m_subject( subject )
-        , m_func( std::forward<F>( func ) )
-    {
-        get_graph().on_node_attach( *this, *subject );
-    }
-
-    signal_observer_node( const signal_observer_node& ) = delete;
-    signal_observer_node& operator=( const signal_observer_node& ) = delete;
-    signal_observer_node( signal_observer_node&& ) noexcept = delete;
-    signal_observer_node& operator=( signal_observer_node&& ) noexcept = delete;
-
-    void tick( turn_type& ) override
-    {
-        bool should_detach = false;
-
-        if( auto p = m_subject.lock() )
-        {
-            if( m_func( p->value_ref() ) == observer_action::stop_and_detach )
-            {
-                should_detach = true;
-            }
-        }
-
-        if( should_detach )
-        {
-            get_graph().queue_observer_for_detach( *this );
-        }
-    }
-
-    void unregister_self() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            p->unregister_observer( this );
-        }
-    }
-
-private:
-    void detach_observer() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            get_graph().on_node_detach( *this, *p );
-            m_subject.reset();
-        }
-    }
-
-    std::weak_ptr<signal_node<S>> m_subject;
-    func_t m_func;
-};
-
 } // namespace detail
 
 
@@ -1793,125 +1692,6 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pa
     return make_signal( arg_pack, std::forward<F>( func ) );
 }
 
-/*! @brief Shared pointer like object that holds a strong reference to the observed subject
- *
- *  An instance of this class provides a unique handle to an observer which can
- *  be used to detach it explicitly. It also holds a strong reference to
- *  the observed subject, so while it exists the subject and therefore
- *  the observer will not be destroyed.
- *
- *  If the handle is destroyed without calling detach(), the lifetime of
- *  the observer is tied to the subject.
- */
-class observer
-{
-private:
-    using subject_ptr_t = std::shared_ptr<detail::observable_node>;
-    using node_t = detail::observer_node;
-
-public:
-    /// Default constructor
-    observer() = default;
-
-    /// Move constructor
-    observer( observer&& other ) noexcept
-        : m_node_ptr( other.m_node_ptr )
-        , m_subject_ptr( std::move( other.m_subject_ptr ) )
-    {
-        other.m_node_ptr = nullptr;
-        other.m_subject_ptr.reset();
-    }
-
-    /// Node constructor
-    observer( node_t* node_ptr, subject_ptr_t subject_ptr )
-        : m_node_ptr( node_ptr )
-        , m_subject_ptr( std::move( subject_ptr ) )
-    {}
-
-    /// Move assignment
-    observer& operator=( observer&& other ) noexcept
-    {
-        m_node_ptr = other.m_node_ptr;
-        m_subject_ptr = std::move( other.m_subject_ptr );
-
-        other.m_node_ptr = nullptr;
-        other.m_subject_ptr.reset();
-
-        return *this;
-    }
-
-    /// Deleted copy constructor and assignment
-    observer( const observer& ) = delete;
-    observer& operator=( const observer& ) = delete;
-
-    ~observer() = default;
-
-    /// Manually detaches the linked observer node from its subject
-    void detach()
-    {
-        assert( is_valid() );
-        m_subject_ptr->unregister_observer( m_node_ptr );
-    }
-
-    /// Tests if this instance is linked to a node
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_node_ptr != nullptr;
-    }
-
-private:
-    /// Owned by subject
-    node_t* m_node_ptr = nullptr;
-
-    /// While the observer handle exists, the subject is not destroyed
-    subject_ptr_t m_subject_ptr = nullptr;
-};
-
-
-/// Takes ownership of an observer and automatically detaches it on scope exit.
-class scoped_observer
-{
-public:
-    /// Move constructor
-    scoped_observer( scoped_observer&& other ) noexcept
-        : m_obs( std::move( other.m_obs ) )
-    {}
-
-    /// Constructs instance from observer
-    scoped_observer( observer&& obs )
-        : m_obs( std::move( obs ) )
-    {}
-
-    // Move assignment
-    scoped_observer& operator=( scoped_observer&& other ) noexcept
-    {
-        m_obs = std::move( other.m_obs );
-        return *this;
-    }
-
-    /// Deleted default ctor, copy ctor and assignment
-    scoped_observer() = delete;
-    scoped_observer( const scoped_observer& ) = delete;
-    scoped_observer& operator=( const scoped_observer& ) = delete;
-
-    /// Destructor
-    ~scoped_observer()
-    {
-        m_obs.detach();
-    }
-
-    /// Tests if this instance is linked to a node
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_obs.is_valid();
-    }
-
-private:
-    observer m_obs;
-};
-
-
-
 //==================================================================================================
 // [[section]] Operator overloads for signals for simplified signal creation
 //==================================================================================================
@@ -2250,7 +2030,208 @@ UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
 
 #endif // !defined(UREACT_DOC)
 
+/// Observer functions can return values of this type to control further processing.
+enum class observer_action
+{
+    next,           ///< Need to continue observing
+    stop_and_detach ///< Need to stop observing
+};
 
+namespace detail
+{
+
+/// Special wrapper to add specific return type to the void function
+template <typename F, typename ret_t, ret_t return_value>
+class add_default_return_value_wrapper
+{
+public:
+    template <typename in_f,
+        class = std::enable_if_t<!is_same_decay_v<in_f, add_default_return_value_wrapper>>>
+    explicit add_default_return_value_wrapper( in_f&& func )
+        : m_func( std::forward<in_f>( func ) )
+    {}
+
+    template <typename... args_t>
+    UREACT_WARN_UNUSED_RESULT ret_t operator()( args_t&&... args )
+    {
+        m_func( std::forward<args_t>( args )... );
+        return return_value;
+    }
+
+private:
+    F m_func;
+};
+
+template <typename S, typename func_t>
+class signal_observer_node : public observer_node
+{
+public:
+    template <typename F>
+    signal_observer_node(
+        context& context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
+        : signal_observer_node::observer_node( context )
+        , m_subject( subject )
+        , m_func( std::forward<F>( func ) )
+    {
+        get_graph().on_node_attach( *this, *subject );
+    }
+
+    void tick( turn_type& ) override
+    {
+        bool should_detach = false;
+
+        if( auto p = m_subject.lock() )
+        {
+            if( m_func( p->value_ref() ) == observer_action::stop_and_detach )
+            {
+                should_detach = true;
+            }
+        }
+
+        if( should_detach )
+        {
+            get_graph().queue_observer_for_detach( *this );
+        }
+    }
+
+    void unregister_self() override
+    {
+        if( auto p = m_subject.lock() )
+        {
+            p->unregister_observer( this );
+        }
+    }
+
+private:
+    void detach_observer() override
+    {
+        if( auto p = m_subject.lock() )
+        {
+            get_graph().on_node_detach( *this, *p );
+            m_subject.reset();
+        }
+    }
+
+    std::weak_ptr<signal_node<S>> m_subject;
+    func_t m_func;
+};
+
+} // namespace detail
+
+/*! @brief Shared pointer like object that holds a strong reference to the observed subject
+ *
+ *  An instance of this class provides a unique handle to an observer which can
+ *  be used to detach it explicitly. It also holds a strong reference to
+ *  the observed subject, so while it exists the subject and therefore
+ *  the observer will not be destroyed.
+ *
+ *  If the handle is destroyed without calling detach(), the lifetime of
+ *  the observer is tied to the subject.
+ */
+class observer
+{
+private:
+    using subject_ptr_t = std::shared_ptr<detail::observable_node>;
+    using node_t = detail::observer_node;
+
+public:
+    /// Default constructor
+    observer() = default;
+
+    /// Move constructor
+    observer( observer&& other ) noexcept
+        : m_node_ptr( other.m_node_ptr )
+        , m_subject_ptr( std::move( other.m_subject_ptr ) )
+    {
+        other.m_node_ptr = nullptr;
+        other.m_subject_ptr.reset();
+    }
+
+    /// Node constructor
+    observer( node_t* node_ptr, subject_ptr_t subject_ptr )
+        : m_node_ptr( node_ptr )
+        , m_subject_ptr( std::move( subject_ptr ) )
+    {}
+
+    /// Move assignment
+    observer& operator=( observer&& other ) noexcept
+    {
+        m_node_ptr = other.m_node_ptr;
+        m_subject_ptr = std::move( other.m_subject_ptr );
+
+        other.m_node_ptr = nullptr;
+        other.m_subject_ptr.reset();
+
+        return *this;
+    }
+
+    /// Deleted copy constructor and assignment
+    observer( const observer& ) = delete;
+    observer& operator=( const observer& ) = delete;
+
+    /// Manually detaches the linked observer node from its subject
+    void detach()
+    {
+        assert( is_valid() );
+        m_subject_ptr->unregister_observer( m_node_ptr );
+    }
+
+    /// Tests if this instance is linked to a node
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_node_ptr != nullptr;
+    }
+
+private:
+    /// Owned by subject
+    node_t* m_node_ptr = nullptr;
+
+    /// While the observer handle exists, the subject is not destroyed
+    subject_ptr_t m_subject_ptr = nullptr;
+};
+
+
+/// Takes ownership of an observer and automatically detaches it on scope exit.
+class scoped_observer
+{
+public:
+    /// Move constructor
+    scoped_observer( scoped_observer&& other ) noexcept
+        : m_obs( std::move( other.m_obs ) )
+    {}
+
+    /// Constructs instance from observer
+    scoped_observer( observer&& obs )
+        : m_obs( std::move( obs ) )
+    {}
+
+    // Move assignment
+    scoped_observer& operator=( scoped_observer&& other ) noexcept
+    {
+        m_obs = std::move( other.m_obs );
+        return *this;
+    }
+
+    /// Deleted default ctor, copy ctor and assignment
+    scoped_observer() = delete;
+    scoped_observer( const scoped_observer& ) = delete;
+    scoped_observer& operator=( const scoped_observer& ) = delete;
+
+    /// Destructor
+    ~scoped_observer()
+    {
+        m_obs.detach();
+    }
+
+    /// Tests if this instance is linked to a node
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_obs.is_valid();
+    }
+
+private:
+    observer m_obs;
+};
 
 //==================================================================================================
 // [[section]] Free functions for fun and profit

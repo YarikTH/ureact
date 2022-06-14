@@ -1713,6 +1713,86 @@ UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... arg
 } // namespace detail
 
 
+/// Factory function to create var signal in the given context.
+template <typename V>
+UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
+{
+    return make_var_impl( context, std::forward<V>( value ) );
+}
+
+
+/// Utility function to create a signal_pack from given signals.
+template <typename... values_t>
+UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
+{
+    return signal_pack<values_t...>( deps... );
+}
+
+
+/// Comma operator overload to create signal pack from two signals.
+template <typename left_val_t, typename right_val_t>
+UREACT_WARN_UNUSED_RESULT auto operator,(
+    const signal<left_val_t>& a, const signal<right_val_t>& b )
+{
+    return signal_pack<left_val_t, right_val_t>( a, b );
+}
+
+/// Comma operator overload to append node to existing signal pack.
+template <typename... cur_values_t, typename append_value_t>
+UREACT_WARN_UNUSED_RESULT auto operator,(
+    const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
+{
+    return signal_pack<cur_values_t..., append_value_t>( cur, append );
+}
+
+
+/// Free function to connect a signal to a function and return the resulting signal.
+template <typename value_t,
+    typename in_f,
+    typename F = std::decay_t<in_f>,
+    typename S = std::invoke_result_t<F, value_t>,
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<value_t>>>
+UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& func )
+{
+    context& context = arg.get_context();
+
+    return detail::make_temp_signal<S, op_t>(
+        context, std::forward<in_f>( func ), get_node_ptr( arg ) );
+}
+
+/// Free function to connect multiple signals to a function and return the resulting signal.
+template <typename... values_t,
+    typename in_f,
+    typename F = std::decay_t<in_f>,
+    typename S = std::invoke_result_t<F, values_t...>,
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<values_t>...>>
+UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
+{
+    context& context = std::get<0>( arg_pack.data ).get_context();
+
+    auto node_builder = [&context, &func]( const signal<values_t>&... args ) {
+        return detail::make_temp_signal<S, op_t>(
+            context, std::forward<in_f>( func ), get_node_ptr( args )... );
+    };
+
+    return std::apply( node_builder, arg_pack.data );
+}
+
+
+/// operator| overload to connect a signal to a function and return the resulting signal.
+template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
+UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
+{
+    return make_signal( arg, std::forward<F>( func ) );
+}
+
+/// operator| overload to connect multiple signals to a function and return the resulting signal.
+template <typename F, typename... values_t>
+UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
+{
+    return make_signal( arg_pack, std::forward<F>( func ) );
+}
+
 /*! @brief Shared pointer like object that holds a strong reference to the observed subject
  *
  *  An instance of this class provides a unique handle to an observer which can
@@ -2175,86 +2255,6 @@ UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
 //==================================================================================================
 // [[section]] Free functions for fun and profit
 //==================================================================================================
-
-/// Factory function to create var signal in the given context.
-template <typename V>
-UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
-{
-    return detail::make_var_impl( context, std::forward<V>( value ) );
-}
-
-
-/// Utility function to create a signal_pack from given signals.
-template <typename... values_t>
-UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
-{
-    return signal_pack<values_t...>( deps... );
-}
-
-
-/// Comma operator overload to create signal pack from two signals.
-template <typename left_val_t, typename right_val_t>
-UREACT_WARN_UNUSED_RESULT auto operator,(
-    const signal<left_val_t>& a, const signal<right_val_t>& b )
-{
-    return signal_pack<left_val_t, right_val_t>( a, b );
-}
-
-/// Comma operator overload to append node to existing signal pack.
-template <typename... cur_values_t, typename append_value_t>
-UREACT_WARN_UNUSED_RESULT auto operator,(
-    const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
-{
-    return signal_pack<cur_values_t..., append_value_t>( cur, append );
-}
-
-
-/// Free function to connect a signal to a function and return the resulting signal.
-template <typename value_t,
-    typename in_f,
-    typename F = std::decay_t<in_f>,
-    typename S = std::invoke_result_t<F, value_t>,
-    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<value_t>>>
-UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& func )
-{
-    context& context = arg.get_context();
-
-    return detail::make_temp_signal<S, op_t>(
-        context, std::forward<in_f>( func ), get_node_ptr( arg ) );
-}
-
-/// Free function to connect multiple signals to a function and return the resulting signal.
-template <typename... values_t,
-    typename in_f,
-    typename F = std::decay_t<in_f>,
-    typename S = std::invoke_result_t<F, values_t...>,
-    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<values_t>...>>
-UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
-{
-    context& context = std::get<0>( arg_pack.data ).get_context();
-
-    auto node_builder = [&context, &func]( const signal<values_t>&... args ) {
-        return detail::make_temp_signal<S, op_t>(
-            context, std::forward<in_f>( func ), get_node_ptr( args )... );
-    };
-
-    return std::apply( node_builder, arg_pack.data );
-}
-
-
-/// operator| overload to connect a signal to a function and return the resulting signal.
-template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
-{
-    return ::ureact::make_signal( arg, std::forward<F>( func ) );
-}
-
-/// operator| overload to connect multiple signals to a function and return the resulting signal.
-template <typename F, typename... values_t>
-UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
-{
-    return ::ureact::make_signal( arg_pack, std::forward<F>( func ) );
-}
 
 
 template <typename inner_value_t>

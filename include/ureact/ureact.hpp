@@ -1678,27 +1678,28 @@ public:
 };
 
 
-template <typename V, typename S = std::decay_t<V>, class = std::enable_if_t<!is_signal_v<S>>>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
-{
-    return var_signal<S>( std::make_shared<detail::var_node<S>>( context, std::forward<V>( v ) ) );
-}
-
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, std::reference_wrapper<S> v )
 {
-    return var_signal<S&>(
-        std::make_shared<detail::var_node<std::reference_wrapper<S>>>( context, v ) );
+    return var_signal<S&>( std::make_shared<var_node<std::reference_wrapper<S>>>( context, v ) );
 }
 
-template <typename V,
-    typename S = std::decay_t<V>,
-    typename inner_t = typename S::value_t,
-    class = std::enable_if_t<is_signal_v<S>>>
+template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
-    return var_signal<signal<inner_t>>(
-        std::make_shared<detail::var_node<signal<inner_t>>>( context, std::forward<V>( v ) ) );
+    if constexpr( is_signal_v<S> )
+    {
+        using inner_t = typename S::value_t;
+        if constexpr( is_signal_v<S> )
+        {
+            return var_signal<signal<inner_t>>(
+                std::make_shared<var_node<signal<inner_t>>>( context, std::forward<V>( v ) ) );
+        }
+    }
+    else
+    {
+        return var_signal<S>( std::make_shared<var_node<S>>( context, std::forward<V>( v ) ) );
+    }
 }
 
 

@@ -1070,7 +1070,7 @@ public:
             if( !equals( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
-                var_node::get_graph().on_input_change( *this );
+                this->get_graph().on_input_change( *this );
                 return true;
             }
             return false;
@@ -1079,7 +1079,7 @@ public:
         {
             m_is_input_modified = false;
 
-            var_node::get_graph().on_input_change( *this );
+            this->get_graph().on_input_change( *this );
             return true;
         }
         return false;
@@ -1186,7 +1186,7 @@ public:
 
         if( changed )
         {
-            signal_op_node::get_graph().on_node_pulse( *this );
+            this->get_graph().on_node_pulse( *this );
         }
     }
 
@@ -1215,14 +1215,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( inner )
     {
-        flatten_node::get_graph().on_node_attach( *this, *m_outer );
-        flatten_node::get_graph().on_node_attach( *this, *m_inner );
+        this->get_graph().on_node_attach( *this, *m_outer );
+        this->get_graph().on_node_attach( *this, *m_inner );
     }
 
     ~flatten_node() override
     {
-        flatten_node::get_graph().on_node_detach( *this, *m_inner );
-        flatten_node::get_graph().on_node_detach( *this, *m_outer );
+        this->get_graph().on_node_detach( *this, *m_inner );
+        this->get_graph().on_node_detach( *this, *m_outer );
     }
 
     // Nodes can't be copied
@@ -1241,8 +1241,8 @@ public:
             auto old_inner = m_inner;
             m_inner = new_inner;
 
-            flatten_node::get_graph().on_dynamic_node_detach( *this, *old_inner );
-            flatten_node::get_graph().on_dynamic_node_attach( *this, *new_inner );
+            this->get_graph().on_dynamic_node_detach( *this, *old_inner );
+            this->get_graph().on_dynamic_node_attach( *this, *new_inner );
 
             return;
         }
@@ -1250,7 +1250,7 @@ public:
         if( !equals( this->m_value, m_inner->value_ref() ) )
         {
             this->m_value = m_inner->value_ref();
-            flatten_node::get_graph().on_node_pulse( *this );
+            this->get_graph().on_node_pulse( *this );
         }
     }
 
@@ -1505,7 +1505,7 @@ template <typename S>
 class var_signal : public detail::var_signal_base<S>
 {
 private:
-    using node_t = ::ureact::detail::var_node<S>;
+    using node_t = detail::var_node<S>;
 
 public:
     /**
@@ -1681,15 +1681,14 @@ public:
 template <typename V, typename S = std::decay_t<V>, class = std::enable_if_t<!is_signal_v<S>>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
-    return var_signal<S>(
-        std::make_shared<::ureact::detail::var_node<S>>( context, std::forward<V>( v ) ) );
+    return var_signal<S>( std::make_shared<detail::var_node<S>>( context, std::forward<V>( v ) ) );
 }
 
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, std::reference_wrapper<S> v )
 {
     return var_signal<S&>(
-        std::make_shared<::ureact::detail::var_node<std::reference_wrapper<S>>>( context, v ) );
+        std::make_shared<detail::var_node<std::reference_wrapper<S>>>( context, v ) );
 }
 
 template <typename V,
@@ -1699,8 +1698,7 @@ template <typename V,
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
     return var_signal<signal<inner_t>>(
-        std::make_shared<::ureact::detail::var_node<signal<inner_t>>>(
-            context, std::forward<V>( v ) ) );
+        std::make_shared<detail::var_node<signal<inner_t>>>( context, std::forward<V>( v ) ) );
 }
 
 
@@ -1728,7 +1726,7 @@ class observer
 {
 private:
     using subject_ptr_t = std::shared_ptr<detail::observable_node>;
-    using node_t = ::ureact::detail::observer_node;
+    using node_t = detail::observer_node;
 
 public:
     /// Default constructor
@@ -2215,8 +2213,7 @@ template <typename value_t,
     typename in_f,
     typename F = std::decay_t<in_f>,
     typename S = std::invoke_result_t<F, value_t>,
-    typename op_t
-    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<value_t>>>
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<value_t>>>
 UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& func )
 {
     context& context = arg.get_context();
@@ -2230,8 +2227,7 @@ template <typename... values_t,
     typename in_f,
     typename F = std::decay_t<in_f>,
     typename S = std::invoke_result_t<F, values_t...>,
-    typename op_t
-    = ::ureact::detail::function_op<S, F, ::ureact::detail::signal_node_ptr_t<values_t>...>>
+    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<values_t>...>>
 UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
 {
     context& context = std::get<0>( arg_pack.data ).get_context();
@@ -2265,7 +2261,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& out
 {
     context& context = outer.get_context();
     return signal<inner_value_t>(
-        std::make_shared<::ureact::detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
+        std::make_shared<detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
             context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
 }
 
@@ -2300,8 +2296,7 @@ auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
     return observer( raw_node_ptr, subject_ptr );
 }
 
-}
-
+} // namespace detail
 
 /// When the signal value S of subject changes, func(s) is called.
 /// The signature of func should be equivalent to:
@@ -2313,7 +2308,7 @@ auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
 template <typename in_f, typename S>
 auto observe( const signal<S>& subject, in_f&& func ) -> observer
 {
-    return ::ureact::detail::observe_impl( subject, std::forward<in_f>( func ) );
+    return observe_impl( subject, std::forward<in_f>( func ) );
 }
 
 /// observe overload for temporary subject.
@@ -2321,7 +2316,7 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
 template <typename in_f, typename S>
 UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, in_f&& func ) -> observer
 {
-    return ::ureact::detail::observe_impl( subject, std::forward<in_f>( func ) );
+    return observe_impl( subject, std::forward<in_f>( func ) );
 }
 
 
@@ -2346,14 +2341,14 @@ using decay_input_t = typename decay_input<T>::type;
 } // namespace detail
 
 
-template <typename S, typename R, typename decayed_r = ::ureact::detail::decay_input_t<R>>
+template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 auto reactive_ref( const ureact::signal<std::reference_wrapper<S>>& outer, R S::*attribute )
 {
     return flatten( make_signal(
         outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
 }
 
-template <typename S, typename R, typename decayed_r = ::ureact::detail::decay_input_t<R>>
+template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 auto reactive_ptr( const ureact::signal<S*>& outer, R S::*attribute )
 {
     return flatten( make_signal(
@@ -2391,7 +2386,7 @@ public:
     }
 
     /// Return internals. Not intended to use in user code.
-    UREACT_WARN_UNUSED_RESULT friend detail::context_internals& _get_internals( context& ctx )
+    UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
     {
         return ctx;
     }

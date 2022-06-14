@@ -937,6 +937,46 @@ protected:
 };
 
 
+template <typename node_t>
+class reactive_base
+{
+public:
+    reactive_base() = default;
+
+    explicit reactive_base( std::shared_ptr<node_t>&& ptr )
+        : m_ptr( std::move( ptr ) )
+    {}
+
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_ptr != nullptr;
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool equals( const reactive_base& other ) const
+    {
+        return this->m_ptr == other.m_ptr;
+    }
+
+    UREACT_WARN_UNUSED_RESULT context& get_context() const
+    {
+        return m_ptr->get_context();
+    }
+
+protected:
+    std::shared_ptr<node_t> m_ptr;
+
+    template <typename node_t_>
+    friend const std::shared_ptr<node_t_>& get_node_ptr( const reactive_base<node_t_>& node );
+};
+
+
+template <typename node_t>
+UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
+    const reactive_base<node_t>& node )
+{
+    return node.m_ptr;
+}
+
 template <typename S>
 class signal_node : public observable_node
 {
@@ -1288,47 +1328,6 @@ private:
 //==================================================================================================
 namespace detail
 {
-
-template <typename node_t>
-class reactive_base
-{
-public:
-    reactive_base() = default;
-
-    reactive_base( std::shared_ptr<node_t>&& ptr ) noexcept
-        : m_ptr( std::move( ptr ) )
-    {}
-
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_ptr != nullptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool equals( const reactive_base& other ) const
-    {
-        return this->m_ptr == other.m_ptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_ptr->get_context();
-    }
-
-protected:
-    std::shared_ptr<node_t> m_ptr;
-
-    template <typename node_t_>
-    friend const std::shared_ptr<node_t_>& get_node_ptr( const reactive_base<node_t_>& node );
-};
-
-
-template <typename node_t>
-UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
-    const reactive_base<node_t>& node )
-{
-    return node.m_ptr;
-}
-
 
 template <typename S>
 class signal_base : public reactive_base<signal_node<S>>

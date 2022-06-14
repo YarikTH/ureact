@@ -3962,6 +3962,573 @@ auto reactive_ptr( const ureact::signal<S*>& outer, R S::*attribute )
         outer, [attribute]( const S* s ) { return static_cast<decayed_r>( s->*attribute ); } ) );
 }
 
+//==================================================================================================
+// [[section]] Algorithms
+//==================================================================================================
+
+namespace detail
+{
+
+template <typename S>
+class hold_node : public signal_node<S>
+{
+public:
+    template <typename T>
+    hold_node( context& context, T&& init, const std::shared_ptr<event_stream_node<S>>& events )
+        : hold_node::signal_node( context, std::forward<T>( init ) )
+        , m_events( events )
+    {
+        this->get_graph().on_node_attach( *this, *m_events );
+    }
+
+    ~hold_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_events );
+    }
+
+    void tick( turn_type& ) override
+    {
+        bool changed = false;
+
+        if( !m_events->events().empty() )
+        {
+            const S& new_value = m_events->events().back();
+
+            if( !equals( new_value, this->m_value ) )
+            {
+                changed = true;
+                this->m_value = new_value;
+            }
+        }
+
+        if( changed )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    const std::shared_ptr<event_stream_node<S>> m_events;
+};
+
+template <typename E>
+class monitor_node : public event_stream_node<E>
+{
+public:
+    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
+        : monitor_node::event_stream_node( context )
+        , m_target( target )
+    {
+        this->get_graph().on_node_attach( *this, *m_target );
+    }
+
+    ~monitor_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_target );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        this->set_current_turn_force_update( turn );
+
+        this->m_events.push_back( m_target->value_ref() );
+
+        if( !this->m_events.empty() )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    const std::shared_ptr<signal_node<E>> m_target;
+};
+
+template <typename E, typename S, typename F, typename... args_t>
+struct add_iterate_range_wrapper
+{
+    add_iterate_range_wrapper( const add_iterate_range_wrapper& other ) = default;
+
+    add_iterate_range_wrapper( add_iterate_range_wrapper&& other ) noexcept
+        : m_func( std::move( other.m_func ) )
+    {}
+
+    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_iterate_range_wrapper>>
+    explicit add_iterate_range_wrapper( f_in_t&& func )
+        : m_func( std::forward<f_in_t>( func ) )
+    {}
+
+    S operator()( event_range<E> range, S value, const args_t&... args )
+    {
+        for( const auto& e : range )
+        {
+            value = m_func( e, value, args... );
+        }
+
+        return value;
+    }
+
+    F m_func;
+};
+
+template <typename E, typename S, typename F, typename... args_t>
+struct add_iterate_by_ref_range_wrapper
+{
+    add_iterate_by_ref_range_wrapper( const add_iterate_by_ref_range_wrapper& other ) = default;
+
+    add_iterate_by_ref_range_wrapper( add_iterate_by_ref_range_wrapper&& other ) noexcept
+        : m_func( std::move( other.m_func ) )
+    {}
+
+    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_iterate_by_ref_range_wrapper>>
+    explicit add_iterate_by_ref_range_wrapper( f_in_t&& func )
+        : m_func( std::forward<f_in_t>( func ) )
+    {}
+
+    void operator()( event_range<E> range, S& value_ref, const args_t&... args )
+    {
+        for( const auto& e : range )
+        {
+            m_func( e, value_ref, args... );
+        }
+    }
+
+    F m_func;
+};
+
+template <typename S, typename E, typename func_t>
+class iterate_node : public signal_node<S>
+{
+public:
+    template <typename T, typename F>
+    iterate_node(
+        context& context, T&& init, const std::shared_ptr<event_stream_node<E>>& events, F&& func )
+        : iterate_node::signal_node( context, std::forward<T>( init ) )
+        , m_events( events )
+        , m_func( std::forward<F>( func ) )
+    {
+        this->get_graph().on_node_attach( *this, *events );
+    }
+
+    ~iterate_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_events );
+    }
+
+    void tick( turn_type& ) override
+    {
+        bool changed = false;
+
+        {
+            S new_value = m_func( event_range<E>( m_events->events() ), this->m_value );
+
+            if( !equals( new_value, this->m_value ) )
+            {
+                this->m_value = std::move( new_value );
+                changed = true;
+            }
+        }
+
+        if( changed )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    std::shared_ptr<event_stream_node<E>> m_events;
+
+    func_t m_func;
+};
+
+template <typename S, typename E, typename func_t>
+class iterate_by_ref_node : public signal_node<S>
+{
+public:
+    template <typename T, typename F>
+    iterate_by_ref_node(
+        context& context, T&& init, const std::shared_ptr<event_stream_node<E>>& events, F&& func )
+        : iterate_by_ref_node::signal_node( context, std::forward<T>( init ) )
+        , m_func( std::forward<F>( func ) )
+        , m_events( events )
+    {
+        this->get_graph().on_node_attach( *this, *events );
+    }
+
+    ~iterate_by_ref_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_events );
+    }
+
+    void tick( turn_type& ) override
+    {
+        m_func( event_range<E>( m_events->events() ), this->m_value );
+
+        // Always assume change
+        this->get_graph().on_node_pulse( *this );
+    }
+
+protected:
+    func_t m_func;
+
+    std::shared_ptr<event_stream_node<E>> m_events;
+};
+
+template <typename S, typename E, typename func_t, typename... dep_values_t>
+class synced_iterate_node : public signal_node<S>
+{
+public:
+    template <typename T, typename F>
+    synced_iterate_node( context& context,
+        T&& init,
+        const std::shared_ptr<event_stream_node<E>>& events,
+        F&& func,
+        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
+        : synced_iterate_node::signal_node( context, std::forward<T>( init ) )
+        , m_events( events )
+        , m_func( std::forward<F>( func ) )
+        , m_deps( deps... )
+    {
+        this->get_graph().on_node_attach( *this, *events );
+        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+    }
+
+    ~synced_iterate_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_events );
+
+        apply( detach_functor<synced_iterate_node, std::shared_ptr<signal_node<dep_values_t>>...>(
+                   *this ),
+            m_deps );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        m_events->set_current_turn( turn );
+
+        bool changed = false;
+
+        if( !m_events->events().empty() )
+        {
+            S new_value = apply(
+                [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
+                    return m_func(
+                        event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                },
+                m_deps );
+
+            if( !equals( new_value, this->m_value ) )
+            {
+                changed = true;
+                this->m_value = std::move( new_value );
+            }
+        }
+
+        if( changed )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
+
+    std::shared_ptr<event_stream_node<E>> m_events;
+
+    func_t m_func;
+    dep_holder_t m_deps;
+};
+
+template <typename S, typename E, typename func_t, typename... dep_values_t>
+class synced_iterate_by_ref_node : public signal_node<S>
+{
+public:
+    template <typename T, typename F>
+    synced_iterate_by_ref_node( context& context,
+        T&& init,
+        const std::shared_ptr<event_stream_node<E>>& events,
+        F&& func,
+        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
+        : synced_iterate_by_ref_node::signal_node( context, std::forward<T>( init ) )
+        , m_events( events )
+        , m_func( std::forward<F>( func ) )
+        , m_deps( deps... )
+    {
+        this->get_graph().on_node_attach( *this, *events );
+        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+    }
+
+    ~synced_iterate_by_ref_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_events );
+
+        apply( detach_functor<synced_iterate_by_ref_node,
+                   std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
+            m_deps );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        m_events->set_current_turn( turn );
+
+        bool changed = false;
+
+        if( !m_events->events().empty() )
+        {
+            apply(
+                [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
+                    m_func(
+                        event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                },
+                m_deps );
+
+            changed = true;
+        }
+
+        if( changed )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
+
+    std::shared_ptr<event_stream_node<E>> m_events;
+
+    func_t m_func;
+    dep_holder_t m_deps;
+};
+
+// Base class for snapshot and pulse algorithm
+// do something with target signal value on trigger event fires
+template <template <typename> class base, typename S, typename E>
+class triggered_node : public base<S>
+{
+public:
+    template <typename... args_t>
+    triggered_node( context& context,
+        const std::shared_ptr<signal_node<S>>& target,
+        const std::shared_ptr<event_stream_node<E>>& trigger,
+        args_t&&... args )
+        : base<S>( context, std::forward<args_t>( args )... )
+        , m_target( target )
+        , m_trigger( trigger )
+    {
+        this->get_graph().on_node_attach( *this, *m_target );
+        this->get_graph().on_node_attach( *this, *m_trigger );
+    }
+
+    ~triggered_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_target );
+        this->get_graph().on_node_detach( *this, *m_trigger );
+    }
+
+    void tick( turn_type& turn ) final
+    {
+        before_tick( turn );
+
+        m_trigger->set_current_turn( turn );
+
+        const size_t count = m_trigger->events().size();
+        if( count > 0 )
+        {
+            const S& new_value = m_target->value_ref();
+            if( on_trigger_fires( count, new_value ) )
+            {
+                this->get_graph().on_node_pulse( *this );
+            }
+        }
+    }
+
+    /// some turn related actions at the begin of the spin
+    virtual void before_tick( turn_type& turn )
+    {}
+
+    /// specific actions performed when trigger fires at least once
+    virtual bool on_trigger_fires( size_t count, const S& target_value ) = 0;
+
+private:
+    const std::shared_ptr<signal_node<S>> m_target;
+    const std::shared_ptr<event_stream_node<E>> m_trigger;
+};
+
+template <typename S, typename E>
+class snapshot_node : public triggered_node<signal_node, S, E>
+{
+public:
+    snapshot_node( context& context,
+        const std::shared_ptr<signal_node<S>>& target,
+        const std::shared_ptr<event_stream_node<E>>& trigger )
+        : snapshot_node::triggered_node( context, target, trigger, target->value_ref() )
+    {}
+
+    bool on_trigger_fires( size_t, const S& target_value ) final
+    {
+        if( equals( target_value, this->m_value ) )
+        {
+            return false;
+        }
+        else
+        {
+            this->m_value = target_value;
+            return true;
+        }
+    }
+};
+
+template <typename S, typename E>
+class pulse_node : public triggered_node<event_stream_node, S, E>
+{
+public:
+    pulse_node( context& context,
+        const std::shared_ptr<signal_node<S>>& target,
+        const std::shared_ptr<event_stream_node<E>>& trigger )
+        : pulse_node::triggered_node( context, target, trigger )
+    {}
+
+    void before_tick( turn_type& turn ) final
+    {
+        this->set_current_turn_force_update( turn );
+    }
+
+    bool on_trigger_fires( size_t count, const S& target_value ) final
+    {
+        this->m_events.reserve( this->m_events.size() + count );
+
+        for( size_t i = 0, ie = count; i < ie; ++i )
+        {
+            this->m_events.push_back( target_value );
+        }
+
+        return true;
+    }
+};
+
+} // namespace detail
+
+/// Holds most recent event in a signal
+template <typename V, typename T = std::decay_t<V>>
+auto hold( const events<T>& events, V&& init ) -> signal<T>
+{
+    context& context = events.get_context();
+    return signal<T>( std::make_shared<detail::hold_node<T>>(
+        context, std::forward<V>( init ), get_node_ptr( events ) ) );
+}
+
+/// Emits value changes of signal as events
+template <typename S>
+auto monitor( const signal<S>& target ) -> events<S>
+{
+    context& context = target.get_context();
+    return events<S>(
+        std::make_shared<detail::monitor_node<S>>( context, get_node_ptr( target ) ) );
+}
+
+/// Folds values from event stream into a signal
+/// iterate - Iteratively combines signal value with values from event stream (aka Fold)
+template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
+auto iterate( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
+{
+    using F = std::decay_t<f_in_t>;
+
+    using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S>,
+        detail::iterate_node<S, E, F>,
+        std::conditional_t<std::is_invocable_r_v<S, F, E, S>,
+            detail::iterate_node<S, E, detail::add_iterate_range_wrapper<E, S, F>>,
+            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&>,
+                detail::iterate_by_ref_node<S, E, F>,
+                std::conditional_t<std::is_invocable_r_v<void, F, E, S&>,
+                    detail::iterate_by_ref_node<S,
+                        E,
+                        detail::add_iterate_by_ref_range_wrapper<E, S, F>>,
+                    void>>>>;
+
+    static_assert( !std::is_same_v<node_t, void>,
+        "iterate: Passed function does not match any of the supported signatures." );
+
+    context& context = events.get_context();
+    return signal<S>( std::make_shared<node_t>(
+        context, std::forward<V>( init ), get_node_ptr( events ), std::forward<f_in_t>( func ) ) );
+}
+
+/// iterate - Synced
+template <typename E,
+    typename V,
+    typename f_in_t,
+    typename... dep_values_t,
+    typename S = std::decay_t<V>>
+auto iterate(
+    const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    -> signal<S>
+{
+    using F = std::decay_t<f_in_t>;
+
+    using node_t = std::conditional_t<
+        std::is_invocable_r_v<S, F, event_range<E>, S, dep_values_t...>,
+        detail::synced_iterate_node<S, E, F, dep_values_t...>,
+        std::conditional_t<std::is_invocable_r_v<S, F, E, S, dep_values_t...>,
+            detail::synced_iterate_node<S,
+                E,
+                detail::add_iterate_range_wrapper<E, S, F, dep_values_t...>,
+                dep_values_t...>,
+            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&, dep_values_t...>,
+                detail::synced_iterate_by_ref_node<S, E, F, dep_values_t...>,
+                std::conditional_t<std::is_invocable_r_v<void, F, E, S&, dep_values_t...>,
+                    detail::synced_iterate_by_ref_node<S,
+                        E,
+                        detail::add_iterate_by_ref_range_wrapper<E, S, F, dep_values_t...>,
+                        dep_values_t...>,
+                    void>>>>;
+
+    static_assert( !std::is_same_v<node_t, void>,
+        "iterate: Passed function does not match any of the supported signatures." );
+
+    context& context = events.get_context();
+
+    auto node_builder = [&context, &events, &init, &func]( const signal<dep_values_t>&... deps ) {
+        return signal<S>( std::make_shared<node_t>( context,
+            std::forward<V>( init ),
+            get_node_ptr( events ),
+            std::forward<f_in_t>( func ),
+            get_node_ptr( deps )... ) );
+    };
+
+    return std::apply( node_builder, dep_pack.data );
+}
+
+/// snapshot - Sets signal value to value of other signal when event is received
+template <typename S, typename E>
+auto snapshot( const events<E>& trigger, const signal<S>& target ) -> signal<S>
+{
+    context& context = trigger.get_context();
+    return signal<S>( std::make_shared<detail::snapshot_node<S, E>>(
+        context, get_node_ptr( target ), get_node_ptr( trigger ) ) );
+}
+
+/// pulse - Emits value of target signal when event is received
+template <typename S, typename E>
+auto pulse( const events<E>& trigger, const signal<S>& target ) -> events<S>
+{
+    context& context = trigger.get_context();
+    return events<S>( std::make_shared<detail::pulse_node<S, E>>(
+        context, get_node_ptr( target ), get_node_ptr( trigger ) ) );
+}
+
+/// changed - Emits token when target signal was changed
+template <typename S>
+auto changed( const signal<S>& target ) -> events<token>
+{
+    return monitor( target ) | tokenize();
+}
+
+/// changed_to - Emits token when target signal was changed to value
+template <typename V, typename S = std::decay_t<V>>
+auto changed_to( const signal<S>& target, V&& value ) -> events<token>
+{
+    return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | tokenize();
+}
+
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UREACT_H_

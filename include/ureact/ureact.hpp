@@ -570,7 +570,7 @@ private:
 
         bool fetch_next();
 
-        const std::vector<value_type>& next_values() const
+        [[nodiscard]] const std::vector<value_type>& next_values() const
         {
             return m_next_data;
         }
@@ -915,7 +915,7 @@ public:
     using dep_holder_t = std::tuple<deps_t...>;
 
     template <typename... deps_in_t>
-    reactive_op_base( dont_move, deps_in_t&&... deps )
+    explicit reactive_op_base( dont_move, deps_in_t&&... deps )
         : m_deps( std::forward<deps_in_t>( deps )... )
     {}
 
@@ -2084,7 +2084,7 @@ class event_source_node
     , public input_node_interface
 {
 public:
-    event_source_node( context& context )
+    explicit event_source_node( context& context )
         : event_source_node::event_stream_node( context )
     {}
 
@@ -2134,7 +2134,7 @@ class event_op_node : public event_stream_node<E>
 {
 public:
     template <typename... args_t>
-    event_op_node( context& context, args_t&&... args )
+    explicit event_op_node( context& context, args_t&&... args )
         : event_op_node::event_stream_node( context )
         , m_op( std::forward<args_t>( args )... )
     {
@@ -2174,7 +2174,7 @@ private:
     {
         using data_t = typename event_op_node::data_t;
 
-        event_collector( data_t& events )
+        explicit event_collector( data_t& events )
             : m_events( events )
         {}
 
@@ -2205,7 +2205,7 @@ public:
     {}
 
 private:
-    auto get_event_source_node() const -> event_source_node<E>*
+    [[nodiscard]] auto get_event_source_node() const -> event_source_node<E>*
     {
         return static_cast<event_source_node<E>*>( this->m_ptr.get() );
     }
@@ -2306,16 +2306,6 @@ public:
         events::event_stream_base::operator=( std::move( other ) );
         return *this;
     }
-
-    bool equals( const events& other ) const
-    {
-        return events::event_stream_base::equals( other );
-    }
-
-    bool is_valid() const
-    {
-        return events::event_stream_base::is_valid();
-    }
 };
 
 // Specialize for references
@@ -2352,16 +2342,6 @@ public:
     {
         events::event_stream_base::operator=( std::move( other ) );
         return *this;
-    }
-
-    bool equals( const events& other ) const
-    {
-        return events::event_stream_base::equals( other );
-    }
-
-    bool is_valid() const
-    {
-        return events::event_stream_base::is_valid();
     }
 };
 
@@ -2509,28 +2489,22 @@ public:
     using const_iterator = typename std::vector<E>::const_iterator;
     using size_type = typename std::vector<E>::size_type;
 
-    // Copy ctor
-    event_range( const event_range& ) = default;
-
-    // Copy assignment
-    event_range& operator=( const event_range& ) = default;
-
-    const_iterator begin() const
+    [[nodiscard]] const_iterator begin() const
     {
         return m_data.begin();
     }
 
-    const_iterator end() const
+    [[nodiscard]] const_iterator end() const
     {
         return m_data.end();
     }
 
-    size_type size() const
+    [[nodiscard]] size_type size() const
     {
         return m_data.size();
     }
 
-    bool is_empty() const
+    [[nodiscard]] bool empty() const
     {
         return m_data.empty();
     }
@@ -2569,7 +2543,7 @@ class event_merge_op : public reactive_op_base<deps_t...>
 {
 public:
     template <typename... deps_in_t>
-    event_merge_op( deps_in_t&&... deps )
+    explicit event_merge_op( deps_in_t&&... deps )
         : event_merge_op::reactive_op_base( dont_move(), std::forward<deps_in_t>( deps )... )
     {}
 
@@ -3007,7 +2981,7 @@ template <typename... values_t>
 class event_join_node : public event_stream_node<std::tuple<values_t...>>
 {
 public:
-    event_join_node(
+    explicit event_join_node(
         context& context, const std::shared_ptr<event_stream_node<values_t>>&... sources )
         : event_join_node::event_stream_node( context )
         , m_slots( sources... )
@@ -3070,7 +3044,7 @@ private:
     template <typename T>
     struct slot
     {
-        slot( const std::shared_ptr<event_stream_node<T>>& src )
+        explicit slot( const std::shared_ptr<event_stream_node<T>>& src )
             : source( src )
         {}
 
@@ -3635,7 +3609,7 @@ public:
     {}
 
     /// Constructs instance from observer
-    scoped_observer( observer&& obs )
+    scoped_observer( observer&& obs ) // NOLINT no explicit by design
         : m_obs( std::move( obs ) )
     {}
 

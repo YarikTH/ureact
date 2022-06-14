@@ -307,70 +307,6 @@ template <typename T1, typename T2>
 inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
 
 
-// Full analog of std::bind1st that removed in c++17
-// See https://en.cppreference.com/w/cpp/utility/functional/bind12
-template <template <typename, typename> class functor_binary_op,
-    typename lhs_t,
-    typename rhs_t,
-    typename F = functor_binary_op<lhs_t, rhs_t>>
-struct bind_left
-{
-    bind_left( bind_left&& other ) noexcept = default;
-
-    bind_left& operator=( bind_left&& other ) noexcept = delete;
-
-    template <typename T, class = std::enable_if_t<!is_same_decay_v<T, bind_left>>>
-    explicit bind_left( T&& val )
-        : m_left_val( std::forward<T>( val ) )
-    {}
-
-    bind_left( const bind_left& other ) = delete;
-
-    bind_left& operator=( const bind_left& other ) = delete;
-
-    ~bind_left() = default;
-
-    UREACT_WARN_UNUSED_RESULT auto operator()( const rhs_t& rhs ) const
-    {
-        return F()( m_left_val, rhs );
-    }
-
-    lhs_t m_left_val;
-};
-
-
-// Full analog of std::bind2nd that removed in c++17
-// See https://en.cppreference.com/w/cpp/utility/functional/bind12
-template <template <typename, typename> class functor_binary_op,
-    typename lhs_t,
-    typename rhs_t,
-    typename F = functor_binary_op<lhs_t, rhs_t>>
-struct bind_right
-{
-    bind_right( bind_right&& other ) noexcept = default;
-
-    bind_right& operator=( bind_right&& other ) noexcept = delete;
-
-    template <typename T, class = std::enable_if_t<!is_same_decay_v<T, bind_right>>>
-    explicit bind_right( T&& val )
-        : m_right_val( std::forward<T>( val ) )
-    {}
-
-    bind_right( const bind_right& other ) = delete;
-
-    bind_right& operator=( const bind_right& other ) = delete;
-
-    ~bind_right() = default;
-
-    UREACT_WARN_UNUSED_RESULT auto operator()( const lhs_t& lhs ) const
-    {
-        return F()( lhs, m_right_val );
-    }
-
-    rhs_t m_right_val;
-};
-
-
 /// Special wrapper to add specific return type to the void function
 template <typename F, typename ret_t, ret_t return_value>
 struct add_default_return_value_wrapper
@@ -1903,6 +1839,69 @@ private:
 //==================================================================================================
 namespace detail
 {
+
+// Full analog of std::binder1st that removed in c++17
+// See https://en.cppreference.com/w/cpp/utility/functional/binder12
+template <template <typename, typename> class functor_binary_op,
+    typename lhs_t,
+    typename rhs_t,
+    typename F = functor_binary_op<lhs_t, rhs_t>>
+struct bind_left
+{
+    bind_left( bind_left&& other ) noexcept = default;
+
+    bind_left& operator=( bind_left&& other ) noexcept = delete;
+
+    template <typename T, class = std::enable_if_t<!is_same_decay_v<T, bind_left>>>
+    explicit bind_left( T&& val )
+        : m_left_val( std::forward<T>( val ) )
+    {}
+
+    bind_left( const bind_left& other ) = delete;
+
+    bind_left& operator=( const bind_left& other ) = delete;
+
+    ~bind_left() = default;
+
+    UREACT_WARN_UNUSED_RESULT auto operator()( const rhs_t& rhs ) const
+    {
+        return F()( m_left_val, rhs );
+    }
+
+    lhs_t m_left_val;
+};
+
+
+// Full analog of std::binder2nd that removed in c++17
+// See https://en.cppreference.com/w/cpp/utility/functional/binder12
+template <template <typename, typename> class functor_binary_op,
+    typename lhs_t,
+    typename rhs_t,
+    typename F = functor_binary_op<lhs_t, rhs_t>>
+struct bind_right
+{
+    bind_right( bind_right&& other ) noexcept = default;
+
+    bind_right& operator=( bind_right&& other ) noexcept = delete;
+
+    template <typename T, class = std::enable_if_t<!is_same_decay_v<T, bind_right>>>
+    explicit bind_right( T&& val )
+        : m_right_val( std::forward<T>( val ) )
+    {}
+
+    bind_right( const bind_right& other ) = delete;
+
+    bind_right& operator=( const bind_right& other ) = delete;
+
+    ~bind_right() = default;
+
+    UREACT_WARN_UNUSED_RESULT auto operator()( const lhs_t& lhs ) const
+    {
+        return F()( lhs, m_right_val );
+    }
+
+    rhs_t m_right_val;
+};
 
 template <template <typename> class functor_op,
     typename signal_t,

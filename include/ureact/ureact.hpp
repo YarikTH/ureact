@@ -741,6 +741,11 @@ public:
         : m_graph( new react_graph() )
     {}
 
+    // context_internals and context should be non-movable because
+    // node_base contains reference to context and it will break if context lose its graph
+    context_internals( context_internals&& ) noexcept = delete;
+    context_internals& operator=( context_internals&& ) noexcept = delete;
+
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
         return *m_graph;

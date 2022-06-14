@@ -195,8 +195,8 @@ class Shape
 {
 public:
     Shape( ureact::context& ctx )
-        : width(  ctx.make_var( 1 ) )
-        , height( ctx.make_var( 1 ) )
+        : width(  make_var( ctx, 1 ) )
+        , height( make_var( ctx, 1 ) )
         , size( width * height )
     {}
 

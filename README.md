@@ -15,7 +15,6 @@
 [![download](https://img.shields.io/badge/download%20%20-link-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/master/include/ureact/ureact.hpp)
 [![Docs](https://img.shields.io/badge/docs-markdown-blue.svg)](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
 [![GitHub Releases](https://img.shields.io/github/release/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/releases)
-[![GitHub Issues](https://img.shields.io/github/issues/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.)
 
 **µReact** is an open-source minimalistic single-header [reactive programming](https://en.wikipedia.org/wiki/Reactive_programming) library for C++17.

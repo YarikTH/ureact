@@ -198,6 +198,7 @@ The library itself consists of a single header file licensed under the Boost Sof
 * [**ClangFormat**](https://clang.llvm.org/docs/ClangFormat.html) for automatic source code indentation
 * [**gersemi**](https://github.com/blankspruce/gersemi) for automatic CMake code indentation
 * [**doctest**](https://github.com/onqtam/doctest) for the unit tests
+* [**nanobench**](https://github.com/martinus/nanobench) for the benchmarks
 * [**GitHub Changelog Generator**](https://github.com/github-changelog-generator/github-changelog-generator) to generate the [ChangeLog](CHANGELOG.md)
 
 ## Contact

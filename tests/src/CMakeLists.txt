@@ -17,6 +17,9 @@ add_executable(
     details/signal_test.cpp
     details/operators_test.cpp
     details/dynamic_signals_test.cpp
+    details/ObserverTest.cpp
+    details/EventStreamTest.cpp
+    details/SignalTest.cpp
 )
 
 target_include_directories(ureact_test PRIVATE include)

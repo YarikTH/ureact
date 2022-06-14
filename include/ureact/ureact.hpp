@@ -294,6 +294,11 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 
 #endif
 
+struct dont_move
+{};
+
+template <typename T, typename U>
+using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::decay_t<U>>>;
 
 template <typename T1, typename T2>
 using is_same_decay = std::is_same<std::decay_t<T1>, std::decay_t<T2>>;
@@ -896,6 +901,106 @@ public:
 };
 
 
+template <typename node_t, typename... deps_t>
+struct attach_functor
+{
+    explicit attach_functor( node_t& node )
+        : m_node( node )
+    {}
+
+    void operator()( const deps_t&... deps ) const
+    {
+        ( attach( deps ), ... );
+    }
+
+    template <typename T>
+    void attach( const T& op ) const
+    {
+        op.template attach_rec<node_t>( *this );
+    }
+
+    template <typename T>
+    void attach( const std::shared_ptr<T>& dep_ptr ) const
+    {
+        m_node.get_graph().on_node_attach( m_node, *dep_ptr );
+    }
+
+    node_t& m_node;
+};
+
+
+template <typename node_t, typename... deps_t>
+struct detach_functor
+{
+    explicit detach_functor( node_t& node )
+        : m_node( node )
+    {}
+
+    void operator()( const deps_t&... deps ) const
+    {
+        ( detach( deps ), ... );
+    }
+
+    template <typename T>
+    void detach( const T& op ) const
+    {
+        op.template detach_rec<node_t>( *this );
+    }
+
+    template <typename T>
+    void detach( const std::shared_ptr<T>& dep_ptr ) const
+    {
+        m_node.get_graph().on_node_detach( m_node, *dep_ptr );
+    }
+
+    node_t& m_node;
+};
+
+
+template <typename... deps_t>
+class reactive_op_base
+{
+public:
+    using dep_holder_t = std::tuple<deps_t...>;
+
+    template <typename... deps_in_t>
+    reactive_op_base( dont_move, deps_in_t&&... deps )
+        : m_deps( std::forward<deps_in_t>( deps )... )
+    {}
+
+    reactive_op_base( reactive_op_base&& ) noexcept = default;
+    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
+
+    template <typename node_t>
+    void attach( node_t& node ) const
+    {
+        std::apply( attach_functor<node_t, deps_t...>{ node }, m_deps );
+    }
+
+    template <typename node_t>
+    void detach( node_t& node ) const
+    {
+        std::apply( detach_functor<node_t, deps_t...>{ node }, m_deps );
+    }
+
+    template <typename node_t, typename functor_t>
+    void attach_rec( const functor_t& functor ) const
+    {
+        // Same memory layout, different func
+        std::apply( reinterpret_cast<const attach_functor<node_t, deps_t...>&>( functor ), m_deps );
+    }
+
+    template <typename node_t, typename functor_t>
+    void detach_rec( const functor_t& functor ) const
+    {
+        std::apply( reinterpret_cast<const detach_functor<node_t, deps_t...>&>( functor ), m_deps );
+    }
+
+protected:
+    dep_holder_t m_deps;
+};
+
+
 template <typename S>
 class signal_node : public observable_node
 {
@@ -1012,115 +1117,24 @@ private:
 
 
 template <typename S, typename F, typename... deps_t>
-class function_op
+class function_op : public reactive_op_base<deps_t...>
 {
 public:
-    using dep_holder_t = std::tuple<deps_t...>;
-
-    template <typename in_f, typename... deps_in_t>
-    explicit function_op( in_f&& func, deps_in_t&&... deps )
-        : m_deps( std::forward<deps_in_t>( deps )... )
-        , m_func( std::forward<in_f>( func ) )
+    template <typename f_in_t, typename... deps_in_t>
+    explicit function_op( f_in_t&& func, deps_in_t&&... deps )
+        : function_op::reactive_op_base( dont_move(), std::forward<deps_in_t>( deps )... )
+        , m_func( std::forward<f_in_t>( func ) )
     {}
 
-    function_op( function_op&& other ) noexcept
-        : m_deps( std::move( other.m_deps ) )
-        , m_func( std::move( other.m_func ) )
-    {}
-
-    function_op& operator=( function_op&& ) noexcept = delete;
-
-    function_op( const function_op& ) = delete;
-    function_op& operator=( const function_op& ) = delete;
-
-    ~function_op() = default;
+    function_op( function_op&& ) noexcept = default;
+    function_op& operator=( function_op&& ) noexcept = default;
 
     UREACT_WARN_UNUSED_RESULT S evaluate()
     {
-        return std::apply( eval_functor( m_func ), m_deps );
-    }
-
-    template <typename node_t>
-    void attach( node_t& node ) const
-    {
-        std::apply( attach_functor<node_t>{ node }, m_deps );
-    }
-
-    template <typename node_t>
-    void detach( node_t& node ) const
-    {
-        std::apply( detach_functor<node_t>{ node }, m_deps );
-    }
-
-    template <typename node_t, typename functor_t>
-    void attach_rec( const functor_t& functor ) const
-    {
-        // Same memory layout, different func
-        std::apply( reinterpret_cast<const attach_functor<node_t>&>( functor ), m_deps );
-    }
-
-    template <typename node_t, typename functor_t>
-    void detach_rec( const functor_t& functor ) const
-    {
-        std::apply( reinterpret_cast<const detach_functor<node_t>&>( functor ), m_deps );
+        return apply( eval_functor( m_func ), this->m_deps );
     }
 
 private:
-    template <typename node_t>
-    struct attach_functor
-    {
-        explicit attach_functor( node_t& node )
-            : node( node )
-        {}
-
-        void operator()( const deps_t&... deps ) const
-        {
-            ( attach( deps ), ... );
-        }
-
-        template <typename T>
-        void attach( const T& op ) const
-        {
-            op.template attach_rec<node_t>( *this );
-        }
-
-        template <typename T>
-        void attach( const std::shared_ptr<T>& dep_ptr ) const
-        {
-            node.get_graph().on_node_attach( node, *dep_ptr );
-        }
-
-        node_t& node;
-    };
-
-    template <typename node_t>
-    struct detach_functor
-    {
-        explicit detach_functor( node_t& node )
-            : node( node )
-        {}
-
-        void operator()( const deps_t&... deps ) const
-        {
-            ( detach( deps ), ... );
-        }
-
-        template <typename T>
-        void detach( const T& op ) const
-        {
-            op.template detach_rec<node_t>( *this );
-        }
-
-        template <typename T>
-        void detach( const std::shared_ptr<T>& dep_ptr ) const
-        {
-            node.get_graph().on_node_detach( node, *dep_ptr );
-        }
-
-        node_t& node;
-    };
-
-    // Eval
     struct eval_functor
     {
         explicit eval_functor( F& f )
@@ -1149,7 +1163,6 @@ private:
         F& m_func;
     };
 
-    dep_holder_t m_deps;
     F m_func;
 };
 

@@ -3090,8 +3090,8 @@ private:
     template <typename T>
     struct slot
     {
-        explicit slot( const std::shared_ptr<event_stream_node<T>>& src )
-            : source( src )
+        explicit slot( const std::shared_ptr<event_stream_node<T>>& source )
+            : source( source )
         {}
 
         std::shared_ptr<event_stream_node<T>> source;
@@ -3210,11 +3210,11 @@ template <typename in_t,
     typename F = std::decay_t<f_in_t>,
     typename out_t = std::invoke_result_t<F, in_t>,
     typename op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>>
-auto transform( const events<in_t>& src, f_in_t&& func ) -> temp_events<out_t, op_t>
+auto transform( const events<in_t>& source, f_in_t&& func ) -> temp_events<out_t, op_t>
 {
-    context& context = src.get_context();
+    context& context = source.get_context();
     return temp_events<out_t, op_t>( std::make_shared<detail::event_op_node<out_t, op_t>>(
-        context, std::forward<f_in_t>( func ), get_node_ptr( src ) ) );
+        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
 }
 
 template <typename in_t,
@@ -3223,11 +3223,11 @@ template <typename in_t,
     typename F = std::decay_t<f_in_t>,
     typename out_t = std::invoke_result_t<F, in_t>,
     typename op_out_t = detail::event_transform_op<in_t, F, op_in_t>>
-auto transform( temp_events<in_t, op_in_t>&& src, f_in_t&& func ) -> temp_events<out_t, op_out_t>
+auto transform( temp_events<in_t, op_in_t>&& source, f_in_t&& func ) -> temp_events<out_t, op_out_t>
 {
-    context& context = src.get_context();
+    context& context = source.get_context();
     return temp_events<out_t, op_out_t>( std::make_shared<detail::event_op_node<out_t, op_out_t>>(
-        context, std::forward<f_in_t>( func ), src.steal_op() ) );
+        context, std::forward<f_in_t>( func ), source.steal_op() ) );
 }
 
 /// transform - Synced
@@ -3257,11 +3257,11 @@ auto transform(
 
 /// process
 template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
-auto process( const events<in_t>& src, f_in_t&& func ) -> events<out_t>
+auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 {
-    context& context = src.get_context();
+    context& context = source.get_context();
     return events<out_t>( std::make_shared<detail::event_processing_node<in_t, out_t, F>>(
-        context, get_node_ptr( src ), std::forward<f_in_t>( func ) ) );
+        context, get_node_ptr( source ), std::forward<f_in_t>( func ) ) );
 }
 
 /// process - Synced

@@ -31,7 +31,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
-#include <iterator>
 #include <limits>
 #include <memory>
 #include <tuple>
@@ -2522,8 +2521,50 @@ private:
     const std::vector<E>& m_data;
 };
 
+// Literally std::back_emplacer, but not depending on heavy <iterator> header
+// and has additional << overload that matches more it this context
 template <typename E>
-using event_emitter = std::back_insert_iterator<std::vector<E>>;
+class event_emitter
+{
+public:
+    using container_type = std::vector<E>;
+
+    explicit event_emitter( container_type& container )
+        : m_container( container )
+    {}
+
+    event_emitter& operator*()
+    {
+        return *this;
+    }
+
+    event_emitter& operator++()
+    {
+        return *this;
+    }
+
+    event_emitter& operator++( int ) // NOLINT
+    {
+        return *this;
+    }
+
+    template <class T, class = detail::disable_if_same_t<T, event_emitter>>
+    event_emitter& operator=( T&& value )
+    {
+        m_container.emplace_back( std::forward<T>( value ) );
+        return *this;
+    }
+
+    template <class T>
+    event_emitter& operator<<( T&& value )
+    {
+        m_container.emplace_back( std::forward<T>( value ) );
+        return *this;
+    }
+
+private:
+    container_type& m_container;
+};
 
 namespace detail
 {
@@ -2907,7 +2948,7 @@ public:
     {
         this->set_current_turn_force_update( turn );
 
-        m_func( event_range<in_t>( m_source->events() ), std::back_inserter( this->m_events ) );
+        m_func( event_range<in_t>( m_source->events() ), event_emitter( this->m_events ) );
 
         if( !this->m_events.empty() )
         {
@@ -2961,7 +3002,7 @@ public:
             apply(
                 [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
                     m_func( event_range<in_t>( m_source->events() ),
-                        std::back_inserter( this->m_events ),
+                        event_emitter( this->m_events ),
                         args->value_ref()... );
                 },
                 m_deps );

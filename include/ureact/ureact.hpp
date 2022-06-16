@@ -2612,15 +2612,27 @@ public:
     template <class T, class = detail::disable_if_same_t<T, event_emitter>>
     event_emitter& operator=( T&& value )
     {
-        m_container.emplace_back( std::forward<T>( value ) );
+        m_container.push_back( std::forward<T>( value ) );
         return *this;
     }
 
     template <class T>
     event_emitter& operator<<( T&& value )
     {
-        m_container.emplace_back( std::forward<T>( value ) );
+        m_container.push_back( std::forward<T>( value ) );
         return *this;
+    }
+
+    template <class T>
+    void emit( T&& value )
+    {
+        m_container.push_back( std::forward<T>( value ) );
+    }
+
+    template <class T>
+    void operator()( T&& value )
+    {
+        m_container.push_back( std::forward<T>( value ) );
     }
 
 private:

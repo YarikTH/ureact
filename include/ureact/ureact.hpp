@@ -4654,6 +4654,27 @@ auto fold(
     return std::apply( node_builder, dep_pack.data );
 }
 
+/// Holds most recent event in a signal
+template <typename V, typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+UREACT_WARN_UNUSED_RESULT auto hold2( T&& source, V&& init )
+{
+    using E = event_value_t<T>;
+    return fold( std::forward<T>( source ),
+        std::forward<V>( init ),
+        []( ureact::event_range<E> range, const auto& ) { return *range.rbegin(); } );
+}
+
+/// curried version of hold2 algorithm. Intended for chaining
+template <typename V>
+UREACT_WARN_UNUSED_RESULT inline auto hold2( V&& init )
+{
+    return [init = std::forward<V>( init )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return hold2( std::forward<arg_t>( source ), std::forward<V>( init ) );
+    };
+}
+
 /// snapshot - Sets signal value to value of other signal when event is received
 template <typename S, typename E>
 auto snapshot( const events<E>& trigger, const signal<S>& target ) -> signal<S>

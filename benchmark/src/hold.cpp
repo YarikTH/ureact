@@ -161,6 +161,18 @@ void hold_original( Scenario& scenario, ankerl::nanobench::Bench& bench )
     perform_test( scenario, "original", bench, ctx, src, out );
 }
 
+// New hold algorithm
+template <class Scenario, class E = typename Scenario::E>
+void hold_new( Scenario& scenario, ankerl::nanobench::Bench& bench )
+{
+    ureact::context ctx;
+    auto src = ureact::make_event_source<E>( ctx );
+
+    auto out = hold2( src, E{} );
+
+    perform_test( scenario, "new", bench, ctx, src, out );
+}
+
 // Hold algorithm via fold with event_range
 template <class Scenario, class E = typename Scenario::E>
 void hold_fold_ranged( Scenario& scenario, ankerl::nanobench::Bench& bench )
@@ -241,6 +253,7 @@ void run_scenario()
 
     //test_baseline( scenario, b );
     hold_original( scenario, b );
+    hold_new( scenario, b );
     hold_fold_ranged( scenario, b );
     hold_fold_ranged_2( scenario, b );
     hold_fold( scenario, b );

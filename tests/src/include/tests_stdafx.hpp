@@ -60,10 +60,10 @@ const auto always_true = []( auto&& ) { return true; };
 
 // use fold expression to collect all received events into a vector
 template <class T>
-auto make_collector( T&& signal )
+auto make_collector( T&& events )
 {
     const auto collector = []( int e, std::vector<int>& accum ) { accum.push_back( e ); };
-    return ureact::fold( std::forward<T>( signal ), std::vector<int>{}, collector );
+    return ureact::fold( std::forward<T>( events ), std::vector<int>{}, collector );
 }
 
 template <class T>

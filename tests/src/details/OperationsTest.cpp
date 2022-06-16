@@ -871,19 +871,19 @@ TEST_SUITE( "OperationsTest" )
         CHECK_EQ( results[5], 450.0f );
     }
 
-    TEST_CASE( "Join1" )
+    TEST_CASE( "Zip1" )
     {
         context ctx;
 
         auto in1 = make_event_source<int>( ctx );
         auto in2 = make_event_source<int>( ctx );
 
-        auto joined = join( in1, in2 );
+        auto zipped = zip( in1, in2 );
 
         std::vector<std::tuple<int, int>> saved_events;
 
         observe(
-            joined, [&]( const std::tuple<int, int>& value ) { saved_events.push_back( value ); } );
+            zipped, [&]( const std::tuple<int, int>& value ) { saved_events.push_back( value ); } );
 
         in1 << -1 << -2 << -3;
         in2 << 1 << 2 << 3 << 4;
@@ -897,19 +897,19 @@ TEST_SUITE( "OperationsTest" )
         CHECK( saved_events == expected );
     }
 
-    TEST_CASE( "Join2" )
+    TEST_CASE( "Zip2" )
     {
         context ctx;
 
         auto in1 = make_event_source<int>( ctx );
         auto in2 = make_event_source<int>( ctx );
 
-        auto joined = join( in1, in2 );
+        auto zipped = zip( in1, in2 );
 
         std::vector<std::tuple<int, int>> saved_events;
 
         observe(
-            joined, [&]( const std::tuple<int, int>& value ) { saved_events.push_back( value ); } );
+            zipped, [&]( const std::tuple<int, int>& value ) { saved_events.push_back( value ); } );
 
         ctx.do_transaction( [&] {
             in1 << -1 << -2 << -3;

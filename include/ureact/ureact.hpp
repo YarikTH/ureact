@@ -3024,18 +3024,18 @@ private:
 };
 
 template <typename... values_t>
-class event_join_node : public event_stream_node<std::tuple<values_t...>>
+class event_zip_node : public event_stream_node<std::tuple<values_t...>>
 {
 public:
-    explicit event_join_node(
+    explicit event_zip_node(
         context& context, const std::shared_ptr<event_stream_node<values_t>>&... sources )
-        : event_join_node::event_stream_node( context )
+        : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
         ( this->get_graph().on_node_attach( *this, *sources ), ... );
     }
 
-    ~event_join_node() override
+    ~event_zip_node() override
     {
         apply(
             [this]( slot<values_t>&... slots ) {
@@ -3289,16 +3289,16 @@ auto process(
     return std::apply( node_builder, dep_pack.data );
 }
 
-/// join
+/// zip
 template <typename arg_t, typename... args_t>
-auto join( const events<arg_t>& arg1, const events<args_t>&... args )
+auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
     -> events<std::tuple<arg_t, args_t...>>
 {
-    static_assert( sizeof...( args_t ) >= 1, "join: 2+ arguments are required." );
+    static_assert( sizeof...( args_t ) >= 1, "zip: 2+ arguments are required." );
 
     context& context = arg1.get_context();
     return events<std::tuple<arg_t, args_t...>>(
-        std::make_shared<detail::event_join_node<arg_t, args_t...>>(
+        std::make_shared<detail::event_zip_node<arg_t, args_t...>>(
             context, get_node_ptr( arg1 ), get_node_ptr( args )... ) );
 }
 

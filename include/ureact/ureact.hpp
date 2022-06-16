@@ -2536,7 +2536,7 @@ template <typename T>
 using event_value_t = typename event_value<std::decay_t<T>>::type;
 
 /// Iterators for event processing
-template <typename E>
+template <typename E = token>
 class event_range
 {
 public:

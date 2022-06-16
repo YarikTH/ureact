@@ -2831,7 +2831,6 @@ public:
         // so make sure source doesn't contain events from last turn
         m_source->set_current_turn( turn );
 
-        // Don't time if there is nothing to do
         if( !m_source->events().empty() )
         {
             for( const auto& e : m_source->events() )
@@ -2970,7 +2969,6 @@ public:
         // so make sure source doesn't contain events from last turn
         m_source->set_current_turn( turn );
 
-        // Don't time if there is nothing to do
         if( !m_source->events().empty() )
         {
             for( const auto& e : m_source->events() )
@@ -3069,7 +3067,6 @@ public:
         // so make sure source doesn't contain events from last turn
         m_source->set_current_turn( turn );
 
-        // Don't time if there is nothing to do
         if( !m_source->events().empty() )
         {
             apply(

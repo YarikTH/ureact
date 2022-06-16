@@ -39,3 +39,4 @@ endfunction()
 # benchmarks
 add_benchmark(benchmark_signal_composing src/signal_composing.cpp)
 add_benchmark(benchmark_hold src/hold.cpp)
+add_benchmark(benchmark_snapshot src/snapshot.cpp)

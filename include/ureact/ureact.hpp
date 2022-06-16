@@ -4666,6 +4666,29 @@ auto pulse( const events<E>& trigger, const signal<S>& target ) -> events<S>
         context, get_node_ptr( target ), get_node_ptr( trigger ) ) );
 }
 
+/// pulse - Emits value of target signal when event is received
+template <typename S, typename E>
+UREACT_WARN_UNUSED_RESULT auto pulse2( const events<E>& trigger, const signal<S>& target )
+{
+    return process<S>( trigger,
+        with( target ),
+        []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
+            for( size_t i = 0, ie = range.size(); i < ie; ++i )
+                out.emit( target_value );
+        } );
+}
+
+/// curried version of pulse algorithm. Intended for chaining
+template <typename S>
+UREACT_WARN_UNUSED_RESULT auto pulse2( const signal<S>& target )
+{
+    return [target = target]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return pulse2( std::forward<arg_t>( source ), target );
+    };
+}
+
 /// changed - Emits token when target signal was changed
 template <typename S>
 auto changed( const signal<S>& target ) -> events<token>

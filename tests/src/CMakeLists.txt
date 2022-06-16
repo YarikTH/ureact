@@ -14,6 +14,7 @@ add_executable(
     examples/observer_examples.cpp
     details/filter_test.cpp
     details/fold_test.cpp
+    details/process_test.cpp
     details/move_test.cpp
     details/observer_test.cpp
     details/signal_test.cpp

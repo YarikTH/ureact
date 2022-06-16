@@ -2684,7 +2684,7 @@ private:
     template <typename collector_t>
     struct filtered_event_collector
     {
-        filtered_event_collector( const filter_t& filter, const collector_t& collector )
+        filtered_event_collector( filter_t& filter, const collector_t& collector )
             : m_filter( filter )
             , m_collector( collector )
         {}
@@ -2698,7 +2698,7 @@ private:
             }
         }
 
-        const filter_t& m_filter;
+        filter_t& m_filter;
         const collector_t& m_collector; // The wrapped collector
     };
 
@@ -2720,7 +2720,7 @@ private:
         }
     }
 
-    filter_t m_filter;
+    mutable filter_t m_filter;
 };
 
 template <typename E, typename func_t, typename... dep_values_t>

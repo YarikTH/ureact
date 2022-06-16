@@ -4534,10 +4534,12 @@ auto fold(
 }
 
 /// Holds most recent event in a signal
-template <typename V, typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init )
+template <typename V,
+    typename T,
+    typename E = event_value_t<T>,
+    class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init ) -> signal<E>
 {
-    using E = event_value_t<T>;
     return fold( std::forward<T>( source ),
         std::forward<V>( init ),
         []( event_range<E> range, const auto& ) { return *range.rbegin(); } );
@@ -4557,6 +4559,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 /// snapshot - Sets signal value to value of other signal when event is received
 template <typename S, typename E>
 UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<S>& target )
+    -> signal<S>
 {
     return fold( trigger,
         target.get(),
@@ -4578,6 +4581,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 /// pulse - Emits value of target signal when event is received
 template <typename S, typename E>
 UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>& target )
+    -> events<S>
 {
     return process<S>( trigger,
         with( target ),

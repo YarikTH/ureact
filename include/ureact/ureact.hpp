@@ -4163,38 +4163,6 @@ auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
 namespace detail
 {
 
-template <typename E>
-class monitor_node : public event_stream_node<E>
-{
-public:
-    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
-        : monitor_node::event_stream_node( context )
-        , m_target( target )
-    {
-        this->get_graph().on_node_attach( *this, *m_target );
-    }
-
-    ~monitor_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_target );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-
-        this->m_events.push_back( m_target->value_ref() );
-
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    const std::shared_ptr<signal_node<E>> m_target;
-};
-
 template <typename E, typename S, typename F, typename... args_t>
 struct add_fold_range_wrapper
 {
@@ -4452,16 +4420,39 @@ private:
     dep_holder_t m_deps;
 };
 
-} // namespace detail
-
-/// Emits value changes of signal as events
-template <typename S>
-auto monitor( const signal<S>& target ) -> events<S>
+template <typename E>
+class monitor_node : public event_stream_node<E>
 {
-    context& context = target.get_context();
-    return events<S>(
-        std::make_shared<detail::monitor_node<S>>( context, get_node_ptr( target ) ) );
-}
+public:
+    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
+        : monitor_node::event_stream_node( context )
+        , m_target( target )
+    {
+        this->get_graph().on_node_attach( *this, *m_target );
+    }
+
+    ~monitor_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_target );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        this->set_current_turn_force_update( turn );
+
+        this->m_events.push_back( m_target->value_ref() );
+
+        if( !this->m_events.empty() )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    const std::shared_ptr<signal_node<E>> m_target;
+};
+
+} // namespace detail
 
 /// Folds values from event stream into a signal
 /// fold - Iteratively combines signal value with values from event stream
@@ -4600,6 +4591,15 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return pulse( std::forward<arg_t>( source ), target );
     };
+}
+
+/// Emits value changes of signal as events
+template <typename S>
+auto monitor( const signal<S>& target ) -> events<S>
+{
+    context& context = target.get_context();
+    return events<S>(
+        std::make_shared<detail::monitor_node<S>>( context, get_node_ptr( target ) ) );
 }
 
 /// changed - Emits token when target signal was changed

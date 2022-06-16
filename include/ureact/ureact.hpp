@@ -2491,6 +2491,7 @@ class event_range
 {
 public:
     using const_iterator = typename std::vector<E>::const_iterator;
+    using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
     using size_type = typename std::vector<E>::size_type;
 
     [[nodiscard]] const_iterator begin() const
@@ -2501,6 +2502,16 @@ public:
     [[nodiscard]] const_iterator end() const
     {
         return m_data.end();
+    }
+
+    [[nodiscard]] const_reverse_iterator rbegin() const
+    {
+        return m_data.rbegin();
+    }
+
+    [[nodiscard]] const_reverse_iterator rend() const
+    {
+        return m_data.rend();
     }
 
     [[nodiscard]] size_type size() const

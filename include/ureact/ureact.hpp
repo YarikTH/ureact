@@ -3121,15 +3121,18 @@ private:
 
 /// Operator | for algorithms chaining
 /// Usage: monitor( target ) | filter( is_even ) | tokenize();
-template <typename S, typename f_in_t, class = std::enable_if_t<is_event_v<std::decay_t<S>>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, f_in_t&& func )
+template <typename S,
+    typename UnaryOperation,
+    class = std::enable_if_t<is_event_v<std::decay_t<S>>>>
+UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, UnaryOperation&& unary_op )
 {
-    static_assert( std::is_invocable_v<f_in_t, decltype( source )>,
+    static_assert( std::is_invocable_v<UnaryOperation, decltype( source )>,
         "Function should be invocable with event type" );
-    using result_t = std::decay_t<std::invoke_result_t<f_in_t, decltype( source )>>;
+    using result_t = std::decay_t<std::invoke_result_t<UnaryOperation, decltype( source )>>;
     static_assert( ureact::is_signal_v<result_t> || ureact::is_event_v<result_t>,
         "Function result should be signal or event" );
-    return chain_algorithms_impl( std::forward<S>( source ), std::forward<f_in_t>( func ) );
+    return chain_algorithms_impl(
+        std::forward<S>( source ), std::forward<UnaryOperation>( unary_op ) );
 }
 
 /// merge
@@ -3150,43 +3153,43 @@ auto merge( const events<TArg1>& arg1, const events<args_t>&... args ) -> temp_e
 
 /// filter
 template <typename E,
-    typename f_in_t,
-    typename F = std::decay_t<f_in_t>,
+    typename Pred,
+    typename F = std::decay_t<Pred>,
     typename op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>>
-auto filter( const events<E>& source, f_in_t&& func ) -> temp_events<E, op_t>
+auto filter( const events<E>& source, Pred&& pred ) -> temp_events<E, op_t>
 {
     context& context = source.get_context();
     return temp_events<E, op_t>( std::make_shared<detail::event_op_node<E, op_t>>(
-        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
+        context, std::forward<Pred>( pred ), get_node_ptr( source ) ) );
 }
 
 /// filter
 template <typename E,
     typename op_in_t,
-    typename f_in_t,
-    typename F = std::decay_t<f_in_t>,
+    typename Pred,
+    typename F = std::decay_t<Pred>,
     typename op_out_t = detail::event_filter_op<E, F, op_in_t>>
-auto filter( temp_events<E, op_in_t>&& source, f_in_t&& func ) -> temp_events<E, op_out_t>
+auto filter( temp_events<E, op_in_t>&& source, Pred&& pred ) -> temp_events<E, op_out_t>
 {
     context& context = source.get_context();
     return temp_events<E, op_out_t>( std::make_shared<detail::event_op_node<E, op_out_t>>(
-        context, std::forward<f_in_t>( func ), source.steal_op() ) );
+        context, std::forward<Pred>( pred ), source.steal_op() ) );
 }
 
 /// filter - Synced
-template <typename E, typename f_in_t, typename... dep_values_t>
-auto filter( const events<E>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+template <typename E, typename Pred, typename... dep_values_t>
+auto filter( const events<E>& source, const signal_pack<dep_values_t...>& dep_pack, Pred&& pred )
     -> events<E>
 {
-    using F = std::decay_t<f_in_t>;
+    using F = std::decay_t<Pred>;
 
     context& context = source.get_context();
 
-    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
+    auto node_builder = [&context, &source, &pred]( const signal<dep_values_t>&... deps ) {
         return events<E>(
             std::make_shared<detail::synced_event_filter_node<E, F, dep_values_t...>>( context,
                 get_node_ptr( source ),
-                std::forward<f_in_t>( func ),
+                std::forward<Pred>( pred ),
                 get_node_ptr( deps )... ) );
     };
 
@@ -3194,13 +3197,13 @@ auto filter( const events<E>& source, const signal_pack<dep_values_t...>& dep_pa
 }
 
 /// curried version of filter algorithm. Intended for chaining
-template <typename f_in_t>
-auto filter( f_in_t&& func )
+template <typename Pred>
+auto filter( Pred&& pred )
 {
-    return [func = std::forward<f_in_t>( func )]( auto&& source ) {
+    return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return filter( std::forward<arg_t>( source ), func );
+        return filter( std::forward<arg_t>( source ), pred );
     };
 }
 

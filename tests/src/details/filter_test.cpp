@@ -31,7 +31,7 @@ TEST_CASE( "Filter" )
         // typically we don't need nor std::move nor naming temp events
         ureact::temp_events temp = ureact::filter( src, always_true );
         filtered = ureact::filter( std::move( temp ), is_even );
-        // unfortunately there is no way to check if operator was actually stolen
+        CHECK( temp.was_op_stolen() );
     }
 
     SUBCASE( "Piped syntax" )
@@ -42,6 +42,7 @@ TEST_CASE( "Filter" )
     {
         ureact::temp_events temp = src | ureact::filter( always_true );
         filtered = std::move( temp ) | ureact::filter( is_even );
+        CHECK( temp.was_op_stolen() );
     }
 
     const auto result = make_collector( filtered );
@@ -83,7 +84,7 @@ TEST_CASE( "FilterSynced" )
     {
         ureact::temp_events temp = ureact::filter( src, always_true );
         filtered = ureact::filter( std::move( temp ), with( limit_min, limit_max ), in_range );
-        // unfortunately there is no way to check if operator was actually stolen
+        CHECK_FALSE( temp.was_op_stolen() ); // no optimization
     }
 
     // todo: Piped syntax is not yet supported for synced version

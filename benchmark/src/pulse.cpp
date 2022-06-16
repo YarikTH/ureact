@@ -103,6 +103,19 @@ void pulse_standard( Scenario& scenario, ankerl::nanobench::Bench& bench )
     perform_test( scenario, "pulse", bench, ctx, trigger, target, out );
 }
 
+// New pulse algorithm
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
+void pulse_new( Scenario& scenario, ankerl::nanobench::Bench& bench )
+{
+    ureact::context ctx;
+    auto trigger = ureact::make_event_source<E>( ctx );
+    auto target = ureact::make_var( ctx, S{} );
+
+    auto out = ureact::pulse2( trigger, target );
+
+    perform_test( scenario, "new", bench, ctx, trigger, target, out );
+}
+
 // Pulse algorithm via synced process algorithm
 template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
 void pulse_process( Scenario& scenario, ankerl::nanobench::Bench& bench )
@@ -153,6 +166,7 @@ void run_scenario()
 
     //test_baseline( scenario, b );
     pulse_standard( scenario, b );
+    pulse_new( scenario, b );
     pulse_process( scenario, b );
     pulse_process_2( scenario, b );
 

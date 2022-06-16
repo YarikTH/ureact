@@ -4067,16 +4067,16 @@ private:
 };
 
 template <typename E, typename S, typename F, typename... args_t>
-struct add_iterate_range_wrapper
+struct add_fold_range_wrapper
 {
-    add_iterate_range_wrapper( const add_iterate_range_wrapper& other ) = default;
+    add_fold_range_wrapper( const add_fold_range_wrapper& other ) = default;
 
-    add_iterate_range_wrapper( add_iterate_range_wrapper&& other ) noexcept
+    add_fold_range_wrapper( add_fold_range_wrapper&& other ) noexcept
         : m_func( std::move( other.m_func ) )
     {}
 
-    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_iterate_range_wrapper>>
-    explicit add_iterate_range_wrapper( f_in_t&& func )
+    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_fold_range_wrapper>>
+    explicit add_fold_range_wrapper( f_in_t&& func )
         : m_func( std::forward<f_in_t>( func ) )
     {}
 
@@ -4094,16 +4094,16 @@ struct add_iterate_range_wrapper
 };
 
 template <typename E, typename S, typename F, typename... args_t>
-struct add_iterate_by_ref_range_wrapper
+struct add_fold_by_ref_range_wrapper
 {
-    add_iterate_by_ref_range_wrapper( const add_iterate_by_ref_range_wrapper& other ) = default;
+    add_fold_by_ref_range_wrapper( const add_fold_by_ref_range_wrapper& other ) = default;
 
-    add_iterate_by_ref_range_wrapper( add_iterate_by_ref_range_wrapper&& other ) noexcept
+    add_fold_by_ref_range_wrapper( add_fold_by_ref_range_wrapper&& other ) noexcept
         : m_func( std::move( other.m_func ) )
     {}
 
-    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_iterate_by_ref_range_wrapper>>
-    explicit add_iterate_by_ref_range_wrapper( f_in_t&& func )
+    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_fold_by_ref_range_wrapper>>
+    explicit add_fold_by_ref_range_wrapper( f_in_t&& func )
         : m_func( std::forward<f_in_t>( func ) )
     {}
 
@@ -4119,20 +4119,20 @@ struct add_iterate_by_ref_range_wrapper
 };
 
 template <typename S, typename E, typename func_t>
-class iterate_node : public signal_node<S>
+class fold_node : public signal_node<S>
 {
 public:
     template <typename T, typename F>
-    iterate_node(
+    fold_node(
         context& context, T&& init, const std::shared_ptr<event_stream_node<E>>& events, F&& func )
-        : iterate_node::signal_node( context, std::forward<T>( init ) )
+        : fold_node::signal_node( context, std::forward<T>( init ) )
         , m_events( events )
         , m_func( std::forward<F>( func ) )
     {
         this->get_graph().on_node_attach( *this, *events );
     }
 
-    ~iterate_node() override
+    ~fold_node() override
     {
         this->get_graph().on_node_detach( *this, *m_events );
     }
@@ -4164,20 +4164,20 @@ private:
 };
 
 template <typename S, typename E, typename func_t>
-class iterate_by_ref_node : public signal_node<S>
+class fold_by_ref_node : public signal_node<S>
 {
 public:
     template <typename T, typename F>
-    iterate_by_ref_node(
+    fold_by_ref_node(
         context& context, T&& init, const std::shared_ptr<event_stream_node<E>>& events, F&& func )
-        : iterate_by_ref_node::signal_node( context, std::forward<T>( init ) )
+        : fold_by_ref_node::signal_node( context, std::forward<T>( init ) )
         , m_func( std::forward<F>( func ) )
         , m_events( events )
     {
         this->get_graph().on_node_attach( *this, *events );
     }
 
-    ~iterate_by_ref_node() override
+    ~fold_by_ref_node() override
     {
         this->get_graph().on_node_detach( *this, *m_events );
     }
@@ -4197,16 +4197,16 @@ protected:
 };
 
 template <typename S, typename E, typename func_t, typename... dep_values_t>
-class synced_iterate_node : public signal_node<S>
+class synced_fold_node : public signal_node<S>
 {
 public:
     template <typename T, typename F>
-    synced_iterate_node( context& context,
+    synced_fold_node( context& context,
         T&& init,
         const std::shared_ptr<event_stream_node<E>>& events,
         F&& func,
         const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_iterate_node::signal_node( context, std::forward<T>( init ) )
+        : synced_fold_node::signal_node( context, std::forward<T>( init ) )
         , m_events( events )
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
@@ -4215,11 +4215,11 @@ public:
         ( this->get_graph().on_node_attach( *this, *deps ), ... );
     }
 
-    ~synced_iterate_node() override
+    ~synced_fold_node() override
     {
         this->get_graph().on_node_detach( *this, *m_events );
 
-        apply( detach_functor<synced_iterate_node, std::shared_ptr<signal_node<dep_values_t>>...>(
+        apply( detach_functor<synced_fold_node, std::shared_ptr<signal_node<dep_values_t>>...>(
                    *this ),
             m_deps );
     }
@@ -4262,16 +4262,16 @@ private:
 };
 
 template <typename S, typename E, typename func_t, typename... dep_values_t>
-class synced_iterate_by_ref_node : public signal_node<S>
+class synced_fold_by_ref_node : public signal_node<S>
 {
 public:
     template <typename T, typename F>
-    synced_iterate_by_ref_node( context& context,
+    synced_fold_by_ref_node( context& context,
         T&& init,
         const std::shared_ptr<event_stream_node<E>>& events,
         F&& func,
         const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_iterate_by_ref_node::signal_node( context, std::forward<T>( init ) )
+        : synced_fold_by_ref_node::signal_node( context, std::forward<T>( init ) )
         , m_events( events )
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
@@ -4280,12 +4280,13 @@ public:
         ( this->get_graph().on_node_attach( *this, *deps ), ... );
     }
 
-    ~synced_iterate_by_ref_node() override
+    ~synced_fold_by_ref_node() override
     {
         this->get_graph().on_node_detach( *this, *m_events );
 
-        apply( detach_functor<synced_iterate_by_ref_node,
-                   std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
+        apply(
+            detach_functor<synced_fold_by_ref_node, std::shared_ptr<signal_node<dep_values_t>>...>(
+                *this ),
             m_deps );
     }
 
@@ -4449,39 +4450,37 @@ auto monitor( const signal<S>& target ) -> events<S>
 }
 
 /// Folds values from event stream into a signal
-/// iterate - Iteratively combines signal value with values from event stream (aka Fold)
+/// fold - Iteratively combines signal value with values from event stream
 template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
-auto iterate( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
+auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
 {
     using F = std::decay_t<f_in_t>;
 
     using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S>,
-        detail::iterate_node<S, E, F>,
+        detail::fold_node<S, E, F>,
         std::conditional_t<std::is_invocable_r_v<S, F, E, S>,
-            detail::iterate_node<S, E, detail::add_iterate_range_wrapper<E, S, F>>,
+            detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F>>,
             std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&>,
-                detail::iterate_by_ref_node<S, E, F>,
+                detail::fold_by_ref_node<S, E, F>,
                 std::conditional_t<std::is_invocable_r_v<void, F, E, S&>,
-                    detail::iterate_by_ref_node<S,
-                        E,
-                        detail::add_iterate_by_ref_range_wrapper<E, S, F>>,
+                    detail::fold_by_ref_node<S, E, detail::add_fold_by_ref_range_wrapper<E, S, F>>,
                     void>>>>;
 
     static_assert( !std::is_same_v<node_t, void>,
-        "iterate: Passed function does not match any of the supported signatures." );
+        "fold: Passed function does not match any of the supported signatures." );
 
     context& context = events.get_context();
     return signal<S>( std::make_shared<node_t>(
         context, std::forward<V>( init ), get_node_ptr( events ), std::forward<f_in_t>( func ) ) );
 }
 
-/// iterate - Synced
+/// fold - Synced
 template <typename E,
     typename V,
     typename f_in_t,
     typename... dep_values_t,
     typename S = std::decay_t<V>>
-auto iterate(
+auto fold(
     const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
     -> signal<S>
 {
@@ -4489,23 +4488,23 @@ auto iterate(
 
     using node_t = std::conditional_t<
         std::is_invocable_r_v<S, F, event_range<E>, S, dep_values_t...>,
-        detail::synced_iterate_node<S, E, F, dep_values_t...>,
+        detail::synced_fold_node<S, E, F, dep_values_t...>,
         std::conditional_t<std::is_invocable_r_v<S, F, E, S, dep_values_t...>,
-            detail::synced_iterate_node<S,
+            detail::synced_fold_node<S,
                 E,
-                detail::add_iterate_range_wrapper<E, S, F, dep_values_t...>,
+                detail::add_fold_range_wrapper<E, S, F, dep_values_t...>,
                 dep_values_t...>,
             std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&, dep_values_t...>,
-                detail::synced_iterate_by_ref_node<S, E, F, dep_values_t...>,
+                detail::synced_fold_by_ref_node<S, E, F, dep_values_t...>,
                 std::conditional_t<std::is_invocable_r_v<void, F, E, S&, dep_values_t...>,
-                    detail::synced_iterate_by_ref_node<S,
+                    detail::synced_fold_by_ref_node<S,
                         E,
-                        detail::add_iterate_by_ref_range_wrapper<E, S, F, dep_values_t...>,
+                        detail::add_fold_by_ref_range_wrapper<E, S, F, dep_values_t...>,
                         dep_values_t...>,
                     void>>>>;
 
     static_assert( !std::is_same_v<node_t, void>,
-        "iterate: Passed function does not match any of the supported signatures." );
+        "fold: Passed function does not match any of the supported signatures." );
 
     context& context = events.get_context();
 

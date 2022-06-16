@@ -34,7 +34,7 @@ TEST_SUITE( "OperationsTest" )
         context ctx;
 
         auto numSrc = make_event_source<int>( ctx );
-        auto numFold = iterate( numSrc, 0, []( int d, int v ) { return v + d; } );
+        auto numFold = fold( numSrc, 0, []( int d, int v ) { return v + d; } );
 
         for( auto i = 1; i <= 100; i++ )
         {
@@ -44,7 +44,7 @@ TEST_SUITE( "OperationsTest" )
         CHECK_EQ( numFold(), 5050 );
 
         auto charSrc = make_event_source<char>( ctx );
-        auto strFold = iterate(
+        auto strFold = fold(
             charSrc, std::string( "" ), []( char c, const std::string& s ) { return s + c; } );
 
         charSrc << 'T' << 'e' << 's' << 't';
@@ -57,7 +57,7 @@ TEST_SUITE( "OperationsTest" )
         context ctx;
 
         auto numSrc = make_event_source<int>( ctx );
-        auto numFold = iterate( numSrc, 0, []( int d, int v ) { return v + d; } );
+        auto numFold = fold( numSrc, 0, []( int d, int v ) { return v + d; } );
 
         int c = 0;
 
@@ -82,7 +82,7 @@ TEST_SUITE( "OperationsTest" )
         auto trigger = make_event_source( ctx );
 
         {
-            auto inc = iterate( trigger, 0, Incrementer<int>{} );
+            auto inc = fold( trigger, 0, Incrementer<int>{} );
             for( auto i = 1; i <= 100; i++ )
                 trigger.emit();
 
@@ -90,7 +90,7 @@ TEST_SUITE( "OperationsTest" )
         }
 
         {
-            auto dec = iterate( trigger, 100, Decrementer<int>{} );
+            auto dec = fold( trigger, 100, Decrementer<int>{} );
             for( auto i = 1; i <= 100; i++ )
                 trigger.emit();
 
@@ -216,7 +216,7 @@ TEST_SUITE( "OperationsTest" )
         context ctx;
 
         auto src = make_event_source<int>( ctx );
-        auto f = iterate(
+        auto f = fold(
             src, std::vector<int>(), []( int d, std::vector<int>& v ) { v.push_back( d ); } );
 
         // Push
@@ -235,7 +235,7 @@ TEST_SUITE( "OperationsTest" )
         context ctx;
 
         auto src = make_event_source( ctx );
-        auto x = iterate(
+        auto x = fold(
             src, std::vector<int>(), []( token, std::vector<int>& v ) { v.push_back( 123 ); } );
 
         // Push
@@ -354,14 +354,14 @@ TEST_SUITE( "OperationsTest" )
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
 
-        auto out1 = iterate( src1,
+        auto out1 = fold( src1,
             std::make_tuple( 0, 0 ),
             with( op1, op2 ),
             []( token, const std::tuple<int, int>& t, int op1, int op2 ) {
                 return std::make_tuple<int, int>( std::get<0>( t ) + op1, std::get<1>( t ) + op2 );
             } );
 
-        auto out2 = iterate( src2,
+        auto out2 = fold( src2,
             std::make_tuple( 0, 0, 0 ),
             with( op1, op2 ),
             []( int e, const std::tuple<int, int, int>& t, int op1, int op2 ) {
@@ -446,7 +446,7 @@ TEST_SUITE( "OperationsTest" )
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
 
-        auto out1 = iterate( src1,
+        auto out1 = fold( src1,
             std::vector<int>{},
             with( op1, op2 ),
             []( token, std::vector<int>& v, int op1, int op2 ) -> void {
@@ -454,7 +454,7 @@ TEST_SUITE( "OperationsTest" )
                 v.push_back( op2 );
             } );
 
-        auto out2 = iterate( src2,
+        auto out2 = fold( src2,
             std::vector<int>{},
             with( op1, op2 ),
             []( int e, std::vector<int>& v, int op1, int op2 ) -> void {
@@ -554,7 +554,7 @@ TEST_SUITE( "OperationsTest" )
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
 
-        auto out1 = iterate( src1,
+        auto out1 = fold( src1,
             std::make_tuple( 0, 0 ),
             with( op1, op2 ),
             []( event_range<token> range, const std::tuple<int, int>& t, int op1, int op2 ) {
@@ -563,7 +563,7 @@ TEST_SUITE( "OperationsTest" )
                     std::get<1>( t ) + ( op2 * static_cast<int>( range.size() ) ) );
             } );
 
-        auto out2 = iterate( src2,
+        auto out2 = fold( src2,
             std::make_tuple( 0, 0, 0 ),
             with( op1, op2 ),
             []( event_range<int> range, const std::tuple<int, int, int>& t, int op1, int op2 ) {
@@ -654,7 +654,7 @@ TEST_SUITE( "OperationsTest" )
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
 
-        auto out1 = iterate( src1,
+        auto out1 = fold( src1,
             std::vector<int>{},
             with( op1, op2 ),
             []( event_range<token> range, std::vector<int>& v, int op1, int op2 ) -> void {
@@ -666,7 +666,7 @@ TEST_SUITE( "OperationsTest" )
                 }
             } );
 
-        auto out2 = iterate( src2,
+        auto out2 = fold( src2,
             std::vector<int>{},
             with( op1, op2 ),
             []( event_range<int> range, std::vector<int>& v, int op1, int op2 ) -> void {

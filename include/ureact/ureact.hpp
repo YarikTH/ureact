@@ -1207,6 +1207,11 @@ public:
         return std::move( m_op );
     }
 
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    {
+        return m_was_op_stolen;
+    }
+
 private:
     op_t m_op;
     bool m_was_op_stolen = false;
@@ -1564,6 +1569,13 @@ public:
     {
         auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
         return node_ptr->steal_op();
+    }
+
+    /// Checks if internal operator was already stolen
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    {
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->was_op_stolen();
     }
 };
 
@@ -2165,12 +2177,17 @@ public:
         }
     }
 
-    op_t steal_op()
+    UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
         assert( !m_was_op_stolen && "Op was already stolen." );
         m_was_op_stolen = true;
         m_op.detach( *this );
         return std::move( m_op );
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    {
+        return m_was_op_stolen;
     }
 
 private:
@@ -2269,9 +2286,16 @@ public:
         return *this;
     }
 
-    op_t steal_op()
+    UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
-        return std::move( reinterpret_cast<node_t*>( this->m_ptr.get() )->steal_op() );
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->steal_op();
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    {
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->was_op_stolen();
     }
 };
 

@@ -2485,6 +2485,32 @@ public:
     }
 };
 
+// Detect E for event
+template <typename T>
+struct event_value
+{};
+
+template <typename E>
+struct event_value<events<E>>
+{
+    using type = E;
+};
+
+template <typename E>
+struct event_value<event_source<E>>
+{
+    using type = E;
+};
+
+template <typename E, typename op_in_t>
+struct event_value<temp_events<E, op_in_t>>
+{
+    using type = E;
+};
+
+template <typename T>
+using event_value_t = typename event_value<std::decay_t<T>>::type;
+
 /// Iterators for event processing
 template <typename E>
 class event_range

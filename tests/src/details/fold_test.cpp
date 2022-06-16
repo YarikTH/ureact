@@ -25,7 +25,7 @@ TEST_CASE( "Hold" )
     // using subcases
     SUBCASE( "Functional syntax" )
     {
-        held = ureact::hold2( src, -1 );
+        held = ureact::hold( src, -1 );
     }
     SUBCASE( "Functional syntax on temporary" )
     {
@@ -33,18 +33,18 @@ TEST_CASE( "Hold" )
         // we use them to check filter overloads that receive temp_events rvalue
         // typically we don't need nor std::move nor naming temp events
         ureact::temp_events temp = ureact::filter( src, always_true );
-        held = ureact::hold2( std::move( temp ), -1 );
+        held = ureact::hold( std::move( temp ), -1 );
         CHECK_FALSE( temp.was_op_stolen() ); // there is no temp_events optimization here
     }
 
     SUBCASE( "Piped syntax" )
     {
-        held = src | ureact::hold2( -1 );
+        held = src | ureact::hold( -1 );
     }
     SUBCASE( "Piped syntax on temporary" )
     {
         ureact::temp_events temp = src | ureact::filter( always_true );
-        held = std::move( temp ) | ureact::hold2( -1 );
+        held = std::move( temp ) | ureact::hold( -1 );
         CHECK_FALSE( temp.was_op_stolen() ); // there is no temp_events optimization here
     }
 

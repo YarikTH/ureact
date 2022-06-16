@@ -4151,48 +4151,6 @@ auto reactive_ptr( const ureact::signal<S*>& outer, R S::*attribute )
 namespace detail
 {
 
-template <typename S>
-class hold_node : public signal_node<S>
-{
-public:
-    template <typename T>
-    hold_node( context& context, T&& init, const std::shared_ptr<event_stream_node<S>>& events )
-        : hold_node::signal_node( context, std::forward<T>( init ) )
-        , m_events( events )
-    {
-        this->get_graph().on_node_attach( *this, *m_events );
-    }
-
-    ~hold_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_events );
-    }
-
-    void tick( turn_type& ) override
-    {
-        bool changed = false;
-
-        if( !m_events->events().empty() )
-        {
-            const S& new_value = m_events->events().back();
-
-            if( !equals( new_value, this->m_value ) )
-            {
-                changed = true;
-                this->m_value = new_value;
-            }
-        }
-
-        if( changed )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    const std::shared_ptr<event_stream_node<S>> m_events;
-};
-
 template <typename E>
 class monitor_node : public event_stream_node<E>
 {
@@ -4590,15 +4548,6 @@ public:
 
 } // namespace detail
 
-/// Holds most recent event in a signal
-template <typename V, typename T = std::decay_t<V>>
-auto hold( const events<T>& events, V&& init ) -> signal<T>
-{
-    context& context = events.get_context();
-    return signal<T>( std::make_shared<detail::hold_node<T>>(
-        context, std::forward<V>( init ), get_node_ptr( events ) ) );
-}
-
 /// Emits value changes of signal as events
 template <typename S>
 auto monitor( const signal<S>& target ) -> events<S>
@@ -4680,7 +4629,7 @@ auto fold(
 
 /// Holds most recent event in a signal
 template <typename V, typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto hold2( T&& source, V&& init )
+UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init )
 {
     using E = event_value_t<T>;
     return fold( std::forward<T>( source ),
@@ -4688,14 +4637,14 @@ UREACT_WARN_UNUSED_RESULT auto hold2( T&& source, V&& init )
         []( ureact::event_range<E> range, const auto& ) { return *range.rbegin(); } );
 }
 
-/// curried version of hold2 algorithm. Intended for chaining
+/// curried version of hold algorithm. Intended for chaining
 template <typename V>
-UREACT_WARN_UNUSED_RESULT auto hold2( V&& init )
+UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 {
     return [init = std::forward<V>( init )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return hold2( std::forward<arg_t>( source ), std::move( init ) );
+        return hold( std::forward<arg_t>( source ), std::move( init ) );
     };
 }
 

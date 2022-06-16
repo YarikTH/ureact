@@ -4657,6 +4657,27 @@ auto snapshot( const events<E>& trigger, const signal<S>& target ) -> signal<S>
         context, get_node_ptr( target ), get_node_ptr( trigger ) ) );
 }
 
+/// snapshot - Sets signal value to value of other signal when event is received
+template <typename S, typename E>
+UREACT_WARN_UNUSED_RESULT auto snapshot2( const events<E>& trigger, const signal<S>& target )
+{
+    return fold( trigger,
+        target.get(),
+        with( target ),
+        []( ureact::event_range<E> range, const S&, const S& value ) { return value; } );
+}
+
+/// curried version of hold algorithm. Intended for chaining
+template <typename S>
+UREACT_WARN_UNUSED_RESULT auto snapshot2( const signal<S>& target )
+{
+    return [target = target]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return snapshot2( std::forward<arg_t>( source ), target );
+    };
+}
+
 /// pulse - Emits value of target signal when event is received
 template <typename S, typename E>
 auto pulse( const events<E>& trigger, const signal<S>& target ) -> events<S>

@@ -287,7 +287,7 @@ void iter_swap( forward_it_1 a, forward_it_2 b )
 template <class forward_it, class unary_predicate>
 forward_it partition( forward_it first, forward_it last, unary_predicate p )
 {
-    first = ureact::detail::find_if_not( first, last, p );
+    first = detail::find_if_not( first, last, p );
     if( first == last )
     {
         return first;
@@ -297,7 +297,7 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
     {
         if( p( *i ) )
         {
-            ureact::detail::iter_swap( i, first );
+            detail::iter_swap( i, first );
             ++first;
         }
     }
@@ -627,7 +627,7 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     }
 
     // Swap entries with min level to the end
-    const auto p = ureact::detail::partition( m_queue_data.begin(),
+    const auto p = detail::partition( m_queue_data.begin(),
         m_queue_data.end(),
         [minimal_level]( const entry& e ) { return e.second != minimal_level; } );
 
@@ -3202,7 +3202,7 @@ UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, UnaryOperation&& unary_op 
     static_assert( std::is_invocable_v<UnaryOperation, decltype( source )>,
         "Function should be invocable with event type" );
     using result_t = std::decay_t<std::invoke_result_t<UnaryOperation, decltype( source )>>;
-    static_assert( ureact::is_signal_v<result_t> || ureact::is_event_v<result_t>,
+    static_assert( is_signal_v<result_t> || is_event_v<result_t>,
         "Function result should be signal or event" );
     return chain_algorithms_impl(
         std::forward<S>( source ), std::forward<UnaryOperation>( unary_op ) );
@@ -3275,7 +3275,7 @@ auto filter( Pred&& pred )
 {
     return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return filter( std::forward<arg_t>( source ), pred );
     };
 }
@@ -3294,7 +3294,7 @@ inline auto drop( const size_t count )
 {
     return [count]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return drop( std::forward<arg_t>( source ), count );
     };
 }
@@ -3318,7 +3318,7 @@ inline auto drop_while( Pred&& pred )
 {
     return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return drop_while( std::forward<arg_t>( source ), pred );
     };
 }
@@ -3337,7 +3337,7 @@ inline auto take( const size_t count )
 {
     return [count]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return take( std::forward<arg_t>( source ), count );
     };
 }
@@ -3360,7 +3360,7 @@ inline auto take_while( Pred&& pred )
 {
     return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return take_while( std::forward<arg_t>( source ), pred );
     };
 }
@@ -3485,7 +3485,7 @@ inline auto tokenize()
 {
     return []( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return tokenize( std::forward<arg_t>( source ) );
     };
 }
@@ -4143,14 +4143,14 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& out
 }
 
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
-auto reactive_ref( const ureact::signal<std::reference_wrapper<S>>& outer, R S::*attribute )
+auto reactive_ref( const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
 {
     return flatten( make_signal(
         outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
 }
 
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
-auto reactive_ptr( const ureact::signal<S*>& outer, R S::*attribute )
+auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
 {
     return flatten( make_signal(
         outer, [attribute]( const S* s ) { return static_cast<decayed_r>( s->*attribute ); } ) );
@@ -4622,7 +4622,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init )
     using E = event_value_t<T>;
     return fold( std::forward<T>( source ),
         std::forward<V>( init ),
-        []( ureact::event_range<E> range, const auto& ) { return *range.rbegin(); } );
+        []( event_range<E> range, const auto& ) { return *range.rbegin(); } );
 }
 
 /// curried version of hold algorithm. Intended for chaining
@@ -4631,7 +4631,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 {
     return [init = std::forward<V>( init )]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return hold( std::forward<arg_t>( source ), std::move( init ) );
     };
 }
@@ -4643,7 +4643,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
     return fold( trigger,
         target.get(),
         with( target ),
-        []( ureact::event_range<E> range, const S&, const S& value ) { return value; } );
+        []( event_range<E> range, const S&, const S& value ) { return value; } );
 }
 
 /// curried version of snapshot algorithm. Intended for chaining
@@ -4652,7 +4652,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 {
     return [target = target]( auto&& source ) {
         using arg_t = decltype( source );
-        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return snapshot( std::forward<arg_t>( source ), target );
     };
 }

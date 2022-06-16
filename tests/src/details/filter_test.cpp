@@ -29,7 +29,7 @@ auto make_deeper( T&& signal )
     for( int i = 0; i < 100; ++i )
         result = +result;
     return result;
-};
+}
 
 } // namespace
 
@@ -152,4 +152,69 @@ TEST_CASE( "FilterSynced" )
     const std::vector<int> expected_not_synced
         = { /*first range*/ 4, 5, 6, 7, /*second range*/ 4, 5, 6, 7 };
     CHECK( result_not_synced.get() == expected_not_synced );
+}
+
+// demonstrate and test special filter functions like take, drop and once
+TEST_CASE( "SpecialFilterFunctions" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<int>( ctx );
+    ureact::events<int> first;
+    ureact::events<int> first_n;
+    ureact::events<int> without_first_n;
+    ureact::events<int> before_negative;
+    ureact::events<int> from_negative;
+
+    const auto is_not_negative = [&]( auto i ) { return i >= 0; };
+
+    SUBCASE( "Functional syntax" )
+    {
+        first = ureact::once( src );
+        first_n = ureact::take( src, 5 );
+        without_first_n = ureact::drop( src, 5 );
+        before_negative = ureact::take_while( src, is_not_negative );
+        from_negative = ureact::drop_while( src, is_not_negative );
+    }
+    SUBCASE( "Piped syntax" )
+    {
+        first = src | ureact::once();
+        first_n = src | ureact::take( 5 );
+        without_first_n = src | ureact::drop( 5 );
+        before_negative = src | ureact::take_while( is_not_negative );
+        from_negative = src | ureact::drop_while( is_not_negative );
+    }
+
+    const auto result_first = make_collector( first );
+    const auto result_first_n = make_collector( first_n );
+    const auto result_without_first_n = make_collector( without_first_n );
+    const auto result_before_negative = make_collector( before_negative );
+    const auto result_from_negative = make_collector( from_negative );
+
+    // pass integers as events
+    for( int i : { 0, 1, 2, 3, 4, 5, -1, 6, 7, 8, 9 } )
+        src << i;
+
+
+    const std::vector<int> expected_first = //
+        { 0 };
+    CHECK( result_first.get() == expected_first );
+
+
+    // if we concatenate results of take(N) and drop(N) we receive original vector
+    const std::vector<int> expected_first_n = //
+        { 0, 1, 2, 3, 4 };
+    const std::vector<int> expected_without_first_n = //
+        /*          */ { 5, -1, 6, 7, 8, 9 };
+    CHECK( result_first_n.get() == expected_first_n );
+    CHECK( result_without_first_n.get() == expected_without_first_n );
+
+
+    // if we concatenate results of take_while(pred) and drop_while(pred) we receive original vector
+    const std::vector<int> expected_before_negative = //
+        { 0, 1, 2, 3, 4, 5 };
+    const std::vector<int> expected_from_negative = //
+        /*             */ { -1, 6, 7, 8, 9 };
+    CHECK( result_before_negative.get() == expected_before_negative );
+    CHECK( result_from_negative.get() == expected_from_negative );
 }

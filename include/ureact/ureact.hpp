@@ -3207,6 +3207,104 @@ auto filter( Pred&& pred )
     };
 }
 
+/// drop
+template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+auto drop( T&& source, const size_t count )
+{
+    auto dropper = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ >= count; };
+
+    return filter( std::forward<T>( source ), dropper );
+}
+
+/// curried version of drop algorithm. Intended for chaining
+inline auto drop( const size_t count )
+{
+    return [count]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return drop( std::forward<arg_t>( source ), count );
+    };
+}
+
+/// drop_while
+template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+auto drop_while( T&& source, Pred&& pred )
+{
+    auto dropper_while
+        = [passed = false, pred = std::forward<Pred>( pred )]( const auto& i ) mutable {
+              passed = passed || !pred( i );
+              return passed;
+          };
+
+    return filter( std::forward<T>( source ), dropper_while );
+}
+
+/// curried version of drop_while algorithm. Intended for chaining
+template <typename Pred>
+inline auto drop_while( Pred&& pred )
+{
+    return [pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return drop_while( std::forward<arg_t>( source ), pred );
+    };
+}
+
+/// take
+template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+auto take( T&& source, const size_t count )
+{
+    auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
+
+    return filter( std::forward<T>( source ), taker );
+}
+
+/// curried version of take algorithm. Intended for chaining
+inline auto take( const size_t count )
+{
+    return [count]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return take( std::forward<arg_t>( source ), count );
+    };
+}
+
+/// take_while
+template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+auto take_while( T&& source, Pred&& pred )
+{
+    auto taker_while = [passed = true, pred = std::forward<Pred>( pred )]( const auto& i ) mutable {
+        passed = passed && pred( i );
+        return passed;
+    };
+
+    return filter( std::forward<T>( source ), taker_while );
+}
+
+/// curried version of take_while algorithm. Intended for chaining
+template <typename Pred>
+inline auto take_while( Pred&& pred )
+{
+    return [pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return take_while( std::forward<arg_t>( source ), pred );
+    };
+}
+
+/// once
+template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+auto once( T&& source )
+{
+    return take( std::forward<T>( source ), 1 );
+}
+
+/// curried version of once algorithm. Intended for chaining
+inline auto once()
+{
+    return take( 1 );
+}
+
 /// transform
 template <typename in_t,
     typename f_in_t,

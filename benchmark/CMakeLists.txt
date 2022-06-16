@@ -36,5 +36,6 @@ function(add_benchmark TARGET_NAME SRC)
     target_compile_options(${TARGET_NAME} PRIVATE ${UREACT_WARNING_OPTION})
 endfunction()
 
-# benchmark_signal_composing
+# benchmarks
 add_benchmark(benchmark_signal_composing src/signal_composing.cpp)
+add_benchmark(benchmark_hold src/hold.cpp)

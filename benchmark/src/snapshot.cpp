@@ -15,6 +15,7 @@ struct ScenarioSnapshot
 
     std::ostream& os;
 
+    using S = int;
     using E = int;
 
     static const char* name()
@@ -22,7 +23,7 @@ struct ScenarioSnapshot
         return "Snapshot";
     }
 
-    static E event_value( int a )
+    static S event_value( int a )
     {
         return a;
     }
@@ -36,33 +37,33 @@ struct ScenarioSnapshot
     }
 };
 
-template <class Scenario, class E = typename Scenario::E>
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
 void perform_test( Scenario& scenario,
     const char* name,
     ankerl::nanobench::Bench& bench,
     ureact::context& ctx,
-    const ureact::event_source<ureact::token>& trigger,
-    const ureact::var_signal<E>& target,
-    const ureact::signal<E>& out )
+    const ureact::event_source<E>& trigger,
+    const ureact::var_signal<S>& target,
+    const ureact::signal<S>& out )
 {
     int i = 0;
 
     int changes = 0;
-    observe( out, [&]( const E& ) { ++changes; } );
+    observe( out, [&]( const S& ) { ++changes; } );
 
     bench.run( name, [&] {
-        // ensure changing the target do not changes the out
+        // ensure changing the target do not change the out
         target <<= i * 10;
         assert( out.get() != target.get() );
 
         // ensure emitting the trigger changes the out
         target <<= i;
-        trigger.emit();
+        trigger.emit( E{} );
         assert( out.get() == i );
 
         // additionally trigger to ensure it does not add additional changes
         for( int j = 0; j < 10; ++j )
-            trigger.emit();
+            trigger.emit( E{} );
 
         bench.doNotOptimizeAway( out.get() );
         ++i;
@@ -72,42 +73,69 @@ void perform_test( Scenario& scenario,
 }
 
 // Standard snapshot algorithm
-template <class Scenario, class E = typename Scenario::E>
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
 void snapshot_standard( Scenario& scenario, ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
-    auto trigger = ureact::make_event_source( ctx );
-    auto target = ureact::make_var( ctx, E{} );
+    auto trigger = ureact::make_event_source<E>( ctx );
+    auto target = ureact::make_var( ctx, S{} );
 
     auto out = ureact::snapshot( trigger, target );
 
     perform_test( scenario, "snapshot", bench, ctx, trigger, target, out );
 }
 
+// New snapshot algorithm
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
+void snapshot_new( Scenario& scenario, ankerl::nanobench::Bench& bench )
+{
+    ureact::context ctx;
+    auto trigger = ureact::make_event_source<E>( ctx );
+    auto target = ureact::make_var( ctx, S{} );
+
+    auto out = ureact::snapshot2( trigger, target );
+
+    perform_test( scenario, "new", bench, ctx, trigger, target, out );
+}
+
+// New snapshot algorithm piped
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
+void snapshot_new_piped( Scenario& scenario, ankerl::nanobench::Bench& bench )
+{
+    ureact::context ctx;
+    auto trigger = ureact::make_event_source<E>( ctx );
+    auto target = ureact::make_var( ctx, S{} );
+
+    auto out = trigger | ureact::snapshot2( target );
+
+    perform_test( scenario, "new piped", bench, ctx, trigger, target, out );
+}
+
 // Snapshot algorithm via fold with event_range
-template <class Scenario, class E = typename Scenario::E>
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
 void snapshot_fold_ranged( Scenario& scenario, ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
-    auto trigger = ureact::make_event_source( ctx );
-    auto target = ureact::make_var( ctx, E{} );
+    auto trigger = ureact::make_event_source<E>( ctx );
+    auto target = ureact::make_var( ctx, S{} );
 
-    auto out = fold( trigger, target.get(), with( target ), []( ureact::event_range<> range, const E&, const E& value ) {
-        return value;
-    } );
+    auto out = fold( trigger,
+        target.get(),
+        with( target ),
+        []( ureact::event_range<E> range, const S&, const S& value ) { return value; } );
 
     perform_test( scenario, "fold ranged", bench, ctx, trigger, target, out );
 }
 
 // Snapshot algorithm via fold
-template <class Scenario, class E = typename Scenario::E>
+template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
 void snapshot_fold( Scenario& scenario, ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
-    auto trigger = ureact::make_event_source( ctx );
-    auto target = ureact::make_var( ctx, E{} );
+    auto trigger = ureact::make_event_source<E>( ctx );
+    auto target = ureact::make_var( ctx, S{} );
 
-    auto out = fold( trigger, target.get(), with( target ), []( ureact::token, const E&, const E& value ) {
+    auto out = fold( trigger, target.get(), with( target ), []( E, const S&, const S& value ) {
         return value;
     } );
 
@@ -128,6 +156,8 @@ void run_scenario()
 
     //test_baseline( scenario, b );
     snapshot_standard( scenario, b );
+    snapshot_new( scenario, b );
+    snapshot_new_piped( scenario, b );
     snapshot_fold_ranged( scenario, b );
     snapshot_fold( scenario, b );
 

@@ -103,17 +103,17 @@ void pulse_standard( Scenario& scenario, ankerl::nanobench::Bench& bench )
     perform_test( scenario, "pulse", bench, ctx, trigger, target, out );
 }
 
-// New pulse algorithm
+// Standard pulse algorithm piped
 template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
-void pulse_new( Scenario& scenario, ankerl::nanobench::Bench& bench )
+void pulse_standard_piped( Scenario& scenario, ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
     auto trigger = ureact::make_event_source<E>( ctx );
     auto target = ureact::make_var( ctx, S{} );
 
-    auto out = ureact::pulse2( trigger, target );
+    auto out = trigger | ureact::pulse( target );
 
-    perform_test( scenario, "new", bench, ctx, trigger, target, out );
+    perform_test( scenario, "pulse piped", bench, ctx, trigger, target, out );
 }
 
 // Pulse algorithm via synced process algorithm
@@ -166,7 +166,7 @@ void run_scenario()
 
     //test_baseline( scenario, b );
     pulse_standard( scenario, b );
-    pulse_new( scenario, b );
+    pulse_standard_piped( scenario, b );
     pulse_process( scenario, b );
     pulse_process_2( scenario, b );
 

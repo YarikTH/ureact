@@ -4452,88 +4452,6 @@ private:
     dep_holder_t m_deps;
 };
 
-// Base class for snapshot and pulse algorithm
-// do something with target signal value on trigger event fires
-template <template <typename> class base, typename S, typename E>
-class triggered_node : public base<S>
-{
-public:
-    template <typename... args_t>
-    triggered_node( context& context,
-        const std::shared_ptr<signal_node<S>>& target,
-        const std::shared_ptr<event_stream_node<E>>& trigger,
-        args_t&&... args )
-        : base<S>( context, std::forward<args_t>( args )... )
-        , m_target( target )
-        , m_trigger( trigger )
-    {
-        this->get_graph().on_node_attach( *this, *m_target );
-        this->get_graph().on_node_attach( *this, *m_trigger );
-    }
-
-    ~triggered_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_target );
-        this->get_graph().on_node_detach( *this, *m_trigger );
-    }
-
-    void tick( turn_type& turn ) final
-    {
-        before_tick( turn );
-
-        m_trigger->set_current_turn( turn );
-
-        const size_t count = m_trigger->events().size();
-        if( count > 0 )
-        {
-            const S& new_value = m_target->value_ref();
-            if( on_trigger_fires( count, new_value ) )
-            {
-                this->get_graph().on_node_pulse( *this );
-            }
-        }
-    }
-
-    /// some turn related actions at the begin of the spin
-    virtual void before_tick( turn_type& turn )
-    {}
-
-    /// specific actions performed when trigger fires at least once
-    virtual bool on_trigger_fires( size_t count, const S& target_value ) = 0;
-
-private:
-    const std::shared_ptr<signal_node<S>> m_target;
-    const std::shared_ptr<event_stream_node<E>> m_trigger;
-};
-
-template <typename S, typename E>
-class pulse_node : public triggered_node<event_stream_node, S, E>
-{
-public:
-    pulse_node( context& context,
-        const std::shared_ptr<signal_node<S>>& target,
-        const std::shared_ptr<event_stream_node<E>>& trigger )
-        : pulse_node::triggered_node( context, target, trigger )
-    {}
-
-    void before_tick( turn_type& turn ) final
-    {
-        this->set_current_turn_force_update( turn );
-    }
-
-    bool on_trigger_fires( size_t count, const S& target_value ) final
-    {
-        this->m_events.reserve( this->m_events.size() + count );
-
-        for( size_t i = 0, ie = count; i < ie; ++i )
-        {
-            this->m_events.push_back( target_value );
-        }
-
-        return true;
-    }
-};
-
 } // namespace detail
 
 /// Emits value changes of signal as events
@@ -4659,16 +4577,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 
 /// pulse - Emits value of target signal when event is received
 template <typename S, typename E>
-auto pulse( const events<E>& trigger, const signal<S>& target ) -> events<S>
-{
-    context& context = trigger.get_context();
-    return events<S>( std::make_shared<detail::pulse_node<S, E>>(
-        context, get_node_ptr( target ), get_node_ptr( trigger ) ) );
-}
-
-/// pulse - Emits value of target signal when event is received
-template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto pulse2( const events<E>& trigger, const signal<S>& target )
+UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>& target )
 {
     return process<S>( trigger,
         with( target ),
@@ -4680,12 +4589,12 @@ UREACT_WARN_UNUSED_RESULT auto pulse2( const events<E>& trigger, const signal<S>
 
 /// curried version of pulse algorithm. Intended for chaining
 template <typename S>
-UREACT_WARN_UNUSED_RESULT auto pulse2( const signal<S>& target )
+UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
 {
     return [target = target]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return pulse2( std::forward<arg_t>( source ), target );
+        return pulse( std::forward<arg_t>( source ), target );
     };
 }
 

@@ -26,7 +26,7 @@ TEST_CASE( "Pulse" )
     // using subcases
     SUBCASE( "Functional syntax" )
     {
-        beat = ureact::pulse2( trigger, target );
+        beat = ureact::pulse( trigger, target );
     }
     SUBCASE( "Functional syntax on temporary" )
     {
@@ -34,25 +34,25 @@ TEST_CASE( "Pulse" )
         // we use them to check filter overloads that receive temp_events rvalue
         // typically we don't need nor std::move nor naming temp events
         ureact::temp_events temp = ureact::filter( trigger, always_true );
-        beat = ureact::pulse2( std::move( temp ), target );
+        beat = ureact::pulse( std::move( temp ), target );
         CHECK_FALSE( temp.was_op_stolen() ); // there is no temp_events optimization here
     }
 
     SUBCASE( "Piped syntax" )
     {
-        beat = trigger | ureact::pulse2( target );
+        beat = trigger | ureact::pulse( target );
     }
     SUBCASE( "Piped syntax on temporary" )
     {
         ureact::temp_events temp = trigger | ureact::filter( always_true );
-        beat = std::move( temp ) | ureact::pulse2( target );
+        beat = std::move( temp ) | ureact::pulse( target );
         CHECK_FALSE( temp.was_op_stolen() ); // there is no temp_events optimization here
     }
 
     SUBCASE( "Trigger can be any type" )
     {
         beat = ureact::transform( trigger, []( ureact::token ) { return 1; } )
-             | ureact::pulse2( target );
+             | ureact::pulse( target );
     }
 
     auto result = make_collector( beat );

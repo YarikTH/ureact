@@ -8,8 +8,7 @@
 #include <iostream>
 #include <string>
 
-#include <doctest.h>
-
+#include "tests_stdafx.hpp"
 #include "ureact/ureact.hpp"
 
 TEST_SUITE_BEGIN( "ObserverTest" );

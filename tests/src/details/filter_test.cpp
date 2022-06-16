@@ -5,8 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include <doctest.h>
-
+#include "tests_stdafx.hpp"
 #include "ureact/ureact.hpp"
 
 namespace

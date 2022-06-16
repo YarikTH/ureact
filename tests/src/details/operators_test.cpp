@@ -8,8 +8,7 @@
 #include <sstream>
 #include <string>
 
-#include <doctest.h>
-
+#include "tests_stdafx.hpp"
 #include "ureact/ureact.hpp"
 
 namespace

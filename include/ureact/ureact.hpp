@@ -4666,12 +4666,12 @@ UREACT_WARN_UNUSED_RESULT auto hold2( T&& source, V&& init )
 
 /// curried version of hold2 algorithm. Intended for chaining
 template <typename V>
-UREACT_WARN_UNUSED_RESULT inline auto hold2( V&& init )
+UREACT_WARN_UNUSED_RESULT auto hold2( V&& init )
 {
     return [init = std::forward<V>( init )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return hold2( std::forward<arg_t>( source ), std::forward<V>( init ) );
+        return hold2( std::forward<arg_t>( source ), std::move( init ) );
     };
 }
 

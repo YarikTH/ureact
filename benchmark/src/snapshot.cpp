@@ -85,30 +85,17 @@ void snapshot_standard( Scenario& scenario, ankerl::nanobench::Bench& bench )
     perform_test( scenario, "snapshot", bench, ctx, trigger, target, out );
 }
 
-// New snapshot algorithm
+// Standard snapshot algorithm
 template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
-void snapshot_new( Scenario& scenario, ankerl::nanobench::Bench& bench )
+void snapshot_standard_piped( Scenario& scenario, ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
     auto trigger = ureact::make_event_source<E>( ctx );
     auto target = ureact::make_var( ctx, S{} );
 
-    auto out = ureact::snapshot2( trigger, target );
+    auto out = trigger | ureact::snapshot( target );
 
-    perform_test( scenario, "new", bench, ctx, trigger, target, out );
-}
-
-// New snapshot algorithm piped
-template <class Scenario, class S = typename Scenario::S, class E = typename Scenario::E>
-void snapshot_new_piped( Scenario& scenario, ankerl::nanobench::Bench& bench )
-{
-    ureact::context ctx;
-    auto trigger = ureact::make_event_source<E>( ctx );
-    auto target = ureact::make_var( ctx, S{} );
-
-    auto out = trigger | ureact::snapshot2( target );
-
-    perform_test( scenario, "new piped", bench, ctx, trigger, target, out );
+    perform_test( scenario, "snapshot piped", bench, ctx, trigger, target, out );
 }
 
 // Snapshot algorithm via fold with event_range
@@ -156,8 +143,7 @@ void run_scenario()
 
     //test_baseline( scenario, b );
     snapshot_standard( scenario, b );
-    snapshot_new( scenario, b );
-    snapshot_new_piped( scenario, b );
+    snapshot_standard_piped( scenario, b );
     snapshot_fold_ranged( scenario, b );
     snapshot_fold( scenario, b );
 

@@ -4495,30 +4495,6 @@ private:
 };
 
 template <typename S, typename E>
-class snapshot_node : public triggered_node<signal_node, S, E>
-{
-public:
-    snapshot_node( context& context,
-        const std::shared_ptr<signal_node<S>>& target,
-        const std::shared_ptr<event_stream_node<E>>& trigger )
-        : snapshot_node::triggered_node( context, target, trigger, target->value_ref() )
-    {}
-
-    bool on_trigger_fires( size_t, const S& target_value ) final
-    {
-        if( equals( target_value, this->m_value ) )
-        {
-            return false;
-        }
-        else
-        {
-            this->m_value = target_value;
-            return true;
-        }
-    }
-};
-
-template <typename S, typename E>
 class pulse_node : public triggered_node<event_stream_node, S, E>
 {
 public:
@@ -4650,16 +4626,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 
 /// snapshot - Sets signal value to value of other signal when event is received
 template <typename S, typename E>
-auto snapshot( const events<E>& trigger, const signal<S>& target ) -> signal<S>
-{
-    context& context = trigger.get_context();
-    return signal<S>( std::make_shared<detail::snapshot_node<S, E>>(
-        context, get_node_ptr( target ), get_node_ptr( trigger ) ) );
-}
-
-/// snapshot - Sets signal value to value of other signal when event is received
-template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto snapshot2( const events<E>& trigger, const signal<S>& target )
+UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<S>& target )
 {
     return fold( trigger,
         target.get(),
@@ -4667,14 +4634,14 @@ UREACT_WARN_UNUSED_RESULT auto snapshot2( const events<E>& trigger, const signal
         []( ureact::event_range<E> range, const S&, const S& value ) { return value; } );
 }
 
-/// curried version of hold algorithm. Intended for chaining
+/// curried version of snapshot algorithm. Intended for chaining
 template <typename S>
-UREACT_WARN_UNUSED_RESULT auto snapshot2( const signal<S>& target )
+UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 {
     return [target = target]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( ureact::is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return snapshot2( std::forward<arg_t>( source ), target );
+        return snapshot( std::forward<arg_t>( source ), target );
     };
 }
 

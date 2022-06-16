@@ -74,7 +74,7 @@ TEST_CASE( "Snapshot" )
     // using subcases
     SUBCASE( "Functional syntax" )
     {
-        snap = ureact::snapshot2( trigger, target );
+        snap = ureact::snapshot( trigger, target );
     }
     SUBCASE( "Functional syntax on temporary" )
     {
@@ -82,25 +82,25 @@ TEST_CASE( "Snapshot" )
         // we use them to check filter overloads that receive temp_events rvalue
         // typically we don't need nor std::move nor naming temp events
         ureact::temp_events temp = ureact::filter( trigger, always_true );
-        snap = ureact::snapshot2( std::move( temp ), target );
+        snap = ureact::snapshot( std::move( temp ), target );
         CHECK_FALSE( temp.was_op_stolen() ); // there is no temp_events optimization here
     }
 
     SUBCASE( "Piped syntax" )
     {
-        snap = trigger | ureact::snapshot2( target );
+        snap = trigger | ureact::snapshot( target );
     }
     SUBCASE( "Piped syntax on temporary" )
     {
         ureact::temp_events temp = trigger | ureact::filter( always_true );
-        snap = std::move( temp ) | ureact::snapshot2( target );
+        snap = std::move( temp ) | ureact::snapshot( target );
         CHECK_FALSE( temp.was_op_stolen() ); // there is no temp_events optimization here
     }
 
     SUBCASE( "Trigger can be any type" )
     {
         snap = ureact::transform( trigger, []( ureact::token ) { return 1; } )
-             | ureact::snapshot2( target );
+             | ureact::snapshot( target );
     }
 
     int changes = 0;

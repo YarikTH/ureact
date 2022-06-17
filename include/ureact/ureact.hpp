@@ -1273,6 +1273,31 @@ protected:
     {
         return this->m_ptr->value_ref();
     }
+
+    template <typename T>
+    void set_value( T&& new_value ) const
+    {
+        auto node_ptr = get_var_node();
+        auto& graph_ref = node_ptr->get_graph();
+
+        graph_ref.push_input( node_ptr,
+            [node_ptr, &new_value] { node_ptr->set_value( std::forward<T>( new_value ) ); } );
+    }
+
+    template <typename F>
+    void modify_value( const F& func ) const
+    {
+        auto node_ptr = get_var_node();
+        auto& graph_ref = node_ptr->get_graph();
+
+        graph_ref.push_input( node_ptr, [node_ptr, &func] { node_ptr->modify_value( func ); } );
+    }
+
+private:
+    UREACT_WARN_UNUSED_RESULT auto get_var_node() const
+    {
+        return static_cast<var_node<S>*>( this->m_ptr.get() );
+    }
 };
 
 } // namespace detail
@@ -1370,56 +1395,6 @@ public:
 };
 
 
-namespace detail
-{
-
-/*! @brief Source signals which values can be manually changed.
- *
- *  This class extends the immutable signal interface with functions that support
- *  imperative value input. In the dataflow graph, input signals are sources.
- *  As such, they don't have any predecessors.
- */
-template <typename S>
-class var_signal_base : public signal<S>
-{
-private:
-    UREACT_WARN_UNUSED_RESULT auto get_var_node() const
-    {
-        return static_cast<var_node<S>*>( this->m_ptr.get() );
-    }
-
-protected:
-    /**
-     * Construct value from var_node.
-     */
-    template <class node_t>
-    explicit var_signal_base( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal_base::signal( std::move( node_ptr ) )
-    {}
-
-    template <typename T>
-    void set_value( T&& new_value ) const
-    {
-        auto node_ptr = get_var_node();
-        auto& graph_ref = node_ptr->get_graph();
-
-        graph_ref.push_input( node_ptr,
-            [node_ptr, &new_value] { node_ptr->set_value( std::forward<T>( new_value ) ); } );
-    }
-
-    template <typename F>
-    void modify_value( const F& func ) const
-    {
-        auto node_ptr = get_var_node();
-        auto& graph_ref = node_ptr->get_graph();
-
-        graph_ref.push_input( node_ptr, [node_ptr, &func] { node_ptr->modify_value( func ); } );
-    }
-};
-
-} // namespace detail
-
-
 /*! @brief Source signals which values can be manually changed.
  * (Specialization for non-reference types.)
  *
@@ -1430,7 +1405,7 @@ protected:
  *  var_signal is created by constructor function make_var.
  */
 template <typename S>
-class var_signal : public detail::var_signal_base<S>
+class var_signal : public signal<S>
 {
 private:
     using node_t = detail::var_node<S>;
@@ -1444,7 +1419,7 @@ public:
      * @todo make it private and allow to call it only from make_var function
      */
     explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::var_signal_base( std::move( node_ptr ) )
+        : var_signal::signal( std::move( node_ptr ) )
     {}
 
     /**
@@ -1510,7 +1485,7 @@ public:
  *  var_signal is created by constructor function make_var.
  */
 template <typename S>
-class var_signal<S&> : public detail::var_signal_base<std::reference_wrapper<S>>
+class var_signal<S&> : public signal<std::reference_wrapper<S>>
 {
 private:
     using node_t = detail::var_node<std::reference_wrapper<S>>;
@@ -1526,7 +1501,7 @@ public:
      * @todo make it private and allow to call it only from make_var function
      */
     explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::var_signal_base( std::move( node_ptr ) )
+        : var_signal::signal( std::move( node_ptr ) )
     {}
 
     /**

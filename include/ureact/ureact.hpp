@@ -167,14 +167,17 @@ class signal;
 template <typename S>
 class var_signal;
 
+template <typename S, typename op_t>
+class temp_signal;
+
 template <typename E>
 class events;
 
-template <typename E, typename op_t>
-class temp_events;
-
 template <typename E>
 class event_source;
+
+template <typename E, typename op_t>
+class temp_events;
 
 template <typename... values_t>
 class signal_pack;
@@ -1553,6 +1556,41 @@ public:
     }
 };
 
+/*! @brief This signal that exposes additional type information of the linked node, which enables
+ * r-value based node merging at construction time.
+ *
+ * The primary use case for this is to avoid unnecessary nodes when creating signal
+ * expression from overloaded arithmetic operators.
+ *
+ * temp_signal shouldn't be used as an l-value type, but instead implicitly
+ * converted to signal.
+ */
+template <typename S, typename op_t>
+class temp_signal : public signal<S>
+{
+private:
+    using node_t = detail::signal_op_node<S, op_t>;
+
+public:
+    /// Construct temp_signal from var_node.
+    explicit temp_signal( std::shared_ptr<node_t>&& ptr )
+        : temp_signal::signal( std::move( ptr ) )
+    {}
+
+    /// Return internal operator, leaving node invalid
+    UREACT_WARN_UNUSED_RESULT op_t steal_op()
+    {
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->steal_op();
+    }
+
+    /// Checks if internal operator was already stolen
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    {
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->was_op_stolen();
+    }
+};
 
 /// Proxy class that wraps several nodes into a tuple.
 template <typename... values_t>
@@ -1575,46 +1613,6 @@ public:
 
 namespace detail
 {
-
-/**
- * This class exposes additional type information of the linked node, which enables
- * r-value based node merging at construction time.
- * The primary use case for this is to avoid unnecessary nodes when creating signal
- * expression from overloaded arithmetic operators.
- *
- * temp_signal shouldn't be used as an l-value type, but instead implicitly
- * converted to signal.
- */
-template <typename S, typename op_t>
-class temp_signal : public signal<S>
-{
-private:
-    using node_t = signal_op_node<S, op_t>;
-
-public:
-    /**
-     * Construct temp_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
-     */
-    explicit temp_signal( std::shared_ptr<node_t>&& ptr )
-        : temp_signal::signal( std::move( ptr ) )
-    {}
-
-    /// Return internal operator, leaving node invalid
-    UREACT_WARN_UNUSED_RESULT op_t steal_op()
-    {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
-        return node_ptr->steal_op();
-    }
-
-    /// Checks if internal operator was already stolen
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
-    {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
-        return node_ptr->was_op_stolen();
-    }
-};
-
 
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, std::reference_wrapper<S> v )

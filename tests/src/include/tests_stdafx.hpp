@@ -59,11 +59,19 @@ doctest::String toString( const std::vector<T, Allocator>& value )
 const auto always_true = []( auto&& ) { return true; };
 
 // use fold expression to collect all received events into a vector
-template <class T>
-auto make_collector( T&& events )
+template <class E>
+auto make_collector( const ureact::events<E>& events )
 {
-    const auto collector = []( int e, std::vector<int>& accum ) { accum.push_back( e ); };
-    return ureact::fold( std::forward<T>( events ), std::vector<int>{}, collector );
+    const auto collector = []( const E& e, std::vector<E>& accum ) { accum.push_back( e ); };
+    return ureact::fold( events, std::vector<E>{}, collector );
+}
+
+// use fold expression to count received events
+template <class E>
+auto make_counter( const ureact::events<E>& events )
+{
+    const auto counter = []( const E&, size_t& accum ) { ++accum; };
+    return ureact::fold( events, size_t{ 0 }, counter );
 }
 
 template <class T>

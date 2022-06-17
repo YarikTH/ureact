@@ -4152,63 +4152,6 @@ private:
     F m_func;
 };
 
-template <typename S, typename E, typename func_t>
-class fold_node : public signal_node<S>
-{
-public:
-    template <typename T, typename F>
-    fold_node(
-        context& context, T&& init, const std::shared_ptr<event_stream_node<E>>& events, F&& func )
-        : fold_node::signal_node( context, std::forward<T>( init ) )
-        , m_events( events )
-        , m_func( std::forward<F>( func ) )
-    {
-        this->get_graph().on_node_attach( *this, *events );
-    }
-
-    ~fold_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_events );
-    }
-
-    void tick( turn_type& ) override
-    {
-        bool changed = false;
-
-        if constexpr( std::is_invocable_r_v<S, func_t, event_range<E>, S> )
-        {
-            S new_value = m_func( event_range<E>( m_events->events() ), this->m_value );
-
-            if( !equals( new_value, this->m_value ) )
-            {
-                this->m_value = std::move( new_value );
-                changed = true;
-            }
-        }
-        else if constexpr( std::is_invocable_r_v<void, func_t, event_range<E>, S&> )
-        {
-            m_func( event_range<E>( m_events->events() ), this->m_value );
-
-            // Always assume change
-            changed = true;
-        }
-        else
-        {
-            static_assert( !std::is_same_v<S, S>, "Unsupported function signature" );
-        }
-
-        if( changed )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    std::shared_ptr<event_stream_node<E>> m_events;
-
-    func_t m_func;
-};
-
 template <typename S, typename E, typename func_t, typename... dep_values_t>
 class synced_fold_node : public signal_node<S>
 {
@@ -4268,7 +4211,8 @@ public:
                             event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
                     },
                     m_deps );
-    
+
+                // Always assume change
                 changed = true;
             }
             else
@@ -4350,13 +4294,13 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&&
     using F = std::decay_t<f_in_t>;
 
     using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S>,
-        detail::fold_node<S, E, F>,
+        detail::synced_fold_node<S, E, F>,
         std::conditional_t<std::is_invocable_r_v<S, F, E, S>,
-            detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F>>,
+            detail::synced_fold_node<S, E, detail::add_fold_range_wrapper<E, S, F>>,
             std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&>,
-                detail::fold_node<S, E, F>,
+                detail::synced_fold_node<S, E, F>,
                 std::conditional_t<std::is_invocable_r_v<void, F, E, S&>,
-                    detail::fold_node<S, E, detail::add_fold_by_ref_range_wrapper<E, S, F>>,
+                    detail::synced_fold_node<S, E, detail::add_fold_by_ref_range_wrapper<E, S, F>>,
                     void>>>>;
 
     static_assert( !std::is_same_v<node_t, void>,

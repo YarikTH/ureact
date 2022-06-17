@@ -2233,53 +2233,6 @@ auto make_event_source( context& context ) -> event_source<E>
     return event_source<E>( std::make_shared<detail::event_source_node<E>>( context ) );
 }
 
-/// temp_events
-template <typename E, typename op_t>
-class temp_events : public events<E>
-{
-protected:
-    using node_t = detail::event_op_node<E, op_t>;
-
-public:
-    // Default ctor
-    temp_events() = default;
-
-    // Copy ctor
-    temp_events( const temp_events& ) = default;
-
-    // Move ctor
-    temp_events( temp_events&& other ) noexcept
-        : temp_events::events( std::move( other ) )
-    {}
-
-    // Node ctor
-    explicit temp_events( std::shared_ptr<node_t>&& node_ptr )
-        : temp_events::events( std::move( node_ptr ) )
-    {}
-
-    // Copy assignment
-    temp_events& operator=( const temp_events& ) = default;
-
-    // Move assignment
-    temp_events& operator=( temp_events&& other ) noexcept
-    {
-        temp_events::event_stream_base::operator=( std::move( other ) );
-        return *this;
-    }
-
-    UREACT_WARN_UNUSED_RESULT op_t steal_op()
-    {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
-        return node_ptr->steal_op();
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
-    {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
-        return node_ptr->was_op_stolen();
-    }
-};
-
 /// events
 template <typename E = token>
 class events : public detail::event_stream_base<E>
@@ -2487,6 +2440,53 @@ public:
     {
         event_source::event_stream_base::emit( e );
         return *this;
+    }
+};
+
+/// temp_events
+template <typename E, typename op_t>
+class temp_events : public events<E>
+{
+protected:
+    using node_t = detail::event_op_node<E, op_t>;
+
+public:
+    // Default ctor
+    temp_events() = default;
+
+    // Copy ctor
+    temp_events( const temp_events& ) = default;
+
+    // Move ctor
+    temp_events( temp_events&& other ) noexcept
+        : temp_events::events( std::move( other ) )
+    {}
+
+    // Node ctor
+    explicit temp_events( std::shared_ptr<node_t>&& node_ptr )
+        : temp_events::events( std::move( node_ptr ) )
+    {}
+
+    // Copy assignment
+    temp_events& operator=( const temp_events& ) = default;
+
+    // Move assignment
+    temp_events& operator=( temp_events&& other ) noexcept
+    {
+        temp_events::event_stream_base::operator=( std::move( other ) );
+        return *this;
+    }
+
+    UREACT_WARN_UNUSED_RESULT op_t steal_op()
+    {
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->steal_op();
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    {
+        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        return node_ptr->was_op_stolen();
     }
 };
 

@@ -4153,16 +4153,16 @@ private:
 };
 
 template <typename S, typename E, typename func_t, typename... dep_values_t>
-class synced_fold_node : public signal_node<S>
+class fold_node : public signal_node<S>
 {
 public:
     template <typename T, typename F>
-    synced_fold_node( context& context,
+    fold_node( context& context,
         T&& init,
         const std::shared_ptr<event_stream_node<E>>& events,
         F&& func,
         const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_fold_node::signal_node( context, std::forward<T>( init ) )
+        : fold_node::signal_node( context, std::forward<T>( init ) )
         , m_events( events )
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
@@ -4171,12 +4171,11 @@ public:
         ( this->get_graph().on_node_attach( *this, *deps ), ... );
     }
 
-    ~synced_fold_node() override
+    ~fold_node() override
     {
         this->get_graph().on_node_detach( *this, *m_events );
 
-        apply( detach_functor<synced_fold_node, std::shared_ptr<signal_node<dep_values_t>>...>(
-                   *this ),
+        apply( detach_functor<fold_node, std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
             m_deps );
     }
 
@@ -4192,23 +4191,26 @@ public:
             {
                 S new_value = apply(
                     [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        return m_func(
-                            event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                        return m_func( event_range<E>( m_events->events() ),
+                            this->m_value,
+                            args->value_ref()... );
                     },
                     m_deps );
-    
+
                 if( !equals( new_value, this->m_value ) )
                 {
                     changed = true;
                     this->m_value = std::move( new_value );
                 }
             }
-            else if constexpr( std::is_invocable_r_v<void, func_t, event_range<E>, S&, dep_values_t...> )
+            else if constexpr(
+                std::is_invocable_r_v<void, func_t, event_range<E>, S&, dep_values_t...> )
             {
                 apply(
                     [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        m_func(
-                            event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                        m_func( event_range<E>( m_events->events() ),
+                            this->m_value,
+                            args->value_ref()... );
                     },
                     m_deps );
 
@@ -4294,13 +4296,13 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&&
     using F = std::decay_t<f_in_t>;
 
     using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S>,
-        detail::synced_fold_node<S, E, F>,
+        detail::fold_node<S, E, F>,
         std::conditional_t<std::is_invocable_r_v<S, F, E, S>,
-            detail::synced_fold_node<S, E, detail::add_fold_range_wrapper<E, S, F>>,
+            detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F>>,
             std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&>,
-                detail::synced_fold_node<S, E, F>,
+                detail::fold_node<S, E, F>,
                 std::conditional_t<std::is_invocable_r_v<void, F, E, S&>,
-                    detail::synced_fold_node<S, E, detail::add_fold_by_ref_range_wrapper<E, S, F>>,
+                    detail::fold_node<S, E, detail::add_fold_by_ref_range_wrapper<E, S, F>>,
                     void>>>>;
 
     static_assert( !std::is_same_v<node_t, void>,
@@ -4344,16 +4346,16 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 
     using node_t = std::conditional_t<
         std::is_invocable_r_v<S, F, event_range<E>, S, dep_values_t...>,
-        detail::synced_fold_node<S, E, F, dep_values_t...>,
+        detail::fold_node<S, E, F, dep_values_t...>,
         std::conditional_t<std::is_invocable_r_v<S, F, E, S, dep_values_t...>,
-            detail::synced_fold_node<S,
+            detail::fold_node<S,
                 E,
                 detail::add_fold_range_wrapper<E, S, F, dep_values_t...>,
                 dep_values_t...>,
             std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&, dep_values_t...>,
-                detail::synced_fold_node<S, E, F, dep_values_t...>,
+                detail::fold_node<S, E, F, dep_values_t...>,
                 std::conditional_t<std::is_invocable_r_v<void, F, E, S&, dep_values_t...>,
-                    detail::synced_fold_node<S,
+                    detail::fold_node<S,
                         E,
                         detail::add_fold_by_ref_range_wrapper<E, S, F, dep_values_t...>,
                         dep_values_t...>,

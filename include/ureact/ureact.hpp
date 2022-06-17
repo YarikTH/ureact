@@ -229,31 +229,30 @@ struct event_value_impl<event_source<E>>
 
 } // namespace detail
 
-/// Return if type is signal or its inheritor
+/// @brief Return if type is signal or its inheritor
 template <typename T>
 struct is_signal : detail::is_base_of_template<signal, T>
 {};
 
-/// Helper variable template for is_signal
+/// @brief Helper variable template for is_signal
 template <typename T>
 inline constexpr bool is_signal_v = is_signal<T>::value;
 
-/// Return if type is events or its inheritor
+/// @brief Return if type is events or its inheritor
 template <typename T>
 struct is_event : detail::is_base_of_template<events, T>
 {};
 
-/// Helper variable template for is_event
+/// @brief Helper variable template for is_event
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
 
-/// Detect event type E of events, event_source
-/// can't be used with no event types
+/// @brief Detect event type E of @ref events and @ref  event_source
 template <typename T>
 struct event_value : detail::event_value_impl<T>
 {};
 
-/// Helper type for event_value
+/// @brief Helper type for event_value
 template <typename T>
 using event_value_t = typename event_value<std::decay_t<T>>::type;
 
@@ -1273,7 +1272,7 @@ private:
 } // namespace detail
 
 /*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
- * its dependencies. (Specialization for non-reference types)
+ * its dependencies (Specialization for non-reference types)
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
  *  and react to changes of its dependencies.
@@ -1324,7 +1323,7 @@ public:
 };
 
 /*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
- * its dependencies. (Specialization for references)
+ * its dependencies (Specialization for references)
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
  *  and react to changes of its dependencies.
@@ -1374,7 +1373,7 @@ public:
     }
 };
 
-/*! @brief Source signals which values can be manually changed.
+/*! @brief Source signals which values can be manually changed
  * (Specialization for non-reference types)
  *
  *  This class extends the immutable signal interface with functions that support
@@ -1440,7 +1439,7 @@ public:
     }
 };
 
-/*! @brief Source signals which values can be manually changed.
+/*! @brief Source signals which values can be manually changed
  * (Specialization for references)
  *
  *  This class extends the immutable signal interface with functions that support
@@ -2211,7 +2210,7 @@ protected:
 
 } // namespace detail
 
-/*! @brief Reactive event stream class. (Specialization for non-reference types)
+/*! @brief Reactive event stream class (Specialization for non-reference types)
  *
  *  An instance of this class acts as a proxy to an event stream node.
  *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
@@ -2242,7 +2241,7 @@ public:
     {}
 };
 
-/*! @brief Reactive event stream class. (Specialization for references)
+/*! @brief Reactive event stream class (Specialization for references)
  *
  *  An instance of this class acts as a proxy to an event stream node.
  *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
@@ -2273,7 +2272,7 @@ public:
     {}
 };
 
-/*! @brief @ref events that support imperative input. (Specialization for non-reference types)
+/*! @brief @ref events that support imperative input (Specialization for non-reference types)
  *
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
@@ -2357,7 +2356,7 @@ public:
     }
 };
 
-/*! @brief @ref events that support imperative input. (Specialization for references)
+/*! @brief @ref events that support imperative input (Specialization for references)
  *
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
@@ -4345,8 +4344,24 @@ private:
 
 } // namespace detail
 
-/// Folds values from event stream into a signal
-/// fold - Iteratively combines signal value with values from event stream
+/*!
+ * @brief Folds values from an event stream into a signal
+ *
+ *  Iteratively combines signal value with values from event stream
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const E&, const S&)
+ *  * S func(event_range<E> range, const S&)
+ *  * void func(const E&, S&)
+ *  * void func(event_range<E> range, S&)
+ *
+ *  Creates a signal with an initial value v = init.
+ *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v).
+ *  * If the return type of func is void: For every received event e in events,
+ *    v is passed by non-cost reference to func(e,v), making it mutable.
+ *    This variant can be used if copying and comparing S is prohibitively expensive.
+ *    Because the old and new values cannot be compared, updates will always trigger a change.
+ */
 template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
 {
@@ -4370,7 +4385,26 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&&
         context, std::forward<V>( init ), get_node_ptr( events ), std::forward<f_in_t>( func ) ) );
 }
 
-/// fold - Synced
+/*!
+ * @brief Folds values from an event stream into a signal (Synchronized)
+ *
+ *  Iteratively combines signal value with values from event stream.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *  Changes of signals in dep_pack do not trigger an update - only received events do.
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const E&, const S&, const dep_values_t& ...)
+ *  * S func(event_range<E> range, const S&, const dep_values_t& ...)
+ *  * void func(const E&, S&, const dep_values_t& ...)
+ *  * void func(event_range<E> range, S&, const dep_values_t& ...)
+ *
+ *  Creates a signal with an initial value v = init.
+ *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
+ *  * If the return type of func is void: For every received event e in events,
+ *    v is passed by non-cost reference to func(e,v, deps), making it mutable.
+ *    This variant can be used if copying and comparing S is prohibitively expensive.
+ *    Because the old and new values cannot be compared, updates will always trigger a change.
+ */
 template <typename E,
     typename V,
     typename f_in_t,
@@ -4415,7 +4449,12 @@ UREACT_WARN_UNUSED_RESULT auto fold(
     return std::apply( node_builder, dep_pack.data );
 }
 
-/// Holds most recent event in a signal
+/*!
+ * @brief Holds the most recent event in a signal
+ *
+ *  Creates a @ref signal with an initial value v = init.
+ *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
+ */
 template <typename V,
     typename T,
     typename E = event_value_t<T>,
@@ -4427,7 +4466,9 @@ UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init ) -> signal<E>
         []( event_range<E> range, const auto& ) { return *range.rbegin(); } );
 }
 
-/// curried version of hold algorithm. Intended for chaining
+/*!
+ * @brief Curried version of hold() algorithm used for "pipe" syntax
+ */
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 {
@@ -4438,7 +4479,12 @@ UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
     };
 }
 
-/// snapshot - Sets signal value to value of other signal when event is received
+/*!
+ * @brief Sets the signal value to the value of a target signal when an event is received
+ *
+ *  Creates a signal with value v = target.get().
+ *  The value is set on construction and updated only when receiving an event from trigger
+ */
 template <typename S, typename E>
 UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<S>& target )
     -> signal<S>
@@ -4449,7 +4495,9 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
         []( event_range<E> range, const S&, const S& value ) { return value; } );
 }
 
-/// curried version of snapshot algorithm. Intended for chaining
+/*!
+ * @brief Curried version of snapshot() algorithm used for "pipe" syntax
+ */
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 {
@@ -4460,7 +4508,12 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
     };
 }
 
-/// pulse - Emits value of target signal when event is received
+/*!
+ * @brief Emits the value of a target signal when an event is received
+ *
+ *  Creates an event stream that emits target.get() when receiving an event from trigger.
+ *  The values of the received events are irrelevant.
+ */
 template <typename S, typename E>
 UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>& target )
     -> events<S>
@@ -4473,7 +4526,9 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
         } );
 }
 
-/// curried version of pulse algorithm. Intended for chaining
+/*!
+ * @brief Curried version of pulse() algorithm used for "pipe" syntax
+ */
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
 {
@@ -4484,7 +4539,11 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
     };
 }
 
-/// Emits value changes of signal as events
+/*!
+ * @brief Emits value changes of signal as events
+ *
+ *  When target changes, emit the new value 'e = target.get()'.
+ */
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
 {
@@ -4493,14 +4552,22 @@ UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
         std::make_shared<detail::monitor_node<S>>( context, get_node_ptr( target ) ) );
 }
 
-/// Emits token when target signal was changed
+/*!
+ * @brief Emits token when target signal was changed
+ *
+ *  Creates a token stream that emits when target is changed.
+ */
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<token>
 {
     return monitor( target ) | tokenize();
 }
 
-/// Emits token when target signal was changed to value
+/*!
+ * @brief Emits token when target signal was changed to value
+ *  Creates a token stream that emits when target is changed and 'target.get() == value'.
+ *  V and S should be comparable with ==.
+ */
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<token>
 {

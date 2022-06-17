@@ -986,27 +986,27 @@ class reactive_base
 public:
     reactive_base() = default;
 
-    explicit reactive_base( std::shared_ptr<node_t>&& ptr )
-        : m_ptr( std::move( ptr ) )
+    explicit reactive_base( std::shared_ptr<node_t>&& node )
+        : m_node( std::move( node ) )
     {}
 
     UREACT_WARN_UNUSED_RESULT bool is_valid() const
     {
-        return m_ptr != nullptr;
+        return m_node != nullptr;
     }
 
     UREACT_WARN_UNUSED_RESULT bool equals( const reactive_base& other ) const
     {
-        return this->m_ptr == other.m_ptr;
+        return this->m_node == other.m_node;
     }
 
     UREACT_WARN_UNUSED_RESULT context& get_context() const
     {
-        return m_ptr->get_context();
+        return m_node->get_context();
     }
 
 protected:
-    std::shared_ptr<node_t> m_ptr;
+    std::shared_ptr<node_t> m_node;
 
     template <typename node_t_>
     friend const std::shared_ptr<node_t_>& get_node_ptr( const reactive_base<node_t_>& node );
@@ -1016,7 +1016,7 @@ template <typename node_t>
 UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
     const reactive_base<node_t>& node )
 {
-    return node.m_ptr;
+    return node.m_node;
 }
 
 template <typename S>
@@ -1250,7 +1250,7 @@ public:
 protected:
     UREACT_WARN_UNUSED_RESULT const S& get_value() const
     {
-        return this->m_ptr->value_ref();
+        return this->m_node->value_ref();
     }
 
     template <typename T>
@@ -1275,14 +1275,14 @@ protected:
 private:
     UREACT_WARN_UNUSED_RESULT auto get_var_node() const
     {
-        return static_cast<var_node<S>*>( this->m_ptr.get() );
+        return static_cast<var_node<S>*>( this->m_node.get() );
     }
 };
 
 } // namespace detail
 
 /*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
- * its dependencies. (Specialization for non-reference types.)
+ * its dependencies. (Specialization for non-reference types)
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
  *  and react to changes of its dependencies.
@@ -1290,8 +1290,6 @@ private:
  *  Instances of this class act as a proxies to signal nodes. It takes shared
  *  ownership of the node, so while it exists, the node will not be destroyed.
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
- *
- *  signals are created by constructor functions, i.e. make_signal.
  */
 template <typename S>
 class signal : public detail::signal_base<S>
@@ -1304,17 +1302,17 @@ public:
     using value_t = S;
 
     /*!
-     * @brief Default construct signal
+     * @brief Default construct @ref signal
      *
-     * Default constructed signal is not attached to node, so it is not valid
+     * Default constructed @ref signal is not attached to node, so it is not valid
      */
     signal() = default;
 
     /*!
-     * @brief Construct signal from the given node
+     * @brief Construct from the given node
      */
-    explicit signal( std::shared_ptr<node_t>&& node_ptr )
-        : signal::signal_base( std::move( node_ptr ) )
+    explicit signal( std::shared_ptr<node_t>&& node )
+        : signal::signal_base( std::move( node ) )
     {}
 
     /*!
@@ -1335,7 +1333,7 @@ public:
 };
 
 /*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
- * its dependencies. (Specialization for references.)
+ * its dependencies. (Specialization for references)
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
  *  and react to changes of its dependencies.
@@ -1343,8 +1341,6 @@ public:
  *  Instances of this class act as a proxies to signal nodes. It takes shared
  *  ownership of the node, so while it exists, the node will not be destroyed.
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
- *
- *  signals are created by constructor functions, i.e. make_signal.
  */
 template <typename S>
 class signal<S&> : public detail::signal_base<std::reference_wrapper<S>>
@@ -1357,17 +1353,17 @@ public:
     using value_t = S;
 
     /*!
-     * @brief Default construct signal
+     * @brief Default construct @ref signal
      *
-     * Default constructed signal is not attached to node, so it is not valid
+     * Default constructed @ref signal is not attached to node, so it is not valid
      */
     signal() = default;
 
     /*!
-     * @brief Construct signal from the given node
+     * @brief Construct from the given node
      */
-    explicit signal( std::shared_ptr<node_t>&& node_ptr )
-        : signal::signal_base( std::move( node_ptr ) )
+    explicit signal( std::shared_ptr<node_t>&& node )
+        : signal::signal_base( std::move( node ) )
     {}
 
     /*!
@@ -1388,13 +1384,11 @@ public:
 };
 
 /*! @brief Source signals which values can be manually changed.
- * (Specialization for non-reference types.)
+ * (Specialization for non-reference types)
  *
  *  This class extends the immutable signal interface with functions that support
  *  imperative value input. In the dataflow graph, input signals are sources.
  *  As such, they don't have any predecessors.
- *
- *  var_signal is created by constructor function make_var.
  */
 template <typename S>
 class var_signal : public signal<S>
@@ -1404,17 +1398,17 @@ private:
 
 public:
     /*!
-     * @brief Default construct var_signal.
+     * @brief Default construct @ref var_signal.
      *
-     * Default constructed var_signal is not attached to node, so it is not valid.
+     * Default constructed @ref var_signal is not attached to node, so it is not valid.
      */
     var_signal() = default;
 
     /*!
-     * @brief Construct var_signal from var_node.
+     * @brief Construct from the given node
      */
-    explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::signal( std::move( node_ptr ) )
+    explicit var_signal( std::shared_ptr<node_t>&& node )
+        : var_signal::signal( std::move( node ) )
     {}
 
     /*!
@@ -1456,13 +1450,11 @@ public:
 };
 
 /*! @brief Source signals which values can be manually changed.
- * (Specialization for references.)
+ * (Specialization for references)
  *
  *  This class extends the immutable signal interface with functions that support
  *  imperative value input. In the dataflow graph, input signals are sources.
  *  As such, they don't have any predecessors.
- *
- *  var_signal is created by constructor function make_var.
  */
 template <typename S>
 class var_signal<S&> : public signal<std::reference_wrapper<S>>
@@ -1472,17 +1464,17 @@ private:
 
 public:
     /*!
-     * @brief Default construct var_signal.
+     * @brief Default construct @ref var_signal.
      *
-     * Default constructed var_signal is not attached to node, so it is not valid.
+     * Default constructed @ref var_signal is not attached to node, so it is not valid.
      */
     var_signal() = default;
 
     /*!
-     * @brief Construct var_signal from var_node.
+     * @brief Construct from the given node
      */
-    explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
-        : var_signal::signal( std::move( node_ptr ) )
+    explicit var_signal( std::shared_ptr<node_t>&& node )
+        : var_signal::signal( std::move( node ) )
     {}
 
     /*!
@@ -1529,10 +1521,10 @@ private:
 
 public:
     /*!
-     * @brief Construct temp_signal from var_node
+     * @brief Construct from the given node
      */
-    explicit temp_signal( std::shared_ptr<node_t>&& ptr )
-        : temp_signal::signal( std::move( ptr ) )
+    explicit temp_signal( std::shared_ptr<node_t>&& node )
+        : temp_signal::signal( std::move( node ) )
     {}
 
     /*!
@@ -1540,7 +1532,7 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
         return node_ptr->steal_op();
     }
 
@@ -1549,7 +1541,7 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
         return node_ptr->was_op_stolen();
     }
 };
@@ -2023,6 +2015,8 @@ UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
 //==================================================================================================
 // [[section]] Events
 //==================================================================================================
+
+/// This class is used as value type of token streams, which emit events without any value other than the fact that they occurred.
 enum class token
 {
     value
@@ -2209,12 +2203,12 @@ public:
 private:
     [[nodiscard]] auto get_event_source_node() const -> event_source_node<E>*
     {
-        return static_cast<event_source_node<E>*>( this->m_ptr.get() );
+        return static_cast<event_source_node<E>*>( this->m_node.get() );
     }
 
 protected:
     template <typename T>
-    void emit( T&& e ) const
+    void emit_event( T&& e ) const
     {
         auto node_ptr = get_event_source_node();
         auto& graph_ref = node_ptr->get_graph();
@@ -2233,7 +2227,12 @@ auto make_event_source( context& context ) -> event_source<E>
     return event_source<E>( std::make_shared<detail::event_source_node<E>>( context ) );
 }
 
-/// events
+/*! @brief Reactive event stream class. (Specialization for non-reference types)
+ *
+ *  An instance of this class acts as a proxy to an event stream node.
+ *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
+ *  Copy, move and assignment semantics are similar to std::shared_ptr.
+ */
 template <typename E = token>
 class events : public detail::event_stream_base<E>
 {
@@ -2241,36 +2240,30 @@ private:
     using node_t = detail::event_stream_node<E>;
 
 public:
+    /// Alias to value type to use in metaprogramming
     using value_t = E;
 
-    // Default ctor
+    /*!
+     * @brief Default construct @ref events
+     *
+     * Default constructed @ref events is not attached to node, so it is not valid
+     */
     events() = default;
 
-    // Copy ctor
-    events( const events& ) = default;
-
-    // Move ctor
-    events( events&& other ) noexcept
-        : events::event_stream_base( std::move( other ) )
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit events( std::shared_ptr<node_t>&& node )
+        : events::event_stream_base( std::move( node ) )
     {}
-
-    // Node ctor
-    explicit events( std::shared_ptr<node_t>&& node_ptr )
-        : events::event_stream_base( std::move( node_ptr ) )
-    {}
-
-    // Copy assignment
-    events& operator=( const events& ) = default;
-
-    // Move assignment
-    events& operator=( events&& other ) noexcept
-    {
-        events::event_stream_base::operator=( std::move( other ) );
-        return *this;
-    }
 };
 
-// Specialize for references
+/*! @brief Reactive event stream class. (Specialization for references)
+ *
+ *  An instance of this class acts as a proxy to an event stream node.
+ *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
+ *  Copy, move and assignment semantics are similar to std::shared_ptr.
+ */
 template <typename E>
 class events<E&> : public detail::event_stream_base<std::reference_wrapper<E>>
 {
@@ -2278,36 +2271,28 @@ private:
     using node_t = detail::event_stream_node<std::reference_wrapper<E>>;
 
 public:
+    /// Alias to value type to use in metaprogramming
     using value_t = E;
 
-    // Default ctor
+    /*!
+     * @brief Default construct @ref events
+     *
+     * Default constructed @ref events is not attached to node, so it is not valid
+     */
     events() = default;
 
-    // Copy ctor
-    events( const events& ) = default;
-
-    // Move ctor
-    events( events&& other ) noexcept
-        : events::event_stream_base( std::move( other ) )
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit events( std::shared_ptr<node_t>&& node )
+        : events::event_stream_base( std::move( node ) )
     {}
-
-    // Node ctor
-    explicit events( std::shared_ptr<node_t>&& node_ptr )
-        : events::event_stream_base( std::move( node_ptr ) )
-    {}
-
-    // Copy assignment
-    events& operator=( const events& ) = default;
-
-    // Move assignment
-    events& operator=( events&& other ) noexcept
-    {
-        events::event_stream_base::operator=( std::move( other ) );
-        return *this;
-    }
 };
 
-/// event_source
+/*! @brief @ref events that support imperative input. (Specialization for non-reference types)
+ *
+ *  An event source extends the immutable @ref events interface with functions that support imperative input.
+ */
 template <typename E = token>
 class event_source : public events<E>
 {
@@ -2315,81 +2300,83 @@ private:
     using node_t = detail::event_source_node<E>;
 
 public:
-    // Default ctor
+    /*!
+     * @brief Default construct @ref event_source
+     *
+     * Default constructed @ref event_source is not attached to node, so it is not valid
+     */
     event_source() = default;
 
-    // Copy ctor
-    event_source( const event_source& ) = default;
-
-    // Move ctor
-    event_source( event_source&& other ) noexcept
-        : event_source::events( std::move( other ) )
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit event_source( std::shared_ptr<node_t>&& node )
+        : event_source::events( std::move( node ) )
     {}
 
-    // Node ctor
-    explicit event_source( std::shared_ptr<node_t>&& node_ptr )
-        : event_source::events( std::move( node_ptr ) )
-    {}
-
-    // Copy assignment
-    event_source& operator=( const event_source& ) = default;
-
-    // Move assignment
-    event_source& operator=( event_source&& other ) noexcept
+    /*!
+     * @brief Adds e to the queue of outgoing events of the linked event source node
+     *
+     * If emit() was called inside of a transaction function, it will return after
+     * the event has been queued and propagation is delayed until the transaction
+     * function returns.
+     * Otherwise, propagation starts immediately and emit() blocks until it’s done.
+     */
+    template <class T>
+    void emit( T&& e ) const
     {
-        event_source::events::operator=( std::move( other ) );
-        return *this;
+        this->emit_event( std::forward<T>( e ) );
     }
 
-    // Explicit emit
-    void emit( const E& e ) const
-    {
-        event_source::event_stream_base::emit( e );
-    }
-
-    void emit( E&& e ) const
-    {
-        event_source::event_stream_base::emit( std::move( e ) );
-    }
-
+    /*!
+     * @brief Specialization of emit() that allows to omit e value, when the emitted value is always @ref token
+     */
     void emit() const
     {
         static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
-        event_source::event_stream_base::emit( token::value );
+        this->emit_event( token::value );
     }
 
-    // Function object style
-    void operator()( const E& e ) const
+    /*!
+     * @brief Function object version of emit()
+     *
+     * Semantically equivalent to emit().
+     */
+    template <class T>
+    void operator()( T&& e ) const
     {
-        event_source::event_stream_base::emit( e );
+        this->emit_event( std::forward<T>( e ) );
     }
 
-    void operator()( E&& e ) const
-    {
-        event_source::event_stream_base::emit( std::move( e ) );
-    }
-
+    /*!
+     * @brief Function object version of emit() (@ref token specialization)
+     *
+     * Semantically equivalent to emit().
+     */
     void operator()() const
     {
         static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
-        event_source::event_stream_base::emit( token::value );
+        this->emit_event( token::value );
     }
 
-    // Stream style
-    const event_source& operator<<( const E& e ) const
+    /*!
+     * @brief Stream version of emit()
+     *
+     * Semantically equivalent to emit().
+     * In particular, chaining multiple events in a single statement will not execute them in a single transaction.
+     */
+    template <class T>
+    const event_source& operator<<( T&& e ) const
     {
-        event_source::event_stream_base::emit( e );
-        return *this;
-    }
-
-    const event_source& operator<<( E&& e ) const
-    {
-        event_source::event_stream_base::emit( std::move( e ) );
+        this->emit_event( std::forward<T>( e ) );
         return *this;
     }
 };
 
-// Specialize for references
+/*! @brief @ref events that support imperative input. (Specialization for references)
+ *
+ *  An event source extends the immutable @ref events interface with functions that support imperative input.
+ */
 template <typename E>
 class event_source<E&> : public events<std::reference_wrapper<E>>
 {
@@ -2397,95 +2384,91 @@ private:
     using node_t = detail::event_source_node<std::reference_wrapper<E>>;
 
 public:
-    // Default ctor
+    /*!
+     * @brief Default construct @ref event_source
+     *
+     * Default constructed @ref event_source is not attached to node, so it is not valid
+     */
     event_source() = default;
 
-    // Copy ctor
-    event_source( const event_source& ) = default;
-
-    // Move ctor
-    event_source( event_source&& other ) noexcept
-        : event_source::events( std::move( other ) )
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit event_source( std::shared_ptr<node_t>&& node )
+        : event_source::events( std::move( node ) )
     {}
 
-    // Node ctor
-    explicit event_source( std::shared_ptr<node_t>&& node_ptr )
-        : event_source::events( std::move( node_ptr ) )
-    {}
-
-    // Copy assignment
-    event_source& operator=( const event_source& ) = default;
-
-    // Move assignment
-    event_source& operator=( event_source&& other ) noexcept
-    {
-        event_source::events::operator=( std::move( other ) );
-        return *this;
-    }
-
-    // Explicit emit
+    /*!
+     * @brief Adds e to the queue of outgoing events of the linked event source node
+     *
+     * If emit() was called inside of a transaction function, it will return after
+     * the event has been queued and propagation is delayed until the transaction
+     * function returns.
+     * Otherwise, propagation starts immediately and emit() blocks until it’s done.
+     */
     void emit( std::reference_wrapper<E> e ) const
     {
-        event_source::event_stream_base::emit( e );
+        this->emit_event( e );
     }
 
-    // Function object style
+    /*!
+     * @brief Function object version of emit()
+     *
+     * Semantically equivalent to emit().
+     */
     void operator()( std::reference_wrapper<E> e ) const
     {
-        event_source::event_stream_base::emit( e );
+        this->emit_event( e );
     }
 
-    // Stream style
+    /*!
+     * @brief Stream version of emit()
+     *
+     * Semantically equivalent to emit().
+     * In particular, chaining multiple events in a single statement will not execute them in a single transaction.
+     */
     const event_source& operator<<( std::reference_wrapper<E> e ) const
     {
-        event_source::event_stream_base::emit( e );
+        this->emit_event( e );
         return *this;
     }
 };
 
-/// temp_events
+/*! @brief This @ref events exposes additional type information of the linked node, which enables
+ * r-value based node merging at construction time.
+ *
+ * temp_events shouldn't be used as an l-value type, but instead implicitly
+ * converted to @ref events.
+ */
 template <typename E, typename op_t>
 class temp_events : public events<E>
 {
-protected:
+private:
     using node_t = detail::event_op_node<E, op_t>;
 
 public:
-    // Default ctor
-    temp_events() = default;
-
-    // Copy ctor
-    temp_events( const temp_events& ) = default;
-
-    // Move ctor
-    temp_events( temp_events&& other ) noexcept
-        : temp_events::events( std::move( other ) )
+    /*!
+     * @brief Construct @ref temp_events from the given node
+     */
+    explicit temp_events( std::shared_ptr<node_t>&& node )
+        : temp_events::events( std::move( node ) )
     {}
 
-    // Node ctor
-    explicit temp_events( std::shared_ptr<node_t>&& node_ptr )
-        : temp_events::events( std::move( node_ptr ) )
-    {}
-
-    // Copy assignment
-    temp_events& operator=( const temp_events& ) = default;
-
-    // Move assignment
-    temp_events& operator=( temp_events&& other ) noexcept
-    {
-        temp_events::event_stream_base::operator=( std::move( other ) );
-        return *this;
-    }
-
+    /*!
+     * @brief Return internal operator, leaving node invalid
+     */
     UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
         return node_ptr->steal_op();
     }
 
+    /*!
+     * @brief Checks if internal operator was already stolen
+     */
     UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
-        auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
+        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
         return node_ptr->was_op_stolen();
     }
 };
@@ -3720,27 +3703,27 @@ public:
 
     /// Move constructor
     observer( observer&& other ) noexcept
-        : m_node_ptr( other.m_node_ptr )
-        , m_subject_ptr( std::move( other.m_subject_ptr ) )
+        : m_node( other.m_node )
+        , m_subject( std::move( other.m_subject ) )
     {
-        other.m_node_ptr = nullptr;
-        other.m_subject_ptr.reset();
+        other.m_node = nullptr;
+        other.m_subject.reset();
     }
 
     /// Node constructor
-    observer( node_t* node_ptr, subject_ptr_t subject_ptr )
-        : m_node_ptr( node_ptr )
-        , m_subject_ptr( std::move( subject_ptr ) )
+    observer( node_t* node, subject_ptr_t subject )
+        : m_node( node )
+        , m_subject( std::move( subject ) )
     {}
 
     /// Move assignment
     observer& operator=( observer&& other ) noexcept
     {
-        m_node_ptr = other.m_node_ptr;
-        m_subject_ptr = std::move( other.m_subject_ptr );
+        m_node = other.m_node;
+        m_subject = std::move( other.m_subject );
 
-        other.m_node_ptr = nullptr;
-        other.m_subject_ptr.reset();
+        other.m_node = nullptr;
+        other.m_subject.reset();
 
         return *this;
     }
@@ -3753,21 +3736,21 @@ public:
     void detach()
     {
         assert( is_valid() );
-        m_subject_ptr->unregister_observer( m_node_ptr );
+        m_subject->unregister_observer( m_node );
     }
 
     /// Tests if this instance is linked to a node
     UREACT_WARN_UNUSED_RESULT bool is_valid() const
     {
-        return m_node_ptr != nullptr;
+        return m_node != nullptr;
     }
 
 private:
     /// Owned by subject
-    node_t* m_node_ptr = nullptr;
+    node_t* m_node = nullptr;
 
     /// While the observer handle exists, the subject is not destroyed
-    subject_ptr_t m_subject_ptr = nullptr;
+    subject_ptr_t m_subject = nullptr;
 };
 
 /// Takes ownership of an observer and automatically detaches it on scope exit.
@@ -3833,11 +3816,11 @@ auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
 
     const auto& subject_ptr = get_node_ptr( subject );
 
-    std::unique_ptr<observer_node> node_ptr(
+    std::unique_ptr<observer_node> node(
         new node_t( subject.get_context(), subject_ptr, std::forward<in_f>( func ) ) );
-    observer_node* raw_node_ptr = node_ptr.get();
+    observer_node* raw_node_ptr = node.get();
 
-    subject_ptr->register_observer( std::move( node_ptr ) );
+    subject_ptr->register_observer( std::move( node ) );
 
     return observer( raw_node_ptr, subject_ptr );
 }
@@ -3891,11 +3874,11 @@ auto observe( const events<E>& subject, f_in_t&& func ) -> observer
 
     const auto& subject_ptr = get_node_ptr( subject );
 
-    std::unique_ptr<detail::observer_node> node_ptr(
+    std::unique_ptr<detail::observer_node> node(
         new node_t( subject.get_context(), subject_ptr, std::forward<f_in_t>( func ) ) );
-    detail::observer_node* raw_node_ptr = node_ptr.get();
+    detail::observer_node* raw_node_ptr = node.get();
 
-    subject_ptr->register_observer( std::move( node_ptr ) );
+    subject_ptr->register_observer( std::move( node ) );
 
     return observer( raw_node_ptr, subject_ptr );
 }
@@ -3937,15 +3920,15 @@ auto observe(
             get_node_ptr( deps )... );
     };
 
-    const auto& subject_ptr = get_node_ptr( subject );
+    const auto& subject_node = get_node_ptr( subject );
 
-    std::unique_ptr<detail::observer_node> node_ptr( std::apply( node_builder, dep_pack.data ) );
+    std::unique_ptr<detail::observer_node> node( std::apply( node_builder, dep_pack.data ) );
 
-    detail::observer_node* raw_node_ptr = node_ptr.get();
+    detail::observer_node* raw_node = node.get();
 
-    subject_ptr->register_observer( std::move( node_ptr ) );
+    subject_node->register_observer( std::move( node ) );
 
-    return observer( raw_node_ptr, subject_ptr );
+    return observer( raw_node, subject_node );
 }
 
 namespace detail

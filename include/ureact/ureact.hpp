@@ -4592,23 +4592,23 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
 
 /// Emits value changes of signal as events
 template <typename S>
-auto monitor( const signal<S>& target ) -> events<S>
+UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
 {
     context& context = target.get_context();
     return events<S>(
         std::make_shared<detail::monitor_node<S>>( context, get_node_ptr( target ) ) );
 }
 
-/// changed - Emits token when target signal was changed
+/// Emits token when target signal was changed
 template <typename S>
-auto changed( const signal<S>& target ) -> events<token>
+UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<token>
 {
     return monitor( target ) | tokenize();
 }
 
-/// changed_to - Emits token when target signal was changed to value
+/// Emits token when target signal was changed to value
 template <typename V, typename S = std::decay_t<V>>
-auto changed_to( const signal<S>& target, V&& value ) -> events<token>
+UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<token>
 {
     return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | tokenize();
 }

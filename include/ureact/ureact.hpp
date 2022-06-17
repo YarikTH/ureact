@@ -591,7 +591,7 @@ private:
 
         bool fetch_next();
 
-        [[nodiscard]] const std::vector<value_type>& next_values() const
+        UREACT_WARN_UNUSED_RESULT const std::vector<value_type>& next_values() const
         {
             return m_next_data;
         }
@@ -762,7 +762,7 @@ public:
     {}
 
     // context_internals and context should be non-movable because
-    // node_base contains reference to context and it will break if context lose its graph
+    // node_base contains reference to context, and it will break if context lose its graph
     context_internals( context_internals&& ) noexcept = delete;
     context_internals& operator=( context_internals&& ) noexcept = delete;
 
@@ -2192,7 +2192,7 @@ public:
     {}
 
 private:
-    [[nodiscard]] auto get_event_source_node() const -> event_source_node<E>*
+    UREACT_WARN_UNUSED_RESULT auto get_event_source_node() const -> event_source_node<E>*
     {
         return static_cast<event_source_node<E>*>( this->m_node.get() );
     }
@@ -2210,13 +2210,6 @@ protected:
 };
 
 } // namespace detail
-
-/// make_event_source
-template <typename E = token>
-auto make_event_source( context& context ) -> event_source<E>
-{
-    return event_source<E>( std::make_shared<detail::event_source_node<E>>( context ) );
-}
 
 /*! @brief Reactive event stream class. (Specialization for non-reference types)
  *
@@ -2425,7 +2418,12 @@ public:
     }
 };
 
-/// Iterators for event processing
+/*!
+ * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node.
+ *
+ *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
+ *  that allows to iterate over its events without modifying it.
+ */
 template <typename E = token>
 class event_range
 {
@@ -2434,95 +2432,128 @@ public:
     using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
     using size_type = typename std::vector<E>::size_type;
 
-    [[nodiscard]] const_iterator begin() const
+    /// Constructor
+    explicit event_range( const std::vector<E>& data )
+        : m_data( data )
+    {}
+
+    /// Returns random access const_iterator to beginning of the range
+    UREACT_WARN_UNUSED_RESULT const_iterator begin() const
     {
         return m_data.begin();
     }
 
-    [[nodiscard]] const_iterator end() const
+    /// Returns random access const_iterator to end of the range
+    UREACT_WARN_UNUSED_RESULT const_iterator end() const
     {
         return m_data.end();
     }
 
-    [[nodiscard]] const_reverse_iterator rbegin() const
+    /// Returns random access const_reverse_iterator to right beginning of the range
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rbegin() const
     {
         return m_data.rbegin();
     }
 
-    [[nodiscard]] const_reverse_iterator rend() const
+    /// Returns random access const_reverse_iterator to right end of the range
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
     {
         return m_data.rend();
     }
 
-    [[nodiscard]] size_type size() const
+    /// Returns the number of events in the range
+    UREACT_WARN_UNUSED_RESULT size_type size() const
     {
         return m_data.size();
     }
 
-    [[nodiscard]] bool empty() const
+    /// Returns true, if the range is empty
+    UREACT_WARN_UNUSED_RESULT bool empty() const
     {
         return m_data.empty();
     }
-
-    explicit event_range( const std::vector<E>& data )
-        : m_data( data )
-    {}
 
 private:
     const std::vector<E>& m_data;
 };
 
-// Literally std::back_emplacer, but not depending on heavy <iterator> header
-// and has additional << overload that matches more it this context
+/*!
+ * @brief Represents output stream of events.
+ *
+ *  It is std::back_insert_iterator analog, but not depending on heavy <iterator> header.
+ *  Additionally to std::back_insert_iterator interface it provides emit() methods like event_stream has
+ */
 template <typename E>
 class event_emitter
 {
 public:
     using container_type = std::vector<E>;
 
+    /// Constructor
     explicit event_emitter( container_type& container )
         : m_container( container )
     {}
 
+    /// no-op
     event_emitter& operator*()
     {
         return *this;
     }
 
+    /// no-op
     event_emitter& operator++()
     {
         return *this;
     }
 
+    /// no-op
     event_emitter& operator++( int ) // NOLINT
     {
         return *this;
     }
 
+    /*!
+     * @brief Iterator assign version of emit()
+     *
+     * Semantically equivalent to emit().
+     */
     template <class T, class = detail::disable_if_same_t<T, event_emitter>>
-    event_emitter& operator=( T&& value )
+    event_emitter& operator=( T&& e )
     {
-        m_container.push_back( std::forward<T>( value ) );
+        m_container.push_back( std::forward<T>( e ) );
         return *this;
     }
 
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
     template <class T>
-    event_emitter& operator<<( T&& value )
+    void emit( T&& e )
     {
-        m_container.push_back( std::forward<T>( value ) );
+        m_container.push_back( std::forward<T>( e ) );
+    }
+
+    /*!
+     * @brief Function object version of emit()
+     *
+     * Semantically equivalent to emit().
+     */
+    template <class T>
+    void operator()( T&& e )
+    {
+        m_container.push_back( std::forward<T>( e ) );
+    }
+
+    /*!
+     * @brief Stream version of emit()
+     *
+     * Semantically equivalent to emit().
+     */
+    template <class T>
+    event_emitter& operator<<( T&& e )
+    {
+        m_container.push_back( std::forward<T>( e ) );
         return *this;
-    }
-
-    template <class T>
-    void emit( T&& value )
-    {
-        m_container.push_back( std::forward<T>( value ) );
-    }
-
-    template <class T>
-    void operator()( T&& value )
-    {
-        m_container.push_back( std::forward<T>( value ) );
     }
 
 private:
@@ -3071,6 +3102,13 @@ private:
 
 } // namespace detail
 
+/// make_event_source
+template <typename E = token>
+UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context ) -> event_source<E>
+{
+    return event_source<E>( std::make_shared<detail::event_source_node<E>>( context ) );
+}
+
 /// Operator | for algorithms chaining
 /// Usage: monitor( target ) | filter( is_even ) | tokenize();
 template <typename S,
@@ -3089,7 +3127,8 @@ UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, UnaryOperation&& unary_op 
 
 /// merge
 template <typename TArg1, typename... args_t, typename E = TArg1>
-auto merge( const events<TArg1>& arg1, const events<args_t>&... args ) -> events<E>
+UREACT_WARN_UNUSED_RESULT auto merge( const events<TArg1>& arg1, const events<args_t>&... args )
+    -> events<E>
 {
     static_assert( sizeof...( args_t ) > 0, "merge: 2+ arguments are required." );
 
@@ -3104,7 +3143,7 @@ auto merge( const events<TArg1>& arg1, const events<args_t>&... args ) -> events
 
 /// filter
 template <typename E, typename Pred, typename F = std::decay_t<Pred>>
-auto filter( const events<E>& source, Pred&& pred ) -> events<E>
+UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
 {
     using op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>;
 
@@ -3115,7 +3154,8 @@ auto filter( const events<E>& source, Pred&& pred ) -> events<E>
 
 /// filter - Synced
 template <typename E, typename Pred, typename... dep_values_t>
-auto filter( const events<E>& source, const signal_pack<dep_values_t...>& dep_pack, Pred&& pred )
+UREACT_WARN_UNUSED_RESULT auto filter(
+    const events<E>& source, const signal_pack<dep_values_t...>& dep_pack, Pred&& pred )
     -> events<E>
 {
     using F = std::decay_t<Pred>;
@@ -3135,7 +3175,7 @@ auto filter( const events<E>& source, const signal_pack<dep_values_t...>& dep_pa
 
 /// curried version of filter algorithm. Intended for chaining
 template <typename Pred>
-auto filter( Pred&& pred )
+UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 {
     return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
@@ -3146,7 +3186,7 @@ auto filter( Pred&& pred )
 
 /// drop
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-auto drop( T&& source, const size_t count )
+UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
 {
     auto dropper = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ >= count; };
 
@@ -3154,7 +3194,7 @@ auto drop( T&& source, const size_t count )
 }
 
 /// curried version of drop algorithm. Intended for chaining
-inline auto drop( const size_t count )
+UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 {
     return [count]( auto&& source ) {
         using arg_t = decltype( source );
@@ -3165,7 +3205,7 @@ inline auto drop( const size_t count )
 
 /// drop_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-auto drop_while( T&& source, Pred&& pred )
+UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
 {
     auto dropper_while
         = [passed = false, pred = std::forward<Pred>( pred )]( const auto& i ) mutable {
@@ -3178,7 +3218,7 @@ auto drop_while( T&& source, Pred&& pred )
 
 /// curried version of drop_while algorithm. Intended for chaining
 template <typename Pred>
-inline auto drop_while( Pred&& pred )
+UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 {
     return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
@@ -3189,7 +3229,7 @@ inline auto drop_while( Pred&& pred )
 
 /// take
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-auto take( T&& source, const size_t count )
+UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
 {
     auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
 
@@ -3197,7 +3237,7 @@ auto take( T&& source, const size_t count )
 }
 
 /// curried version of take algorithm. Intended for chaining
-inline auto take( const size_t count )
+UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
 {
     return [count]( auto&& source ) {
         using arg_t = decltype( source );
@@ -3208,7 +3248,7 @@ inline auto take( const size_t count )
 
 /// take_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-auto take_while( T&& source, Pred&& pred )
+UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
 {
     auto taker_while = [passed = true, pred = std::forward<Pred>( pred )]( const auto& i ) mutable {
         passed = passed && pred( i );
@@ -3220,7 +3260,7 @@ auto take_while( T&& source, Pred&& pred )
 
 /// curried version of take_while algorithm. Intended for chaining
 template <typename Pred>
-inline auto take_while( Pred&& pred )
+UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
 {
     return [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
@@ -3231,13 +3271,13 @@ inline auto take_while( Pred&& pred )
 
 /// once
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-auto once( T&& source )
+UREACT_WARN_UNUSED_RESULT auto once( T&& source )
 {
     return take( std::forward<T>( source ), 1 );
 }
 
 /// curried version of once algorithm. Intended for chaining
-inline auto once()
+UREACT_WARN_UNUSED_RESULT inline auto once()
 {
     return take( 1 );
 }
@@ -3247,7 +3287,8 @@ template <typename in_t,
     typename f_in_t,
     typename F = std::decay_t<f_in_t>,
     typename out_t = std::invoke_result_t<F, in_t>>
-auto transform( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
+UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, f_in_t&& func )
+    -> events<out_t>
 {
     using op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>;
 
@@ -3261,7 +3302,7 @@ template <typename in_t,
     typename f_in_t,
     typename... dep_values_t,
     typename out_t = std::invoke_result_t<f_in_t, in_t, dep_values_t...>>
-auto transform(
+UREACT_WARN_UNUSED_RESULT auto transform(
     const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
     -> events<out_t>
 {
@@ -3283,7 +3324,7 @@ auto transform(
 
 /// process
 template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
-auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
+UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 {
     context& context = source.get_context();
     return events<out_t>( std::make_shared<detail::event_processing_node<in_t, out_t, F>>(
@@ -3292,7 +3333,7 @@ auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 
 /// process - Synced
 template <typename out_t, typename in_t, typename f_in_t, typename... dep_values_t>
-auto process(
+UREACT_WARN_UNUSED_RESULT auto process(
     const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
     -> events<out_t>
 {
@@ -3314,7 +3355,7 @@ auto process(
 
 /// zip
 template <typename arg_t, typename... args_t>
-auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
+UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
     -> events<std::tuple<arg_t, args_t...>>
 {
     static_assert( sizeof...( args_t ) >= 1, "zip: 2+ arguments are required." );
@@ -3326,14 +3367,14 @@ auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
 }
 
 template <typename events_t>
-auto tokenize( events_t&& source )
+UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
 {
     auto tokenizer = []( const auto& ) { return token::value; };
     return transform( source, tokenizer );
 }
 
 /// curried version of tokenize algorithm. Intended for chaining
-inline auto tokenize()
+UREACT_WARN_UNUSED_RESULT inline auto tokenize()
 {
     return []( auto&& source ) {
         using arg_t = decltype( source );
@@ -3992,14 +4033,15 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& out
 }
 
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
-auto reactive_ref( const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
+UREACT_WARN_UNUSED_RESULT auto reactive_ref(
+    const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
 {
     return flatten( make_signal(
         outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
 }
 
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
-auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
+UREACT_WARN_UNUSED_RESULT auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
 {
     return flatten( make_signal(
         outer, [attribute]( const S* s ) { return static_cast<decayed_r>( s->*attribute ); } ) );
@@ -4306,7 +4348,7 @@ private:
 /// Folds values from event stream into a signal
 /// fold - Iteratively combines signal value with values from event stream
 template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
-auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
+UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
 {
     using F = std::decay_t<f_in_t>;
 
@@ -4334,7 +4376,7 @@ template <typename E,
     typename f_in_t,
     typename... dep_values_t,
     typename S = std::decay_t<V>>
-auto fold(
+UREACT_WARN_UNUSED_RESULT auto fold(
     const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
     -> signal<S>
 {

@@ -176,9 +176,6 @@ class events;
 template <typename E>
 class event_source;
 
-template <typename E, typename op_t>
-class temp_events;
-
 template <typename... values_t>
 class signal_pack;
 
@@ -230,12 +227,6 @@ struct event_value_impl<event_source<E>>
     using type = E;
 };
 
-template <typename E, typename op_in_t>
-struct event_value_impl<temp_events<E, op_in_t>>
-{
-    using type = E;
-};
-
 } // namespace detail
 
 /// Return if type is signal or its inheritor
@@ -256,7 +247,7 @@ struct is_event : detail::is_base_of_template<events, T>
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
 
-/// Detect event type E of events, event_source or temp_events
+/// Detect event type E of events, event_source
 /// can't be used with no event types
 template <typename T>
 struct event_value : detail::event_value_impl<T>
@@ -2434,45 +2425,6 @@ public:
     }
 };
 
-/*! @brief This @ref events exposes additional type information of the linked node, which enables
- * r-value based node merging at construction time.
- *
- * temp_events shouldn't be used as an l-value type, but instead implicitly
- * converted to @ref events.
- */
-template <typename E, typename op_t>
-class temp_events : public events<E>
-{
-private:
-    using node_t = detail::event_op_node<E, op_t>;
-
-public:
-    /*!
-     * @brief Construct @ref temp_events from the given node
-     */
-    explicit temp_events( std::shared_ptr<node_t>&& node )
-        : temp_events::events( std::move( node ) )
-    {}
-
-    /*!
-     * @brief Return internal operator, leaving node invalid
-     */
-    UREACT_WARN_UNUSED_RESULT op_t steal_op()
-    {
-        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
-        return node_ptr->steal_op();
-    }
-
-    /*!
-     * @brief Checks if internal operator was already stolen
-     */
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
-    {
-        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
-        return node_ptr->was_op_stolen();
-    }
-};
-
 /// Iterators for event processing
 template <typename E = token>
 class event_range
@@ -2585,14 +2537,6 @@ template <typename E, typename f_in_t>
 UREACT_WARN_UNUSED_RESULT auto chain_algorithms_impl( const events<E>& source, f_in_t&& func )
 {
     return std::forward<f_in_t>( func )( source );
-}
-
-/// Operator | for function chaining
-template <typename E, typename op_in_t, typename f_in_t>
-UREACT_WARN_UNUSED_RESULT auto chain_algorithms_impl(
-    temp_events<E, op_in_t>&& source, f_in_t&& func )
-{
-    return std::forward<f_in_t>( func )( std::forward<temp_events<E, op_in_t>>( source ) );
 }
 
 template <typename E, typename... deps_t>
@@ -3144,44 +3088,29 @@ UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, UnaryOperation&& unary_op 
 }
 
 /// merge
-template <typename TArg1,
-    typename... args_t,
-    typename E = TArg1,
-    typename op_t = detail::event_merge_op<E,
-        detail::event_stream_node_ptr_t<TArg1>,
-        detail::event_stream_node_ptr_t<args_t>...>>
-auto merge( const events<TArg1>& arg1, const events<args_t>&... args ) -> temp_events<E, op_t>
+template <typename TArg1, typename... args_t, typename E = TArg1>
+auto merge( const events<TArg1>& arg1, const events<args_t>&... args ) -> events<E>
 {
     static_assert( sizeof...( args_t ) > 0, "merge: 2+ arguments are required." );
 
+    using op_t = detail::event_merge_op<E,
+        detail::event_stream_node_ptr_t<TArg1>,
+        detail::event_stream_node_ptr_t<args_t>...>;
+
     context& context = arg1.get_context();
-    return temp_events<E, op_t>( std::make_shared<detail::event_op_node<E, op_t>>(
+    return events<E>( std::make_shared<detail::event_op_node<E, op_t>>(
         context, get_node_ptr( arg1 ), get_node_ptr( args )... ) );
 }
 
 /// filter
-template <typename E,
-    typename Pred,
-    typename F = std::decay_t<Pred>,
-    typename op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>>
-auto filter( const events<E>& source, Pred&& pred ) -> temp_events<E, op_t>
+template <typename E, typename Pred, typename F = std::decay_t<Pred>>
+auto filter( const events<E>& source, Pred&& pred ) -> events<E>
 {
-    context& context = source.get_context();
-    return temp_events<E, op_t>( std::make_shared<detail::event_op_node<E, op_t>>(
-        context, std::forward<Pred>( pred ), get_node_ptr( source ) ) );
-}
+    using op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>;
 
-/// filter
-template <typename E,
-    typename op_in_t,
-    typename Pred,
-    typename F = std::decay_t<Pred>,
-    typename op_out_t = detail::event_filter_op<E, F, op_in_t>>
-auto filter( temp_events<E, op_in_t>&& source, Pred&& pred ) -> temp_events<E, op_out_t>
-{
     context& context = source.get_context();
-    return temp_events<E, op_out_t>( std::make_shared<detail::event_op_node<E, op_out_t>>(
-        context, std::forward<Pred>( pred ), source.steal_op() ) );
+    return events<E>( std::make_shared<detail::event_op_node<E, op_t>>(
+        context, std::forward<Pred>( pred ), get_node_ptr( source ) ) );
 }
 
 /// filter - Synced
@@ -3317,26 +3246,14 @@ inline auto once()
 template <typename in_t,
     typename f_in_t,
     typename F = std::decay_t<f_in_t>,
-    typename out_t = std::invoke_result_t<F, in_t>,
-    typename op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>>
-auto transform( const events<in_t>& source, f_in_t&& func ) -> temp_events<out_t, op_t>
+    typename out_t = std::invoke_result_t<F, in_t>>
+auto transform( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 {
-    context& context = source.get_context();
-    return temp_events<out_t, op_t>( std::make_shared<detail::event_op_node<out_t, op_t>>(
-        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
-}
+    using op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>;
 
-template <typename in_t,
-    typename op_in_t,
-    typename f_in_t,
-    typename F = std::decay_t<f_in_t>,
-    typename out_t = std::invoke_result_t<F, in_t>,
-    typename op_out_t = detail::event_transform_op<in_t, F, op_in_t>>
-auto transform( temp_events<in_t, op_in_t>&& source, f_in_t&& func ) -> temp_events<out_t, op_out_t>
-{
     context& context = source.get_context();
-    return temp_events<out_t, op_out_t>( std::make_shared<detail::event_op_node<out_t, op_out_t>>(
-        context, std::forward<f_in_t>( func ), source.steal_op() ) );
+    return events<out_t>( std::make_shared<detail::event_op_node<out_t, op_t>>(
+        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
 }
 
 /// transform - Synced

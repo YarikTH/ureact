@@ -18,31 +18,14 @@ TEST_CASE( "Filter" )
     ureact::events<int> filtered;
     const auto is_even = []( auto i ) { return i % 2 == 0; };
 
-    // there are two syntax variants and temporary event optimization, so we check them all
-    // using subcases
+    // there are two syntax variants, so we check them all using subcases
     SUBCASE( "Functional syntax" )
     {
         filtered = ureact::filter( src, is_even );
     }
-    SUBCASE( "Functional syntax on temporary" )
-    {
-        // filter returns temp_events
-        // we use them to check filter overloads that receive temp_events rvalue
-        // typically we don't need nor std::move nor naming temp events
-        ureact::temp_events temp = ureact::filter( src, always_true );
-        filtered = ureact::filter( std::move( temp ), is_even );
-        CHECK( temp.was_op_stolen() );
-    }
-
     SUBCASE( "Piped syntax" )
     {
         filtered = src | ureact::filter( is_even );
-    }
-    SUBCASE( "Piped syntax on temporary" )
-    {
-        ureact::temp_events temp = src | ureact::filter( always_true );
-        filtered = std::move( temp ) | ureact::filter( is_even );
-        CHECK( temp.was_op_stolen() );
     }
 
     const auto result = make_collector( filtered );
@@ -80,22 +63,10 @@ TEST_CASE( "FilterSynced" )
     {
         filtered = ureact::filter( src, with( limit_min, limit_max ), in_range );
     }
-    SUBCASE( "Functional syntax on temporary" )
-    {
-        ureact::temp_events temp = ureact::filter( src, always_true );
-        filtered = ureact::filter( std::move( temp ), with( limit_min, limit_max ), in_range );
-        CHECK_FALSE( temp.was_op_stolen() ); // no optimization
-    }
-
     // todo: Piped syntax is not yet supported for synced version
     //    SUBCASE( "Piped syntax" )
     //    {
     //        filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
-    //    }
-    //    SUBCASE( "Piped syntax on temporary" )
-    //    {
-    //        ureact::temp_events temp = src | ureact::filter( always_true );
-    //        filtered = std::move( temp ) | ureact::filter( with( limit_min, limit_max ), in_range );
     //    }
 
     const auto result = make_collector( filtered );

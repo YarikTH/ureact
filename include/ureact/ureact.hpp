@@ -4238,107 +4238,12 @@ private:
     dep_holder_t m_deps;
 };
 
-template <typename E>
-class monitor_node : public event_stream_node<E>
-{
-public:
-    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
-        : monitor_node::event_stream_node( context )
-        , m_target( target )
-    {
-        this->get_graph().on_node_attach( *this, *m_target );
-    }
-
-    ~monitor_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_target );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-
-        this->m_events.push_back( m_target->value_ref() );
-
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    const std::shared_ptr<signal_node<E>> m_target;
-};
-
-} // namespace detail
-
-/*!
- * @brief Folds values from an event stream into a signal
- *
- *  Iteratively combines signal value with values from event stream
- *
- *  The signature of func should be equivalent to:
- *  * S func(const E&, const S&)
- *  * S func(event_range<E> range, const S&)
- *  * void func(const E&, S&)
- *  * void func(event_range<E> range, S&)
- *
- *  Creates a signal with an initial value v = init.
- *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v).
- *  * If the return type of func is void: For every received event e in events,
- *    v is passed by non-cost reference to func(e,v), making it mutable.
- *    This variant can be used if copying and comparing S is prohibitively expensive.
- *    Because the old and new values cannot be compared, updates will always trigger a change.
- */
-template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
-{
-    using F = std::decay_t<f_in_t>;
-
-    using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S>,
-        detail::fold_node<S, E, F>,
-        std::conditional_t<std::is_invocable_r_v<S, F, E, S>,
-            detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F>>,
-            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&>,
-                detail::fold_node<S, E, F>,
-                std::conditional_t<std::is_invocable_r_v<void, F, E, S&>,
-                    detail::fold_node<S, E, detail::add_fold_by_ref_range_wrapper<E, S, F>>,
-                    void>>>>;
-
-    static_assert( !std::is_same_v<node_t, void>,
-        "fold: Passed function does not match any of the supported signatures." );
-
-    context& context = events.get_context();
-    return signal<S>( std::make_shared<node_t>(
-        context, std::forward<V>( init ), get_node_ptr( events ), std::forward<f_in_t>( func ) ) );
-}
-
-/*!
- * @brief Folds values from an event stream into a signal (Synchronized)
- *
- *  Iteratively combines signal value with values from event stream.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *  Changes of signals in dep_pack do not trigger an update - only received events do.
- *
- *  The signature of func should be equivalent to:
- *  * S func(const E&, const S&, const dep_values_t& ...)
- *  * S func(event_range<E> range, const S&, const dep_values_t& ...)
- *  * void func(const E&, S&, const dep_values_t& ...)
- *  * void func(event_range<E> range, S&, const dep_values_t& ...)
- *
- *  Creates a signal with an initial value v = init.
- *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
- *  * If the return type of func is void: For every received event e in events,
- *    v is passed by non-cost reference to func(e,v, deps), making it mutable.
- *    This variant can be used if copying and comparing S is prohibitively expensive.
- *    Because the old and new values cannot be compared, updates will always trigger a change.
- */
 template <typename E,
     typename V,
     typename f_in_t,
     typename... dep_values_t,
     typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold(
+UREACT_WARN_UNUSED_RESULT auto fold_impl(
     const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
     -> signal<S>
 {
@@ -4375,6 +4280,97 @@ UREACT_WARN_UNUSED_RESULT auto fold(
     };
 
     return std::apply( node_builder, dep_pack.data );
+}
+
+template <typename E>
+class monitor_node : public event_stream_node<E>
+{
+public:
+    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
+        : monitor_node::event_stream_node( context )
+        , m_target( target )
+    {
+        this->get_graph().on_node_attach( *this, *m_target );
+    }
+
+    ~monitor_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_target );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        this->set_current_turn_force_update( turn );
+
+        this->m_events.push_back( m_target->value_ref() );
+
+        if( !this->m_events.empty() )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    const std::shared_ptr<signal_node<E>> m_target;
+};
+
+} // namespace detail
+
+/*!
+ * @brief Folds values from an event stream into a signal (Synchronized)
+ *
+ *  Iteratively combines signal value with values from event stream.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *  Changes of signals in dep_pack do not trigger an update - only received events do.
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const E&, const S&, const dep_values_t& ...)
+ *  * S func(event_range<E> range, const S&, const dep_values_t& ...)
+ *  * void func(const E&, S&, const dep_values_t& ...)
+ *  * void func(event_range<E> range, S&, const dep_values_t& ...)
+ *
+ *  Creates a signal with an initial value v = init.
+ *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
+ *  * If the return type of func is void: For every received event e in events,
+ *    v is passed by non-cost reference to func(e,v, deps), making it mutable.
+ *    This variant can be used if copying and comparing S is prohibitively expensive.
+ *    Because the old and new values cannot be compared, updates will always trigger a change.
+ */
+template <typename E,
+    typename V,
+    typename f_in_t,
+    typename... dep_values_t,
+    typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT auto fold(
+    const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    -> signal<S>
+{
+    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<f_in_t>( func ) );
+}
+
+/*!
+ * @brief Folds values from an event stream into a signal
+ *
+ *  Iteratively combines signal value with values from event stream
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const E&, const S&)
+ *  * S func(event_range<E> range, const S&)
+ *  * void func(const E&, S&)
+ *  * void func(event_range<E> range, S&)
+ *
+ *  Creates a signal with an initial value v = init.
+ *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v).
+ *  * If the return type of func is void: For every received event e in events,
+ *    v is passed by non-cost reference to func(e,v), making it mutable.
+ *    This variant can be used if copying and comparing S is prohibitively expensive.
+ *    Because the old and new values cannot be compared, updates will always trigger a change.
+ */
+template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
+{
+    return fold_impl(
+        events, std::forward<V>( init ), signal_pack<>(), std::forward<f_in_t>( func ) );
 }
 
 /*!

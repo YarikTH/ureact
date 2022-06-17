@@ -170,6 +170,9 @@ class var_signal;
 template <typename E>
 class events;
 
+template <typename E, typename op_t>
+class temp_events;
+
 template <typename E>
 class event_source;
 
@@ -208,6 +211,28 @@ struct is_base_of_template_impl
 template <template <typename...> class base, typename derived>
 using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
 
+template <typename T>
+struct event_value_impl
+{};
+
+template <typename E>
+struct event_value_impl<events<E>>
+{
+    using type = E;
+};
+
+template <typename E>
+struct event_value_impl<event_source<E>>
+{
+    using type = E;
+};
+
+template <typename E, typename op_in_t>
+struct event_value_impl<temp_events<E, op_in_t>>
+{
+    using type = E;
+};
+
 } // namespace detail
 
 /// Return if type is signal or its inheritor
@@ -215,6 +240,7 @@ template <typename T>
 struct is_signal : detail::is_base_of_template<signal, T>
 {};
 
+/// Helper variable template for is_signal
 template <typename T>
 inline constexpr bool is_signal_v = is_signal<T>::value;
 
@@ -223,9 +249,19 @@ template <typename T>
 struct is_event : detail::is_base_of_template<events, T>
 {};
 
+/// Helper variable template for is_event
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
 
+/// Detect event type E of events, event_source or temp_events
+/// can't be used with no event types
+template <typename T>
+struct event_value : detail::event_value_impl<T>
+{};
+
+/// Helper type for event_value
+template <typename T>
+using event_value_t = typename event_value<std::decay_t<T>>::type;
 
 //==================================================================================================
 // [[section]] General purpose utilities
@@ -2508,32 +2544,6 @@ public:
         return *this;
     }
 };
-
-// Detect E for event
-template <typename T>
-struct event_value
-{};
-
-template <typename E>
-struct event_value<events<E>>
-{
-    using type = E;
-};
-
-template <typename E>
-struct event_value<event_source<E>>
-{
-    using type = E;
-};
-
-template <typename E, typename op_in_t>
-struct event_value<temp_events<E, op_in_t>>
-{
-    using type = E;
-};
-
-template <typename T>
-using event_value_t = typename event_value<std::decay_t<T>>::type;
 
 /// Iterators for event processing
 template <typename E = token>

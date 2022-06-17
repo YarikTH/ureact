@@ -156,9 +156,6 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 
 UREACT_BEGIN_NAMESPACE
 
-//==================================================================================================
-// [[section]] Forward declarations
-//==================================================================================================
 class context;
 
 template <typename S>
@@ -229,36 +226,45 @@ struct event_value_impl<event_source<E>>
 
 } // namespace detail
 
-/// @brief Return if type is signal or its inheritor
+/*!
+ * @brief Return if type is signal or its inheritor
+ */
 template <typename T>
 struct is_signal : detail::is_base_of_template<signal, T>
 {};
 
-/// @brief Helper variable template for is_signal
+/*!
+ * @brief Helper variable template for is_signal
+ */
 template <typename T>
 inline constexpr bool is_signal_v = is_signal<T>::value;
 
-/// @brief Return if type is events or its inheritor
+/*!
+ * @brief Return if type is events or its inheritor
+ */
 template <typename T>
 struct is_event : detail::is_base_of_template<events, T>
 {};
 
-/// @brief Helper variable template for is_event
+/*!
+ * @brief Helper variable template for is_event
+ */
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
 
-/// @brief Detect event type E of @ref events and @ref  event_source
+/*!
+ * @brief Detect event type E of @ref events and @ref  event_source
+ */
 template <typename T>
 struct event_value : detail::event_value_impl<T>
 {};
 
-/// @brief Helper type for event_value
+/*!
+ * @brief Helper type for event_value
+ */
 template <typename T>
 using event_value_t = typename event_value<std::decay_t<T>>::type;
 
-//==================================================================================================
-// [[section]] General purpose utilities
-//==================================================================================================
 namespace detail
 {
 
@@ -347,15 +353,6 @@ using is_same_decay = std::is_same<std::decay_t<T1>, std::decay_t<T2>>;
 template <typename T1, typename T2>
 inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
 
-} // namespace detail
-
-
-//==================================================================================================
-// [[section]] Ureact specific utilities
-//==================================================================================================
-namespace detail
-{
-
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wfloat-equal"
@@ -389,15 +386,6 @@ UREACT_WARN_UNUSED_RESULT bool equals( const events<L>& lhs, const events<R>& rh
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic pop
 #endif
-
-} // namespace detail
-
-
-//==================================================================================================
-// [[section]] Ureact engine
-//==================================================================================================
-namespace detail
-{
 
 template <typename node_type>
 class node_vector
@@ -781,11 +769,8 @@ private:
 
 } // namespace detail
 
-//==================================================================================================
-// [[section]] Context class
-//==================================================================================================
-
-/*! @brief Core class that connects all reactive nodes together.
+/*!
+ * @brief Core class that connects all reactive nodes together.
  *
  *  Each signal and node belongs to a single ureact context.
  *  Signals from different contexts can't interact with each other.
@@ -817,10 +802,6 @@ public:
     }
 };
 
-
-//==================================================================================================
-// [[section]] Reactive nodes
-//==================================================================================================
 namespace detail
 {
 
@@ -1008,6 +989,14 @@ UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
 {
     return node.m_node;
 }
+
+}
+
+//==================================================================================================
+// [[section]] Signals
+//==================================================================================================
+namespace detail
+{
 
 template <typename S>
 class signal_node : public observable_node
@@ -1271,7 +1260,8 @@ private:
 
 } // namespace detail
 
-/*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
+/*!
+ * @brief Reactive variable that can propagate its changes to dependents and react to changes of
  * its dependencies (Specialization for non-reference types)
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
@@ -1322,7 +1312,8 @@ public:
     }
 };
 
-/*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
+/*!
+ * @brief Reactive variable that can propagate its changes to dependents and react to changes of
  * its dependencies (Specialization for references)
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
@@ -1373,7 +1364,8 @@ public:
     }
 };
 
-/*! @brief Source signals which values can be manually changed
+/*!
+ * @brief Source signals which values can be manually changed
  * (Specialization for non-reference types)
  *
  *  This class extends the immutable signal interface with functions that support
@@ -1439,7 +1431,8 @@ public:
     }
 };
 
-/*! @brief Source signals which values can be manually changed
+/*!
+ * @brief Source signals which values can be manually changed
  * (Specialization for references)
  *
  *  This class extends the immutable signal interface with functions that support
@@ -1494,8 +1487,9 @@ public:
     }
 };
 
-/*! @brief This signal that exposes additional type information of the linked node, which enables
- * r-value based node merging at construction time.
+/*!
+ * @brief This signal that exposes additional type information of the linked node, which enables
+ * r-value based node merging at construction time
  *
  * The primary use case for this is to avoid unnecessary nodes when creating signal
  * expression from overloaded arithmetic operators.
@@ -1536,21 +1530,34 @@ public:
     }
 };
 
-/// Proxy that wraps several nodes into a tuple
+/*!
+ * @brief A wrapper type for a tuple of signal references
+ *
+ *  Created with @ref with() or with overloaded operator,
+ */
 template <typename... values_t>
 class signal_pack
 {
 public:
+    /*!
+     * @brief Construct from signals
+     */
     explicit signal_pack( const signal<values_t>&... deps )
         : data( std::tie( deps... ) )
     {}
 
+    /*!
+     * @brief Construct by appending signal to other signal_pack
+     */
     template <typename... cur_values_t, typename append_value_t>
     signal_pack(
         const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
         : data( std::tuple_cat( cur_args.data, std::tie( new_arg ) ) )
     {}
 
+    /*!
+     * @brief The wrapped tuple
+     */
     std::tuple<const signal<values_t>&...> data;
 };
 
@@ -1595,21 +1602,30 @@ UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... arg
 
 } // namespace detail
 
-/// Factory function to create var signal in the given context.
+/*!
+ * @brief Creates a new input signal node and links it to the returned make_var instance
+ */
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
 {
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
-/// Utility function to create a signal_pack from given signals.
+/*!
+ * @brief Utility function to create a signal_pack from given signals
+ *
+ *  Creates a signal_pack from the signals passed as deps.
+ *  Semantically, this is equivalent to std::tie.
+ */
 template <typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
 {
     return signal_pack<values_t...>( deps... );
 }
 
-/// Comma operator overload to create signal pack from two signals.
+/*!
+ * @brief Comma operator overload to create signal pack from two signals
+ */
 template <typename left_val_t, typename right_val_t>
 UREACT_WARN_UNUSED_RESULT auto operator,(
     const signal<left_val_t>& a, const signal<right_val_t>& b )
@@ -1617,7 +1633,9 @@ UREACT_WARN_UNUSED_RESULT auto operator,(
     return signal_pack<left_val_t, right_val_t>( a, b );
 }
 
-/// Comma operator overload to append node to existing signal pack.
+/*!
+ * @brief Comma operator overload to append node to existing signal pack
+ */
 template <typename... cur_values_t, typename append_value_t>
 UREACT_WARN_UNUSED_RESULT auto operator,(
     const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
@@ -1625,7 +1643,13 @@ UREACT_WARN_UNUSED_RESULT auto operator,(
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
 
-/// Free function to connect a signal to a function and return the resulting signal.
+/*!
+ * @brief Creates a new signal node with value v = func(arg.get()).
+ * This value is set on construction and updated when arg have changed
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const value_t&)
+ */
 template <typename value_t,
     typename in_f,
     typename F = std::decay_t<in_f>,
@@ -1639,7 +1663,13 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& f
         context, std::forward<in_f>( func ), get_node_ptr( arg ) );
 }
 
-/// Free function to connect multiple signals to a function and return the resulting signal.
+/*!
+ * @brief Creates a new signal node with value v = func(arg_pack.get(), ...).
+ * This value is set on construction and updated when any args have changed
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const values_t& ...)
+ */
 template <typename... values_t,
     typename in_f,
     typename F = std::decay_t<in_f>,
@@ -1671,9 +1701,6 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pa
     return make_signal( arg_pack, std::forward<F>( func ) );
 }
 
-//==================================================================================================
-// [[section]] Operator overloads for signals for simplified signal creation
-//==================================================================================================
 namespace detail
 {
 
@@ -2006,7 +2033,9 @@ UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
 // [[section]] Events
 //==================================================================================================
 
-/// This class is used as value type of token streams, which emit events without any value other than the fact that they occurred.
+/*!
+ * @brief This class is used as value type of token streams, which emit events without any value other than the fact that they occurred.
+ */
 enum class token
 {
     value
@@ -2210,7 +2239,8 @@ protected:
 
 } // namespace detail
 
-/*! @brief Reactive event stream class (Specialization for non-reference types)
+/*!
+ * @brief Reactive event stream class (Specialization for non-reference types)
  *
  *  An instance of this class acts as a proxy to an event stream node.
  *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
@@ -2241,7 +2271,8 @@ public:
     {}
 };
 
-/*! @brief Reactive event stream class (Specialization for references)
+/*!
+ * @brief Reactive event stream class (Specialization for references)
  *
  *  An instance of this class acts as a proxy to an event stream node.
  *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
@@ -2272,7 +2303,8 @@ public:
     {}
 };
 
-/*! @brief @ref events that support imperative input (Specialization for non-reference types)
+/*!
+ * @brief @ref events that support imperative input (Specialization for non-reference types)
  *
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
@@ -2356,7 +2388,8 @@ public:
     }
 };
 
-/*! @brief @ref events that support imperative input (Specialization for references)
+/*!
+ * @brief @ref events that support imperative input (Specialization for references)
  *
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
@@ -3101,7 +3134,11 @@ private:
 
 } // namespace detail
 
-/// make_event_source
+/*!
+ * @brief Creates a new event source node and links it to the returned event_source instance
+ *
+ *  Event value type E has to be specified explicitly. It would be token if it is omitted.
+ */
 template <typename E = token>
 UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context ) -> event_source<E>
 {
@@ -3124,20 +3161,24 @@ UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, UnaryOperation&& unary_op 
         std::forward<S>( source ), std::forward<UnaryOperation>( unary_op ) );
 }
 
-/// merge
-template <typename TArg1, typename... args_t, typename E = TArg1>
-UREACT_WARN_UNUSED_RESULT auto merge( const events<TArg1>& arg1, const events<args_t>&... args )
-    -> events<E>
+/*!
+ * @brief Emit all events in source1, ... sources
+ *
+ *  @warning Not to be confused with std::merge() or ranges::merge()
+ */
+template <typename source_t, typename... sources_t, typename E = source_t>
+UREACT_WARN_UNUSED_RESULT auto merge(
+    const events<source_t>& source1, const events<sources_t>&... sources ) -> events<E>
 {
-    static_assert( sizeof...( args_t ) > 0, "merge: 2+ arguments are required." );
+    static_assert( sizeof...( sources_t ) > 0, "merge: 2+ arguments are required." );
 
     using op_t = detail::event_merge_op<E,
-        detail::event_stream_node_ptr_t<TArg1>,
-        detail::event_stream_node_ptr_t<args_t>...>;
+        detail::event_stream_node_ptr_t<source_t>,
+        detail::event_stream_node_ptr_t<sources_t>...>;
 
-    context& context = arg1.get_context();
+    context& context = source1.get_context();
     return events<E>( std::make_shared<detail::event_op_node<E, op_t>>(
-        context, get_node_ptr( arg1 ), get_node_ptr( args )... ) );
+        context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
 }
 
 /// filter
@@ -3352,7 +3393,12 @@ UREACT_WARN_UNUSED_RESULT auto process(
     return std::apply( node_builder, dep_pack.data );
 }
 
-/// zip
+/*!
+ * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N
+ *
+ *  Each source slot has its own unbounded buffer queue that persistently stores incoming events.
+ *  For as long as all queues are not empty, one value is popped from each and emitted together as a tuple.
+ */
 template <typename arg_t, typename... args_t>
 UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
     -> events<std::tuple<arg_t, args_t...>>
@@ -3365,6 +3411,13 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args
             context, get_node_ptr( arg1 ), get_node_ptr( args )... ) );
 }
 
+/*!
+ * @brief Utility function to transform any event stream into a token stream
+ *
+ *  Emits a token for any event that passes source
+ *
+ *   @warning Not to be confused with ranges::tokenize()
+ */
 template <typename events_t>
 UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
 {
@@ -3372,7 +3425,9 @@ UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
     return transform( source, tokenizer );
 }
 
-/// curried version of tokenize algorithm. Intended for chaining
+/*!
+ * @brief Curried version of tokenize() algorithm used for "pipe" syntax
+ */
 UREACT_WARN_UNUSED_RESULT inline auto tokenize()
 {
     return []( auto&& source ) {

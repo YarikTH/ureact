@@ -360,7 +360,6 @@ inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
 } // namespace detail
 
 
-
 //==================================================================================================
 // [[section]] Ureact specific utilities
 //==================================================================================================
@@ -404,7 +403,6 @@ UREACT_WARN_UNUSED_RESULT bool equals( const events<L>& lhs, const events<R>& rh
 } // namespace detail
 
 
-
 //==================================================================================================
 // [[section]] Ureact engine
 //==================================================================================================
@@ -440,9 +438,7 @@ private:
     std::vector<node_type*> m_data;
 };
 
-
 using turn_type = unsigned;
-
 
 class reactive_node
 {
@@ -458,14 +454,12 @@ public:
     virtual void tick( turn_type& turn ) = 0;
 };
 
-
 struct input_node_interface
 {
     virtual ~input_node_interface() = default;
 
     virtual bool apply_input( turn_type& turn ) = 0;
 };
-
 
 class observer_interface
 {
@@ -479,7 +473,6 @@ private:
 
     friend class observable;
 };
-
 
 class observable
 {
@@ -519,7 +512,6 @@ public:
 private:
     std::vector<std::unique_ptr<observer_interface>> m_observers;
 };
-
 
 class react_graph
 {
@@ -648,7 +640,6 @@ private:
 
     std::vector<observer_interface*> m_detached_observers;
 };
-
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()
 {
@@ -872,7 +863,6 @@ private:
     context& m_context;
 };
 
-
 class observer_node
     : public node_base
     , public observer_interface
@@ -883,7 +873,6 @@ public:
     {}
 };
 
-
 class observable_node
     : public node_base
     , public observable
@@ -893,7 +882,6 @@ public:
         : node_base( context )
     {}
 };
-
 
 template <typename node_t, typename... deps_t>
 struct attach_functor
@@ -922,7 +910,6 @@ struct attach_functor
     node_t& m_node;
 };
 
-
 template <typename node_t, typename... deps_t>
 struct detach_functor
 {
@@ -949,7 +936,6 @@ struct detach_functor
 
     node_t& m_node;
 };
-
 
 template <typename... deps_t>
 class reactive_op_base
@@ -994,7 +980,6 @@ protected:
     dep_holder_t m_deps;
 };
 
-
 template <typename node_t>
 class reactive_base
 {
@@ -1027,7 +1012,6 @@ protected:
     friend const std::shared_ptr<node_t_>& get_node_ptr( const reactive_base<node_t_>& node );
 };
 
-
 template <typename node_t>
 UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
     const reactive_base<node_t>& node )
@@ -1058,10 +1042,8 @@ protected:
     S m_value;
 };
 
-
 template <typename S>
 using signal_node_ptr_t = std::shared_ptr<signal_node<S>>;
-
 
 template <typename S>
 class var_node
@@ -1144,7 +1126,6 @@ private:
     bool m_is_input_modified = false;
 };
 
-
 template <typename S, typename F, typename... deps_t>
 class function_op : public reactive_op_base<deps_t...>
 {
@@ -1194,7 +1175,6 @@ private:
 
     F m_func;
 };
-
 
 template <typename S, typename op_t>
 class signal_op_node : public signal_node<S>
@@ -1256,7 +1236,6 @@ private:
     bool m_was_op_stolen = false;
 };
 
-
 template <typename S>
 class signal_base : public reactive_base<signal_node<S>>
 {
@@ -1302,7 +1281,6 @@ private:
 
 } // namespace detail
 
-
 /*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
  * its dependencies. (Specialization for non-reference types.)
  *
@@ -1322,32 +1300,39 @@ protected:
     using node_t = detail::signal_node<S>;
 
 public:
+    /// Alias to value type to use in metaprogramming
     using value_t = S;
 
-    /// Default constructor
+    /*!
+     * @brief Default construct signal
+     *
+     * Default constructed signal is not attached to node, so it is not valid
+     */
     signal() = default;
 
-    /**
-     * Construct signal from the given node.
-     * @todo make it private and allow to call it only from make_var function
+    /*!
+     * @brief Construct signal from the given node
      */
     explicit signal( std::shared_ptr<node_t>&& node_ptr )
         : signal::signal_base( std::move( node_ptr ) )
     {}
 
-    /// Return value of linked node
+    /*!
+     * @brief Return value of linked node
+     */
     UREACT_WARN_UNUSED_RESULT const S& get() const
     {
         return this->get_value();
     }
 
-    /// Return value of linked node
+    /*!
+     * @brief Return value of linked node
+     */
     UREACT_WARN_UNUSED_RESULT const S& operator()() const
     {
         return this->get_value();
     }
 };
-
 
 /*! @brief Reactive variable that can propagate its changes to dependents and react to changes of
  * its dependencies. (Specialization for references.)
@@ -1368,32 +1353,39 @@ protected:
     using node_t = detail::signal_node<std::reference_wrapper<S>>;
 
 public:
+    /// Alias to value type to use in metaprogramming
     using value_t = S;
 
-    /// Default constructor
+    /*!
+     * @brief Default construct signal
+     *
+     * Default constructed signal is not attached to node, so it is not valid
+     */
     signal() = default;
 
-    /**
-     * Construct signal from given node.
-     * @todo make it private and allow to call it only from make_var function
+    /*!
+     * @brief Construct signal from the given node
      */
     explicit signal( std::shared_ptr<node_t>&& node_ptr )
         : signal::signal_base( std::move( node_ptr ) )
     {}
 
-    /// Return value of linked node
-    UREACT_WARN_UNUSED_RESULT const S& value() const
+    /*!
+     * @brief Return value of linked node
+     */
+    UREACT_WARN_UNUSED_RESULT const S& get() const
     {
         return this->get_value();
     }
 
-    /// Return value of linked node
+    /*!
+     * @brief Return value of linked node
+     */
     UREACT_WARN_UNUSED_RESULT const S& operator()() const
     {
         return this->get_value();
     }
 };
-
 
 /*! @brief Source signals which values can be manually changed.
  * (Specialization for non-reference types.)
@@ -1411,18 +1403,21 @@ private:
     using node_t = detail::var_node<S>;
 
 public:
-    /// Default ctor
+    /*!
+     * @brief Default construct var_signal.
+     *
+     * Default constructed var_signal is not attached to node, so it is not valid.
+     */
     var_signal() = default;
 
-    /**
-     * Construct var_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+    /*!
+     * @brief Construct var_signal from var_node.
      */
     explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
         : var_signal::signal( std::move( node_ptr ) )
     {}
 
-    /**
+    /*!
      * @brief Set new signal value
      *
      * Set the the signal value of the linked variable signal node to a new_value.
@@ -1433,38 +1428,24 @@ public:
      * until the transaction function returns.
      * Otherwise, propagation starts immediately and Set blocks until it's done.
      */
-    void set( const S& new_value ) const
+    template <class T>
+    void set( T&& new_value ) const
     {
-        this->set_value( new_value );
+        this->set_value( std::forward<T>( new_value ) );
     }
 
-    /// @copydoc set
-    void set( S&& new_value ) const
-    {
-        this->set_value( std::move( new_value ) );
-    }
-
-    /**
+    /*!
      * @brief Operator version of set()
      *
      * Semantically equivalent to set().
      */
-    void operator<<=( const S& new_value ) const
+    template <class T>
+    void operator<<=( T&& new_value ) const
     {
-        this->set_value( new_value );
+        this->set_value( std::forward<T>( new_value ) );
     }
 
-    /**
-     * @brief Operator version of set()
-     *
-     * Semantically equivalent to set().
-     */
-    void operator<<=( S&& new_value ) const
-    {
-        this->set_value( std::move( new_value ) );
-    }
-
-    /**
+    /*!
      * @brief Modify current signal value in-place
      */
     template <typename F>
@@ -1473,7 +1454,6 @@ public:
         this->modify_value( func );
     }
 };
-
 
 /*! @brief Source signals which values can be manually changed.
  * (Specialization for references.)
@@ -1491,20 +1471,21 @@ private:
     using node_t = detail::var_node<std::reference_wrapper<S>>;
 
 public:
-    using value_t = S;
-
-    /// Default ctor
+    /*!
+     * @brief Default construct var_signal.
+     *
+     * Default constructed var_signal is not attached to node, so it is not valid.
+     */
     var_signal() = default;
 
-    /**
-     * Construct var_signal from var_node.
-     * @todo make it private and allow to call it only from make_var function
+    /*!
+     * @brief Construct var_signal from var_node.
      */
     explicit var_signal( std::shared_ptr<node_t>&& node_ptr )
         : var_signal::signal( std::move( node_ptr ) )
     {}
 
-    /**
+    /*!
      * @brief Set new signal value
      *
      * Set the the signal value of the linked variable signal node to a new_value.
@@ -1520,7 +1501,7 @@ public:
         this->set_value( new_value );
     }
 
-    /**
+    /*!
      * @brief Operator version of set()
      *
      * Semantically equivalent to set().
@@ -1547,19 +1528,25 @@ private:
     using node_t = detail::signal_op_node<S, op_t>;
 
 public:
-    /// Construct temp_signal from var_node.
+    /*!
+     * @brief Construct temp_signal from var_node
+     */
     explicit temp_signal( std::shared_ptr<node_t>&& ptr )
         : temp_signal::signal( std::move( ptr ) )
     {}
 
-    /// Return internal operator, leaving node invalid
+    /*!
+     * @brief Return internal operator, leaving node invalid
+     */
     UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
         auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
         return node_ptr->steal_op();
     }
 
-    /// Checks if internal operator was already stolen
+    /*!
+     * @brief Checks if internal operator was already stolen
+     */
     UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
         auto* node_ptr = static_cast<node_t*>( this->m_ptr.get() );
@@ -1567,7 +1554,7 @@ public:
     }
 };
 
-/// Proxy class that wraps several nodes into a tuple.
+/// Proxy that wraps several nodes into a tuple
 template <typename... values_t>
 class signal_pack
 {
@@ -1584,7 +1571,6 @@ public:
 
     std::tuple<const signal<values_t>&...> data;
 };
-
 
 namespace detail
 {
@@ -1618,7 +1604,6 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
     }
 }
 
-
 template <typename S, typename op_t, typename... Args>
 UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... args )
 {
@@ -1628,7 +1613,6 @@ UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... arg
 
 } // namespace detail
 
-
 /// Factory function to create var signal in the given context.
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
@@ -1636,14 +1620,12 @@ UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
-
 /// Utility function to create a signal_pack from given signals.
 template <typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
 {
     return signal_pack<values_t...>( deps... );
 }
-
 
 /// Comma operator overload to create signal pack from two signals.
 template <typename left_val_t, typename right_val_t>
@@ -1660,7 +1642,6 @@ UREACT_WARN_UNUSED_RESULT auto operator,(
 {
     return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
-
 
 /// Free function to connect a signal to a function and return the resulting signal.
 template <typename value_t,
@@ -1693,7 +1674,6 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
 
     return std::apply( node_builder, arg_pack.data );
 }
-
 
 /// operator| overload to connect a signal to a function and return the resulting signal.
 template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
@@ -1739,7 +1719,6 @@ private:
     Fn m_fn{};
     first_argument_type m_first_argument;
 };
-
 
 // Full analog of std::binder2nd that removed in c++17
 // See https://en.cppreference.com/w/cpp/utility/functional/binder12
@@ -1951,7 +1930,6 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
         } /* namespace op_functors */                                                              \
         } /* namespace detail */
 
-
 #    define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                           \
         namespace detail                                                                           \
         {                                                                                          \
@@ -1968,7 +1946,6 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
         } /* namespace op_functors */                                                              \
         } /* namespace detail */
 
-
 #    define UREACT_DECLARE_UNARY_OP( op, name )                                                    \
         template <typename arg_t,                                                                  \
             template <typename> class functor_op = detail::op_functors::op_functor_##name>         \
@@ -1977,7 +1954,6 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
         {                                                                                          \
             return detail::unary_operator_impl<functor_op>( std::forward<arg_t&&>( arg ) );        \
         }
-
 
 #    define UREACT_DECLARE_BINARY_OP( op, name )                                                   \
         template <typename lhs_t,                                                                  \
@@ -1992,16 +1968,13 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
                 std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) );                      \
         }
 
-
 #    define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                              \
         UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
         UREACT_DECLARE_UNARY_OP( op, name )
 
-
 #    define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                             \
         UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
         UREACT_DECLARE_BINARY_OP( op, name )
-
 
 #    if defined( __clang__ ) && defined( __clang_minor__ )
 #        pragma clang diagnostic push
@@ -2219,7 +2192,6 @@ private:
     op_t m_op;
     bool m_was_op_stolen = false;
 };
-
 
 template <typename E>
 class event_stream_base : public reactive_base<event_stream_node<E>>
@@ -3798,7 +3770,6 @@ private:
     subject_ptr_t m_subject_ptr = nullptr;
 };
 
-
 /// Takes ownership of an observer and automatically detaches it on scope exit.
 class scoped_observer
 {
@@ -3977,7 +3948,6 @@ auto observe(
     return observer( raw_node_ptr, subject_ptr );
 }
 
-
 namespace detail
 {
 
@@ -4029,7 +3999,6 @@ private:
     std::shared_ptr<signal_node<outer_t>> m_outer;
     std::shared_ptr<signal_node<inner_t>> m_inner;
 };
-
 
 template <typename outer_t, typename inner_t>
 class event_flatten_node : public event_stream_node<inner_t>

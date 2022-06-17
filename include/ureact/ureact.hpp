@@ -4238,32 +4238,24 @@ private:
     dep_holder_t m_deps;
 };
 
-template <typename E,
-    typename V,
-    typename f_in_t,
-    typename... dep_values_t,
-    typename S = std::decay_t<V>>
+template <typename E, typename V, typename f_in_t, typename... deps_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold_impl(
-    const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
     -> signal<S>
 {
     using F = std::decay_t<f_in_t>;
 
-    using node_t = std::conditional_t<
-        std::is_invocable_r_v<S, F, event_range<E>, S, dep_values_t...>,
-        detail::fold_node<S, E, F, dep_values_t...>,
-        std::conditional_t<std::is_invocable_r_v<S, F, E, S, dep_values_t...>,
-            detail::fold_node<S,
-                E,
-                detail::add_fold_range_wrapper<E, S, F, dep_values_t...>,
-                dep_values_t...>,
-            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&, dep_values_t...>,
-                detail::fold_node<S, E, F, dep_values_t...>,
-                std::conditional_t<std::is_invocable_r_v<void, F, E, S&, dep_values_t...>,
+    using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S, deps_t...>,
+        detail::fold_node<S, E, F, deps_t...>,
+        std::conditional_t<std::is_invocable_r_v<S, F, E, S, deps_t...>,
+            detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F, deps_t...>, deps_t...>,
+            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&, deps_t...>,
+                detail::fold_node<S, E, F, deps_t...>,
+                std::conditional_t<std::is_invocable_r_v<void, F, E, S&, deps_t...>,
                     detail::fold_node<S,
                         E,
-                        detail::add_fold_by_ref_range_wrapper<E, S, F, dep_values_t...>,
-                        dep_values_t...>,
+                        detail::add_fold_by_ref_range_wrapper<E, S, F, deps_t...>,
+                        deps_t...>,
                     void>>>>;
 
     static_assert( !std::is_same_v<node_t, void>,
@@ -4271,7 +4263,7 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
 
     context& context = events.get_context();
 
-    auto node_builder = [&context, &events, &init, &func]( const signal<dep_values_t>&... deps ) {
+    auto node_builder = [&context, &events, &init, &func]( const signal<deps_t>&... deps ) {
         return signal<S>( std::make_shared<node_t>( context,
             std::forward<V>( init ),
             get_node_ptr( events ),
@@ -4336,13 +4328,9 @@ private:
  *    This variant can be used if copying and comparing S is prohibitively expensive.
  *    Because the old and new values cannot be compared, updates will always trigger a change.
  */
-template <typename E,
-    typename V,
-    typename f_in_t,
-    typename... dep_values_t,
-    typename S = std::decay_t<V>>
+template <typename E, typename V, typename f_in_t, typename... deps_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold(
-    const events<E>& events, V&& init, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
     -> signal<S>
 {
     return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<f_in_t>( func ) );

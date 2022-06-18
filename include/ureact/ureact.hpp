@@ -3780,61 +3780,6 @@ private:
     func_t m_func;
 };
 
-template <typename E, typename func_t>
-class event_observer_node : public observer_node
-{
-public:
-    template <typename F>
-    event_observer_node(
-        context& context, const std::shared_ptr<event_stream_node<E>>& subject, F&& func )
-        : event_observer_node::observer_node( context )
-        , m_subject( subject )
-        , m_func( std::forward<F>( func ) )
-    {
-        get_graph().on_node_attach( *this, *subject );
-    }
-
-    ~event_observer_node() override = default;
-
-    void tick( turn_type& ) override
-    {
-        bool should_detach = false;
-
-        if( auto p = m_subject.lock() )
-        {
-            should_detach
-                = m_func( event_range<E>( p->events() ) ) == observer_action::stop_and_detach;
-        }
-
-        if( should_detach )
-        {
-            get_graph().queue_observer_for_detach( *this );
-        }
-    }
-
-    void unregister_self() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            p->unregister_observer( this );
-        }
-    }
-
-private:
-    std::weak_ptr<event_stream_node<E>> m_subject;
-
-    func_t m_func;
-
-    void detach_observer() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            get_graph().on_node_detach( *this, *p );
-            m_subject.reset();
-        }
-    }
-};
-
 template <typename E, typename func_t, typename... dep_values_t>
 class synced_observer_node : public observer_node
 {
@@ -4038,7 +3983,7 @@ namespace detail
 {
 
 template <typename in_f, typename S>
-auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
+auto observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer
 {
     static_assert( std::is_invocable_v<in_f, S>,
         "Passed functor should be callable with S. See documentation for ureact::observe()" );
@@ -4063,99 +4008,11 @@ auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
     return observer( raw_node_ptr, subject_ptr );
 }
 
-} // namespace detail
-
-/*!
- * @brief TODO: documentation
- */
-/// When the signal value S of subject changes, func(s) is called.
-/// The signature of func should be equivalent to:
-/// TRet func(const S&)
-/// TRet can be either observer_action or void.
-/// By returning observer_action::stop_and_detach, the observer function can request
-/// its own detachment. Returning observer_action::next keeps the observer attached.
-/// Using a void return type is the same as always returning observer_action::next.
-template <typename in_f, typename S>
-auto observe( const signal<S>& subject, in_f&& func ) -> observer
-{
-    return observe_impl( subject, std::forward<in_f>( func ) );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// observe overload for temporary subject.
-/// Caller must use result, otherwise observation isn't performed, that is not expected.
-template <typename in_f, typename S>
-UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, in_f&& func ) -> observer
-{
-    return observe_impl( subject, std::forward<in_f>( func ) );
-}
-
-/*!
- * @brief TODO: documentation
- *
- * observe - events
- */
-template <typename f_in_t, typename E>
-auto observe( const events<E>& subject, f_in_t&& func ) -> observer
-{
-    using F = std::decay_t<f_in_t>;
-
-    using detail::add_observer_action_next_ret;
-    using detail::add_observer_range_wrapper;
-    using detail::condition;
-    using detail::select_t;
-
-    // clang-format off
-    using wrapper_t =
-        select_t<
-            // observer_action func(event_range<E> range)
-            condition<std::is_invocable_r_v<observer_action, F, event_range<E>>,
-                      F>,
-            // observer_action func(const E&)
-            condition<std::is_invocable_r_v<observer_action, F, E>,
-                      add_observer_range_wrapper<E, F>>,
-            // void func(event_range<E> range)
-            condition<std::is_invocable_r_v<void, F, event_range<E>>,
-                      add_observer_action_next_ret<F>>,
-            // void func(const E&)
-            condition<std::is_invocable_r_v<void, F, E>,
-                      add_observer_range_wrapper<E, add_observer_action_next_ret<F>>>,
-            void>;
-    // clang-format on
-
-    static_assert( !std::is_same_v<wrapper_t, void>,
-        "observe: Passed function does not match any of the supported signatures." );
-
-    using node_t = detail::event_observer_node<E, wrapper_t>;
-
-    const auto& subject_ptr = get_node_ptr( subject );
-
-    std::unique_ptr<detail::observer_node> node(
-        new node_t( subject.get_context(), subject_ptr, std::forward<f_in_t>( func ) ) );
-    detail::observer_node* raw_node_ptr = node.get();
-
-    subject_ptr->register_observer( std::move( node ) );
-
-    return observer( raw_node_ptr, subject_ptr );
-}
-
-/*!
- * @brief TODO: documentation
- *
- * observe - Synced
- */
 template <typename f_in_t, typename E, typename... deps_t>
-auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
-    -> observer
+auto observe_events_impl(
+    const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func ) -> observer
 {
     using F = std::decay_t<f_in_t>;
-
-    using detail::add_observer_action_next_ret;
-    using detail::add_observer_range_wrapper;
-    using detail::condition;
-    using detail::select_t;
 
     // clang-format off
     using wrapper_t =
@@ -4178,7 +4035,7 @@ auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, 
     static_assert( !std::is_same_v<wrapper_t, void>,
         "observe: Passed function does not match any of the supported signatures." );
 
-    using node_t = detail::synced_observer_node<E, wrapper_t, deps_t...>;
+    using node_t = synced_observer_node<E, wrapper_t, deps_t...>;
 
     context& context = subject.get_context();
 
@@ -4191,13 +4048,84 @@ auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, 
 
     const auto& subject_node = get_node_ptr( subject );
 
-    std::unique_ptr<detail::observer_node> node( std::apply( node_builder, dep_pack.data ) );
+    std::unique_ptr<observer_node> node( std::apply( node_builder, dep_pack.data ) );
 
-    detail::observer_node* raw_node = node.get();
+    observer_node* raw_node = node.get();
 
     subject_node->register_observer( std::move( node ) );
 
     return observer( raw_node, subject_node );
+}
+
+} // namespace detail
+
+/*!
+ * @brief TODO: documentation
+ */
+/// When the signal value S of subject changes, func(s) is called.
+/// The signature of func should be equivalent to:
+/// TRet func(const S&)
+/// TRet can be either observer_action or void.
+/// By returning observer_action::stop_and_detach, the observer function can request
+/// its own detachment. Returning observer_action::next keeps the observer attached.
+/// Using a void return type is the same as always returning observer_action::next.
+template <typename in_f, typename S>
+auto observe( const signal<S>& subject, in_f&& func ) -> observer
+{
+    return observe_signal_impl( subject, std::forward<in_f>( func ) );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+/// observe overload for temporary subject.
+/// Caller must use result, otherwise observation isn't performed, that is not expected.
+template <typename F, typename S>
+UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, F&& func ) -> observer
+{
+    return observe_signal_impl( subject, std::forward<F>( func ) );
+}
+
+/*!
+ * @brief TODO: documentation
+ *
+ * observe - events
+ */
+template <typename F, typename E>
+auto observe( const events<E>& subject, F&& func ) -> observer
+{
+    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+template <typename F, typename E>
+UREACT_WARN_UNUSED_RESULT auto observe( events<E>&& subject, F&& func ) -> observer
+{
+    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
+}
+
+/*!
+ * @brief TODO: documentation
+ *
+ * observe - Synced
+ */
+template <typename F, typename E, typename... deps_t>
+auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func )
+    -> observer
+{
+    return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+template <typename F, typename E, typename... deps_t>
+UREACT_WARN_UNUSED_RESULT auto observe(
+    events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer
+{
+    return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
 }
 
 namespace detail

@@ -28,7 +28,7 @@ TEST_CASE( "Monitor" )
     }
     //    SUBCASE( "Piped syntax" )
     //    {
-    //        // TODO: the is a problem with ambigues operator|
+    //        // TODO: the is a problem with ambiguous operator|
     //        // maybe I need to create lambda wrapper called algorithm or something
     //        // to disable signal<S> | func(S) overload
     //        monitored = src | ureact::monitor();

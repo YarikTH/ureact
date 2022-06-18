@@ -3502,6 +3502,8 @@ UREACT_WARN_UNUSED_RESULT auto process(
  *
  *  Each source slot has its own unbounded buffer queue that persistently stores incoming events.
  *  For as long as all queues are not empty, one value is popped from each and emitted together as a tuple.
+ *
+ *  Semantically equivalent of ranges::zip
  */
 template <typename arg_t, typename... args_t>
 UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
@@ -3530,7 +3532,7 @@ UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
 }
 
 /*!
- * @brief Curried version of tokenize() algorithm used for "pipe" syntax
+ * @brief Curried version of tokenize(events_t&& source) algorithm used for "pipe" syntax
  */
 UREACT_WARN_UNUSED_RESULT inline auto tokenize()
 {

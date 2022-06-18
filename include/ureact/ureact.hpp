@@ -3348,7 +3348,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
     T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
 {
     auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
-                             const auto& e, const deps_t&... deps ) mutable {
+                             const auto& e, auto... deps ) mutable {
         passed = passed || !pred( e, deps... );
         return passed;
     };
@@ -3403,7 +3403,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
     T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
 {
     auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
-                           const auto& e, const deps_t&... deps ) mutable {
+                           const auto& e, auto... deps ) mutable {
         passed = passed && pred( e, deps... );
         return passed;
     };

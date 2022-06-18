@@ -3282,6 +3282,50 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 /*!
  * @brief TODO: documentation
  */
+/// take
+template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
+{
+    auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
+
+    return filter( std::forward<T>( source ), taker );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+/// curried version of take algorithm. Intended for chaining
+UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
+{
+    return [count]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return take( std::forward<arg_t>( source ), count );
+    };
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+/// once
+template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+UREACT_WARN_UNUSED_RESULT auto once( T&& source )
+{
+    return take( std::forward<T>( source ), 1 );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+/// curried version of once algorithm. Intended for chaining
+UREACT_WARN_UNUSED_RESULT inline auto once()
+{
+    return take( 1 );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
 /// drop_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
@@ -3312,31 +3356,6 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 /*!
  * @brief TODO: documentation
  */
-/// take
-template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
-{
-    auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
-
-    return filter( std::forward<T>( source ), taker );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// curried version of take algorithm. Intended for chaining
-UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
-{
-    return [count]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take( std::forward<arg_t>( source ), count );
-    };
-}
-
-/*!
- * @brief TODO: documentation
- */
 /// take_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
@@ -3361,25 +3380,6 @@ UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return take_while( std::forward<arg_t>( source ), pred );
     };
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// once
-template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto once( T&& source )
-{
-    return take( std::forward<T>( source ), 1 );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// curried version of once algorithm. Intended for chaining
-UREACT_WARN_UNUSED_RESULT inline auto once()
-{
-    return take( 1 );
 }
 
 /*!

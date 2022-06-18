@@ -4068,6 +4068,9 @@ using decay_input_t = typename decay_input<T>::type;
 
 } // namespace detail
 
+/*!
+ * @brief Creates a new signal by flattening a signal of a signal
+ */
 template <typename inner_value_t>
 UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
 {
@@ -4077,6 +4080,9 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& out
             context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
 }
 
+/*!
+ * @brief Creates a new event stream by flattening a signal of an event stream
+ */
 template <typename inner_value_t>
 UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& outer )
 {
@@ -4086,6 +4092,15 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& out
             context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
 }
 
+/*!
+ * @brief Utility to flatten public signal attribute of class pointed be reference
+ *
+ *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
+ *  Also, we have signal that points to this class by reference: signal<Foo&> bar
+ *  This utility receives a signal reference bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
+ *
+ *  @sa reactive_ptr does the same, but receives signal<Foo*>
+ */
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 UREACT_WARN_UNUSED_RESULT auto reactive_ref(
     const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
@@ -4094,6 +4109,15 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref(
         outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
 }
 
+/*!
+ * @brief Utility to flatten public signal attribute of class pointed be pointer
+ *
+ *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
+ *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
+ *  This utility receives a signal reference bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
+ *
+ *  @sa reactive_ref does the same, but receives signal<Foo&>
+ */
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 UREACT_WARN_UNUSED_RESULT auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
 {

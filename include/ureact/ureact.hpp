@@ -224,6 +224,60 @@ struct event_value_impl<event_source<E>>
     using type = E;
 };
 
+// chaining of std::conditional_t  based on
+// https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263
+
+/*!
+ * @brief Utility for using with select_t
+ */
+template <bool B, typename T>
+struct condition
+{
+    static constexpr bool value = B;
+    using type = T;
+};
+
+template <typename Head, typename... Tail>
+struct select_impl : std::conditional_t<Head::value, Head, select_impl<Tail...>>
+{};
+
+template <typename T>
+struct select_impl<T>
+{
+    using type = T;
+};
+
+template <bool B, typename T>
+struct select_impl<condition<B, T>>
+{
+    // last one had better be true!
+    static_assert( B, "!" );
+    using type = T;
+};
+
+/*!
+ * @brief Utility for selecting type based on several conditions
+ *
+ * Usage:
+ *   template<class T>
+ *   using foo =
+ *      select_t<condition<std::is_convertible_v<T, A>, A>,
+ *               condition<std::is_convertible_v<T, B>, B>,
+ *               void>;
+ * the same as
+ *   template<class T>
+ *   using foo =
+ *      std::conditional_t<
+ *          std::is_convertible_v<T, A>,
+ *          A,
+ *          std::conditional_t<
+ *              std::is_convertible_v<T, B>,
+ *              B,
+ *              void>>;
+ */
+template <typename Head, typename... Tail>
+using select_t = typename select_impl<Head, Tail...>::type;
+
 } // namespace detail
 
 /*!
@@ -3638,6 +3692,10 @@ private:
     F m_func;
 };
 
+template <class F>
+using add_observer_action_next_ret
+    = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
+
 template <typename E, typename F, typename... args_t>
 struct add_observer_range_wrapper
 {
@@ -3987,12 +4045,11 @@ auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
 
     using F = std::decay_t<in_f>;
     using R = std::invoke_result_t<in_f, S>;
-    using wrapper_t = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
 
     // If return value of passed function is void, add observer_action::next as
     // default return value.
     using node_t = std::conditional_t<std::is_same_v<void, R>,
-        signal_observer_node<S, wrapper_t>,
+        signal_observer_node<S, add_observer_action_next_ret<F>>,
         signal_observer_node<S, F>>;
 
     const auto& subject_ptr = get_node_ptr( subject );
@@ -4045,18 +4102,28 @@ auto observe( const events<E>& subject, f_in_t&& func ) -> observer
 {
     using F = std::decay_t<f_in_t>;
 
-    using wrapper_t = std::conditional_t<std::is_invocable_r_v<observer_action, F, event_range<E>>,
-        F,
-        std::conditional_t<std::is_invocable_r_v<observer_action, F, E>,
-            detail::add_observer_range_wrapper<E, F>,
-            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>>,
-                detail::add_default_return_value_wrapper<F, observer_action, observer_action::next>,
-                std::conditional_t<std::is_invocable_r_v<void, F, E>,
-                    detail::add_observer_range_wrapper<E,
-                        detail::add_default_return_value_wrapper<F,
-                            observer_action,
-                            observer_action::next>>,
-                    void>>>>;
+    using detail::add_observer_action_next_ret;
+    using detail::add_observer_range_wrapper;
+    using detail::condition;
+    using detail::select_t;
+
+    // clang-format off
+    using wrapper_t =
+        select_t<
+            // observer_action func(event_range<E> range)
+            condition<std::is_invocable_r_v<observer_action, F, event_range<E>>,
+                      F>,
+            // observer_action func(const E&)
+            condition<std::is_invocable_r_v<observer_action, F, E>,
+                      add_observer_range_wrapper<E, F>>,
+            // void func(event_range<E> range)
+            condition<std::is_invocable_r_v<void, F, event_range<E>>,
+                      add_observer_action_next_ret<F>>,
+            // void func(const E&)
+            condition<std::is_invocable_r_v<void, F, E>,
+                      add_observer_range_wrapper<E, add_observer_action_next_ret<F>>>,
+            void>;
+    // clang-format on
 
     static_assert( !std::is_same_v<wrapper_t, void>,
         "observe: Passed function does not match any of the supported signatures." );
@@ -4079,36 +4146,43 @@ auto observe( const events<E>& subject, f_in_t&& func ) -> observer
  *
  * observe - Synced
  */
-template <typename f_in_t, typename E, typename... dep_values_t>
-auto observe(
-    const events<E>& subject, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+template <typename f_in_t, typename E, typename... deps_t>
+auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
     -> observer
 {
     using F = std::decay_t<f_in_t>;
 
-    using wrapper_t = std::conditional_t<
-        std::is_invocable_r_v<observer_action, F, event_range<E>, dep_values_t...>,
-        F,
-        std::conditional_t<std::is_invocable_r_v<observer_action, F, E, dep_values_t...>,
-            detail::add_observer_range_wrapper<E, F, dep_values_t...>,
-            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, dep_values_t...>,
-                detail::add_default_return_value_wrapper<F, observer_action, observer_action::next>,
-                std::conditional_t<std::is_invocable_r_v<void, F, E, dep_values_t...>,
-                    detail::add_observer_range_wrapper<E,
-                        detail::add_default_return_value_wrapper<F,
-                            observer_action,
-                            observer_action::next>,
-                        dep_values_t...>,
-                    void>>>>;
+    using detail::add_observer_action_next_ret;
+    using detail::add_observer_range_wrapper;
+    using detail::condition;
+    using detail::select_t;
+
+    // clang-format off
+    using wrapper_t =
+        select_t<
+            // observer_action func(event_range<E> range, const deps_t& ...)
+            condition<std::is_invocable_r_v<observer_action, F, event_range<E>, deps_t...>,
+                      F>,
+            // observer_action func(const E&, const deps_t& ...)
+            condition<std::is_invocable_r_v<observer_action, F, E, deps_t...>,
+                      add_observer_range_wrapper<E, F, deps_t...>>,
+            // void func(event_range<E> range, const deps_t& ...)
+            condition<std::is_invocable_r_v<void, F, event_range<E>, deps_t...>,
+                      add_observer_action_next_ret<F>>,
+            // void func(const E&, const deps_t& ...)
+            condition<std::is_invocable_r_v<void, F, E, deps_t...>,
+                      add_observer_range_wrapper<E, add_observer_action_next_ret<F>, deps_t...>>,
+            void>;
+    // clang-format on
 
     static_assert( !std::is_same_v<wrapper_t, void>,
         "observe: Passed function does not match any of the supported signatures." );
 
-    using node_t = detail::synced_observer_node<E, wrapper_t, dep_values_t...>;
+    using node_t = detail::synced_observer_node<E, wrapper_t, deps_t...>;
 
     context& context = subject.get_context();
 
-    auto node_builder = [&context, &subject, &func]( const signal<dep_values_t>&... deps ) {
+    auto node_builder = [&context, &subject, &func]( const signal<deps_t>&... deps ) {
         return new node_t( context,
             get_node_ptr( subject ),
             std::forward<f_in_t>( func ),
@@ -4453,18 +4527,23 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
 {
     using F = std::decay_t<f_in_t>;
 
-    using node_t = std::conditional_t<std::is_invocable_r_v<S, F, S, event_range<E>, deps_t...>,
-        detail::fold_node<S, E, F, deps_t...>,
-        std::conditional_t<std::is_invocable_r_v<S, F, S, E, deps_t...>,
-            detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F, deps_t...>, deps_t...>,
-            std::conditional_t<std::is_invocable_r_v<void, F, S&, event_range<E>, deps_t...>,
-                detail::fold_node<S, E, F, deps_t...>,
-                std::conditional_t<std::is_invocable_r_v<void, F, S&, E, deps_t...>,
-                    detail::fold_node<S,
-                        E,
-                        detail::add_fold_by_ref_range_wrapper<E, S, F, deps_t...>,
-                        deps_t...>,
-                    void>>>>;
+    // clang-format off
+    using node_t =
+        select_t<
+            // S func(const S&, event_range<E> range, const deps_t& ...)
+            condition<std::is_invocable_r_v<S, F, S, event_range<E>, deps_t...>,
+                                  fold_node<S, E, F, deps_t...>>,
+            // S func(const S&, const E&, const deps_t& ...)
+            condition<std::is_invocable_r_v<S, F, S, E, deps_t...>,
+                                  fold_node<S, E, add_fold_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
+            // void func(S&, event_range<E> range, const deps_t& ...)
+            condition<std::is_invocable_r_v<void, F, S&, event_range<E>, deps_t...>,
+                                  fold_node<S, E, F, deps_t...>>,
+            // void func(S&, const E&, const deps_t& ...)
+            condition<std::is_invocable_r_v<void, F, S&, E, deps_t...>,
+                                  fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
+            void>;
+    // clang-format on
 
     static_assert( !std::is_same_v<node_t, void>,
         "fold: Passed function does not match any of the supported signatures." );

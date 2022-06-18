@@ -3860,6 +3860,9 @@ private:
 } // namespace detail
 
 /*!
+ * @brief TODO: documentation
+ */
+/*!
  * @brief Shared pointer like object that holds a strong reference to the observed subject
  *
  *  An instance of this class provides a unique handle to an observer which can
@@ -4058,56 +4061,59 @@ auto observe_events_impl(
 } // namespace detail
 
 /*!
- * @brief TODO: documentation
+ * @brief Create observer for signal
+ *
+ *  When the signal value S of subject changes, func is called
+ *
+ *  The signature of func should be equivalent to:
+ *  * void func(const S&)
+ *  * observer_action func(const S&)
+ *
+ *  By returning observer_action::stop_and_detach, the observer function can request
+ *  its own detachment. Returning observer_action::next keeps the observer attached.
+ *  Using a void return type is the same as always returning observer_action::next.
+ *
+ *  Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
  */
-/// When the signal value S of subject changes, func(s) is called.
-/// The signature of func should be equivalent to:
-/// TRet func(const S&)
-/// TRet can be either observer_action or void.
-/// By returning observer_action::stop_and_detach, the observer function can request
-/// its own detachment. Returning observer_action::next keeps the observer attached.
-/// Using a void return type is the same as always returning observer_action::next.
-template <typename in_f, typename S>
-auto observe( const signal<S>& subject, in_f&& func ) -> observer
-{
-    return observe_signal_impl( subject, std::forward<in_f>( func ) );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// observe overload for temporary subject.
-/// Caller must use result, otherwise observation isn't performed, that is not expected.
 template <typename F, typename S>
-UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, F&& func ) -> observer
+auto observe( const signal<S>& subject, F&& func ) -> observer
 {
     return observe_signal_impl( subject, std::forward<F>( func ) );
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Create observer for temporary signal
  *
- * observe - events
+ *  Same as observe(const signal<S>& subject, F&& func),
+ *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
  */
-template <typename F, typename E>
-auto observe( const events<E>& subject, F&& func ) -> observer
+template <typename F, typename S>
+UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+auto observe( signal<S>&& subject, F&& func ) -> observer
 {
-    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
+    return observe_signal_impl( subject, std::forward<F>( func ) );
 }
 
 /*!
- * @brief TODO: documentation
- */
-template <typename F, typename E>
-UREACT_WARN_UNUSED_RESULT auto observe( events<E>&& subject, F&& func ) -> observer
-{
-    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
-}
-
-/*!
- * @brief TODO: documentation
+ * @brief Create observer for event stream
  *
- * observe - Synced
+ *  For every event e in subject, func is called.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *  Changes of signals in dep_pack do not trigger an update - only received events do.
+ *
+ *  The signature of func should be equivalent to:
+ *  * observer_action func(event_range<E> range, const deps_t& ...)
+ *  * observer_action func(const E&, const deps_t& ...)
+ *  * void func(event_range<E> range, const deps_t& ...)
+ *  * void func(const E&, const deps_t& ...)
+ *
+ *  By returning observer_action::stop_and_detach, the observer function can request
+ *  its own detachment. Returning observer_action::next keeps the observer attached.
+ *  Using a void return type is the same as always returning observer_action::next.
+ *
+ *  Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+ *
+ *  The event_range<E> option allows to explicitly batch process single turn events.
  */
 template <typename F, typename E, typename... deps_t>
 auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func )
@@ -4117,13 +4123,42 @@ auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, 
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Create observer for temporary event stream
+ *
+ *  Same as observe(const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func),
+ *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
  */
 template <typename F, typename E, typename... deps_t>
-UREACT_WARN_UNUSED_RESULT auto observe(
-    events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer
+UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer
 {
     return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+}
+
+/*!
+ * @brief Create observer for event stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See observe(const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func)
+ */
+template <typename F, typename E>
+auto observe( const events<E>& subject, F&& func ) -> observer
+{
+    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
+}
+
+/*!
+ * @brief Create observer for temporary event stream
+ *
+ *  Same as observe(const events<E>& subject, F&& func),
+ *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+ */
+template <typename F, typename E>
+UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+auto observe( events<E>&& subject, F&& func ) -> observer
+{
+    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
 }
 
 namespace detail
@@ -4540,6 +4575,8 @@ private:
  *    v is passed by non-cost reference to func(v, e, deps), making it mutable.
  *    This variant can be used if copying and comparing S is prohibitively expensive.
  *    Because the old and new values cannot be compared, updates will always trigger a change.
+ *
+ *  The event_range<E> option allows to explicitly batch process single turn events.
  */
 template <typename E, typename V, typename f_in_t, typename... deps_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold(
@@ -4554,7 +4591,7 @@ UREACT_WARN_UNUSED_RESULT auto fold(
  *
  *  Version without synchronization with additional signals
  *
- *  See @ref fold()
+ *  See fold(const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack, f_in_t&& func)
  */
 template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>

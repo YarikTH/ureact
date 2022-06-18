@@ -3383,6 +3383,38 @@ UREACT_WARN_UNUSED_RESULT inline auto once()
 }
 
 /*!
+ * @brief Filter out all except the first element from every consecutive group of equivalent elements
+ *
+ *  In other words: removes consecutive (adjacent) duplicates
+ *
+ *  Semantically equivalent of std::unique
+ */
+template <typename E>
+UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
+{
+    auto deduplicator = [first = true, prev = E{}]( const E& e ) mutable {
+        const bool pass = first || e != prev;
+        first = false;
+        prev = e;
+        return pass;
+    };
+
+    return filter( source, deduplicator );
+}
+
+/*!
+ * @brief Curried version of unique(const events<E>& source) algorithm used for "pipe" syntax
+ */
+UREACT_WARN_UNUSED_RESULT inline auto unique()
+{
+    return []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return unique( std::forward<arg_t>( source ) );
+    };
+}
+
+/*!
  * @brief TODO: documentation
  */
 /// transform

@@ -165,3 +165,31 @@ TEST_CASE( "SpecialFilterFunctions" )
     CHECK( result_before_negative.get() == expected_before_negative );
     CHECK( result_from_negative.get() == expected_from_negative );
 }
+
+// demonstrate and test special filter function unique
+TEST_CASE( "Unique" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<int>( ctx );
+    ureact::events<int> uniq;
+
+    SUBCASE( "Functional syntax" )
+    {
+        uniq = ureact::unique( src );
+    }
+    SUBCASE( "Piped syntax" )
+    {
+        uniq = src | ureact::unique();
+    }
+
+    const auto result = make_collector( uniq );
+
+    // pass set containing several duplicate elements
+    for( int i : { 1, 2, 1, 1, 3, 3, 3, 4, 5, 4 } )
+        src << i;
+
+    // expect removing consecutive (adjacent) duplicates
+    const std::vector<int> expected = { 1, 2, 1, 3, 4, 5, 4 };
+    CHECK( result.get() == expected );
+}

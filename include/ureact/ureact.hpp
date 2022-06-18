@@ -3781,15 +3781,15 @@ private:
 };
 
 template <typename E, typename func_t, typename... dep_values_t>
-class synced_observer_node : public observer_node
+class events_observer_node : public observer_node
 {
 public:
     template <typename F>
-    synced_observer_node( context& context,
+    events_observer_node( context& context,
         const std::shared_ptr<event_stream_node<E>>& subject,
         F&& func,
         const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_observer_node::observer_node( context )
+        : events_observer_node::observer_node( context )
         , m_subject( subject )
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
@@ -3797,8 +3797,6 @@ public:
         get_graph().on_node_attach( *this, *subject );
         ( get_graph().on_node_attach( *this, *deps ), ... );
     }
-
-    ~synced_observer_node() override = default;
 
     void tick( turn_type& turn ) override
     {
@@ -3850,7 +3848,7 @@ private:
             get_graph().on_node_detach( *this, *p );
 
             apply(
-                detach_functor<synced_observer_node, std::shared_ptr<signal_node<dep_values_t>>...>(
+                detach_functor<events_observer_node, std::shared_ptr<signal_node<dep_values_t>>...>(
                     *this ),
                 m_deps );
 
@@ -4035,7 +4033,7 @@ auto observe_events_impl(
     static_assert( !std::is_same_v<wrapper_t, void>,
         "observe: Passed function does not match any of the supported signatures." );
 
-    using node_t = synced_observer_node<E, wrapper_t, deps_t...>;
+    using node_t = events_observer_node<E, wrapper_t, deps_t...>;
 
     context& context = subject.get_context();
 

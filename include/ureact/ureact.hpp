@@ -1664,7 +1664,7 @@ UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... arg
 } // namespace detail
 
 /*!
- * @brief Creates a new input signal node and links it to the returned make_var instance
+ * @brief Create a new input signal node and links it to the returned make_var instance
  */
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
@@ -1705,7 +1705,7 @@ UREACT_WARN_UNUSED_RESULT auto operator,(
 }
 
 /*!
- * @brief Creates a new signal node with value v = func(arg.get()).
+ * @brief Create a new signal node with value v = func(arg.get()).
  * This value is set on construction and updated when arg have changed
  *
  *  The signature of func should be equivalent to:
@@ -1725,7 +1725,7 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& f
 }
 
 /*!
- * @brief Creates a new signal node with value v = func(arg_pack.get(), ...).
+ * @brief Create a new signal node with value v = func(arg_pack.get(), ...).
  * This value is set on construction and updated when any args have changed
  *
  *  The signature of func should be equivalent to:
@@ -3191,7 +3191,7 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 } // namespace detail
 
 /*!
- * @brief Creates a new event source node and links it to the returned event_source instance
+ * @brief Create a new event source node and links it to the returned event_source instance
  *
  *  Event value type E has to be specified explicitly. It would be token if it is omitted.
  */
@@ -4054,7 +4054,7 @@ auto observe_events_impl(
  *  its own detachment. Returning observer_action::next keeps the observer attached.
  *  Using a void return type is the same as always returning observer_action::next.
  *
- *  Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+ *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
  */
 template <typename F, typename S>
 auto observe( const signal<S>& subject, F&& func ) -> observer
@@ -4080,7 +4080,6 @@ auto observe( signal<S>&& subject, F&& func ) -> observer
  *
  *  For every event e in subject, func is called.
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *  Changes of signals in dep_pack do not trigger an update - only received events do.
  *
  *  The signature of func should be equivalent to:
  *  * observer_action func(event_range<E> range, const deps_t& ...)
@@ -4092,9 +4091,9 @@ auto observe( signal<S>&& subject, F&& func ) -> observer
  *  its own detachment. Returning observer_action::next keeps the observer attached.
  *  Using a void return type is the same as always returning observer_action::next.
  *
- *  Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
- *
- *  The event_range<E> option allows to explicitly batch process single turn events.
+ *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+ *  @note The event_range<E> option allows to explicitly batch process single turn events
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
 template <typename F, typename E, typename... deps_t>
 auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func )
@@ -4268,7 +4267,7 @@ using decay_input_t = typename decay_input<T>::type;
 } // namespace detail
 
 /*!
- * @brief Creates a new signal by flattening a signal of a signal
+ * @brief Create a new signal by flattening a signal of a signal
  */
 template <typename inner_value_t>
 UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
@@ -4280,7 +4279,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& out
 }
 
 /*!
- * @brief Creates a new event stream by flattening a signal of an event stream
+ * @brief Create a new event stream by flattening a signal of an event stream
  */
 template <typename inner_value_t>
 UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& outer )
@@ -4542,7 +4541,6 @@ private:
  *
  *  Iteratively combines signal value with values from event stream.
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *  Changes of signals in dep_pack do not trigger an update - only received events do.
  *
  *  The signature of func should be equivalent to:
  *  * S func(const S&, const E&, const deps_t& ...)
@@ -4557,7 +4555,8 @@ private:
  *    This variant can be used if copying and comparing S is prohibitively expensive.
  *    Because the old and new values cannot be compared, updates will always trigger a change.
  *
- *  The event_range<E> option allows to explicitly batch process single turn events.
+ *  @note The event_range<E> option allows to explicitly batch process single turn events
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
 template <typename E, typename V, typename f_in_t, typename... deps_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold(

@@ -3255,9 +3255,12 @@ UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Skips first N elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::drop
+ *
+ *  @sa drop(const size_t count), once(T&& source), once(), take(T&&, const size_t count), take(const size_t count)
  */
-/// drop
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
 {
@@ -3267,9 +3270,8 @@ UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Curried version of drop(T&& source, const size_t count) algorithm used for "pipe" syntax
  */
-/// curried version of drop algorithm. Intended for chaining
 UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 {
     return [count]( auto&& source ) {
@@ -3280,9 +3282,12 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Keeps first N elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::take
+ *
+ *  @sa take(const size_t count), once(T&& source), once(), drop(T&&, const size_t count), drop(const size_t count)
  */
-/// take
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
 {
@@ -3292,9 +3297,8 @@ UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Curried version of take(T&& source, const size_t count) algorithm used for "pipe" syntax
  */
-/// curried version of take algorithm. Intended for chaining
 UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
 {
     return [count]( auto&& source ) {
@@ -3305,9 +3309,12 @@ UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Take only the first element from another stream
+ *
+ *  The same as take(1)
+ *
+ *  @sa take(T&& source, const size_t count), take(const size_t count), once()
  */
-/// once
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto once( T&& source )
 {
@@ -3315,18 +3322,21 @@ UREACT_WARN_UNUSED_RESULT auto once( T&& source )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Curried version of once(T&& source) algorithm used for "pipe" syntax
  */
-/// curried version of once algorithm. Intended for chaining
 UREACT_WARN_UNUSED_RESULT inline auto once()
 {
     return take( 1 );
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Skips the first elements of the source stream that satisfy the unary predicate
+ *
+ *  Takes events beginning at the first for which the predicate returns false.
+ *  Semantically equivalent of std::ranges::views::drop_while
+ *
+ *  @sa drop_while(Pred&& pred), take_while(T&& source, Pred&& pred), take_while(Pred&& pred)
  */
-/// drop_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
 {
@@ -3340,9 +3350,8 @@ UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Curried version of drop_while(T&& source, Pred&& pred) algorithm used for "pipe" syntax
  */
-/// curried version of drop_while algorithm. Intended for chaining
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 {
@@ -3354,9 +3363,14 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Keeps the first elements of the source stream that satisfy the unary predicate
+ *
+ *  Keeps events from the source stream, starting at the beginning and ending
+ *  at the first element for which the predicate returns false.
+ *  Semantically equivalent of std::ranges::views::take_while
+ *
+ *  @sa drop_while(Pred&& pred), take_while(T&& source, Pred&& pred), take_while(Pred&& pred)
  */
-/// take_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
 {
@@ -3369,9 +3383,8 @@ UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Curried version of take_while(T&& source, Pred&& pred) algorithm used for "pipe" syntax
  */
-/// curried version of take_while algorithm. Intended for chaining
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
 {

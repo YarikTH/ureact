@@ -3014,15 +3014,15 @@ private:
 };
 
 template <typename in_t, typename out_t, typename func_t, typename... dep_values_t>
-class synced_event_processing_node : public event_stream_node<out_t>
+class event_processing_node : public event_stream_node<out_t>
 {
 public:
     template <typename F>
-    synced_event_processing_node( context& context,
+    event_processing_node( context& context,
         const std::shared_ptr<event_stream_node<in_t>>& source,
         F&& func,
         const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_event_processing_node::event_stream_node( context )
+        : event_processing_node::event_stream_node( context )
         , m_source( source )
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
@@ -3031,11 +3031,11 @@ public:
         ( this->get_graph().on_node_attach( *this, *deps ), ... );
     }
 
-    ~synced_event_processing_node() override
+    ~event_processing_node() override
     {
         this->get_graph().on_node_detach( *this, *m_source );
 
-        apply( detach_functor<synced_event_processing_node,
+        apply( detach_functor<event_processing_node,
                    std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
             m_deps );
     }
@@ -3178,7 +3178,7 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 
     auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
         return events<out_t>(
-            std::make_shared<synced_event_processing_node<in_t, out_t, F, dep_values_t...>>(
+            std::make_shared<event_processing_node<in_t, out_t, F, dep_values_t...>>(
                 context,
                 get_node_ptr( source ),
                 std::forward<f_in_t>( func ),

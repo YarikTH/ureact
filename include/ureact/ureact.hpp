@@ -3013,43 +3013,6 @@ private:
     dep_holder_t m_deps;
 };
 
-template <typename in_t, typename out_t, typename func_t>
-class event_processing_node : public event_stream_node<out_t>
-{
-public:
-    template <typename F>
-    event_processing_node(
-        context& context, const std::shared_ptr<event_stream_node<in_t>>& source, F&& func )
-        : event_processing_node::event_stream_node( context )
-        , m_source( source )
-        , m_func( std::forward<F>( func ) )
-    {
-        this->get_graph().on_node_attach( *this, *source );
-    }
-
-    ~event_processing_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_source );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-
-        m_func( event_range<in_t>( m_source->events() ), event_emitter( this->m_events ) );
-
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    std::shared_ptr<event_stream_node<in_t>> m_source;
-
-    func_t m_func;
-};
-
 template <typename in_t, typename out_t, typename func_t, typename... dep_values_t>
 class synced_event_processing_node : public event_stream_node<out_t>
 {
@@ -3204,6 +3167,27 @@ private:
     std::tuple<slot<values_t>...> m_slots;
 };
 
+template <typename out_t, typename in_t, typename f_in_t, typename... dep_values_t>
+UREACT_WARN_UNUSED_RESULT auto process_impl(
+    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    -> events<out_t>
+{
+    using F = std::decay_t<f_in_t>;
+
+    context& context = source.get_context();
+
+    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
+        return events<out_t>(
+            std::make_shared<synced_event_processing_node<in_t, out_t, F, dep_values_t...>>(
+                context,
+                get_node_ptr( source ),
+                std::forward<f_in_t>( func ),
+                get_node_ptr( deps )... ) );
+    };
+
+    return std::apply( node_builder, dep_pack.data );
+}
+
 } // namespace detail
 
 /*!
@@ -3254,6 +3238,40 @@ UREACT_WARN_UNUSED_RESULT auto merge(
     context& context = source1.get_context();
     return events<E>( std::make_shared<detail::event_op_node<E, op_t>>(
         context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
+}
+
+/*!
+ * @brief Create a new event stream by batch processing events from other stream
+ *
+ *  func is called with all events range from source in current turn.
+ *  New events are emitted through "out".
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of func should be equivalent to:
+ *  * bool func(event_range<in_t> range, event_emitter<out_t> out, const deps_t& ...)
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+ *  @note The type of outgoing events T has to be specified explicitly, i.e. Process<T>(src, func)
+ */
+template <typename out_t, typename in_t, typename f_in_t, typename... deps_t>
+UREACT_WARN_UNUSED_RESULT auto process(
+    const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
+    -> events<out_t>
+{
+    return detail::process_impl<out_t, in_t, f_in_t>( source, dep_pack, std::forward<f_in_t>( func ) );
+}
+
+/*!
+ * @brief Create a new event stream by batch processing events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See process(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func)
+ */
+template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
+UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
+{
+    return detail::process_impl<out_t, in_t, f_in_t>( source, signal_pack<>(), std::forward<f_in_t>( func ) );
 }
 
 /*!
@@ -3562,43 +3580,6 @@ UREACT_WARN_UNUSED_RESULT auto transform(
     auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
         return events<out_t>(
             std::make_shared<detail::synced_event_transform_node<in_t, out_t, F, dep_values_t...>>(
-                context,
-                get_node_ptr( source ),
-                std::forward<f_in_t>( func ),
-                get_node_ptr( deps )... ) );
-    };
-
-    return std::apply( node_builder, dep_pack.data );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// process
-template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
-UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
-{
-    context& context = source.get_context();
-    return events<out_t>( std::make_shared<detail::event_processing_node<in_t, out_t, F>>(
-        context, get_node_ptr( source ), std::forward<f_in_t>( func ) ) );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// process - Synced
-template <typename out_t, typename in_t, typename f_in_t, typename... dep_values_t>
-UREACT_WARN_UNUSED_RESULT auto process(
-    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
-    -> events<out_t>
-{
-    using F = std::decay_t<f_in_t>;
-
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
-        return events<out_t>(
-            std::make_shared<detail::synced_event_processing_node<in_t, out_t, F, dep_values_t...>>(
                 context,
                 get_node_ptr( source ),
                 std::forward<f_in_t>( func ),

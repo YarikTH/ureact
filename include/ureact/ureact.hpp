@@ -770,6 +770,9 @@ private:
 } // namespace detail
 
 /*!
+ * @brief TODO: documentation
+ */
+/*!
  * @brief Core class that connects all reactive nodes together.
  *
  *  Each signal and node belongs to a single ureact context.
@@ -990,7 +993,7 @@ UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
     return node.m_node;
 }
 
-}
+} // namespace detail
 
 //==================================================================================================
 // [[section]] Signals
@@ -1278,7 +1281,9 @@ protected:
     using node_t = detail::signal_node<S>;
 
 public:
-    /// Alias to value type to use in metaprogramming
+    /*!
+     * @brief Alias to value type to use in metaprogramming
+     */
     using value_t = S;
 
     /*!
@@ -1330,7 +1335,9 @@ protected:
     using node_t = detail::signal_node<std::reference_wrapper<S>>;
 
 public:
-    /// Alias to value type to use in metaprogramming
+    /*!
+     * @brief Alias to value type to use in metaprogramming
+     */
     using value_t = S;
 
     /*!
@@ -1687,6 +1694,9 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
     return std::apply( node_builder, arg_pack.data );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// operator| overload to connect a signal to a function and return the resulting signal.
 template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
 UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
@@ -1694,6 +1704,9 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
     return make_signal( arg, std::forward<F>( func ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// operator| overload to connect multiple signals to a function and return the resulting signal.
 template <typename F, typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
@@ -2253,7 +2266,9 @@ private:
     using node_t = detail::event_stream_node<E>;
 
 public:
-    /// Alias to value type to use in metaprogramming
+    /*!
+     * @brief Alias to value type to use in metaprogramming
+     */
     using value_t = E;
 
     /*!
@@ -2450,6 +2465,9 @@ public:
     }
 };
 
+/*!
+ * @brief TODO: documentation
+ */
 /*!
  * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node.
  *
@@ -3145,6 +3163,9 @@ UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context ) -> event_so
     return event_source<E>( std::make_shared<detail::event_source_node<E>>( context ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// Operator | for algorithms chaining
 /// Usage: monitor( target ) | filter( is_even ) | tokenize();
 template <typename S,
@@ -3181,6 +3202,9 @@ UREACT_WARN_UNUSED_RESULT auto merge(
         context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// filter
 template <typename E, typename Pred, typename F = std::decay_t<Pred>>
 UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
@@ -3192,6 +3216,9 @@ UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) ->
         context, std::forward<Pred>( pred ), get_node_ptr( source ) ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// filter - Synced
 template <typename E, typename Pred, typename... dep_values_t>
 UREACT_WARN_UNUSED_RESULT auto filter(
@@ -3213,6 +3240,9 @@ UREACT_WARN_UNUSED_RESULT auto filter(
     return std::apply( node_builder, dep_pack.data );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// curried version of filter algorithm. Intended for chaining
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
@@ -3224,6 +3254,9 @@ UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
     };
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// drop
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
@@ -3233,6 +3266,9 @@ UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
     return filter( std::forward<T>( source ), dropper );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// curried version of drop algorithm. Intended for chaining
 UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 {
@@ -3243,6 +3279,9 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
     };
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// drop_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
@@ -3256,6 +3295,9 @@ UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
     return filter( std::forward<T>( source ), dropper_while );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// curried version of drop_while algorithm. Intended for chaining
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
@@ -3267,6 +3309,9 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
     };
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// take
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
@@ -3276,6 +3321,9 @@ UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
     return filter( std::forward<T>( source ), taker );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// curried version of take algorithm. Intended for chaining
 UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
 {
@@ -3286,6 +3334,9 @@ UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
     };
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// take_while
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
@@ -3298,6 +3349,9 @@ UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
     return filter( std::forward<T>( source ), taker_while );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// curried version of take_while algorithm. Intended for chaining
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
@@ -3309,6 +3363,9 @@ UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
     };
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// once
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto once( T&& source )
@@ -3316,12 +3373,18 @@ UREACT_WARN_UNUSED_RESULT auto once( T&& source )
     return take( std::forward<T>( source ), 1 );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// curried version of once algorithm. Intended for chaining
 UREACT_WARN_UNUSED_RESULT inline auto once()
 {
     return take( 1 );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// transform
 template <typename in_t,
     typename f_in_t,
@@ -3337,6 +3400,9 @@ UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, f_in_t&& f
         context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// transform - Synced
 template <typename in_t,
     typename f_in_t,
@@ -3362,6 +3428,9 @@ UREACT_WARN_UNUSED_RESULT auto transform(
     return std::apply( node_builder, dep_pack.data );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// process
 template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
 UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
@@ -3371,6 +3440,9 @@ UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& fun
         context, get_node_ptr( source ), std::forward<f_in_t>( func ) ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// process - Synced
 template <typename out_t, typename in_t, typename f_in_t, typename... dep_values_t>
 UREACT_WARN_UNUSED_RESULT auto process(
@@ -3441,11 +3513,13 @@ UREACT_WARN_UNUSED_RESULT inline auto tokenize()
 // [[section]] Observers
 //==================================================================================================
 
-/// Observer functions can return values of this type to control further processing.
+/*!
+ * @brief Observer functions can return values of this type to control further processing.
+ */
 enum class observer_action
 {
-    next,           ///< Need to continue observing
-    stop_and_detach ///< Need to stop observing
+    next,           ///< Continue observing
+    stop_and_detach ///< Stop observing
 };
 
 namespace detail
@@ -3693,7 +3767,8 @@ private:
 
 } // namespace detail
 
-/*! @brief Shared pointer like object that holds a strong reference to the observed subject
+/*!
+ * @brief Shared pointer like object that holds a strong reference to the observed subject
  *
  *  An instance of this class provides a unique handle to an observer which can
  *  be used to detach it explicitly. It also holds a strong reference to
@@ -3765,6 +3840,9 @@ private:
     subject_ptr_t m_subject = nullptr;
 };
 
+/*!
+ * @brief TODO: documentation
+ */
 /// Takes ownership of an observer and automatically detaches it on scope exit.
 class scoped_observer
 {
@@ -3839,6 +3917,9 @@ auto observe_impl( const signal<S>& subject, in_f&& func ) -> observer
 
 } // namespace detail
 
+/*!
+ * @brief TODO: documentation
+ */
 /// When the signal value S of subject changes, func(s) is called.
 /// The signature of func should be equivalent to:
 /// TRet func(const S&)
@@ -3852,6 +3933,9 @@ auto observe( const signal<S>& subject, in_f&& func ) -> observer
     return observe_impl( subject, std::forward<in_f>( func ) );
 }
 
+/*!
+ * @brief TODO: documentation
+ */
 /// observe overload for temporary subject.
 /// Caller must use result, otherwise observation isn't performed, that is not expected.
 template <typename in_f, typename S>
@@ -3860,7 +3944,11 @@ UREACT_WARN_UNUSED_RESULT auto observe( signal<S>&& subject, in_f&& func ) -> ob
     return observe_impl( subject, std::forward<in_f>( func ) );
 }
 
-/// observe - events
+/*!
+ * @brief TODO: documentation
+ *
+ * observe - events
+ */
 template <typename f_in_t, typename E>
 auto observe( const events<E>& subject, f_in_t&& func ) -> observer
 {
@@ -3895,7 +3983,11 @@ auto observe( const events<E>& subject, f_in_t&& func ) -> observer
     return observer( raw_node_ptr, subject_ptr );
 }
 
-/// observe - Synced
+/*!
+ * @brief TODO: documentation
+ *
+ * observe - Synced
+ */
 template <typename f_in_t, typename E, typename... dep_values_t>
 auto observe(
     const events<E>& subject, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )

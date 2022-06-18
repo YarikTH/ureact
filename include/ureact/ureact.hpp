@@ -3330,6 +3330,33 @@ UREACT_WARN_UNUSED_RESULT inline auto once()
 }
 
 /*!
+ * @brief Skips the first elements of the source stream that satisfy the predicate
+ *
+ *  Takes events beginning at the first for which the predicate returns false.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool func(const E&, const deps_t& ...)
+ *
+ *  @sa drop_while(T&& source, Pred&& pred)
+ */
+template <typename T,
+    typename... deps_t,
+    typename Pred,
+    class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+UREACT_WARN_UNUSED_RESULT auto drop_while(
+    T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
+{
+    auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
+                             const auto& e, const deps_t&... deps ) mutable {
+        passed = passed || !pred( e, deps... );
+        return passed;
+    };
+
+    return filter( std::forward<T>( source ), dep_pack, dropper_while );
+}
+
+/*!
  * @brief Skips the first elements of the source stream that satisfy the unary predicate
  *
  *  Takes events beginning at the first for which the predicate returns false.
@@ -3340,13 +3367,7 @@ UREACT_WARN_UNUSED_RESULT inline auto once()
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
 {
-    auto dropper_while
-        = [passed = false, pred = std::forward<Pred>( pred )]( const auto& i ) mutable {
-              passed = passed || !pred( i );
-              return passed;
-          };
-
-    return filter( std::forward<T>( source ), dropper_while );
+    return drop_while( std::forward<T>( source ), signal_pack<>(), std::forward<Pred>( pred ) );
 }
 
 /*!
@@ -3363,6 +3384,34 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 }
 
 /*!
+ * @brief Keeps the first elements of the source stream that satisfy the predicate
+ *
+ *  Keeps events from the source stream, starting at the beginning and ending
+ *  at the first element for which the predicate returns false.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool func(const E&, const deps_t& ...)
+ *
+ *  @sa take_while(T&& source, Pred&& pred)
+ */
+template <typename T,
+    typename... deps_t,
+    typename Pred,
+    class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+UREACT_WARN_UNUSED_RESULT auto take_while(
+    T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
+{
+    auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
+                           const auto& e, const deps_t&... deps ) mutable {
+        passed = passed && pred( e, deps... );
+        return passed;
+    };
+
+    return filter( std::forward<T>( source ), dep_pack, taker_while );
+}
+
+/*!
  * @brief Keeps the first elements of the source stream that satisfy the unary predicate
  *
  *  Keeps events from the source stream, starting at the beginning and ending
@@ -3374,12 +3423,7 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
 {
-    auto taker_while = [passed = true, pred = std::forward<Pred>( pred )]( const auto& i ) mutable {
-        passed = passed && pred( i );
-        return passed;
-    };
-
-    return filter( std::forward<T>( source ), taker_while );
+    return take_while( std::forward<T>( source ), signal_pack<>(), std::forward<Pred>( pred ) );
 }
 
 /*!
@@ -4503,7 +4547,7 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 /*!
  * @brief Folds values from an event stream into a signal
  *
- *  Version without syncronization with additional signals
+ *  Version without synchronization with additional signals
  *
  *  See @ref fold()
  */

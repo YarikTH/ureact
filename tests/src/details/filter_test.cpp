@@ -212,6 +212,57 @@ TEST_CASE( "TakeOrDropWhile" )
     CHECK( result_from_negative.get() == expected_from_negative );
 }
 
+// filters that take first elements or skip first elements according to given predicate
+// that depends on signal values
+TEST_CASE( "TakeOrDropWhileSynced" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<int>( ctx );
+    ureact::events<int> before_overflow;
+    ureact::events<int> from_overflow;
+
+    const ureact::var_signal<int> blackjack = make_var( ctx, 21 );
+    const ureact::signal<int> sum = ureact::fold( src, 0, std::plus<>() );
+    const ureact::signal<bool> overflowed = sum >= blackjack;
+
+    const auto is_not_overflowed
+        = []( int /*e*/, int sum_value, int blackjack ) { return sum_value < blackjack; };
+    const auto is_not_overflowed_2 = []( int /*e*/, bool overflowed ) { return !overflowed; };
+
+    SUBCASE( "Functional syntax" )
+    {
+        before_overflow = ureact::take_while( src, with( sum, blackjack ), is_not_overflowed );
+        from_overflow = ureact::drop_while( src, with( sum, blackjack ), is_not_overflowed );
+    }
+    // todo: Piped syntax is not yet supported for synced version
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        before_overflow = src | ureact::take_while( with(sum, blackjack), is_not_overflowed );
+    //        from_overflow = src | ureact::drop_while( with(sum, blackjack), is_not_overflowed );
+    //    }
+    SUBCASE( "Calculated bool condition" )
+    {
+        before_overflow = ureact::take_while( src, with( overflowed ), is_not_overflowed_2 );
+        from_overflow = ureact::drop_while( src, with( overflowed ), is_not_overflowed_2 );
+    }
+
+    const auto result_before_overflow = make_collector( before_overflow );
+    const auto result_from_overflow = make_collector( from_overflow );
+
+    // pass integers as events
+    for( int i : { 10, 5, 1, 3 /*19*/, 6 /*25*/, 4, 1, 11 } )
+        src << i;
+
+    // if we concatenate results of take_while(pred) and drop_while(pred) we receive original vector
+    const std::vector<int> expected_before_overflow = //
+        { 10, 5, 1, 3 };
+    const std::vector<int> expected_from_overflow = //
+        /*       */ { 6, 4, 1, 11 };
+    CHECK( result_before_overflow.get() == expected_before_overflow );
+    CHECK( result_from_overflow.get() == expected_from_overflow );
+}
+
 // demonstrate and test special filter function unique
 TEST_CASE( "Unique" )
 {

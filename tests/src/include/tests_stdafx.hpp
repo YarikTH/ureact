@@ -62,7 +62,7 @@ const auto always_true = []( auto&& ) { return true; };
 template <class E>
 auto make_collector( const ureact::events<E>& events )
 {
-    const auto collector = []( const E& e, std::vector<E>& accum ) { accum.push_back( e ); };
+    const auto collector = []( std::vector<E>& accum, const E& e ) { accum.push_back( e ); };
     return ureact::fold( events, std::vector<E>{}, collector );
 }
 
@@ -70,7 +70,7 @@ auto make_collector( const ureact::events<E>& events )
 template <class E>
 auto make_counter( const ureact::events<E>& events )
 {
-    const auto counter = []( const E&, size_t& accum ) { ++accum; };
+    const auto counter = []( size_t& accum, const E& ) { ++accum; };
     return ureact::fold( events, size_t{ 0 }, counter );
 }
 

@@ -4117,14 +4117,15 @@ public:
         : m_func( std::forward<f_in_t>( func ) )
     {}
 
-    S operator()( event_range<E> range, S value, const args_t&... args )
+    // TODO: possible optimization - move accum as much as possible. See std::accumulate
+    S operator()( S accum, event_range<E> range, const args_t&... args )
     {
         for( const auto& e : range )
         {
-            value = m_func( e, value, args... );
+            accum = m_func( accum, e, args... );
         }
 
-        return value;
+        return accum;
     }
 
 private:
@@ -4140,11 +4141,11 @@ public:
         : m_func( std::forward<f_in_t>( func ) )
     {}
 
-    void operator()( event_range<E> range, S& value_ref, const args_t&... args )
+    void operator()( S& accum, event_range<E> range, const args_t&... args )
     {
         for( const auto& e : range )
         {
-            m_func( e, value_ref, args... );
+            m_func( accum, e, args... );
         }
     }
 
@@ -4187,12 +4188,12 @@ public:
 
         if( !m_events->events().empty() )
         {
-            if constexpr( std::is_invocable_r_v<S, func_t, event_range<E>, S, dep_values_t...> )
+            if constexpr( std::is_invocable_r_v<S, func_t, S, event_range<E>, dep_values_t...> )
             {
                 S new_value = apply(
                     [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        return m_func( event_range<E>( m_events->events() ),
-                            this->m_value,
+                        return m_func( this->m_value,
+                            event_range<E>( m_events->events() ),
                             args->value_ref()... );
                     },
                     m_deps );
@@ -4204,12 +4205,12 @@ public:
                 }
             }
             else if constexpr(
-                std::is_invocable_r_v<void, func_t, event_range<E>, S&, dep_values_t...> )
+                std::is_invocable_r_v<void, func_t, S&, event_range<E>, dep_values_t...> )
             {
                 apply(
                     [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        m_func( event_range<E>( m_events->events() ),
-                            this->m_value,
+                        m_func( this->m_value,
+                            event_range<E>( m_events->events() ),
                             args->value_ref()... );
                     },
                     m_deps );
@@ -4245,13 +4246,13 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
 {
     using F = std::decay_t<f_in_t>;
 
-    using node_t = std::conditional_t<std::is_invocable_r_v<S, F, event_range<E>, S, deps_t...>,
+    using node_t = std::conditional_t<std::is_invocable_r_v<S, F, S, event_range<E>, deps_t...>,
         detail::fold_node<S, E, F, deps_t...>,
-        std::conditional_t<std::is_invocable_r_v<S, F, E, S, deps_t...>,
+        std::conditional_t<std::is_invocable_r_v<S, F, S, E, deps_t...>,
             detail::fold_node<S, E, detail::add_fold_range_wrapper<E, S, F, deps_t...>, deps_t...>,
-            std::conditional_t<std::is_invocable_r_v<void, F, event_range<E>, S&, deps_t...>,
+            std::conditional_t<std::is_invocable_r_v<void, F, S&, event_range<E>, deps_t...>,
                 detail::fold_node<S, E, F, deps_t...>,
-                std::conditional_t<std::is_invocable_r_v<void, F, E, S&, deps_t...>,
+                std::conditional_t<std::is_invocable_r_v<void, F, S&, E, deps_t...>,
                     detail::fold_node<S,
                         E,
                         detail::add_fold_by_ref_range_wrapper<E, S, F, deps_t...>,
@@ -4309,22 +4310,22 @@ private:
 } // namespace detail
 
 /*!
- * @brief Folds values from an event stream into a signal (Synchronized)
+ * @brief Folds values from an event stream into a signal
  *
  *  Iteratively combines signal value with values from event stream.
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *  Changes of signals in dep_pack do not trigger an update - only received events do.
  *
  *  The signature of func should be equivalent to:
- *  * S func(const E&, const S&, const dep_values_t& ...)
- *  * S func(event_range<E> range, const S&, const dep_values_t& ...)
- *  * void func(const E&, S&, const dep_values_t& ...)
- *  * void func(event_range<E> range, S&, const dep_values_t& ...)
+ *  * S func(const S&, const E&, const deps_t& ...)
+ *  * S func(const S&, event_range<E> range, const deps_t& ...)
+ *  * void func(S&, const E&, const deps_t& ...)
+ *  * void func(S&, event_range<E> range, const deps_t& ...)
  *
  *  Creates a signal with an initial value v = init.
  *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
  *  * If the return type of func is void: For every received event e in events,
- *    v is passed by non-cost reference to func(e,v, deps), making it mutable.
+ *    v is passed by non-cost reference to func(v, e, deps), making it mutable.
  *    This variant can be used if copying and comparing S is prohibitively expensive.
  *    Because the old and new values cannot be compared, updates will always trigger a change.
  */
@@ -4339,20 +4340,9 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 /*!
  * @brief Folds values from an event stream into a signal
  *
- *  Iteratively combines signal value with values from event stream
+ *  Version without syncronization with additional signals
  *
- *  The signature of func should be equivalent to:
- *  * S func(const E&, const S&)
- *  * S func(event_range<E> range, const S&)
- *  * void func(const E&, S&)
- *  * void func(event_range<E> range, S&)
- *
- *  Creates a signal with an initial value v = init.
- *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v).
- *  * If the return type of func is void: For every received event e in events,
- *    v is passed by non-cost reference to func(e,v), making it mutable.
- *    This variant can be used if copying and comparing S is prohibitively expensive.
- *    Because the old and new values cannot be compared, updates will always trigger a change.
+ *  See @ref fold()
  */
 template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
@@ -4375,7 +4365,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init ) -> signal<E>
 {
     return fold( std::forward<T>( source ),
         std::forward<V>( init ),
-        []( event_range<E> range, const auto& ) { return *range.rbegin(); } );
+        []( const auto&, event_range<E> range ) { return *range.rbegin(); } );
 }
 
 /*!
@@ -4404,7 +4394,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
     return fold( trigger,
         target.get(),
         with( target ),
-        []( event_range<E> range, const S&, const S& value ) { return value; } );
+        []( const S&, event_range<E> range, const S& value ) { return value; } );
 }
 
 /*!

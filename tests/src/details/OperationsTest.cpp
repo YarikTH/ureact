@@ -11,7 +11,7 @@ using namespace ureact;
 template <typename T>
 struct Incrementer
 {
-    T operator()( token, T v ) const
+    T operator()( T v, token ) const
     {
         return v + 1;
     }
@@ -20,7 +20,7 @@ struct Incrementer
 template <typename T>
 struct Decrementer
 {
-    T operator()( token, T v ) const
+    T operator()( T v, token ) const
     {
         return v - 1;
     }
@@ -45,7 +45,7 @@ TEST_SUITE( "OperationsTest" )
 
         auto charSrc = make_event_source<char>( ctx );
         auto strFold = fold(
-            charSrc, std::string( "" ), []( char c, const std::string& s ) { return s + c; } );
+            charSrc, std::string( "" ), []( const std::string& s, char c ) { return s + c; } );
 
         charSrc << 'T' << 'e' << 's' << 't';
 
@@ -217,7 +217,7 @@ TEST_SUITE( "OperationsTest" )
 
         auto src = make_event_source<int>( ctx );
         auto f = fold(
-            src, std::vector<int>(), []( int d, std::vector<int>& v ) { v.push_back( d ); } );
+            src, std::vector<int>(), []( std::vector<int>& v, int d ) { v.push_back( d ); } );
 
         // Push
         for( auto i = 1; i <= 100; i++ )
@@ -236,7 +236,7 @@ TEST_SUITE( "OperationsTest" )
 
         auto src = make_event_source( ctx );
         auto x = fold(
-            src, std::vector<int>(), []( token, std::vector<int>& v ) { v.push_back( 123 ); } );
+            src, std::vector<int>(), []( std::vector<int>& v, token ) { v.push_back( 123 ); } );
 
         // Push
         for( auto i = 0; i < 100; i++ )
@@ -357,14 +357,14 @@ TEST_SUITE( "OperationsTest" )
         auto out1 = fold( src1,
             std::make_tuple( 0, 0 ),
             with( op1, op2 ),
-            []( token, const std::tuple<int, int>& t, int op1, int op2 ) {
+            []( const std::tuple<int, int>& t, token, int op1, int op2 ) {
                 return std::make_tuple<int, int>( std::get<0>( t ) + op1, std::get<1>( t ) + op2 );
             } );
 
         auto out2 = fold( src2,
             std::make_tuple( 0, 0, 0 ),
             with( op1, op2 ),
-            []( int e, const std::tuple<int, int, int>& t, int op1, int op2 ) {
+            []( const std::tuple<int, int, int>& t, int e, int op1, int op2 ) {
                 return std::make_tuple<int, int, int>(
                     std::get<0>( t ) + e, std::get<1>( t ) + op1, std::get<2>( t ) + op2 );
             } );
@@ -449,7 +449,7 @@ TEST_SUITE( "OperationsTest" )
         auto out1 = fold( src1,
             std::vector<int>{},
             with( op1, op2 ),
-            []( token, std::vector<int>& v, int op1, int op2 ) -> void {
+            []( std::vector<int>& v, token, int op1, int op2 ) -> void {
                 v.push_back( op1 );
                 v.push_back( op2 );
             } );
@@ -457,7 +457,7 @@ TEST_SUITE( "OperationsTest" )
         auto out2 = fold( src2,
             std::vector<int>{},
             with( op1, op2 ),
-            []( int e, std::vector<int>& v, int op1, int op2 ) -> void {
+            []( std::vector<int>& v, int e, int op1, int op2 ) -> void {
                 v.push_back( e );
                 v.push_back( op1 );
                 v.push_back( op2 );
@@ -557,7 +557,7 @@ TEST_SUITE( "OperationsTest" )
         auto out1 = fold( src1,
             std::make_tuple( 0, 0 ),
             with( op1, op2 ),
-            []( event_range<token> range, const std::tuple<int, int>& t, int op1, int op2 ) {
+            []( const std::tuple<int, int>& t, event_range<token> range, int op1, int op2 ) {
                 return std::make_tuple<int, int>( //
                     std::get<0>( t ) + ( op1 * static_cast<int>( range.size() ) ),
                     std::get<1>( t ) + ( op2 * static_cast<int>( range.size() ) ) );
@@ -566,7 +566,7 @@ TEST_SUITE( "OperationsTest" )
         auto out2 = fold( src2,
             std::make_tuple( 0, 0, 0 ),
             with( op1, op2 ),
-            []( event_range<int> range, const std::tuple<int, int, int>& t, int op1, int op2 ) {
+            []( const std::tuple<int, int, int>& t, event_range<int> range, int op1, int op2 ) {
                 int sum = 0;
                 for( const auto& e : range )
                     sum += e;
@@ -657,7 +657,7 @@ TEST_SUITE( "OperationsTest" )
         auto out1 = fold( src1,
             std::vector<int>{},
             with( op1, op2 ),
-            []( event_range<token> range, std::vector<int>& v, int op1, int op2 ) -> void {
+            []( std::vector<int>& v, event_range<token> range, int op1, int op2 ) -> void {
                 for( const auto& e : range )
                 {
                     (void)e;
@@ -669,7 +669,7 @@ TEST_SUITE( "OperationsTest" )
         auto out2 = fold( src2,
             std::vector<int>{},
             with( op1, op2 ),
-            []( event_range<int> range, std::vector<int>& v, int op1, int op2 ) -> void {
+            []( std::vector<int>& v, event_range<int> range, int op1, int op2 ) -> void {
                 for( const auto& e : range )
                 {
                     v.push_back( e );

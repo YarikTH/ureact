@@ -181,7 +181,7 @@ void hold_fold_ranged( Scenario& scenario, ankerl::nanobench::Bench& bench )
     auto src = ureact::make_event_source<E>( ctx );
 
     auto out
-        = fold( src, E{}, []( ureact::event_range<E> range, E accum ) { return *range.rbegin(); } );
+        = fold( src, E{}, []( E accum, ureact::event_range<E> range ) { return *range.rbegin(); } );
 
     perform_test( scenario, "fold ranged", bench, ctx, src, out );
 }
@@ -194,7 +194,7 @@ void hold_fold_ranged_2( Scenario& scenario, ankerl::nanobench::Bench& bench )
     auto src = ureact::make_event_source<E>( ctx );
 
     auto out = fold(
-        src, E{}, []( ureact::event_range<E> range, const E& ) { return *range.rbegin(); } );
+        src, E{}, []( const E&, ureact::event_range<E> range ) { return *range.rbegin(); } );
 
     perform_test( scenario, "fold ranged 2", bench, ctx, src, out );
 }
@@ -218,7 +218,7 @@ void hold_fold_ranged_by_ref( Scenario& scenario, ankerl::nanobench::Bench& benc
     ureact::context ctx;
     auto src = ureact::make_event_source<E>( ctx );
 
-    auto out = fold( src, E{}, []( ureact::event_range<E> range, E& accum ) {
+    auto out = fold( src, E{}, []( E& accum, ureact::event_range<E> range ) {
         const E& new_value = *range.rbegin();
         if( accum != new_value )
             accum = new_value;
@@ -234,7 +234,7 @@ void hold_fold_by_ref( Scenario& scenario, ankerl::nanobench::Bench& bench )
     ureact::context ctx;
     auto src = ureact::make_event_source<E>( ctx );
 
-    auto out = fold( src, E{}, []( E i, E& accum ) { accum = i; } );
+    auto out = fold( src, E{}, []( E& accum, E i ) { accum = i; } );
 
     perform_test( scenario, "fold by ref", bench, ctx, src, out );
 }

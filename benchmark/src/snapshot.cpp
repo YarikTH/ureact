@@ -109,7 +109,7 @@ void snapshot_fold_ranged( Scenario& scenario, ankerl::nanobench::Bench& bench )
     auto out = fold( trigger,
         target.get(),
         with( target ),
-        []( ureact::event_range<E> range, const S&, const S& value ) { return value; } );
+        []( const S&, ureact::event_range<E> range, const S& value ) { return value; } );
 
     perform_test( scenario, "fold ranged", bench, ctx, trigger, target, out );
 }

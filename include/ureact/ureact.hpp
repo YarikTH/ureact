@@ -3083,7 +3083,7 @@ UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, Op&& op ) ->
 }
 
 /*!
- * @brief Curried version of process(T&& source, Op&& op) algorithm used for "pipe" syntax
+ * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
  */
 template <typename out_t, typename Op>
 UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
@@ -3142,7 +3142,7 @@ UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) ->
 }
 
 /*!
- * @brief Curried version of filter(T&& source, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of filter(const events<E>& source, Pred&& pred) algorithm used for "pipe" syntax
  */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
@@ -3215,16 +3215,16 @@ UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
  *
  *  Semantically equivalent of std::ranges::views::drop
  */
-template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
+template <typename E>
+UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const size_t count )
 {
     auto dropper = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ >= count; };
 
-    return filter( std::forward<T>( source ), std::move( dropper ) );
+    return filter( source, std::move( dropper ) );
 }
 
 /*!
- * @brief Curried version of drop(T&& source, const size_t count) algorithm used for "pipe" syntax
+ * @brief Curried version of drop(const events<E>& source, const size_t count) algorithm used for "pipe" syntax
  */
 UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 {
@@ -3240,16 +3240,16 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
  *
  *  Semantically equivalent of std::ranges::views::take
  */
-template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
+template <typename E>
+UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const size_t count )
 {
     auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
 
-    return filter( std::forward<T>( source ), std::move( taker ) );
+    return filter( source, std::move( taker ) );
 }
 
 /*!
- * @brief Curried version of take(T&& source, const size_t count) algorithm used for "pipe" syntax
+ * @brief Curried version of take(const events<E>& source, const size_t count) algorithm used for "pipe" syntax
  */
 UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
 {
@@ -3265,14 +3265,14 @@ UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
  *
  *  The same as take(1)
  */
-template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto once( T&& source )
+template <typename E>
+UREACT_WARN_UNUSED_RESULT auto once( const events<E>& source )
 {
-    return take( std::forward<T>( source ), 1 );
+    return take( source, 1 );
 }
 
 /*!
- * @brief Curried version of once(T&& source) algorithm used for "pipe" syntax
+ * @brief Curried version of once(const events<E>& source) algorithm used for "pipe" syntax
  */
 UREACT_WARN_UNUSED_RESULT inline auto once()
 {
@@ -3288,12 +3288,9 @@ UREACT_WARN_UNUSED_RESULT inline auto once()
  *  The signature of pred should be equivalent to:
  *  * bool func(const E&, const deps_t& ...)
  */
-template <typename T,
-    typename... deps_t,
-    typename Pred,
-    class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+template <typename E, typename... deps_t, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto drop_while(
-    T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
+    const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
 {
     auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
                              const auto& e, const auto... deps ) mutable {
@@ -3301,7 +3298,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
         return passed;
     };
 
-    return filter( std::forward<T>( source ), dep_pack, dropper_while );
+    return filter( source, dep_pack, dropper_while );
 }
 
 /*!
@@ -3310,14 +3307,14 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
  *  Takes events beginning at the first for which the predicate returns false.
  *  Semantically equivalent of std::ranges::views::drop_while
  */
-template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
+template <typename E, typename Pred>
+UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred )
 {
-    return drop_while( std::forward<T>( source ), signal_pack<>(), std::forward<Pred>( pred ) );
+    return drop_while( source, signal_pack<>(), std::forward<Pred>( pred ) );
 }
 
 /*!
- * @brief Curried version of drop_while(T&& source, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of drop_while(const events<E>& source, Pred&& pred) algorithm used for "pipe" syntax
  */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
@@ -3339,12 +3336,9 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
  *  The signature of pred should be equivalent to:
  *  * bool func(const E&, const deps_t& ...)
  */
-template <typename T,
-    typename... deps_t,
-    typename Pred,
-    class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
+template <typename E, typename... deps_t, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto take_while(
-    T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
+    const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
 {
     auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
                            const auto& e, const auto... deps ) mutable {
@@ -3352,7 +3346,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
         return passed;
     };
 
-    return filter( std::forward<T>( source ), dep_pack, taker_while );
+    return filter( source, dep_pack, taker_while );
 }
 
 /*!
@@ -3362,14 +3356,14 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
  *  at the first element for which the predicate returns false.
  *  Semantically equivalent of std::ranges::views::take_while
  */
-template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )
+template <typename E, typename Pred>
+UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred )
 {
-    return take_while( std::forward<T>( source ), signal_pack<>(), std::forward<Pred>( pred ) );
+    return take_while( source, signal_pack<>(), std::forward<Pred>( pred ) );
 }
 
 /*!
- * @brief Curried version of take_while(T&& source, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of take_while(const events<E>& source, Pred&& pred) algorithm used for "pipe" syntax
  */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
@@ -4410,15 +4404,12 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&&
  *  Creates a @ref signal with an initial value v = init.
  *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
  */
-template <typename V,
-    typename T,
-    typename E = event_value_t<T>,
-    class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
-UREACT_WARN_UNUSED_RESULT auto hold( T&& source, V&& init ) -> signal<E>
+template <typename V, typename E>
+UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> signal<E>
 {
-    return fold( std::forward<T>( source ),
-        std::forward<V>( init ),
-        []( const auto&, event_range<E> range ) { return *range.rbegin(); } );
+    return fold( source, std::forward<V>( init ), []( const auto&, event_range<E> range ) {
+        return *range.rbegin();
+    } );
 }
 
 /*!

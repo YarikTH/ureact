@@ -145,8 +145,8 @@ TEST_SUITE( "OperationsTest" )
 
         auto summ = []( int a, int b ) { return a + b; };
 
-        auto op1 = ( in1, in2 ) | summ;
-        auto op2 = ( ( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
+        auto op1 = with( in1, in2 ) | summ;
+        auto op2 = with( with( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
 
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
@@ -237,8 +237,8 @@ TEST_SUITE( "OperationsTest" )
 
         auto summ = []( int a, int b ) { return a + b; };
 
-        auto op1 = ( in1, in2 ) | summ;
-        auto op2 = ( ( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
+        auto op1 = with( in1, in2 ) | summ;
+        auto op2 = with( with( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
 
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
@@ -345,8 +345,8 @@ TEST_SUITE( "OperationsTest" )
 
         auto summ = []( int a, int b ) { return a + b; };
 
-        auto op1 = ( in1, in2 ) | summ;
-        auto op2 = ( ( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
+        auto op1 = with( in1, in2 ) | summ;
+        auto op2 = with( with( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
 
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );
@@ -445,8 +445,8 @@ TEST_SUITE( "OperationsTest" )
 
         auto summ = []( int a, int b ) { return a + b; };
 
-        auto op1 = ( in1, in2 ) | summ;
-        auto op2 = ( ( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
+        auto op1 = with( in1, in2 ) | summ;
+        auto op2 = ( with( in1, in2 ) | summ ) | []( int a ) { return a * 10; };
 
         auto src1 = make_event_source( ctx );
         auto src2 = make_event_source<int>( ctx );

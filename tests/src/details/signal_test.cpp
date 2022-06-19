@@ -252,7 +252,7 @@ TEST_CASE( "FunctionBind1" )
     auto v2 = make_var( ctx, 30 );
     auto v3 = make_var( ctx, 10 );
 
-    auto signal = ( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
+    auto signal = with( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
 
     CHECK( signal.get() == 600 );
     v3 <<= 100;
@@ -266,9 +266,9 @@ TEST_CASE( "FunctionBind2" )
     auto a = make_var( ctx, 1 );
     auto b = make_var( ctx, 1 );
 
-    auto c = ( ( a + b ), ( a + 100 ) ) | &add;
+    auto c = with( a + b, a + 100 ) | &add;
     auto d = c | &halve;
-    auto e = ( d, d ) | &multiply;
+    auto e = with( d, d ) | &multiply;
     auto f = -e + 100.f;
 
     CHECK( c.get() == 103 );
@@ -298,7 +298,7 @@ TEST_CASE( "Compose signals" )
     auto x = a | double_value | double_value | double_value;
 
     // y = (2 * a + (-1) * b) * 2
-    auto y = ( a | double_value, b | inverse_value ) | sum_values | double_value;
+    auto y = with( a | double_value, b | inverse_value ) | sum_values | double_value;
 
     CHECK( x.get() == 1 * 2 * 2 * 2 );
     CHECK( y.get() == ( 2 * 1 + ( -1 ) * 1 ) * 2 );

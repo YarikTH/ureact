@@ -102,7 +102,7 @@ TEST_SUITE( "SignalTest" )
 
         auto s2 = make_signal( with( v3, v4 ), []( int a, int b ) { return a + b; } );
 
-        auto s3 = ( s1, s2 ) | summ;
+        auto s3 = with( s1, s2 ) | summ;
 
         CHECK_EQ( s1.get(), 3 );
         CHECK_EQ( s2.get(), 7 );
@@ -143,13 +143,13 @@ TEST_SUITE( "SignalTest" )
         auto summ = []( int a, int b ) { return a + b; };
 
         auto b1 = a1 | plus0;
-        auto b2 = ( a1, a2 ) | summ;
+        auto b2 = with( a1, a2 ) | summ;
         auto b3 = a2 | plus0;
 
-        auto c1 = ( b1, b2 ) | summ;
-        auto c2 = ( b2, b3 ) | summ;
+        auto c1 = with( b1, b2 ) | summ;
+        auto c2 = with( b2, b3 ) | summ;
 
-        auto result = ( c1, c2 ) | summ;
+        auto result = with( c1, c2 ) | summ;
 
         int observeCount = 0;
 
@@ -217,13 +217,13 @@ TEST_SUITE( "SignalTest" )
         auto summ = []( int a, int b ) { return a + b; };
 
         auto b1 = a1 | plus0;
-        auto b2 = ( a1, a2 ) | summ;
+        auto b2 = with( a1, a2 ) | summ;
         auto b3 = a2 | plus0;
 
-        auto c1 = ( b1, b2 ) | summ;
-        auto c2 = ( b2, b3 ) | summ;
+        auto c1 = with( b1, b2 ) | summ;
+        auto c2 = with( b2, b3 ) | summ;
 
-        auto result = ( c1, c2 ) | summ;
+        auto result = with( c1, c2 ) | summ;
 
         int observeCount = 0;
 
@@ -273,8 +273,8 @@ TEST_SUITE( "SignalTest" )
 
         auto summ = []( int a, int b ) { return a + b; };
 
-        auto b1 = ( a1, a2 ) | summ;
-        auto b2 = ( b1, a2 ) | summ;
+        auto b1 = with( a1, a2 ) | summ;
+        auto b2 = with( b1, a2 ) | summ;
 
         CHECK_EQ( a1(), 1 );
         CHECK_EQ( a2(), 1 );
@@ -299,7 +299,7 @@ TEST_SUITE( "SignalTest" )
         auto v2 = make_var( ctx, 30 );
         auto v3 = make_var( ctx, 10 );
 
-        auto signal = ( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
+        auto signal = with( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
 
         CHECK_EQ( signal(), 600 );
         v3 <<= 100;
@@ -315,9 +315,9 @@ TEST_SUITE( "SignalTest" )
 
         auto summ = []( int a, int b ) { return a + b; };
 
-        auto c = ( ( ( a, b ) | summ ), ( ( a, make_var( ctx, 100 ) ) | summ ) ) | &myfunc;
+        auto c = with( with( a, b ) | summ, with( a, make_var( ctx, 100 ) ) | summ ) | &myfunc;
         auto d = c | &myfunc2;
-        auto e = ( d, d ) | &myfunc3;
+        auto e = with( d, d ) | &myfunc3;
         auto f = make_signal( e, []( float value ) { return -value + 100; } );
 
         CHECK_EQ( c(), 103 );
@@ -400,7 +400,7 @@ TEST_SUITE( "SignalTest" )
 
         observe( flattened, [&observeCount]( int v ) { observeCount++; } );
 
-        auto o1 = make_signal( ( a0, flattened ), []( int a, int b ) { return a + b; } );
+        auto o1 = make_signal( with( a0, flattened ), []( int a, int b ) { return a + b; } );
         auto o2 = make_signal( o1, plus0 );
         auto o3 = make_signal( o2, plus0 );
         auto result = make_signal( o3, plus0 );
@@ -450,7 +450,7 @@ TEST_SUITE( "SignalTest" )
 
         observe( flattened, [&observeCount]( int v ) { observeCount++; } );
 
-        auto result = ( flattened, a0 ) | summ;
+        auto result = with( flattened, a0 ) | summ;
 
         CHECK_EQ( result(), 10 + 30 );
         CHECK_EQ( observeCount, 0 );
@@ -503,7 +503,7 @@ TEST_SUITE( "SignalTest" )
 
         auto flattened = flatten( outer );
 
-        auto result = ( flattened, a3 ) | summ;
+        auto result = with( flattened, a3 ) | summ;
 
         observe( result, [&]( int v ) { results.push_back( v ); } );
 

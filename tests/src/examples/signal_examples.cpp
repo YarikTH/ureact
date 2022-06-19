@@ -37,9 +37,8 @@ TEST_SUITE( "Examples" )
 
         SUBCASE( "operators , and |" )
         {
-            // operator "," can be used instead of function with()
             // operator "|" can be used instead of make_signal()
-            bothWords = /*with*/ ( firstWord, secondWord ) | concatFunc;
+            bothWords = with( firstWord, secondWord ) | concatFunc;
         }
 
         // Imperative value access

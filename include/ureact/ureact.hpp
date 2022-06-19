@@ -1594,7 +1594,7 @@ public:
 /*!
  * @brief A wrapper type for a tuple of signal references
  *
- *  Created with @ref with() or with overloaded operator,
+ *  Created with @ref with()
  */
 template <typename... values_t>
 class signal_pack
@@ -1682,26 +1682,6 @@ template <typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
 {
     return signal_pack<values_t...>( deps... );
-}
-
-/*!
- * @brief Comma operator overload to create signal pack from two signals
- */
-template <typename left_val_t, typename right_val_t>
-UREACT_WARN_UNUSED_RESULT auto operator,(
-    const signal<left_val_t>& a, const signal<right_val_t>& b )
-{
-    return signal_pack<left_val_t, right_val_t>( a, b );
-}
-
-/*!
- * @brief Comma operator overload to append node to existing signal pack
- */
-template <typename... cur_values_t, typename append_value_t>
-UREACT_WARN_UNUSED_RESULT auto operator,(
-    const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append )
-{
-    return signal_pack<cur_values_t..., append_value_t>( cur, append );
 }
 
 /*!

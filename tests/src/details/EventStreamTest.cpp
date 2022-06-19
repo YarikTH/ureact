@@ -155,47 +155,6 @@ TEST_SUITE( "EventStreamTest" )
         CHECK( results.empty() );
     }
 
-    TEST_CASE( "EventFilter" )
-    {
-        std::queue<std::string> results;
-
-        context ctx;
-
-        auto in = make_event_source<std::string>( ctx );
-
-        events<std::string> filtered;
-
-        SUBCASE( "Filter" )
-        {
-            filtered = filter( in, []( const std::string& s ) { return s == "Hello World"; } );
-        }
-        SUBCASE( "Filter chained" )
-        {
-            filtered = in | filter( []( const std::string& s ) { return s == "Hello World"; } );
-        }
-        SUBCASE( "Filter filtered" )
-        {
-            filtered = filter( filter( in, []( const std::string& s ) { return true; } ),
-                []( const std::string& s ) { return s == "Hello World"; } );
-        }
-        SUBCASE( "Filter filtered chained" )
-        {
-            filtered = in | filter( []( const std::string& s ) { return true; } )
-                     | filter( []( const std::string& s ) { return s == "Hello World"; } );
-        }
-
-        observe( filtered, [&]( const std::string& s ) { results.push( s ); } );
-
-        in << std::string( "Hello Worlt" ) << std::string( "Hello World" )
-           << std::string( "Hello Vorld" );
-
-        CHECK_FALSE( results.empty() );
-        CHECK_EQ( results.front(), "Hello World" );
-        results.pop();
-
-        CHECK( results.empty() );
-    }
-
     TEST_CASE( "EventTransform" )
     {
         std::vector<std::string> results;

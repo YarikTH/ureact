@@ -3468,7 +3468,7 @@ UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
 {
     auto dropper = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ >= count; };
 
-    return filter( std::forward<T>( source ), dropper );
+    return filter( std::forward<T>( source ), std::move( dropper ) );
 }
 
 /*!
@@ -3495,7 +3495,7 @@ UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
 {
     auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
 
-    return filter( std::forward<T>( source ), taker );
+    return filter( std::forward<T>( source ), std::move( taker ) );
 }
 
 /*!
@@ -3550,7 +3550,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
     T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
 {
     auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
-                             const auto& e, auto... deps ) mutable {
+                             const auto& e, const auto... deps ) mutable {
         passed = passed || !pred( e, deps... );
         return passed;
     };
@@ -3605,7 +3605,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
     T&& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
 {
     auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
-                           const auto& e, auto... deps ) mutable {
+                           const auto& e, const auto... deps ) mutable {
         passed = passed && pred( e, deps... );
         return passed;
     };
@@ -3760,7 +3760,7 @@ template <typename events_t>
 UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
 {
     auto tokenizer = []( const auto& ) { return token::value; };
-    return transform( source, tokenizer );
+    return transform( source, std::move( tokenizer ) );
 }
 
 /*!

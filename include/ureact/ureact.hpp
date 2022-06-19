@@ -3564,6 +3564,16 @@ UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, f_in_t&& f
         context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
 }
 
+template <typename UnaryOperation>
+UREACT_WARN_UNUSED_RESULT auto transform( UnaryOperation&& op )
+{
+    return [pred = std::forward<UnaryOperation>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), pred );
+    };
+}
+
 /*!
  * @brief TODO: documentation
  */

@@ -3290,6 +3290,62 @@ UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 }
 
 /*!
+ * @brief TODO: documentation
+ */
+/// transform
+template <typename in_t,
+    typename f_in_t,
+    typename F = std::decay_t<f_in_t>,
+    typename out_t = std::invoke_result_t<F, in_t>>
+UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, f_in_t&& func )
+    -> events<out_t>
+{
+    using op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>;
+
+    context& context = source.get_context();
+    return events<out_t>( std::make_shared<detail::event_op_node<out_t, op_t>>(
+        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
+}
+
+template <typename UnaryOperation>
+UREACT_WARN_UNUSED_RESULT auto transform( UnaryOperation&& op )
+{
+    return [pred = std::forward<UnaryOperation>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), pred );
+    };
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+/// transform - Synced
+template <typename in_t,
+    typename f_in_t,
+    typename... dep_values_t,
+    typename out_t = std::invoke_result_t<f_in_t, in_t, dep_values_t...>>
+UREACT_WARN_UNUSED_RESULT auto transform(
+    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    -> events<out_t>
+{
+    using F = std::decay_t<f_in_t>;
+
+    context& context = source.get_context();
+
+    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
+        return events<out_t>(
+            std::make_shared<detail::synced_event_transform_node<in_t, out_t, F, dep_values_t...>>(
+                context,
+                get_node_ptr( source ),
+                std::forward<f_in_t>( func ),
+                get_node_ptr( deps )... ) );
+    };
+
+    return std::apply( node_builder, dep_pack.data );
+}
+
+/*!
  * @brief Skips first N elements from the source stream
  *
  *  Semantically equivalent of std::ranges::views::drop
@@ -3490,62 +3546,6 @@ UREACT_WARN_UNUSED_RESULT inline auto unique()
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return unique( std::forward<arg_t>( source ) );
     };
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// transform
-template <typename in_t,
-    typename f_in_t,
-    typename F = std::decay_t<f_in_t>,
-    typename out_t = std::invoke_result_t<F, in_t>>
-UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, f_in_t&& func )
-    -> events<out_t>
-{
-    using op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>;
-
-    context& context = source.get_context();
-    return events<out_t>( std::make_shared<detail::event_op_node<out_t, op_t>>(
-        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
-}
-
-template <typename UnaryOperation>
-UREACT_WARN_UNUSED_RESULT auto transform( UnaryOperation&& op )
-{
-    return [pred = std::forward<UnaryOperation>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), pred );
-    };
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// transform - Synced
-template <typename in_t,
-    typename f_in_t,
-    typename... dep_values_t,
-    typename out_t = std::invoke_result_t<f_in_t, in_t, dep_values_t...>>
-UREACT_WARN_UNUSED_RESULT auto transform(
-    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
-    -> events<out_t>
-{
-    using F = std::decay_t<f_in_t>;
-
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
-        return events<out_t>(
-            std::make_shared<detail::synced_event_transform_node<in_t, out_t, F, dep_values_t...>>(
-                context,
-                get_node_ptr( source ),
-                std::forward<f_in_t>( func ),
-                get_node_ptr( deps )... ) );
-    };
-
-    return std::apply( node_builder, dep_pack.data );
 }
 
 /*!

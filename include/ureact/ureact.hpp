@@ -2843,148 +2843,6 @@ private:
     };
 };
 
-template <typename E, typename filter_t, typename dep_t>
-class event_filter_op : public reactive_op_base<dep_t>
-{
-public:
-    template <typename filter_in_t, typename dep_in_t>
-    event_filter_op( filter_in_t&& filter, dep_in_t&& dep )
-        : event_filter_op::reactive_op_base{ dont_move(), std::forward<dep_in_t>( dep ) }
-        , m_filter( std::forward<filter_in_t>( filter ) )
-    {}
-
-    event_filter_op( event_filter_op&& other ) noexcept
-        : event_filter_op::reactive_op_base{ std::move( other ) }
-        , m_filter( std::move( other.m_filter ) )
-    {}
-
-    template <typename turn_t_, typename collector_t>
-    void collect( const turn_t_& turn, const collector_t& collector ) const
-    {
-        collect_impl(
-            turn, filtered_event_collector<collector_t>{ m_filter, collector }, get_dep() );
-    }
-
-    template <typename turn_t_, typename collector_t, typename functor_t>
-    void collect_rec( const functor_t& functor ) const
-    {
-        // Can't recycle functor because m_func needs replacing
-        collect<turn_t_, collector_t>( functor.m_turn, functor.m_collector );
-    }
-
-private:
-    const dep_t& get_dep() const
-    {
-        return std::get<0>( this->m_deps );
-    }
-
-    template <typename collector_t>
-    struct filtered_event_collector
-    {
-        filtered_event_collector( filter_t& filter, const collector_t& collector )
-            : m_filter( filter )
-            , m_collector( collector )
-        {}
-
-        void operator()( const E& e ) const
-        {
-            // Accepted?
-            if( m_filter( e ) )
-            {
-                m_collector( e );
-            }
-        }
-
-        filter_t& m_filter;
-        const collector_t& m_collector; // The wrapped collector
-    };
-
-    template <typename turn_t_, typename collector_t, typename T>
-    static void collect_impl( const turn_t_& turn, const collector_t& collector, const T& op )
-    {
-        op.collect( turn, collector );
-    }
-
-    template <typename turn_t_, typename collector_t, typename T>
-    static void collect_impl(
-        const turn_t_& turn, const collector_t& collector, const std::shared_ptr<T>& dep_ptr )
-    {
-        dep_ptr->set_current_turn( turn );
-
-        for( const auto& v : dep_ptr->events() )
-        {
-            collector( v );
-        }
-    }
-
-    mutable filter_t m_filter;
-};
-
-template <typename E, typename func_t, typename... dep_values_t>
-class synced_event_filter_node : public event_stream_node<E>
-{
-public:
-    template <typename F>
-    synced_event_filter_node( context& context,
-        const std::shared_ptr<event_stream_node<E>>& source,
-        F&& filter,
-        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_event_filter_node::event_stream_node( context )
-        , m_source( source )
-        , m_filter( std::forward<F>( filter ) )
-        , m_deps( deps... )
-    {
-        this->get_graph().on_node_attach( *this, *source );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
-    }
-
-    ~synced_event_filter_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_source );
-
-        apply(
-            detach_functor<synced_event_filter_node, std::shared_ptr<signal_node<dep_values_t>>...>(
-                *this ),
-            m_deps );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-        // Update of this node could be triggered from deps,
-        // so make sure source doesn't contain events from last turn
-        m_source->set_current_turn( turn );
-
-        if( !m_source->events().empty() )
-        {
-            for( const auto& e : m_source->events() )
-            {
-                if( apply(
-                        [this, &e]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                            return m_filter( e, args->value_ref()... );
-                        },
-                        m_deps ) )
-                {
-                    this->m_events.push_back( e );
-                }
-            }
-        }
-
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
-
-    std::shared_ptr<event_stream_node<E>> m_source;
-
-    func_t m_filter;
-    dep_holder_t m_deps;
-};
-
 // Todo: Refactor code duplication
 template <typename E, typename func_t, typename dep_t>
 class event_transform_op : public reactive_op_base<dep_t>
@@ -3364,7 +3222,7 @@ UREACT_WARN_UNUSED_RESULT auto process(
     const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
     -> events<out_t>
 {
-    return detail::process_impl<out_t, in_t, f_in_t>(
+    return detail::process_impl<out_t>(
         source, dep_pack, std::forward<f_in_t>( func ) );
 }
 
@@ -3378,7 +3236,7 @@ UREACT_WARN_UNUSED_RESULT auto process(
 template <typename out_t, typename in_t, typename f_in_t>
 UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 {
-    return detail::process_impl<out_t, in_t, f_in_t>(
+    return detail::process_impl<out_t>(
         source, signal_pack<>(), std::forward<f_in_t>( func ) );
 }
 
@@ -3399,26 +3257,6 @@ UREACT_WARN_UNUSED_RESULT auto process( f_in_t&& pred )
 /*!
  * @brief TODO: documentation
  */
-/// filter
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
-{
-    using F = std::decay_t<Pred>;
-    using result_t = std::invoke_result_t<F, E>;
-    static_assert(
-        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
-
-    using op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>;
-
-    context& context = source.get_context();
-    return events<E>( std::make_shared<detail::event_op_node<E, op_t>>(
-        context, std::forward<Pred>( pred ), get_node_ptr( source ) ) );
-}
-
-/*!
- * @brief TODO: documentation
- */
-/// filter - Synced
 template <typename E, typename Pred, typename... dep_values_t>
 UREACT_WARN_UNUSED_RESULT auto filter(
     const events<E>& source, const signal_pack<dep_values_t...>& dep_pack, Pred&& pred )
@@ -3429,23 +3267,28 @@ UREACT_WARN_UNUSED_RESULT auto filter(
     static_assert(
         std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
 
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &pred]( const signal<dep_values_t>&... deps ) {
-        return events<E>(
-            std::make_shared<detail::synced_event_filter_node<E, F, dep_values_t...>>( context,
-                get_node_ptr( source ),
-                std::forward<Pred>( pred ),
-                get_node_ptr( deps )... ) );
+    auto filterer = [pred = std::forward<Pred>( pred )](
+                        event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
+        for( const auto& e : range )
+            if( pred( e, deps... ) )
+                out.emit( e );
     };
 
-    return std::apply( node_builder, dep_pack.data );
+    return detail::process_impl<E>( source, dep_pack, std::move( filterer ) );
 }
 
 /*!
  * @brief TODO: documentation
  */
-/// curried version of filter algorithm. Intended for chaining
+template <typename E, typename Pred, typename... dep_values_t>
+UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
+{
+    return filter( source, signal_pack<>(), std::forward<Pred>( pred ) );
+}
+
+/*!
+ * @brief Curried version of filter(T&& source, Pred&& pred) algorithm used for "pipe" syntax
+ */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 {

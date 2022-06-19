@@ -3035,8 +3035,8 @@ public:
     {
         this->get_graph().on_node_detach( *this, *m_source );
 
-        apply( detach_functor<event_processing_node,
-                   std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
+        apply( detach_functor<event_processing_node, std::shared_ptr<signal_node<dep_values_t>>...>(
+                   *this ),
             m_deps );
     }
 
@@ -3178,8 +3178,7 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 
     auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
         return events<out_t>(
-            std::make_shared<event_processing_node<in_t, out_t, F, dep_values_t...>>(
-                context,
+            std::make_shared<event_processing_node<in_t, out_t, F, dep_values_t...>>( context,
                 get_node_ptr( source ),
                 std::forward<f_in_t>( func ),
                 get_node_ptr( deps )... ) );
@@ -3258,7 +3257,8 @@ UREACT_WARN_UNUSED_RESULT auto process(
     const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
     -> events<out_t>
 {
-    return detail::process_impl<out_t, in_t, f_in_t>( source, dep_pack, std::forward<f_in_t>( func ) );
+    return detail::process_impl<out_t, in_t, f_in_t>(
+        source, dep_pack, std::forward<f_in_t>( func ) );
 }
 
 /*!
@@ -3271,16 +3271,19 @@ UREACT_WARN_UNUSED_RESULT auto process(
 template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
 UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 {
-    return detail::process_impl<out_t, in_t, f_in_t>( source, signal_pack<>(), std::forward<f_in_t>( func ) );
+    return detail::process_impl<out_t, in_t, f_in_t>(
+        source, signal_pack<>(), std::forward<f_in_t>( func ) );
 }
 
 /*!
  * @brief TODO: documentation
  */
 /// filter
-template <typename E, typename Pred, typename F = std::decay_t<Pred>>
+template <typename E, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
 {
+    using F = std::decay_t<Pred>;
+
     using op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>;
 
     context& context = source.get_context();

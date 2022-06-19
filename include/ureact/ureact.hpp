@@ -2654,46 +2654,116 @@ public:
     }
 
     /*!
-     * @brief Iterator assign version of emit()
+     * @brief Adds e to the queue of outgoing events
      *
-     * Semantically equivalent to emit().
+     * Iterator assign version of emit(const E& e). Prefer not to use it manually
      */
-    template <class T, class = detail::disable_if_same_t<T, event_emitter>>
-    event_emitter& operator=( T&& e )
+    event_emitter& operator=( const E& e )
     {
-        m_container.push_back( std::forward<T>( e ) );
+        m_container.push_back( e );
         return *this;
     }
 
     /*!
      * @brief Adds e to the queue of outgoing events
+     *
+     * Iterator assign version of emit(E&& e). Prefer not to use it manually
+     *
+     * Specialization of operator=(const E& e) for rvalue
      */
-    template <class T>
-    void emit( T&& e )
+    event_emitter& operator=( E&& e )
     {
-        m_container.push_back( std::forward<T>( e ) );
+        m_container.push_back( std::move( e ) );
+        return *this;
     }
 
     /*!
-     * @brief Function object version of emit()
+     * @brief Adds e to the queue of outgoing events
      *
-     * Semantically equivalent to emit().
+     * If emit() was called inside of a transaction function, it will return after
+     * the event has been queued and propagation is delayed until the transaction
+     * function returns.
+     * Otherwise, propagation starts immediately and emit() blocks until it’s done.
      */
-    template <class T>
-    void operator()( T&& e )
+    void emit( const E& e )
     {
-        m_container.push_back( std::forward<T>( e ) );
+        m_container.push_back( e );
     }
 
     /*!
-     * @brief Stream version of emit()
+     * @brief Adds e to the queue of outgoing events
      *
-     * Semantically equivalent to emit().
+     * Specialization of emit(const E& e) for rvalue
      */
-    template <class T>
-    event_emitter& operator<<( T&& e )
+    void emit( E&& e )
     {
-        m_container.push_back( std::forward<T>( e ) );
+        m_container.push_back( std::move( e ) );
+    }
+
+    /*!
+     * @brief Adds token to the queue of outgoing events
+     *
+     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref token
+     */
+    void emit()
+    {
+        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
+        m_container.push_back( token::value );
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Function object version of emit(const E& e)
+     */
+    void operator()( const E& e )
+    {
+        m_container.push_back( e );
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Function object version of emit(E&& e)
+     */
+    void operator()( E&& e )
+    {
+        m_container.push_back( std::move( e ) );
+    }
+
+    /*!
+     * @brief Adds token to the queue of outgoing events
+     *
+     * Function object version of emit()
+     *
+     */
+    void operator()()
+    {
+        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
+        m_container.push_back( token::value );
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Stream version of emit(const E& e)
+     */
+    event_emitter& operator<<( const E& e )
+    {
+        m_container.push_back( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Stream version of emit(E&& e)
+     *
+     * Specialization of operator<<(const E& e) for rvalue
+     */
+    event_emitter& operator<<( E&& e )
+    {
+        m_container.push_back( std::move( e ) );
         return *this;
     }
 

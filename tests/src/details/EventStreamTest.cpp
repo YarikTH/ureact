@@ -155,43 +155,6 @@ TEST_SUITE( "EventStreamTest" )
         CHECK( results.empty() );
     }
 
-    TEST_CASE( "EventTransform" )
-    {
-        std::vector<std::string> results;
-
-        context ctx;
-
-        auto in1 = make_event_source<std::string>( ctx );
-        auto in2 = make_event_source<std::string>( ctx );
-
-        auto merged = merge( in1, in2 );
-
-        events<std::string> transformed;
-
-        SUBCASE( "Transform" )
-        {
-            transformed = transform( merged, []( std::string s ) -> std::string {
-                std::transform( s.begin(), s.end(), s.begin(), ::toupper );
-                return s;
-            } );
-        }
-        SUBCASE( "Transform filtered" )
-        {
-            transformed = transform( filter( merged, []( const std::string& s ) { return true; } ),
-                []( std::string s ) -> std::string {
-                    std::transform( s.begin(), s.end(), s.begin(), ::toupper );
-                    return s;
-                } );
-        }
-
-        observe( transformed, [&]( const std::string& s ) { results.push_back( s ); } );
-
-        in1 << std::string( "Hello Worlt" ) << std::string( "Hello World" );
-        in2 << std::string( "Hello Vorld" );
-
-        CHECK( results == std::vector<std::string>{ "HELLO WORLT", "HELLO WORLD", "HELLO VORLD" } );
-    }
-
     TEST_CASE( "EventProcess" )
     {
         std::vector<float> results;

@@ -40,6 +40,93 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( x.get().v == 1112 );
 }
 
+// squaring integer events
+TEST_CASE( "Transform" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<int>( ctx );
+    ureact::events<int> squared;
+    const auto square = []( auto i ) { return i * i; };
+
+    SUBCASE( "Functional syntax" )
+    {
+        squared = ureact::transform( src, square );
+    }
+    SUBCASE( "Piped syntax" )
+    {
+        squared = src | ureact::transform( square );
+    }
+
+    const auto result = make_collector( squared );
+
+    for( int i = 0; i < 5; ++i )
+        src << i;
+
+    const std::vector<int> expected = { 0, 1, 4, 9, 16 };
+    CHECK( result.get() == expected );
+}
+
+// clamp integer events with limit which values are in range which is presented in the form
+// of signals
+TEST_CASE( "TransformSynced" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<int>( ctx );
+    auto limit_range_begin = ureact::make_var( ctx, 4 );
+    auto limit_range_size = ureact::make_var( ctx, 4 );
+
+    // make deep dependent signals
+    // so they are calculated later than not synced event filter
+    auto limit_min = make_deeper( limit_range_begin );
+    auto limit_max = make_deeper( limit_range_begin + limit_range_size - 1 );
+
+    ureact::events<int> clamped;
+    const auto clamp = []( auto i, int min, int max ) { return std::clamp( i, min, max ); };
+
+    SUBCASE( "Functional syntax" )
+    {
+        clamped = ureact::transform( src, with( limit_min, limit_max ), clamp );
+    }
+    // todo: Piped syntax is not yet supported for synced version
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
+    //    }
+
+    const auto result = make_collector( clamped );
+
+    // make not synced analog to show the difference
+    const auto clamp_not_synced
+        = [&]( auto i ) { return std::clamp( i, limit_min.get(), limit_max.get() ); };
+    ureact::events<int> clamped_not_synced = ureact::transform( src, clamp_not_synced );
+    const auto result_not_synced = make_collector( clamped_not_synced );
+
+    for( int i : { -1, 4, 10, 0, 5, 2 } )
+        src << i;
+
+    // change limits and pass the same values second time
+    ctx.do_transaction( [&]() {
+        for( int i : { -1, 4, 10, 0, 5, 2 } )
+            src << i;
+
+        limit_range_begin <<= 1;
+        limit_range_size <<= 3;
+    } );
+
+    // we expect only numbers in [limit_min, limit_max] range passed our filter
+    // synced filtering performed only after new limit values are calculated
+    const std::vector<int> expected
+        = { /*first range*/ 4, 4, 7, 4, 5, 4, /*second range*/ 1, 3, 3, 1, 3, 2 };
+    CHECK( result.get() == expected );
+
+    // we expect that second pass would use the old limit values because they are not recalculated yet
+    const std::vector<int> expected_not_synced
+        = { /*first range*/ 4, 4, 7, 4, 5, 4, /*second range*/ 4, 4, 7, 4, 5, 4 };
+    CHECK( result_not_synced.get() == expected_not_synced );
+}
+
 // filter only even integer events
 // our check function depends only on event value
 TEST_CASE( "Filter" )
@@ -50,7 +137,6 @@ TEST_CASE( "Filter" )
     ureact::events<int> filtered;
     const auto is_even = []( auto i ) { return i % 2 == 0; };
 
-    // there are two syntax variants, so we check them all using subcases
     SUBCASE( "Functional syntax" )
     {
         filtered = ureact::filter( src, is_even );
@@ -62,11 +148,8 @@ TEST_CASE( "Filter" )
 
     const auto result = make_collector( filtered );
 
-    // pass 0-9 values into src
     for( int i = 0; i < 10; ++i )
-    {
         src << i;
-    }
 
     // we expect only even numbers passed our filter
     const std::vector<int> expected = { 0, 2, 4, 6, 8 };
@@ -109,7 +192,6 @@ TEST_CASE( "FilterSynced" )
     ureact::events<int> filtered_not_synced = ureact::filter( src, in_range_not_synced );
     const auto result_not_synced = make_collector( filtered_not_synced );
 
-    // pass 0-9 values into src
     for( int i = 0; i < 10; ++i )
         src << i;
 
@@ -331,7 +413,6 @@ TEST_CASE( "Hold" )
     auto src = ureact::make_event_source<int>( ctx );
     ureact::signal<int> held;
 
-    // there are two syntax variants, so we check them all using subcases
     SUBCASE( "Functional syntax" )
     {
         held = ureact::hold( src, -1 );
@@ -363,7 +444,6 @@ TEST_CASE( "Snapshot" )
     auto target = ureact::make_var<int>( ctx, -1 );
     ureact::signal<int> snap;
 
-    // there are two syntax variants, so we check them all using subcases
     SUBCASE( "Functional syntax" )
     {
         snap = ureact::snapshot( trigger, target );
@@ -382,7 +462,6 @@ TEST_CASE( "Snapshot" )
     int changes = 0;
     observe( snap, [&changes]( const auto& ) { ++changes; } );
 
-    // pass 0-9 values into src
     for( int i = 0; i < 10; ++i )
     {
         // ensure changing the target do not change the out
@@ -410,7 +489,6 @@ TEST_CASE( "Pulse" )
     auto target = ureact::make_var<int>( ctx, -1 );
     ureact::events<int> beat;
 
-    // there are two syntax variants, so we check them all using subcases
     SUBCASE( "Functional syntax" )
     {
         beat = ureact::pulse( trigger, target );

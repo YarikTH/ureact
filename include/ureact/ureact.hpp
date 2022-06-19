@@ -2823,141 +2823,6 @@ private:
     };
 };
 
-// Todo: Refactor code duplication
-template <typename E, typename func_t, typename dep_t>
-class event_transform_op : public reactive_op_base<dep_t>
-{
-public:
-    template <typename func_in_t, typename dep_in_t>
-    event_transform_op( func_in_t&& func, dep_in_t&& dep )
-        : event_transform_op::reactive_op_base( dont_move(), std::forward<dep_in_t>( dep ) )
-        , m_func( std::forward<func_in_t>( func ) )
-    {}
-
-    event_transform_op( event_transform_op&& other ) noexcept
-        : event_transform_op::reactive_op_base( std::move( other ) )
-        , m_func( std::move( other.m_func ) )
-    {}
-
-    template <typename turn_t_, typename collector_t>
-    void collect( const turn_t_& turn, const collector_t& collector ) const
-    {
-        collect_impl(
-            turn, transform_event_collector<collector_t>( m_func, collector ), get_dep() );
-    }
-
-    template <typename turn_t_, typename collector_t, typename functor_t>
-    void collect_rec( const functor_t& functor ) const
-    {
-        // Can't recycle functor because m_func needs replacing
-        collect<turn_t_, collector_t>( functor.m_turn, functor.m_collector );
-    }
-
-private:
-    const dep_t& get_dep() const
-    {
-        return std::get<0>( this->m_deps );
-    }
-
-    template <typename target_t>
-    struct transform_event_collector
-    {
-        transform_event_collector( const func_t& func, const target_t& target )
-            : m_func( func )
-            , m_target( target )
-        {}
-
-        void operator()( const E& e ) const
-        {
-            m_target( m_func( e ) );
-        }
-
-        const func_t& m_func;
-        const target_t& m_target;
-    };
-
-    template <typename turn_t_, typename collector_t, typename T>
-    static void collect_impl( const turn_t_& turn, const collector_t& collector, const T& op )
-    {
-        op.collect( turn, collector );
-    }
-
-    template <typename turn_t_, typename collector_t, typename T>
-    static void collect_impl(
-        const turn_t_& turn, const collector_t& collector, const std::shared_ptr<T>& dep_ptr )
-    {
-        dep_ptr->set_current_turn( turn );
-
-        for( const auto& v : dep_ptr->events() )
-        {
-            collector( v );
-        }
-    }
-
-    func_t m_func;
-};
-
-template <typename in_t, typename out_t, typename func_t, typename... dep_values_t>
-class synced_event_transform_node : public event_stream_node<out_t>
-{
-public:
-    template <typename F>
-    synced_event_transform_node( context& context,
-        const std::shared_ptr<event_stream_node<in_t>>& source,
-        F&& func,
-        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : synced_event_transform_node::event_stream_node( context )
-        , m_source( source )
-        , m_func( std::forward<F>( func ) )
-        , m_deps( deps... )
-    {
-        this->get_graph().on_node_attach( *this, *source );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
-    }
-
-    ~synced_event_transform_node() override
-    {
-        this->get_graph().on_node_detach( *this, *m_source );
-
-        apply( detach_functor<synced_event_transform_node,
-                   std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
-            m_deps );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-        // Update of this node could be triggered from deps,
-        // so make sure source doesn't contain events from last turn
-        m_source->set_current_turn( turn );
-
-        if( !m_source->events().empty() )
-        {
-            for( const auto& e : m_source->events() )
-            {
-                this->m_events.push_back( apply(
-                    [this, &e]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        return m_func( e, args->value_ref()... );
-                    },
-                    m_deps ) );
-            }
-        }
-
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
-    }
-
-private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
-
-    std::shared_ptr<event_stream_node<in_t>> m_source;
-
-    func_t m_func;
-    dep_holder_t m_deps;
-};
-
 template <typename in_t, typename out_t, typename func_t, typename... dep_values_t>
 class event_processing_node : public event_stream_node<out_t>
 {
@@ -3233,7 +3098,7 @@ UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
 /*!
  * @brief Create a new event stream that filters events from other stream
  *
- *  For every event e in source, emit e if pred(e) == true.
+ *  For every event e in source, emit e if pred(e, deps...) == true.
  *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
  *
  *  The signature of pred should be equivalent to:
@@ -3290,59 +3155,59 @@ UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Create a new event stream that transforms events from other stream
+ *
+ *  For every event e in source, emit t = func(e, deps...).
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of func should be equivalent to:
+ *  * T func(const E&, const deps_t& ...)
+ *
+ *  Semantically equivalent of ranges::transform
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-/// transform
 template <typename in_t,
-    typename f_in_t,
-    typename F = std::decay_t<f_in_t>,
-    typename out_t = std::invoke_result_t<F, in_t>>
-UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, f_in_t&& func )
-    -> events<out_t>
+    typename F,
+    typename... deps_t,
+    typename out_t = std::invoke_result_t<F, in_t, deps_t...>>
+UREACT_WARN_UNUSED_RESULT auto transform(
+    const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, F&& func ) -> events<out_t>
 {
-    using op_t = detail::event_transform_op<in_t, F, detail::event_stream_node_ptr_t<in_t>>;
+    auto transformer
+        = [func = std::forward<F>( func )](
+              event_range<in_t> range, event_emitter<out_t> out, const auto... deps ) mutable {
+              for( const auto& e : range )
+                  out.emit( func( e, deps... ) );
+          };
 
-    context& context = source.get_context();
-    return events<out_t>( std::make_shared<detail::event_op_node<out_t, op_t>>(
-        context, std::forward<f_in_t>( func ), get_node_ptr( source ) ) );
-}
-
-template <typename UnaryOperation>
-UREACT_WARN_UNUSED_RESULT auto transform( UnaryOperation&& op )
-{
-    return [pred = std::forward<UnaryOperation>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), pred );
-    };
+    return detail::process_impl<out_t>( source, dep_pack, std::move( transformer ) );
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Create a new event stream that transforms events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See transform(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, F&& func)
  */
-/// transform - Synced
-template <typename in_t,
-    typename f_in_t,
-    typename... dep_values_t,
-    typename out_t = std::invoke_result_t<f_in_t, in_t, dep_values_t...>>
-UREACT_WARN_UNUSED_RESULT auto transform(
-    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
-    -> events<out_t>
+template <typename in_t, typename F, typename out_t = std::invoke_result_t<F, in_t>>
+UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, F&& func ) -> events<out_t>
 {
-    using F = std::decay_t<f_in_t>;
+    return transform( source, signal_pack<>(), std::forward<F>( func ) );
+}
 
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
-        return events<out_t>(
-            std::make_shared<detail::synced_event_transform_node<in_t, out_t, F, dep_values_t...>>(
-                context,
-                get_node_ptr( source ),
-                std::forward<f_in_t>( func ),
-                get_node_ptr( deps )... ) );
+/*!
+ * @brief Curried version of transform(const events<in_t>& source, f_in_t&& func) algorithm used for "pipe" syntax
+ */
+template <typename F>
+UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
+{
+    return [func = std::forward<F>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), func );
     };
-
-    return std::apply( node_builder, dep_pack.data );
 }
 
 /*!

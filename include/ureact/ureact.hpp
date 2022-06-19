@@ -3283,6 +3283,9 @@ template <typename E, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
 {
     using F = std::decay_t<Pred>;
+    using result_t = std::invoke_result_t<F, E>;
+    static_assert(
+        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
 
     using op_t = detail::event_filter_op<E, F, detail::event_stream_node_ptr_t<E>>;
 
@@ -3301,6 +3304,9 @@ UREACT_WARN_UNUSED_RESULT auto filter(
     -> events<E>
 {
     using F = std::decay_t<Pred>;
+    using result_t = std::invoke_result_t<F, E, dep_values_t...>;
+    static_assert(
+        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
 
     context& context = source.get_context();
 

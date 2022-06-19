@@ -40,8 +40,58 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( x.get().v == 1112 );
 }
 
-// TODO: test merge
-// TODO: test zip
+// zip 3 event sources into 1
+// based on example https://en.cppreference.com/w/cpp/ranges/zip_view
+TEST_CASE( "Zip" )
+{
+    ureact::context ctx;
+
+    auto x = ureact::make_event_source<int>( ctx );
+    auto y = ureact::make_event_source<std::string>( ctx );
+    auto z = ureact::make_event_source<char>( ctx );
+
+    using zipped_t = std::tuple<int, std::string, char>;
+
+    ureact::events<zipped_t> src = zip( x, y, z );
+
+    const auto result = make_collector( src );
+
+    // clang-format off
+    x <<  1  <<  2  <<  3  <<  4;
+    y << "α" << "β" << "γ" << "δ" << "ε";
+    z << 'A' << 'B' << 'C' << 'D' << 'E' << 'F';
+    // clang-format on
+
+    const std::vector expected = {
+        zipped_t{ 1, "α", 'A' },
+        zipped_t{ 2, "β", 'B' },
+        zipped_t{ 3, "γ", 'C' },
+        zipped_t{ 4, "δ", 'D' } //
+    };
+    CHECK( result.get() == expected );
+}
+
+// merge 3 event sources into 1
+TEST_CASE( "Merge" )
+{
+    ureact::context ctx;
+
+    auto src1 = ureact::make_event_source<int>( ctx );
+    auto src2 = ureact::make_event_source<int>( ctx );
+    auto src3 = ureact::make_event_source<int>( ctx );
+
+    ureact::events<int> src = merge( src1, src2, src3 );
+
+    const auto result = make_collector( src );
+
+    src1 << 1 << 5;
+    src2 << -1;
+    src3 << 9;
+    src2 << 0;
+
+    const std::vector<int> expected = { 1, 5, -1, 9, 0 };
+    CHECK( result.get() == expected );
+}
 
 // on every std::pair<N, value> pass value N times
 TEST_CASE( "Process" )

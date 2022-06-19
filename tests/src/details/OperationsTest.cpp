@@ -551,37 +551,6 @@ TEST_SUITE( "OperationsTest" )
         }
     }
 
-    TEST_CASE( "SyncedEventFilter1" )
-    {
-        std::queue<std::string> results;
-
-        context ctx;
-
-        auto in = make_event_source<std::string>( ctx );
-
-        auto sig1 = make_var( ctx, 1338 );
-        auto sig2 = make_var( ctx, 1336 );
-
-        auto filtered
-            = filter( in, with( sig1, sig2 ), []( const std::string& s, int sig1, int sig2 ) {
-                  return s == "Hello World" && sig1 > sig2;
-              } );
-
-
-        observe( filtered, [&]( const std::string& s ) { results.push( s ); } );
-
-        in << std::string( "Hello Worlt" ) << std::string( "Hello World" )
-           << std::string( "Hello Vorld" );
-        sig1 <<= 1335;
-        in << std::string( "Hello Vorld" );
-
-        CHECK_FALSE( results.empty() );
-        CHECK_EQ( results.front(), "Hello World" );
-        results.pop();
-
-        CHECK( results.empty() );
-    }
-
     TEST_CASE( "SyncedEventProcess1" )
     {
         std::vector<float> results;

@@ -35,6 +35,16 @@ std::ostream& operator<<( std::ostream& os, const std::tuple<T...>& tup )
     return os << "]";
 }
 
+template <typename T, typename Y>
+std::ostream& operator<<( std::ostream& os, const std::pair<T, Y>& pair )
+{
+    os << "[";
+    os << pair.first;
+    os << ", ";
+    os << pair.second;
+    return os << "]";
+}
+
 template <class T, class Allocator>
 doctest::String toString( const std::vector<T, Allocator>& value )
 {

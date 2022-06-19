@@ -2406,14 +2406,25 @@ public:
      * function returns.
      * Otherwise, propagation starts immediately and emit() blocks until it’s done.
      */
-    template <class T>
-    void emit( T&& e ) const
+    void emit( const E& e ) const
     {
-        this->emit_event( std::forward<T>( e ) );
+        this->emit_event( e );
     }
 
     /*!
-     * @brief Specialization of emit() that allows to omit e value, when the emitted value is always @ref token
+     * @brief Adds e to the queue of outgoing events of the linked event source node
+     *
+     * Specialization of emit(const E& e) for rvalue
+     */
+    void emit( E&& e ) const
+    {
+        this->emit_event( std::move( e ) );
+    }
+
+    /*!
+     * @brief Adds token to the queue of outgoing events of the linked event source node
+     *
+     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref token
      */
     void emit() const
     {
@@ -2422,20 +2433,30 @@ public:
     }
 
     /*!
-     * @brief Function object version of emit()
+     * @brief Adds e to the queue of outgoing events of the linked event source node
      *
-     * Semantically equivalent to emit().
+     * Function object version of emit(const E& e)
      */
-    template <class T>
-    void operator()( T&& e ) const
+    void operator()( const E& e ) const
     {
-        this->emit_event( std::forward<T>( e ) );
+        this->emit_event( e );
     }
 
     /*!
-     * @brief Function object version of emit() (@ref token specialization)
+     * @brief Adds e to the queue of outgoing events of the linked event source node
      *
-     * Semantically equivalent to emit().
+     * Function object version of emit(E&& e)
+     */
+    void operator()( E&& e ) const
+    {
+        this->emit_event( std::move( e ) );
+    }
+
+    /*!
+     * @brief Adds token to the queue of outgoing events of the linked event source node
+     *
+     * Function object version of emit()
+     *
      */
     void operator()() const
     {
@@ -2444,15 +2465,30 @@ public:
     }
 
     /*!
-     * @brief Stream version of emit()
+     * @brief Adds e to the queue of outgoing events of the linked event source node
      *
-     * Semantically equivalent to emit().
-     * In particular, chaining multiple events in a single statement will not execute them in a single transaction.
+     * Stream version of emit(const E& e)
+     *
+     * @note chaining multiple events in a single statement will not execute them in a single transaction
      */
-    template <class T>
-    const event_source& operator<<( T&& e ) const
+    const event_source& operator<<( const E& e ) const
     {
-        this->emit_event( std::forward<T>( e ) );
+        this->emit_event( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events of the linked event source node
+     *
+     * Stream version of emit(E&& e)
+     *
+     * Specialization of operator<<(const E& e) for rvalue
+     *
+     * @note chaining multiple events in a single statement will not execute them in a single transaction
+     */
+    const event_source& operator<<( E&& e ) const
+    {
+        this->emit_event( std::move( e ) );
         return *this;
     }
 };
@@ -2497,9 +2533,9 @@ public:
     }
 
     /*!
-     * @brief Function object version of emit()
+     * @brief Adds e to the queue of outgoing events of the linked event source node
      *
-     * Semantically equivalent to emit().
+     * Function object version of emit(std::reference_wrapper<E> e)
      */
     void operator()( std::reference_wrapper<E> e ) const
     {
@@ -2507,10 +2543,11 @@ public:
     }
 
     /*!
-     * @brief Stream version of emit()
+     * @brief Adds e to the queue of outgoing events of the linked event source node
      *
-     * Semantically equivalent to emit().
-     * In particular, chaining multiple events in a single statement will not execute them in a single transaction.
+     * Stream equivalent to emit(std::reference_wrapper<E> e)
+     *
+     * @note chaining multiple events in a single statement will not execute them in a single transaction
      */
     const event_source& operator<<( std::reference_wrapper<E> e ) const
     {

@@ -154,37 +154,4 @@ TEST_SUITE( "EventStreamTest" )
 
         CHECK( results.empty() );
     }
-
-    TEST_CASE( "EventProcess" )
-    {
-        std::vector<float> results;
-
-        context ctx;
-
-        auto in1 = make_event_source<int>( ctx );
-        auto in2 = make_event_source<int>( ctx );
-
-        auto merged = merge( in1, in2 );
-        int callCount = 0;
-
-        auto processed
-            = process<float>( merged, [&]( event_range<int> range, event_emitter<float> out ) {
-                  for( const auto& e : range )
-                  {
-                      *out = 0.1f * static_cast<float>( e );
-                      *out = 1.5f * static_cast<float>( e );
-                  }
-
-                  callCount++;
-              } );
-
-        observe( processed, [&]( float s ) { results.push_back( s ); } );
-
-        ctx.do_transaction( [&] { in1 << 10 << 20; } );
-
-        in2 << 30;
-
-        CHECK( results == std::vector<float>{ 1.0f, 15.0f, 2.0f, 30.0f, 3.0f, 45.0f } );
-        CHECK_EQ( callCount, 2 );
-    }
 }

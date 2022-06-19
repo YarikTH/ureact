@@ -551,49 +551,6 @@ TEST_SUITE( "OperationsTest" )
         }
     }
 
-    TEST_CASE( "SyncedEventProcess1" )
-    {
-        std::vector<float> results;
-
-        context ctx;
-
-        auto in1 = make_event_source<int>( ctx );
-        auto in2 = make_event_source<int>( ctx );
-
-        auto mult = make_var( ctx, 10 );
-
-        auto merged = merge( in1, in2 );
-        int callCount = 0;
-
-        auto processed = process<float>( merged,
-            with( mult ),
-            [&]( event_range<int> range, event_emitter<float> out, int mult ) {
-                for( const auto& e : range )
-                {
-                    *out = 0.1f * static_cast<float>( e * mult );
-                    *out = 1.5f * static_cast<float>( e * mult );
-                }
-
-                callCount++;
-            } );
-
-        observe( processed, [&]( float s ) { results.push_back( s ); } );
-
-        ctx.do_transaction( [&] { in1 << 10 << 20; } );
-
-        in2 << 30;
-
-        CHECK_EQ( results.size(), 6 );
-        CHECK_EQ( callCount, 2 );
-
-        CHECK_EQ( results[0], 10.0f );
-        CHECK_EQ( results[1], 150.0f );
-        CHECK_EQ( results[2], 20.0f );
-        CHECK_EQ( results[3], 300.0f );
-        CHECK_EQ( results[4], 30.0f );
-        CHECK_EQ( results[5], 450.0f );
-    }
-
     TEST_CASE( "Zip1" )
     {
         context ctx;

@@ -90,13 +90,13 @@ TEST_CASE( "ProcessSynced" )
     using record_t = std::pair<std::string, int>;
 
     auto src = ureact::make_event_source<int>( ctx );
-    auto n = ureact::make_var<int>( ctx, {} );
+    auto n = ureact::make_var<unsigned>( ctx, {} );
     auto timestamp = ureact::make_var<std::string>( ctx, {} );
     ureact::events<record_t> processed;
 
     const auto repeater = []( ureact::event_range<int> range,
                               ureact::event_emitter<record_t> out,
-                              int n,
+                              unsigned n,
                               const std::string& timestamp ) {
         for( const auto& value : range )
             for( unsigned i = 0; i < n; ++i )

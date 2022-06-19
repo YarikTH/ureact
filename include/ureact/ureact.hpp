@@ -3132,20 +3132,20 @@ private:
     std::tuple<slot<values_t>...> m_slots;
 };
 
-template <typename out_t, typename in_t, typename f_in_t, typename... dep_values_t>
+template <typename out_t, typename in_t, typename Op, typename... dep_values_t>
 UREACT_WARN_UNUSED_RESULT auto process_impl(
-    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, f_in_t&& func )
+    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, Op&& op )
     -> events<out_t>
 {
-    using F = std::decay_t<f_in_t>;
+    using F = std::decay_t<Op>;
 
     context& context = source.get_context();
 
-    auto node_builder = [&context, &source, &func]( const signal<dep_values_t>&... deps ) {
+    auto node_builder = [&context, &source, &op]( const signal<dep_values_t>&... deps ) {
         return events<out_t>(
             std::make_shared<event_processing_node<in_t, out_t, F, dep_values_t...>>( context,
                 get_node_ptr( source ),
-                std::forward<f_in_t>( func ),
+                std::forward<Op>( op ),
                 get_node_ptr( deps )... ) );
     };
 
@@ -3207,23 +3207,21 @@ UREACT_WARN_UNUSED_RESULT auto merge(
 /*!
  * @brief Create a new event stream by batch processing events from other stream
  *
- *  func is called with all events range from source in current turn.
+ *  op is called with all events range from source in current turn.
  *  New events are emitted through "out".
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
  *
- *  The signature of func should be equivalent to:
- *  * bool func(event_range<in_t> range, event_emitter<out_t> out, const deps_t& ...)
+ *  The signature of op should be equivalent to:
+ *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const deps_t& ...)
  *
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- *  @note The type of outgoing events T has to be specified explicitly, i.e. Process<T>(src, func)
+ *  @note The type of outgoing events T has to be specified explicitly, i.e. Process<T>(src, with(deps), op)
  */
-template <typename out_t, typename in_t, typename f_in_t, typename... deps_t>
+template <typename out_t, typename in_t, typename Op, typename... deps_t>
 UREACT_WARN_UNUSED_RESULT auto process(
-    const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
-    -> events<out_t>
+    const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, Op&& op ) -> events<out_t>
 {
-    return detail::process_impl<out_t>(
-        source, dep_pack, std::forward<f_in_t>( func ) );
+    return detail::process_impl<out_t>( source, dep_pack, std::forward<Op>( op ) );
 }
 
 /*!
@@ -3231,31 +3229,39 @@ UREACT_WARN_UNUSED_RESULT auto process(
  *
  *  Version without synchronization with additional signals
  *
- *  See process(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func)
+ *  See process(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, Op&& op)
  */
-template <typename out_t, typename in_t, typename f_in_t>
-UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
+template <typename out_t, typename in_t, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, Op&& op ) -> events<out_t>
 {
-    return detail::process_impl<out_t>(
-        source, signal_pack<>(), std::forward<f_in_t>( func ) );
+    return detail::process_impl<out_t>( source, signal_pack<>(), std::forward<Op>( op ) );
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Curried version of process(T&& source, Op&& op) algorithm used for "pipe" syntax
  */
-/// curried version of process algorithm. Intended for chaining
-template <typename out_t, typename f_in_t>
-UREACT_WARN_UNUSED_RESULT auto process( f_in_t&& pred )
+template <typename out_t, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
 {
-    return [pred = std::forward<f_in_t>( pred )]( auto&& source ) {
+    return [op = std::forward<Op>( op )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<out_t>( std::forward<arg_t>( source ), pred );
+        return process<out_t>( std::forward<arg_t>( source ), op );
     };
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Create a new event stream that filters events from other stream
+ *
+ *  For every event e in source, emit e if pred(e) == true.
+ *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool pred(const E&, const deps_t& ...)
+ *
+ *  Semantically equivalent of ranges::filter
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
 template <typename E, typename Pred, typename... dep_values_t>
 UREACT_WARN_UNUSED_RESULT auto filter(
@@ -3278,7 +3284,11 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief Create a new event stream that filters events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See filter(const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred)
  */
 template <typename E, typename Pred, typename... dep_values_t>
 UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
@@ -3303,8 +3313,6 @@ UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
  * @brief Skips first N elements from the source stream
  *
  *  Semantically equivalent of std::ranges::views::drop
- *
- *  @sa drop(const size_t count), once(T&& source), once(), take(T&&, const size_t count), take(const size_t count)
  */
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop( T&& source, const size_t count )
@@ -3330,8 +3338,6 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
  * @brief Keeps first N elements from the source stream
  *
  *  Semantically equivalent of std::ranges::views::take
- *
- *  @sa take(const size_t count), once(T&& source), once(), drop(T&&, const size_t count), drop(const size_t count)
  */
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take( T&& source, const size_t count )
@@ -3357,8 +3363,6 @@ UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
  * @brief Take only the first element from another stream
  *
  *  The same as take(1)
- *
- *  @sa take(T&& source, const size_t count), take(const size_t count), once()
  */
 template <typename T, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto once( T&& source )
@@ -3382,8 +3386,6 @@ UREACT_WARN_UNUSED_RESULT inline auto once()
  *
  *  The signature of pred should be equivalent to:
  *  * bool func(const E&, const deps_t& ...)
- *
- *  @sa drop_while(T&& source, Pred&& pred)
  */
 template <typename T,
     typename... deps_t,
@@ -3406,8 +3408,6 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
  *
  *  Takes events beginning at the first for which the predicate returns false.
  *  Semantically equivalent of std::ranges::views::drop_while
- *
- *  @sa drop_while(Pred&& pred), take_while(T&& source, Pred&& pred), take_while(Pred&& pred)
  */
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto drop_while( T&& source, Pred&& pred )
@@ -3437,8 +3437,6 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
  *
  *  The signature of pred should be equivalent to:
  *  * bool func(const E&, const deps_t& ...)
- *
- *  @sa take_while(T&& source, Pred&& pred)
  */
 template <typename T,
     typename... deps_t,
@@ -3462,8 +3460,6 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
  *  Keeps events from the source stream, starting at the beginning and ending
  *  at the first element for which the predicate returns false.
  *  Semantically equivalent of std::ranges::views::take_while
- *
- *  @sa drop_while(Pred&& pred), take_while(T&& source, Pred&& pred), take_while(Pred&& pred)
  */
 template <typename T, typename Pred, class = std::enable_if_t<is_event_v<std::decay_t<T>>>>
 UREACT_WARN_UNUSED_RESULT auto take_while( T&& source, Pred&& pred )

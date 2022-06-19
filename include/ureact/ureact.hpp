@@ -3375,11 +3375,25 @@ UREACT_WARN_UNUSED_RESULT auto process(
  *
  *  See process(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, f_in_t&& func)
  */
-template <typename out_t, typename in_t, typename f_in_t, typename F = std::decay_t<f_in_t>>
+template <typename out_t, typename in_t, typename f_in_t>
 UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, f_in_t&& func ) -> events<out_t>
 {
     return detail::process_impl<out_t, in_t, f_in_t>(
         source, signal_pack<>(), std::forward<f_in_t>( func ) );
+}
+
+/*!
+ * @brief TODO: documentation
+ */
+/// curried version of process algorithm. Intended for chaining
+template <typename out_t, typename f_in_t>
+UREACT_WARN_UNUSED_RESULT auto process( f_in_t&& pred )
+{
+    return [pred = std::forward<f_in_t>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<out_t>( std::forward<arg_t>( source ), pred );
+    };
 }
 
 /*!

@@ -66,7 +66,7 @@ TEST_SUITE( "OperationsTest" )
             CHECK_EQ( v, 5050 );
         } );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             for( auto i = 1; i <= 100; i++ )
                 numSrc << i;
         } );

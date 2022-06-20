@@ -98,7 +98,7 @@ TEST_SUITE( "Examples" )
         a <<= 2; // z is changed to 6
         b <<= 2; // z is changed to 8
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             a <<= 4;
             b <<= 4;
         } ); // z is changed to 16
@@ -123,7 +123,7 @@ TEST_SUITE( "Examples" )
         x <<= -3; // xAbs is changed to 3
         x <<= 3;  // no output, xAbs is still 3
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             x <<= 4;
             x <<= -2;
             x <<= 3;

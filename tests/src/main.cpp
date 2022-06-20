@@ -151,7 +151,7 @@ TEST_CASE( "Process" )
     src.emit( { 2u, -1 } );
     src.emit( { 0u, 666 } );
 
-    ctx.do_transaction( [&]() { src << std::make_pair( 1u, 2 ) << std::make_pair( 3u, 7 ); } );
+    do_transaction( ctx, [&]() { src << std::make_pair( 1u, 2 ) << std::make_pair( 3u, 7 ); } );
 
     const std::vector<int> expected = { -1, -1, 2, 7, 7, 7 };
     CHECK( result.get() == expected );
@@ -199,7 +199,7 @@ TEST_CASE( "ProcessSynced" )
     n <<= 0;
     src.emit( 666 );
 
-    ctx.do_transaction( [&]() {
+    do_transaction( ctx, [&]() {
         timestamp <<= "31 Feb 2021";
         n <<= 1;
 
@@ -283,7 +283,7 @@ TEST_CASE( "TransformSynced" )
         src << i;
 
     // change limits and pass the same values second time
-    ctx.do_transaction( [&]() {
+    do_transaction( ctx, [&]() {
         for( int i : { -1, 4, 10, 0, 5, 2 } )
             src << i;
 
@@ -372,7 +372,7 @@ TEST_CASE( "FilterSynced" )
         src << i;
 
     // change limits and pass the same values second time
-    ctx.do_transaction( [&]() {
+    do_transaction( ctx, [&]() {
         for( int i = 0; i < 10; ++i )
             src << i;
 
@@ -686,7 +686,7 @@ TEST_CASE( "Pulse" )
     for( int i = 0; i < 2; ++i )
         trigger();
 
-    ctx.do_transaction( [&]() {
+    do_transaction( ctx, [&]() {
         target <<= 6;
         for( int i = 0; i < 3; ++i )
             trigger();

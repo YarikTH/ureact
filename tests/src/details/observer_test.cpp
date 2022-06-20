@@ -121,7 +121,7 @@ TEST_CASE( "NoObserveOnNoChanged" )
     CHECK( productObserveCount == 1 );
     CHECK( expressionString.get() == "1 * 2 = 2" );
 
-    ctx.do_transaction( [&]() {
+    do_transaction( ctx, [&]() {
         b <<= 1;
         b <<= 2; // Shouldn't change
     } );

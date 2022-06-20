@@ -85,7 +85,7 @@ TEST_SUITE( "Examples" )
         CHECK( size_values == std::vector<int>{} );
 
         // Do transaction to change width and height in single step
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             my_shape.width <<= 4;
             my_shape.height <<= 4;
         } );

@@ -244,7 +244,7 @@ TEST_SUITE( "SignalTest" )
 
         CHECK_EQ( result(), 6 );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             a1 <<= 2;
             a2 <<= 2;
         } );
@@ -417,7 +417,7 @@ TEST_SUITE( "SignalTest" )
         CHECK_EQ( result(), 100 + 300 );
         CHECK_EQ( observeCount, 2 );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             a0 <<= 5000;
             a1 <<= 6000;
         } );
@@ -455,7 +455,7 @@ TEST_SUITE( "SignalTest" )
         CHECK_EQ( result(), 10 + 30 );
         CHECK_EQ( observeCount, 0 );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             inner1 <<= 1000;
             a0 <<= 200000;
             a1 <<= 50000;
@@ -465,7 +465,7 @@ TEST_SUITE( "SignalTest" )
         CHECK_EQ( result(), 50000 + 200000 );
         CHECK_EQ( observeCount, 1 );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             a0 <<= 667;
             a1 <<= 776;
         } );
@@ -473,7 +473,7 @@ TEST_SUITE( "SignalTest" )
         CHECK_EQ( result(), 776 + 667 );
         CHECK_EQ( observeCount, 2 );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             inner1 <<= 999;
             a0 <<= 888;
         } );
@@ -507,7 +507,7 @@ TEST_SUITE( "SignalTest" )
 
         observe( result, [&]( int v ) { results.push_back( v ); } );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             a3 <<= 400;
             outer <<= inner2;
         } );
@@ -549,12 +549,12 @@ TEST_SUITE( "SignalTest" )
             v.push_back( 50 );
             v.push_back( 70 );
         };
-        
-        SUBCASE("method")
+
+        SUBCASE( "method" )
         {
             v.modify( modificator );
         }
-        SUBCASE("operator")
+        SUBCASE( "operator" )
         {
             v <<= modificator;
         }
@@ -575,7 +575,7 @@ TEST_SUITE( "SignalTest" )
             obsCount++;
         } );
 
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             v.modify( []( std::vector<int>& v ) { v.push_back( 30 ); } );
 
             v.modify( []( std::vector<int>& v ) { v.push_back( 50 ); } );
@@ -601,7 +601,7 @@ TEST_SUITE( "SignalTest" )
         } );
 
         // Also terrible
-        ctx.do_transaction( [&] {
+        do_transaction( ctx, [&] {
             vect.set( std::vector<int>{ 30, 50 } );
 
             vect.modify( []( std::vector<int>& v ) { v.push_back( 70 ); } );

@@ -199,7 +199,7 @@ TEST_CASE( "Signals3" )
 
     CHECK( result.get() == 6 );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         a1 <<= 2;
         a2 <<= 2;
     } );
@@ -392,7 +392,7 @@ TEST_CASE( "Flatten2" )
     CHECK( result.get() == 100 + 300 );
     CHECK( observeCount == 2 );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         a0 <<= 5000;
         a1 <<= 6000;
     } );
@@ -427,7 +427,7 @@ TEST_CASE( "Flatten3" )
     CHECK( result.get() == 10 + 30 );
     CHECK( observeCount == 0 );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         inner1 <<= 1000;
         a0 <<= 200000;
         a1 <<= 50000;
@@ -437,7 +437,7 @@ TEST_CASE( "Flatten3" )
     CHECK( result.get() == 50000 + 200000 );
     CHECK( observeCount == 1 );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         a0 <<= 667;
         a1 <<= 776;
     } );
@@ -445,7 +445,7 @@ TEST_CASE( "Flatten3" )
     CHECK( result.get() == 776 + 667 );
     CHECK( observeCount == 2 );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         inner1 <<= 999;
         a0 <<= 888;
     } );
@@ -476,7 +476,7 @@ TEST_CASE( "Flatten4" )
 
     observe( result, [&]( int v ) { results.push_back( v ); } );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         a3 <<= 400;
         outer <<= inner2;
     } );
@@ -558,7 +558,7 @@ TEST_CASE( "Modify2" )
         obsCount++;
     } );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         v.modify( []( std::vector<int>& v_ ) { v_.push_back( 30 ); } );
 
         v.modify( []( std::vector<int>& v_ ) { v_.push_back( 50 ); } );
@@ -585,7 +585,7 @@ TEST_CASE( "Modify3" )
         obsCount++;
     } );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         value.set( std::vector<int>{ 30, 50 } );
 
         value.modify( []( std::vector<int>& v ) { v.push_back( 70 ); } );
@@ -604,10 +604,10 @@ TEST_CASE( "Recursive transactions" )
 
     observe( v1, [&observeCount]( int /*v*/ ) { observeCount++; } );
 
-    ctx.do_transaction( [&] {
+    do_transaction( ctx, [&] {
         v1 <<= 7;
 
-        ctx.do_transaction( [&] { v1 <<= 4; } );
+        do_transaction( ctx, [&] { v1 <<= 4; } );
 
         v1 <<= 1;
         v1 <<= 2;

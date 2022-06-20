@@ -833,6 +833,13 @@ public:
         return *m_graph;
     }
 
+    /// Perform several changes atomically
+    template <typename F>
+    void do_transaction( F&& func )
+    {
+        m_graph->do_transaction( std::forward<F>( func ) );
+    }
+
 private:
     std::unique_ptr<react_graph> m_graph;
 };
@@ -841,6 +848,9 @@ private:
 class node_base;
 
 } // namespace detail
+
+template <typename F>
+void do_transaction( context& ctx, F&& func );
 
 /*!
  * @brief Core class that connects all reactive nodes together.
@@ -851,13 +861,6 @@ class node_base;
 class context final : protected detail::context_internals
 {
 public:
-    /// Perform several changes atomically
-    template <typename F>
-    void do_transaction( F&& func )
-    {
-        get_graph().do_transaction( std::forward<F>( func ) );
-    }
-
     UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
     {
         return this == &rsh;
@@ -871,12 +874,28 @@ public:
 private:
     friend class detail::node_base;
 
+    template <typename F>
+    friend void do_transaction( context& ctx, F&& func );
+
     /// Returns internals. Not intended to use in user code
     UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
     {
         return ctx;
     }
 };
+
+/*!
+ * @brief Perform several changes atomically
+ *
+ *  The signature of func should be equivalent to:
+ *  * void func()
+ */
+template <typename F>
+void do_transaction( context& ctx, F&& func )
+{
+    static_assert( std::is_invocable_r_v<void, F>, "Transaction functions should be void()" );
+    ctx.do_transaction( std::forward<F>( func ) );
+}
 
 namespace detail
 {

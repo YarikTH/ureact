@@ -286,7 +286,7 @@ TEST_SUITE( "operators" )
             SUBCASE( ( std::to_string( left ) + std::string( " op " ) + std::to_string( right ) )
                          .c_str() )
             {
-                ctx.do_transaction( [&]() {
+                do_transaction( ctx, [&]() {
                     lhs <<= left;
                     rhs <<= right;
                 } );
@@ -333,7 +333,7 @@ TEST_SUITE( "operators" )
             SUBCASE( ( std::to_string( left ) + std::string( " op " ) + std::to_string( right ) )
                          .c_str() )
             {
-                ctx.do_transaction( [&]() {
+                do_transaction( ctx, [&]() {
                     lhs <<= left;
                     rhs <<= right;
                 } );

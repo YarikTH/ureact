@@ -154,6 +154,22 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
         {
 #endif
 
+#define UREACT_MAKE_NONCOPYABLE( ClassName )                                                       \
+    ClassName( const ClassName& ) = delete;                                                        \
+    ClassName& operator=( const ClassName& ) = delete
+
+#define UREACT_MAKE_NONMOVABLE( ClassName )                                                        \
+    ClassName( ClassName&& ) = delete;                                                             \
+    ClassName& operator=( ClassName&& ) = delete
+
+#define UREACT_MAKE_MOVABLE( ClassName )                                                           \
+    ClassName( ClassName&& ) = default;                                                            \
+    ClassName& operator=( ClassName&& ) = default
+
+#define UREACT_MAKE_MOVABLE_ONLY( ClassName )                                                      \
+    UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
+    UREACT_MAKE_MOVABLE( ClassName )
+
 UREACT_BEGIN_NAMESPACE
 
 class context;

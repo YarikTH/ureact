@@ -170,6 +170,22 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
     UREACT_MAKE_MOVABLE( ClassName )
 
+// NOLINTNEXTLINE
+#define UREACT_MAKE_NOOP_ITERATOR( ClassName )                                                     \
+    ClassName& operator*()                                                                         \
+    {                                                                                              \
+        return *this;                                                                              \
+    }                                                                                              \
+    ClassName& operator++()                                                                        \
+    {                                                                                              \
+        return *this;                                                                              \
+    }                                                                                              \
+    ClassName operator++( int )                                                                    \
+    {                                                                                              \
+        return *this;                                                                              \
+    }                                                                                              \
+    static_assert( true ) /*enforce semicolon*/
+
 UREACT_BEGIN_NAMESPACE
 
 class context;
@@ -2452,6 +2468,8 @@ private:
     using node_t = detail::event_source_node<E>;
 
 public:
+    class iterator;
+
     /*!
      * @brief Default construct @ref event_source
      *
@@ -2559,6 +2577,52 @@ public:
         this->emit_event( std::move( e ) );
         return *this;
     }
+
+    /*!
+     * @brief Returns std compatible iterator for emitting using std algorithms like std::copy()
+     */
+    auto begin() const
+    {
+        return iterator{ *this };
+    }
+};
+
+/*!
+ * @brief Iterator for compatibility with std algorithms
+ */
+template <typename E>
+class event_source<E>::iterator final
+{
+public:
+    UREACT_MAKE_NOOP_ITERATOR( iterator );
+
+    /*!
+     * @brief Constructor
+     */
+    explicit iterator( const event_source& parent )
+        : m_parent( parent )
+    {}
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    iterator& operator=( const E& e )
+    {
+        m_parent.emit_event( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    iterator& operator=( E&& e )
+    {
+        m_parent.emit_event( std::move( e ) );
+        return *this;
+    }
+
+private:
+    const event_source& m_parent;
 };
 
 /*!
@@ -2573,6 +2637,8 @@ private:
     using node_t = detail::event_source_node<std::reference_wrapper<E>>;
 
 public:
+    class iterator;
+
     /*!
      * @brief Default construct @ref event_source
      *
@@ -2622,6 +2688,43 @@ public:
         this->emit_event( e );
         return *this;
     }
+
+    /*!
+     * @brief Returns std compatible iterator for emitting using std algorithms like std::copy()
+     */
+    auto begin() const
+    {
+        return iterator{ *this };
+    }
+};
+
+/*!
+ * @brief Iterator for compatibility with std algorithms
+ */
+template <typename E>
+class event_source<E&>::iterator final
+{
+public:
+    UREACT_MAKE_NOOP_ITERATOR( iterator );
+
+    /*!
+     * @brief Constructor
+     */
+    explicit iterator( const event_source& parent )
+        : m_parent( parent )
+    {}
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    iterator& operator=( std::reference_wrapper<E> e )
+    {
+        m_parent.emit_event( e );
+        return *this;
+    }
+
+private:
+    const event_source& m_parent;
 };
 
 /*!
@@ -2711,30 +2814,14 @@ class event_emitter final
 public:
     using container_type = std::vector<E>;
 
+    UREACT_MAKE_NOOP_ITERATOR( event_emitter );
+
     /*!
      * @brief Constructor
      */
     explicit event_emitter( container_type& container )
         : m_container( container )
     {}
-
-    /// no-op
-    event_emitter& operator*()
-    {
-        return *this;
-    }
-
-    /// no-op
-    event_emitter& operator++()
-    {
-        return *this;
-    }
-
-    /// no-op
-    event_emitter& operator++( int ) // NOLINT
-    {
-        return *this;
-    }
 
     /*!
      * @brief Adds e to the queue of outgoing events

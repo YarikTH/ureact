@@ -2596,6 +2596,12 @@ class event_source<E>::iterator final
 public:
     UREACT_MAKE_NOOP_ITERATOR( iterator );
 
+    using iterator_category = std::output_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = E;
+    using pointer = value_type*;
+    using reference = value_type&;
+
     /*!
      * @brief Constructor
      */
@@ -2707,6 +2713,12 @@ class event_source<E&>::iterator final
 public:
     UREACT_MAKE_NOOP_ITERATOR( iterator );
 
+    using iterator_category = std::output_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = std::reference_wrapper<E>;
+    using pointer = value_type*;
+    using reference = value_type&;
+
     /*!
      * @brief Constructor
      */
@@ -2813,6 +2825,11 @@ class event_emitter final
 {
 public:
     using container_type = std::vector<E>;
+    using iterator_category = std::output_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = E;
+    using pointer = value_type*;
+    using reference = value_type&;
 
     UREACT_MAKE_NOOP_ITERATOR( event_emitter );
 

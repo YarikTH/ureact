@@ -4415,6 +4415,19 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&&
 }
 
 /*!
+ * @brief Curried version of fold(const events<E>& events, V&& init, f_in_t&& func) algorithm used for "pipe" syntax
+ */
+template <typename E, typename V, typename f_in_t>
+UREACT_WARN_UNUSED_RESULT auto fold( V&& init, f_in_t&& func )
+{
+    return [init = std::forward<V>( init ), func = std::forward<f_in_t>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return fold( std::forward<arg_t>( source ), std::move( init ), func );
+    };
+}
+
+/*!
  * @brief Holds the most recent event in a signal
  *
  *  Creates a @ref signal with an initial value v = init.

@@ -300,7 +300,7 @@ using select_t = typename select_impl<Head, Tail...>::type;
  * @brief Return if type is signal or its inheritor
  */
 template <typename T>
-struct is_signal : detail::is_base_of_template<signal, T>
+struct is_signal final : detail::is_base_of_template<signal, T>
 {};
 
 /*!
@@ -313,7 +313,7 @@ inline constexpr bool is_signal_v = is_signal<T>::value;
  * @brief Return if type is events or its inheritor
  */
 template <typename T>
-struct is_event : detail::is_base_of_template<events, T>
+struct is_event final : detail::is_base_of_template<events, T>
 {};
 
 /*!
@@ -326,7 +326,7 @@ inline constexpr bool is_event_v = is_event<T>::value;
  * @brief Detect event type E of @ref events and @ref  event_source
  */
 template <typename T>
-struct event_value : detail::event_value_impl<T>
+struct event_value final : detail::event_value_impl<T>
 {};
 
 /*!
@@ -837,18 +837,18 @@ private:
     std::unique_ptr<react_graph> m_graph;
 };
 
+// forward declaration
+class node_base;
+
 } // namespace detail
 
-/*!
- * @brief TODO: documentation
- */
 /*!
  * @brief Core class that connects all reactive nodes together.
  *
  *  Each signal and node belongs to a single ureact context.
  *  Signals from different contexts can't interact with each other.
  */
-class context : protected detail::context_internals
+class context final : protected detail::context_internals
 {
 public:
     /// Perform several changes atomically
@@ -865,10 +865,13 @@ public:
 
     UREACT_WARN_UNUSED_RESULT bool operator!=( const context& rsh ) const
     {
-        return this != &rsh;
+        return !( *this == rsh );
     }
 
-    /// Return internals. Not intended to use in user code.
+private:
+    friend class detail::node_base;
+
+    /// Returns internals. Not intended to use in user code
     UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
     {
         return ctx;
@@ -1098,7 +1101,7 @@ template <typename S>
 using signal_node_ptr_t = std::shared_ptr<signal_node<S>>;
 
 template <typename S>
-class var_node
+class var_node final
     : public signal_node<S>
     , public input_node_interface
 {
@@ -1229,7 +1232,7 @@ private:
 };
 
 template <typename S, typename op_t>
-class signal_op_node : public signal_node<S>
+class signal_op_node final : public signal_node<S>
 {
 public:
     template <typename... args_t>
@@ -1450,7 +1453,7 @@ public:
  *  As such, they don't have any predecessors.
  */
 template <typename S>
-class var_signal : public signal<S>
+class var_signal final : public signal<S>
 {
 private:
     using node_t = detail::var_node<S>;
@@ -1517,7 +1520,7 @@ public:
  *  As such, they don't have any predecessors.
  */
 template <typename S>
-class var_signal<S&> : public signal<std::reference_wrapper<S>>
+class var_signal<S&> final : public signal<std::reference_wrapper<S>>
 {
 private:
     using node_t = detail::var_node<std::reference_wrapper<S>>;
@@ -1575,7 +1578,7 @@ public:
  * converted to signal.
  */
 template <typename S, typename op_t>
-class temp_signal : public signal<S>
+class temp_signal final : public signal<S>
 {
 private:
     using node_t = detail::signal_op_node<S, op_t>;
@@ -1613,7 +1616,7 @@ public:
  *  Created with @ref with()
  */
 template <typename... values_t>
-class signal_pack
+class signal_pack final
 {
 public:
     /*!
@@ -1745,9 +1748,13 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief operator| overload to connect a signal to a function and return the resulting signal
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const value_t&)
+ *
+ *  the same as make_signal(arg, func)
  */
-/// operator| overload to connect a signal to a function and return the resulting signal.
 template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
 UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
 {
@@ -1755,9 +1762,13 @@ UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief operator| overload to connect multiple signals to a function and return the resulting signal
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const values_t& ...)
+ *
+ *  the same as make_signal(with(args), func)
  */
-/// operator| overload to connect multiple signals to a function and return the resulting signal.
 template <typename F, typename... values_t>
 UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
 {
@@ -2153,7 +2164,7 @@ template <typename E>
 using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
 template <typename E>
-class event_source_node
+class event_source_node final
     : public event_stream_node<E>
     , public input_node_interface
 {
@@ -2204,7 +2215,7 @@ private:
 };
 
 template <typename E, typename op_t>
-class event_op_node : public event_stream_node<E>
+class event_op_node final : public event_stream_node<E>
 {
 public:
     template <typename... args_t>
@@ -2374,7 +2385,7 @@ public:
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
 template <typename E = token>
-class event_source : public events<E>
+class event_source final : public events<E>
 {
 private:
     using node_t = detail::event_source_node<E>;
@@ -2495,7 +2506,7 @@ public:
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
 template <typename E>
-class event_source<E&> : public events<std::reference_wrapper<E>>
+class event_source<E&> final : public events<std::reference_wrapper<E>>
 {
 private:
     using node_t = detail::event_source_node<std::reference_wrapper<E>>;
@@ -2553,58 +2564,71 @@ public:
 };
 
 /*!
- * @brief TODO: documentation
- */
-/*!
- * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node.
+ * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node
  *
  *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
  *  that allows to iterate over its events without modifying it.
+ *
+ *  TODO: think about making values movable, so values would be processed more efficiently
  */
 template <typename E = token>
-class event_range
+class event_range final
 {
 public:
     using const_iterator = typename std::vector<E>::const_iterator;
     using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
     using size_type = typename std::vector<E>::size_type;
 
-    /// Constructor
+    /*!
+     * @brief Constructor
+     */
     explicit event_range( const std::vector<E>& data )
         : m_data( data )
     {}
 
-    /// Returns random access const_iterator to beginning of the range
+    /*!
+     * @brief Returns a random access const iterator to the beginning
+     */
     UREACT_WARN_UNUSED_RESULT const_iterator begin() const
     {
         return m_data.begin();
     }
 
-    /// Returns random access const_iterator to end of the range
+    /*!
+     * @brief Returns a random access const iterator to the end
+     */
     UREACT_WARN_UNUSED_RESULT const_iterator end() const
     {
         return m_data.end();
     }
 
-    /// Returns random access const_reverse_iterator to right beginning of the range
+    /*!
+     * @brief Returns a reverse random access const iterator to the beginning
+     */
     UREACT_WARN_UNUSED_RESULT const_reverse_iterator rbegin() const
     {
         return m_data.rbegin();
     }
 
-    /// Returns random access const_reverse_iterator to right end of the range
+    /*!
+     * @brief Returns a reverse random access const iterator to the end
+     */
     UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
     {
         return m_data.rend();
     }
 
-    /// Returns the number of events in the range
+    /*!
+     * @brief Returns the number of events
+     */
     UREACT_WARN_UNUSED_RESULT size_type size() const
     {
         return m_data.size();
     }
 
-    /// Returns true, if the range is empty
+    /*!
+     * @brief Checks whether the container is empty
+     */
     UREACT_WARN_UNUSED_RESULT bool empty() const
     {
         return m_data.empty();
@@ -2621,12 +2645,14 @@ private:
  *  Additionally to std::back_insert_iterator interface it provides emit() methods like event_stream has
  */
 template <typename E>
-class event_emitter
+class event_emitter final
 {
 public:
     using container_type = std::vector<E>;
 
-    /// Constructor
+    /*!
+     * @brief Constructor
+     */
     explicit event_emitter( container_type& container )
         : m_container( container )
     {}
@@ -2840,7 +2866,7 @@ private:
 };
 
 template <typename in_t, typename out_t, typename func_t, typename... dep_values_t>
-class event_processing_node : public event_stream_node<out_t>
+class event_processing_node final : public event_stream_node<out_t>
 {
 public:
     template <typename F>
@@ -2900,7 +2926,7 @@ private:
 };
 
 template <typename... values_t>
-class event_zip_node : public event_stream_node<std::tuple<values_t...>>
+class event_zip_node final : public event_stream_node<std::tuple<values_t...>>
 {
 public:
     explicit event_zip_node(
@@ -3027,10 +3053,14 @@ UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context ) -> event_so
 }
 
 /*!
- * @brief TODO: documentation
+ * @brief apply a functor to an event source and return the resulting signal or event source
+ *
+ *  The signature of unary_op should be equivalent to:
+ *  * signal<T> unary_op(const S& source)
+ *  * events<T> unary_op(const S& source)
+ *
+ *  Intended for algorithm chaining
  */
-/// Operator | for algorithms chaining
-/// Usage: monitor( target ) | filter( is_even ) | tokenize();
 template <typename S,
     typename UnaryOperation,
     class = std::enable_if_t<is_event_v<std::decay_t<S>>>>
@@ -3134,14 +3164,14 @@ UREACT_WARN_UNUSED_RESULT auto filter(
     static_assert(
         std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
 
-    auto filterer = [pred = std::forward<Pred>( pred )](
-                        event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
-        for( const auto& e : range )
-            if( pred( e, deps... ) )
-                out.emit( e );
-    };
-
-    return detail::process_impl<E>( source, dep_pack, std::move( filterer ) );
+    return detail::process_impl<E>( source,
+        dep_pack, //
+        [pred = std::forward<Pred>( pred )](
+            event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
+            for( const auto& e : range )
+                if( pred( e, deps... ) )
+                    out.emit( e );
+        } );
 }
 
 /*!
@@ -3190,14 +3220,13 @@ template <typename in_t,
 UREACT_WARN_UNUSED_RESULT auto transform(
     const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, F&& func ) -> events<out_t>
 {
-    auto transformer
-        = [func = std::forward<F>( func )](
-              event_range<in_t> range, event_emitter<out_t> out, const auto... deps ) mutable {
-              for( const auto& e : range )
-                  out.emit( func( e, deps... ) );
-          };
-
-    return detail::process_impl<out_t>( source, dep_pack, std::move( transformer ) );
+    return detail::process_impl<out_t>( source,
+        dep_pack, //
+        [func = std::forward<F>( func )](
+            event_range<in_t> range, event_emitter<out_t> out, const auto... deps ) mutable {
+            for( const auto& e : range )
+                out.emit( func( e, deps... ) );
+        } );
 }
 
 /*!
@@ -3234,9 +3263,10 @@ UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
 template <typename E>
 UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const size_t count )
 {
-    auto dropper = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ >= count; };
-
-    return filter( source, std::move( dropper ) );
+    return filter( source,                                //
+        [i = size_t( 0 ), count]( const auto& ) mutable { //
+            return i++ >= count;
+        } );
 }
 
 /*!
@@ -3259,9 +3289,10 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
 template <typename E>
 UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const size_t count )
 {
-    auto taker = [i = size_t( 0 ), count]( const auto& ) mutable { return i++ < count; };
-
-    return filter( source, std::move( taker ) );
+    return filter( source,                                //
+        [i = size_t( 0 ), count]( const auto& ) mutable { //
+            return i++ < count;
+        } );
 }
 
 /*!
@@ -3453,8 +3484,7 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args
 template <typename events_t>
 UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
 {
-    auto tokenizer = []( const auto& ) { return token::value; };
-    return transform( source, std::move( tokenizer ) );
+    return transform( source, []( const auto& ) { return token::value; } );
 }
 
 /*!
@@ -3480,6 +3510,124 @@ enum class observer_action
 {
     next,           ///< Continue observing
     stop_and_detach ///< Stop observing
+};
+
+// forward declaration
+class observer;
+
+namespace detail
+{
+
+template <typename in_f, typename S>
+auto observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer;
+
+template <typename f_in_t, typename E, typename... deps_t>
+auto observe_events_impl(
+    const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func ) -> observer;
+
+} // namespace detail
+
+/*!
+ * @brief Shared pointer like object that holds a strong reference to the observed subject
+ *
+ *  An instance of this class provides a unique handle to an observer which can
+ *  be used to detach it explicitly. It also holds a strong reference to
+ *  the observed subject, so while it exists the subject and therefore
+ *  the observer will not be destroyed.
+ *
+ *  If the handle is destroyed without calling detach(), the lifetime of
+ *  the observer is tied to the subject.
+ */
+class observer final
+{
+private:
+    using subject_ptr_t = std::shared_ptr<detail::observable_node>;
+    using node_t = detail::observer_node;
+
+public:
+    UREACT_MAKE_MOVABLE_ONLY( observer );
+
+    /*!
+     * @brief Default constructor
+     */
+    observer() = default;
+
+    /*!
+     * @brief Manually detache the linked observer node from its subject
+     */
+    void detach()
+    {
+        assert( is_valid() );
+        m_subject->unregister_observer( m_node );
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_node != nullptr;
+    }
+
+private:
+    observer( node_t* node, subject_ptr_t subject )
+        : m_node( node )
+        , m_subject( std::move( subject ) )
+    {}
+
+    template <typename in_f, typename S>
+    friend auto detail::observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer;
+
+    template <typename f_in_t, typename E, typename... deps_t>
+    friend auto detail::observe_events_impl(
+        const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
+        -> observer;
+
+    /// Owned by subject
+    node_t* m_node = nullptr;
+
+    /// While the observer handle exists, the subject is not destroyed
+    subject_ptr_t m_subject = nullptr;
+};
+
+/*!
+ * @brief Takes ownership of an observer and automatically detaches it on scope exit
+ */
+class scoped_observer final
+{
+public:
+    UREACT_MAKE_MOVABLE_ONLY( scoped_observer );
+
+    /*!
+     * @brief is not intended to be default constructive
+     */
+    scoped_observer() = delete;
+
+    /*!
+     * @brief Constructs instance from observer
+     */
+    scoped_observer( observer&& observer ) // NOLINT no explicit by design
+        : m_observer( std::move( observer ) )
+    {}
+
+    /*!
+     * @brief Destructor
+     */
+    ~scoped_observer()
+    {
+        m_observer.detach();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_observer.is_valid();
+    }
+
+private:
+    observer m_observer;
 };
 
 namespace detail
@@ -3542,7 +3690,7 @@ struct add_observer_range_wrapper
 };
 
 template <typename S, typename func_t>
-class signal_observer_node : public observer_node
+class signal_observer_node final : public observer_node
 {
 public:
     template <typename F>
@@ -3596,7 +3744,7 @@ private:
 };
 
 template <typename E, typename func_t, typename... dep_values_t>
-class events_observer_node : public observer_node
+class events_observer_node final : public observer_node
 {
 public:
     template <typename F>
@@ -3671,132 +3819,6 @@ private:
         }
     }
 };
-
-} // namespace detail
-
-/*!
- * @brief TODO: documentation
- */
-/*!
- * @brief Shared pointer like object that holds a strong reference to the observed subject
- *
- *  An instance of this class provides a unique handle to an observer which can
- *  be used to detach it explicitly. It also holds a strong reference to
- *  the observed subject, so while it exists the subject and therefore
- *  the observer will not be destroyed.
- *
- *  If the handle is destroyed without calling detach(), the lifetime of
- *  the observer is tied to the subject.
- */
-class observer
-{
-private:
-    using subject_ptr_t = std::shared_ptr<detail::observable_node>;
-    using node_t = detail::observer_node;
-
-public:
-    /// Default constructor
-    observer() = default;
-
-    /// Move constructor
-    observer( observer&& other ) noexcept
-        : m_node( other.m_node )
-        , m_subject( std::move( other.m_subject ) )
-    {
-        other.m_node = nullptr;
-        other.m_subject.reset();
-    }
-
-    /// Node constructor
-    observer( node_t* node, subject_ptr_t subject )
-        : m_node( node )
-        , m_subject( std::move( subject ) )
-    {}
-
-    /// Move assignment
-    observer& operator=( observer&& other ) noexcept
-    {
-        m_node = other.m_node;
-        m_subject = std::move( other.m_subject );
-
-        other.m_node = nullptr;
-        other.m_subject.reset();
-
-        return *this;
-    }
-
-    /// Deleted copy constructor and assignment
-    observer( const observer& ) = delete;
-    observer& operator=( const observer& ) = delete;
-
-    /// Manually detaches the linked observer node from its subject
-    void detach()
-    {
-        assert( is_valid() );
-        m_subject->unregister_observer( m_node );
-    }
-
-    /// Tests if this instance is linked to a node
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_node != nullptr;
-    }
-
-private:
-    /// Owned by subject
-    node_t* m_node = nullptr;
-
-    /// While the observer handle exists, the subject is not destroyed
-    subject_ptr_t m_subject = nullptr;
-};
-
-/*!
- * @brief TODO: documentation
- */
-/// Takes ownership of an observer and automatically detaches it on scope exit.
-class scoped_observer
-{
-public:
-    /// Move constructor
-    scoped_observer( scoped_observer&& other ) noexcept
-        : m_obs( std::move( other.m_obs ) )
-    {}
-
-    /// Constructs instance from observer
-    scoped_observer( observer&& obs ) // NOLINT no explicit by design
-        : m_obs( std::move( obs ) )
-    {}
-
-    // Move assignment
-    scoped_observer& operator=( scoped_observer&& other ) noexcept
-    {
-        m_obs = std::move( other.m_obs );
-        return *this;
-    }
-
-    /// Deleted default ctor, copy ctor and assignment
-    scoped_observer() = delete;
-    scoped_observer( const scoped_observer& ) = delete;
-    scoped_observer& operator=( const scoped_observer& ) = delete;
-
-    /// Destructor
-    ~scoped_observer()
-    {
-        m_obs.detach();
-    }
-
-    /// Tests if this instance is linked to a node
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_obs.is_valid();
-    }
-
-private:
-    observer m_obs;
-};
-
-namespace detail
-{
 
 template <typename in_f, typename S>
 auto observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer
@@ -3979,7 +4001,7 @@ namespace detail
 {
 
 template <typename outer_t, typename inner_t>
-class flatten_node : public signal_node<inner_t>
+class flatten_node final : public signal_node<inner_t>
 {
 public:
     flatten_node( context& context,
@@ -4028,7 +4050,7 @@ private:
 };
 
 template <typename outer_t, typename inner_t>
-class event_flatten_node : public event_stream_node<inner_t>
+class event_flatten_node final : public event_stream_node<inner_t>
 {
 public:
     event_flatten_node( context& context,
@@ -4210,7 +4232,7 @@ private:
 };
 
 template <typename S, typename E, typename func_t, typename... dep_values_t>
-class fold_node : public signal_node<S>
+class fold_node final : public signal_node<S>
 {
 public:
     template <typename T, typename F>
@@ -4337,7 +4359,7 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
 }
 
 template <typename E>
-class monitor_node : public event_stream_node<E>
+class monitor_node final : public event_stream_node<E>
 {
 public:
     monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
@@ -4436,9 +4458,11 @@ UREACT_WARN_UNUSED_RESULT auto fold( V&& init, f_in_t&& func )
 template <typename V, typename E>
 UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> signal<E>
 {
-    return fold( source, std::forward<V>( init ), []( const auto&, event_range<E> range ) {
-        return *range.rbegin();
-    } );
+    return fold( source,
+        std::forward<V>( init ),                  //
+        []( const auto&, event_range<E> range ) { //
+            return *range.rbegin();
+        } );
 }
 
 /*!
@@ -4467,7 +4491,9 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
     return fold( trigger,
         target.get(),
         with( target ),
-        []( const S&, event_range<E> range, const S& value ) { return value; } );
+        []( const S&, event_range<E> range, const S& value ) { //
+            return value;
+        } );
 }
 
 /*!

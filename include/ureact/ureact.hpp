@@ -4587,7 +4587,7 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&&
 /*!
  * @brief Curried version of fold(const events<E>& events, V&& init, f_in_t&& func) algorithm used for "pipe" syntax
  */
-template <typename E, typename V, typename f_in_t>
+template <typename V, typename f_in_t>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, f_in_t&& func )
 {
     return [init = std::forward<V>( init ), func = std::forward<f_in_t>( func )]( auto&& source ) {

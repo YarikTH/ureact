@@ -2606,7 +2606,7 @@ public:
      * @brief Constructor
      */
     explicit iterator( const event_source& parent )
-        : m_parent( parent )
+        : m_parent( &parent )
     {}
 
     /*!
@@ -2614,7 +2614,7 @@ public:
      */
     iterator& operator=( const E& e )
     {
-        m_parent.emit_event( e );
+        m_parent->emit_event( e );
         return *this;
     }
 
@@ -2623,12 +2623,12 @@ public:
      */
     iterator& operator=( E&& e )
     {
-        m_parent.emit_event( std::move( e ) );
+        m_parent->emit_event( std::move( e ) );
         return *this;
     }
 
 private:
-    const event_source& m_parent;
+    const event_source* m_parent;
 };
 
 /*!
@@ -2723,7 +2723,7 @@ public:
      * @brief Constructor
      */
     explicit iterator( const event_source& parent )
-        : m_parent( parent )
+        : m_parent( &parent )
     {}
 
     /*!
@@ -2731,12 +2731,12 @@ public:
      */
     iterator& operator=( std::reference_wrapper<E> e )
     {
-        m_parent.emit_event( e );
+        m_parent->emit_event( e );
         return *this;
     }
 
 private:
-    const event_source& m_parent;
+    const event_source* m_parent;
 };
 
 /*!
@@ -2837,7 +2837,7 @@ public:
      * @brief Constructor
      */
     explicit event_emitter( container_type& container )
-        : m_container( container )
+        : m_container( &container )
     {}
 
     /*!
@@ -2847,7 +2847,7 @@ public:
      */
     event_emitter& operator=( const E& e )
     {
-        m_container.push_back( e );
+        m_container->push_back( e );
         return *this;
     }
 
@@ -2860,7 +2860,7 @@ public:
      */
     event_emitter& operator=( E&& e )
     {
-        m_container.push_back( std::move( e ) );
+        m_container->push_back( std::move( e ) );
         return *this;
     }
 
@@ -2874,7 +2874,7 @@ public:
      */
     void emit( const E& e )
     {
-        m_container.push_back( e );
+        m_container->push_back( e );
     }
 
     /*!
@@ -2884,7 +2884,7 @@ public:
      */
     void emit( E&& e )
     {
-        m_container.push_back( std::move( e ) );
+        m_container->push_back( std::move( e ) );
     }
 
     /*!
@@ -2895,7 +2895,7 @@ public:
     void emit()
     {
         static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
-        m_container.push_back( token::value );
+        m_container->push_back( token::value );
     }
 
     /*!
@@ -2905,7 +2905,7 @@ public:
      */
     void operator()( const E& e )
     {
-        m_container.push_back( e );
+        m_container->push_back( e );
     }
 
     /*!
@@ -2915,7 +2915,7 @@ public:
      */
     void operator()( E&& e )
     {
-        m_container.push_back( std::move( e ) );
+        m_container->push_back( std::move( e ) );
     }
 
     /*!
@@ -2927,7 +2927,7 @@ public:
     void operator()()
     {
         static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
-        m_container.push_back( token::value );
+        m_container->push_back( token::value );
     }
 
     /*!
@@ -2937,7 +2937,7 @@ public:
      */
     event_emitter& operator<<( const E& e )
     {
-        m_container.push_back( e );
+        m_container->push_back( e );
         return *this;
     }
 
@@ -2950,12 +2950,12 @@ public:
      */
     event_emitter& operator<<( E&& e )
     {
-        m_container.push_back( std::move( e ) );
+        m_container->push_back( std::move( e ) );
         return *this;
     }
 
 private:
-    container_type& m_container;
+    container_type* m_container;
 };
 
 namespace detail

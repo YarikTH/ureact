@@ -544,11 +544,20 @@ TEST_SUITE( "SignalTest" )
             obsCount++;
         } );
 
-        v.modify( []( std::vector<int>& v ) {
+        auto modificator = []( std::vector<int>& v ) {
             v.push_back( 30 );
             v.push_back( 50 );
             v.push_back( 70 );
-        } );
+        };
+        
+        SUBCASE("method")
+        {
+            v.modify( modificator );
+        }
+        SUBCASE("operator")
+        {
+            v <<= modificator;
+        }
 
         CHECK_EQ( obsCount, 1 );
     }

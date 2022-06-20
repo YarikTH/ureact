@@ -1484,29 +1484,71 @@ public:
      * until the transaction function returns.
      * Otherwise, propagation starts immediately and Set blocks until it's done.
      */
-    template <class T>
-    void set( T&& new_value ) const
+    void set( const S& new_value ) const
     {
-        this->set_value( std::forward<T>( new_value ) );
+        this->set_value( new_value );
     }
 
     /*!
-     * @brief Operator version of set()
+     * @brief Set new signal value
      *
-     * Semantically equivalent to set().
+     * Specialization of set(const S& new_value) for rvalue
      */
-    template <class T>
-    void operator<<=( T&& new_value ) const
+    void set( S&& new_value ) const
     {
-        this->set_value( std::forward<T>( new_value ) );
+        this->set_value( std::move( new_value ) );
     }
 
     /*!
      * @brief Modify current signal value in-place
+     *
+     *  The signature of func should be equivalent to:
+     *  * void func(const S&)
+     *
+     *  We can not compare the old and new values, we lose the ability to detect
+     *  whether the data was actually changed. We always have to assume that
+     *  it did and re-calculate dependent signals.
      */
     template <typename F>
     void modify( const F& func ) const
     {
+        static_assert(
+            std::is_invocable_r_v<void, F, S&>, "Modifier functions should be void(S&)" );
+        this->modify_value( func );
+    }
+
+    /*!
+     * @brief Set new signal value
+     *
+     *  Operator version of set(const S& new_value)
+     */
+    void operator<<=( const S& new_value ) const
+    {
+        this->set_value( new_value );
+    }
+
+    /*!
+     * @brief Set new signal value
+     *
+     *  Operator version of set(S&& new_value)
+     *
+     *  Specialization of operator<<=(const S& new_value) for rvalue
+     */
+    void operator<<=( S&& new_value ) const
+    {
+        this->set_value( std::move( new_value ) );
+    }
+
+    /*!
+     * @brief Modify current signal value in-place
+     *
+     *  Operator version of modify(const F& func)
+     */
+    template <typename F, class = std::enable_if_t<std::is_invocable_v<F, S&>>>
+    void operator<<=( const F& func ) const
+    {
+        static_assert(
+            std::is_invocable_r_v<void, F, S&>, "Modifier functions should be void(S&)" );
         this->modify_value( func );
     }
 };

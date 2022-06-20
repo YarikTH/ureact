@@ -19,7 +19,6 @@ add_executable(
     details/ObserverTest.cpp
     details/EventStreamTest.cpp
     details/SignalTest.cpp
-    details/OperationsTest.cpp
 )
 
 target_include_directories(ureact_test PRIVATE include)

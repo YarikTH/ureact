@@ -1063,15 +1063,12 @@ TEST_CASE( "Monitor" )
         changes = ureact::changed( src );
         changes_to_zero = ureact::changed_to( src, 0 );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        // TODO: the is a problem with ambiguous operator|
-    //        // maybe I need to create lambda wrapper called algorithm or something
-    //        // to disable signal<S> | func(S) overload
-    //        monitored = src | ureact::monitor();
-    //        changes = src | ureact::changed();
-    //        changes_to_zero = src | ureact::changed_to( 0 );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        monitored = src | ureact::monitor();
+        changes = src | ureact::changed();
+        changes_to_zero = src | ureact::changed_to( 0 );
+    }
 
     const auto result = make_collector( monitored );
     const auto changes_count = make_counter( changes );

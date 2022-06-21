@@ -494,6 +494,48 @@ UREACT_WARN_UNUSED_RESULT bool equals( const events<L>& lhs, const events<R>& rh
 #    pragma clang diagnostic pop
 #endif
 
+// counter that counts down from N to 0
+// prefix decrement operator decrements only to 0
+// example: for(countdown i{N}; i; --i )
+class countdown
+{
+public:
+    explicit countdown( size_t value )
+        : m_value( value )
+    {}
+
+    countdown& operator--()
+    {
+        m_value = dec( m_value );
+        return *this;
+    }
+
+    const countdown operator--( int ) // NOLINT
+    {
+        countdown i{ m_value };
+        m_value = dec( m_value );
+        return i;
+    }
+
+    // checkable in boolean context
+    explicit operator bool() const
+    {
+        return m_value;
+    }
+
+private:
+    // decrement operator decrements only to 0
+    [[nodiscard]] static size_t dec( const size_t value )
+    {
+        if( value == 0 ) // [[likely]]
+            return 0;
+        else
+            return value - 1;
+    }
+
+    size_t m_value;
+};
+
 template <typename node_type>
 class node_vector
 {
@@ -3446,20 +3488,23 @@ UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
  *
  *  Semantically equivalent of std::ranges::views::drop
  */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const size_t count )
+template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const N count )
 {
-    return filter( source,                                //
-        [i = size_t( 0 ), count]( const auto& ) mutable { //
-            return i++ >= count;
+    assert( count >= 0 );
+    return filter( source,                                        //
+        [i = detail::countdown( count )]( const auto& ) mutable { //
+            return !bool( i-- );
         } );
 }
 
 /*!
  * @brief Curried version of drop(const events<E>& source, const size_t count) algorithm used for "pipe" syntax
  */
-UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
+template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+UREACT_WARN_UNUSED_RESULT auto drop( const N count )
 {
+    assert( count >= 0 );
     return [count]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
@@ -3472,20 +3517,23 @@ UREACT_WARN_UNUSED_RESULT inline auto drop( const size_t count )
  *
  *  Semantically equivalent of std::ranges::views::take
  */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const size_t count )
+template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
 {
-    return filter( source,                                //
-        [i = size_t( 0 ), count]( const auto& ) mutable { //
-            return i++ < count;
+    assert( count >= 0 );
+    return filter( source,                                        //
+        [i = detail::countdown( count )]( const auto& ) mutable { //
+            return bool( i-- );
         } );
 }
 
 /*!
  * @brief Curried version of take(const events<E>& source, const size_t count) algorithm used for "pipe" syntax
  */
-UREACT_WARN_UNUSED_RESULT inline auto take( const size_t count )
+template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+UREACT_WARN_UNUSED_RESULT auto take( const N count )
 {
+    assert( count >= 0 );
     return [count]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );

@@ -444,10 +444,31 @@ inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
 #    pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
+template <typename L, class R, typename = void>
+struct equality_comparable_with : std::false_type
+{};
+
+template <typename L, class R>
+struct equality_comparable_with<L,
+    R,
+    std::void_t<decltype( std::declval<L>() == std::declval<R>() )>> : std::true_type
+{};
+
+template <typename L, class R>
+inline constexpr bool equality_comparable_with_v = equality_comparable_with<L, R>::value;
+
 template <typename L, typename R>
 UREACT_WARN_UNUSED_RESULT bool equals( const L& lhs, const R& rhs )
 {
-    return lhs == rhs;
+    if constexpr( equality_comparable_with_v<L, R> )
+    {
+        return lhs == rhs;
+    }
+    else
+    {
+        // if operator == is not defined falling back to comparing addresses
+        return &lhs == &rhs;
+    }
 }
 
 template <typename L, typename R>

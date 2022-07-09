@@ -3426,7 +3426,7 @@ UREACT_WARN_UNUSED_RESULT auto filter(
  *
  *  See filter(const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred)
  */
-template <typename E, typename Pred, typename... dep_values_t>
+template <typename E, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
 {
     return filter( source, signal_pack<>(), std::forward<Pred>( pred ) );
@@ -3683,14 +3683,12 @@ UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
 template <typename E>
 UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
 {
-    auto deduplicator = [first = true, prev = E{}]( const E& e ) mutable {
+    return filter( source, [first = true, prev = E{}]( const E& e ) mutable {
         const bool pass = first || e != prev;
         first = false;
         prev = e;
         return pass;
-    };
-
-    return filter( source, deduplicator );
+    } );
 }
 
 /*!
@@ -3732,8 +3730,8 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args
  *
  *   @warning Not to be confused with ranges::tokenize()
  */
-template <typename events_t>
-UREACT_WARN_UNUSED_RESULT auto tokenize( events_t&& source )
+template <typename E>
+UREACT_WARN_UNUSED_RESULT auto tokenize( const events<E>& source )
 {
     return transform( source, []( const auto& ) { return token::value; } );
 }
@@ -4179,7 +4177,7 @@ template <typename F, typename S>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
 auto observe( signal<S>&& subject, F&& func ) -> observer
 {
-    return observe_signal_impl( subject, std::forward<F>( func ) );
+    return observe_signal_impl( std::move( subject ), std::forward<F>( func ) );
 }
 
 /*!
@@ -4219,7 +4217,7 @@ template <typename F, typename E, typename... deps_t>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
 auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer
 {
-    return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+    return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
 }
 
 /*!
@@ -4245,7 +4243,7 @@ template <typename F, typename E>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
 auto observe( events<E>&& subject, F&& func ) -> observer
 {
-    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
+    return observe_events_impl( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
 }
 
 namespace detail

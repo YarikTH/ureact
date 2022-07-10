@@ -1582,17 +1582,18 @@ private:
 
 public:
     /*!
-     * @brief Default construct @ref var_signal.
+     * @brief Default construct @ref var_signal
      *
      * Default constructed @ref var_signal is not attached to node, so it is not valid.
      */
     var_signal() = default;
 
     /*!
-     * @brief Construct from the given node
+     * @brief Construct a fully functional var signal
      */
-    explicit var_signal( std::shared_ptr<node_t>&& node )
-        : var_signal::signal( std::move( node ) )
+    template <class V>
+    var_signal( context& context, V&& value )
+        : var_signal::signal( std::make_shared<node_t>( context, std::forward<V>( value ) ) )
     {}
 
     /*!
@@ -1691,17 +1692,17 @@ private:
 
 public:
     /*!
-     * @brief Default construct @ref var_signal.
+     * @brief Default construct @ref var_signal
      *
      * Default constructed @ref var_signal is not attached to node, so it is not valid.
      */
     var_signal() = default;
 
     /*!
-     * @brief Construct from the given node
+     * @brief Construct a fully functional var signal
      */
-    explicit var_signal( std::shared_ptr<node_t>&& node )
-        : var_signal::signal( std::move( node ) )
+    var_signal( context& context, std::reference_wrapper<S> value )
+        : var_signal::signal( std::make_shared<node_t>( context, value ) )
     {}
 
     /*!
@@ -1749,10 +1750,11 @@ private:
 
 public:
     /*!
-     * @brief Construct from the given node
+     * @brief Construct a fully functional temp signal
      */
-    explicit temp_signal( std::shared_ptr<node_t>&& node )
-        : temp_signal::signal( std::move( node ) )
+    template <typename... Args>
+    temp_signal( context& context, Args&&... args )
+        : temp_signal::signal( std::make_shared<node_t>( context, std::forward<Args>( args )... ) )
     {}
 
     /*!
@@ -1811,37 +1813,30 @@ namespace detail
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, std::reference_wrapper<S> v )
 {
-    return var_signal<S&>( std::make_shared<var_node<std::reference_wrapper<S>>>( context, v ) );
+    return var_signal<S&>{ context, v };
 }
 
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
+    //    static_assert( !detail::is_base_of_template<std::reference_wrapper, S>::value );
+
     if constexpr( is_signal_v<S> || is_event_v<S> )
     {
         using inner_t = typename S::value_t;
         if constexpr( is_signal_v<S> )
         {
-            return var_signal<signal<inner_t>>(
-                std::make_shared<var_node<signal<inner_t>>>( context, std::forward<V>( v ) ) );
+            return var_signal<signal<inner_t>>{ context, std::forward<V>( v ) };
         }
         else if constexpr( is_event_v<S> )
         {
-            return var_signal<events<inner_t>>(
-                std::make_shared<var_node<events<inner_t>>>( context, std::forward<V>( v ) ) );
+            return var_signal<events<inner_t>>{ context, std::forward<V>( v ) };
         }
     }
     else
     {
-        return var_signal<S>( std::make_shared<var_node<S>>( context, std::forward<V>( v ) ) );
+        return var_signal<S>{ context, std::forward<V>( v ) };
     }
-}
-
-template <typename S, typename op_t, typename... Args>
-UREACT_WARN_UNUSED_RESULT auto make_temp_signal( context& context, Args&&... args )
-{
-    return temp_signal<S, op_t>(
-        std::make_shared<signal_op_node<S, op_t>>( context, std::forward<Args>( args )... ) );
 }
 
 } // namespace detail
@@ -1868,26 +1863,6 @@ UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
 }
 
 /*!
- * @brief Create a new signal node with value v = func(arg.get()).
- * This value is set on construction and updated when arg have changed
- *
- *  The signature of func should be equivalent to:
- *  * S func(const value_t&)
- */
-template <typename value_t,
-    typename in_f,
-    typename F = std::decay_t<in_f>,
-    typename S = std::invoke_result_t<F, value_t>,
-    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<value_t>>>
-UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& func )
-{
-    context& context = arg.get_context();
-
-    return detail::make_temp_signal<S, op_t>(
-        context, std::forward<in_f>( func ), get_node_ptr( arg ) );
-}
-
-/*!
  * @brief Create a new signal node with value v = func(arg_pack.get(), ...).
  * This value is set on construction and updated when any args have changed
  *
@@ -1904,11 +1879,23 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
     context& context = std::get<0>( arg_pack.data ).get_context();
 
     auto node_builder = [&context, &func]( const signal<values_t>&... args ) {
-        return detail::make_temp_signal<S, op_t>(
-            context, std::forward<in_f>( func ), get_node_ptr( args )... );
+        return temp_signal<S, op_t>{ context, std::forward<in_f>( func ), get_node_ptr( args )... };
     };
 
     return std::apply( node_builder, arg_pack.data );
+}
+
+/*!
+ * @brief Create a new signal node with value v = func(arg.get()).
+ * This value is set on construction and updated when arg have changed
+ *
+ *  The signature of func should be equivalent to:
+ *  * S func(const value_t&)
+ */
+template <typename value_t, typename in_f>
+UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& func )
+{
+    return make_signal( with( arg ), std::forward<in_f>( func ) );
 }
 
 /*!
@@ -2001,7 +1988,7 @@ template <template <typename> class functor_op,
     typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
 auto unary_operator_impl( const signal_t& arg )
 {
-    return make_temp_signal<S, op_t>( arg.get_context(), F(), get_node_ptr( arg ) );
+    return temp_signal<S, op_t>{ arg.get_context(), F(), get_node_ptr( arg ) };
 }
 
 template <template <typename> class functor_op,
@@ -2012,7 +1999,7 @@ template <template <typename> class functor_op,
     typename op_t = function_op<S, F, op_in_t>>
 auto unary_operator_impl( temp_signal<val_t, op_in_t>&& arg )
 {
-    return make_temp_signal<S, op_t>( arg.get_context(), F(), arg.steal_op() );
+    return temp_signal<S, op_t>{ arg.get_context(), F(), arg.steal_op() };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2031,7 +2018,7 @@ auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return make_temp_signal<S, op_t>( context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) );
+    return temp_signal<S, op_t>{ context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2049,8 +2036,8 @@ auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
 
     context& context = lhs.get_context();
 
-    return make_temp_signal<S, op_t>(
-        context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) );
+    return temp_signal<S, op_t>{
+        context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2068,8 +2055,8 @@ auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
 
     context& context = rhs.get_context();
 
-    return make_temp_signal<S, op_t>(
-        context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) );
+    return temp_signal<S, op_t>{
+        context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2086,7 +2073,7 @@ auto binary_operator_impl(
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return make_temp_signal<S, op_t>( context, F(), lhs.steal_op(), rhs.steal_op() );
+    return temp_signal<S, op_t>{ context, F(), lhs.steal_op(), rhs.steal_op() };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2102,7 +2089,7 @@ auto binary_operator_impl( temp_signal<left_val_t, left_op_t>&& lhs, const right
 {
     context& context = rhs.get_context();
 
-    return make_temp_signal<S, op_t>( context, F(), lhs.steal_op(), get_node_ptr( rhs ) );
+    return temp_signal<S, op_t>{ context, F(), lhs.steal_op(), get_node_ptr( rhs ) };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2118,7 +2105,7 @@ auto binary_operator_impl( const left_signal_t& lhs, temp_signal<right_val_t, ri
 {
     context& context = lhs.get_context();
 
-    return make_temp_signal<S, op_t>( context, F(), get_node_ptr( lhs ), rhs.steal_op() );
+    return temp_signal<S, op_t>{ context, F(), get_node_ptr( lhs ), rhs.steal_op() };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2135,8 +2122,8 @@ auto binary_operator_impl( temp_signal<left_val_t, left_op_t>&& lhs, right_val_i
 
     context& context = lhs.get_context();
 
-    return make_temp_signal<S, op_t>(
-        context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() );
+    return temp_signal<S, op_t>{
+        context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() };
 }
 
 template <template <typename, typename> class functor_op,
@@ -2153,8 +2140,7 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
 
     context& context = rhs.get_context();
 
-    return make_temp_signal<S, op_t>(
-        context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() );
+    return temp_signal<S, op_t>{ context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() };
 }
 
 } // namespace detail
@@ -2565,10 +2551,10 @@ public:
     event_source() = default;
 
     /*!
-     * @brief Construct from the given node
+     * @brief Construct a fully functional event source
      */
-    explicit event_source( std::shared_ptr<node_t>&& node )
-        : event_source::events( std::move( node ) )
+    explicit event_source( context& context )
+        : event_source::events( std::make_shared<node_t>( context ) )
     {}
 
     /*!
@@ -2740,10 +2726,10 @@ public:
     event_source() = default;
 
     /*!
-     * @brief Construct from the given node
+     * @brief Construct a fully functional event source
      */
-    explicit event_source( std::shared_ptr<node_t>&& node )
-        : event_source::events( std::move( node ) )
+    explicit event_source( context& context )
+        : event_source::events( std::make_shared<node_t>( context ) )
     {}
 
     /*!
@@ -3294,7 +3280,7 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 template <typename E = token>
 UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context ) -> event_source<E>
 {
-    return event_source<E>( std::make_shared<detail::event_source_node<E>>( context ) );
+    return event_source<E>{ context };
 }
 
 /*!

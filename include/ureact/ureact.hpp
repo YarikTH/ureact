@@ -1686,15 +1686,6 @@ public:
     {}
 
     /*!
-     * @brief Construct by appending signal to other signal_pack
-     */
-    template <typename... cur_values_t, typename append_value_t>
-    signal_pack(
-        const signal_pack<cur_values_t...>& cur_args, const signal<append_value_t>& new_arg )
-        : data( std::tuple_cat( cur_args.data, std::tie( new_arg ) ) )
-    {}
-
-    /*!
      * @brief The wrapped tuple
      */
     std::tuple<const signal<values_t>&...> data;
@@ -1706,6 +1697,7 @@ namespace detail
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
+    // TODO: use select_t to detect var_signal type and then construct it once
     if constexpr( is_signal_v<S> || is_event_v<S> )
     {
         using inner_t = typename S::value_t;

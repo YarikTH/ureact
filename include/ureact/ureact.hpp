@@ -159,12 +159,16 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     ClassName& operator=( const ClassName& ) = delete
 
 #define UREACT_MAKE_NONMOVABLE( ClassName )                                                        \
-    ClassName( ClassName&& ) = delete;                                                             \
-    ClassName& operator=( ClassName&& ) = delete
+    ClassName( ClassName&& ) noexcept = delete;                                                    \
+    ClassName& operator=( ClassName&& ) noexcept = delete
+
+#define UREACT_MAKE_COPYABLE( ClassName )                                                          \
+    ClassName( const ClassName& ) = default;                                                       \
+    ClassName& operator=( const ClassName& ) = default
 
 #define UREACT_MAKE_MOVABLE( ClassName )                                                           \
-    ClassName( ClassName&& ) = default;                                                            \
-    ClassName& operator=( ClassName&& ) = default
+    ClassName( ClassName&& ) noexcept = default;                                                   \
+    ClassName& operator=( ClassName&& ) noexcept = default
 
 #define UREACT_MAKE_MOVABLE_ONLY( ClassName )                                                      \
     UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
@@ -2316,8 +2320,9 @@ class event_stream_base : public reactive_base<event_stream_node<E>>
 {
 public:
     event_stream_base() = default;
-    event_stream_base( const event_stream_base& ) = default;
-    event_stream_base& operator=( const event_stream_base& ) = default;
+
+    UREACT_MAKE_COPYABLE( event_stream_base );
+    UREACT_MAKE_MOVABLE( event_stream_base );
 
     template <typename T, class = disable_if_same_t<T, event_stream_base>>
     explicit event_stream_base( T&& t )

@@ -1397,7 +1397,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
-        assert( !m_was_op_stolen && "Op was already stolen." );
+        assert( !m_was_op_stolen && "Op was already stolen" );
         m_was_op_stolen = true;
         m_op.detach( *this );
         return std::move( m_op );
@@ -2279,7 +2279,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT op_t steal_op()
     {
-        assert( !m_was_op_stolen && "Op was already stolen." );
+        assert( !m_was_op_stolen && "Op was already stolen" );
         m_was_op_stolen = true;
         m_op.detach( *this );
         return std::move( m_op );
@@ -2416,6 +2416,7 @@ public:
      */
     void emit( const E& e ) const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( e );
     }
 
@@ -2426,6 +2427,7 @@ public:
      */
     void emit( E&& e ) const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( std::move( e ) );
     }
 
@@ -2436,7 +2438,8 @@ public:
      */
     void emit() const
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
+        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( token::value );
     }
 
@@ -2447,6 +2450,7 @@ public:
      */
     void operator()( const E& e ) const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( e );
     }
 
@@ -2457,6 +2461,7 @@ public:
      */
     void operator()( E&& e ) const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( std::move( e ) );
     }
 
@@ -2468,7 +2473,8 @@ public:
      */
     void operator()() const
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
+        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( token::value );
     }
 
@@ -2481,6 +2487,7 @@ public:
      */
     const event_source& operator<<( const E& e ) const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( e );
         return *this;
     }
@@ -2496,6 +2503,7 @@ public:
      */
     const event_source& operator<<( E&& e ) const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         this->emit_event( std::move( e ) );
         return *this;
     }
@@ -2505,6 +2513,7 @@ public:
      */
     auto begin() const
     {
+        assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         return iterator{ *this };
     }
 };
@@ -2708,7 +2717,7 @@ public:
      */
     void emit()
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
+        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
         m_container->push_back( token::value );
     }
 
@@ -2740,7 +2749,7 @@ public:
      */
     void operator()()
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream." );
+        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
         m_container->push_back( token::value );
     }
 
@@ -3056,7 +3065,7 @@ template <typename source_t, typename... sources_t, typename E = source_t>
 UREACT_WARN_UNUSED_RESULT auto merge(
     const events<source_t>& source1, const events<sources_t>&... sources ) -> events<E>
 {
-    static_assert( sizeof...( sources_t ) > 0, "merge: 2+ arguments are required." );
+    static_assert( sizeof...( sources_t ) > 0, "merge: 2+ arguments are required" );
 
     using op_t = detail::event_merge_op<E,
         detail::event_stream_node_ptr_t<source_t>,
@@ -3442,7 +3451,7 @@ template <typename arg_t, typename... args_t>
 UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
     -> events<std::tuple<arg_t, args_t...>>
 {
-    static_assert( sizeof...( args_t ) >= 1, "zip: 2+ arguments are required." );
+    static_assert( sizeof...( args_t ) >= 1, "zip: 2+ arguments are required" );
 
     context& context = arg1.get_context();
     return events<std::tuple<arg_t, args_t...>>(
@@ -3847,7 +3856,7 @@ auto observe_events_impl(
     // clang-format on
 
     static_assert( !std::is_same_v<wrapper_t, void>,
-        "observe: Passed function does not match any of the supported signatures." );
+        "observe: Passed function does not match any of the supported signatures" );
 
     using node_t = events_observer_node<E, wrapper_t, deps_t...>;
 
@@ -4319,7 +4328,7 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
     // clang-format on
 
     static_assert( !std::is_same_v<node_t, void>,
-        "fold: Passed function does not match any of the supported signatures." );
+        "fold: Passed function does not match any of the supported signatures" );
 
     context& context = events.get_context();
 

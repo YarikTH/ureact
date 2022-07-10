@@ -23,12 +23,8 @@
 // * events<E&>
 // * event_source
 // * event_source<E>::iterator
-// * event_source<E&>
-// * event_source<E&>::iterator
 // * signal<S>
-// * signal<S&>
 // * var_signal
-// * var_signal<S&>
 // * temp_signal<S, ...>
 // * signal_pack
 // * observer
@@ -91,6 +87,109 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( stats.copy_count == 4 );
     CHECK( stats.move_count == 10 );
     CHECK( x.get().v == 1112 );
+}
+
+TEST_CASE( "EventSourceConstruction" )
+{
+    ureact::context ctx;
+
+    // default constructed event_source isn't linked to a reactive node, thus
+    // can't be used for anything but for following assignment
+    {
+        ureact::event_source<> null_src;
+        CHECK_FALSE( null_src.is_valid() );
+    }
+
+    // event_source can be created via free function semantically close to std::make_shared
+    // Event value type E has to be specified explicitly. It would be token if it is omitted
+    {
+        auto src = ureact::make_event_source<int>( ctx );
+        CHECK( src.is_valid() );
+    }
+
+    // event_source can be created using constructor receiving context reference
+    {
+        ureact::event_source<int> src{ ctx };
+        CHECK( src.is_valid() );
+    }
+
+    // event_source can be created using constructor receiving context reference
+    // in the form of AAA
+    {
+        auto src = ureact::event_source<int>{ ctx };
+        CHECK( src.is_valid() );
+    }
+}
+
+// We can emit events using a bunch of methods doing basically the same
+TEST_CASE( "EventSourceEmitting" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<int>( ctx );
+    auto _2 = 2;
+
+    auto result = make_collector( src );
+
+    SUBCASE( "emit method" )
+    {
+        src.emit( 1 );  // R-value
+        src.emit( _2 ); // L-value
+    }
+    SUBCASE( "function object" )
+    {
+        src( 1 );  // R-value
+        src( _2 ); // L-value
+    }
+    SUBCASE( "stream" )
+    {
+        src << 1   // R-value
+            << _2; // L-value
+    }
+    SUBCASE( "stl iterator" )
+    {
+        std::generate_n( src.begin(), 1, [] { return 1; } );                   // R-value
+        std::generate_n( src.begin(), 1, [&]() -> const int& { return _2; } ); // L-value
+    }
+
+    CHECK_EQ( result.get(), std::vector{ 1, 2 } );
+}
+
+// We can emit tokens using a bunch of methods doing basically the same
+TEST_CASE( "EventSourceEmittingTokenSpecialization" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_event_source<>( ctx );
+    auto token = ureact::token::value;
+
+    auto count = make_counter( src );
+
+    SUBCASE( "emit method" )
+    {
+        src.emit();                       // event_source<token> specialization without argument
+        src.emit( ureact::token::value ); // R-value
+        src.emit( token );                // L-value
+    }
+    SUBCASE( "function object" )
+    {
+        src();                       // event_source<token> specialization without argument
+        src( ureact::token::value ); // R-value
+        src( token );                // L-value
+    }
+    SUBCASE( "stream" )
+    {
+        src << ureact::token::value // R-value
+            << token                // L-value
+            << token;               // L-value
+    }
+    SUBCASE( "stl iterator" )
+    {
+        std::generate_n( src.begin(), 1, [] { return ureact::token::value; } );       // R-value
+        std::generate_n( src.begin(), 2, [&]() -> ureact::token& { return token; } ); // L-value
+    }
+
+    CHECK( count.get() == 3 );
 }
 
 // calculate sum and product of range of integers using value based function

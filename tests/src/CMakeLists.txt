@@ -17,7 +17,6 @@ add_executable(
     details/operators_test.cpp
     details/dynamic_signals_test.cpp
     details/ObserverTest.cpp
-    details/EventStreamTest.cpp
     details/SignalTest.cpp
 )
 

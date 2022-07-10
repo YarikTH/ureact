@@ -20,11 +20,10 @@
 // * event_emitter
 // * event_range
 // * events<E>
-// * events<E&>
-// * event_source
+// * event_source<E>
 // * event_source<E>::iterator
 // * signal<S>
-// * var_signal
+// * var_signal<S>
 // * temp_signal<S, ...>
 // * signal_pack
 // * observer
@@ -33,8 +32,32 @@
 // * detail::node_base
 // * detail::reactive_base
 
+// copyable and nothrow movable
+static_assert( std::is_default_constructible_v<ureact::events<>> );
+static_assert( std::is_copy_constructible_v<ureact::events<>> );
+static_assert( std::is_copy_assignable_v<ureact::events<>> );
+static_assert( std::is_move_constructible_v<ureact::events<>> );
+static_assert( std::is_move_assignable_v<ureact::events<>> );
+static_assert( std::is_nothrow_move_constructible_v<ureact::events<>> );
+static_assert( std::is_nothrow_move_assignable_v<ureact::events<>> );
 
-// default constructible
+
+// default constructive
+static_assert( std::is_default_constructible_v<ureact::event_source<>> );
+
+// constructive from context
+static_assert( std::is_constructible_v<ureact::event_source<>, ureact::context&> );
+
+// copyable and nothrow movable
+static_assert( std::is_copy_constructible_v<ureact::event_source<>> );
+static_assert( std::is_copy_assignable_v<ureact::event_source<>> );
+static_assert( std::is_move_constructible_v<ureact::event_source<>> );
+static_assert( std::is_move_assignable_v<ureact::event_source<>> );
+static_assert( std::is_nothrow_move_constructible_v<ureact::event_source<>> );
+static_assert( std::is_nothrow_move_assignable_v<ureact::event_source<>> );
+
+
+// default constructive
 static_assert( std::is_default_constructible_v<ureact::observer> );
 
 // nothrow movable only
@@ -89,12 +112,94 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( x.get().v == 1112 );
 }
 
+TEST_CASE( "EventsConstruction" )
+{
+    ureact::context ctx;
+
+    // default constructed events isn't linked to a reactive node, thus
+    // can't be used for anything but for following assignment
+    SUBCASE( "default constructed" )
+    {
+        ureact::events<> null_evt;
+        CHECK_FALSE( null_evt.is_valid() );
+    }
+
+    // events can be created via object slicing from event_source object
+    SUBCASE( "slicing" )
+    {
+        auto src = ureact::make_event_source<>( ctx );
+        ureact::events<> evt = src;
+
+        CHECK( evt.is_valid() );
+    }
+
+    // events can be created using various algorithms
+    SUBCASE( "algorithm" )
+    {
+        auto src1 = ureact::make_event_source<>( ctx );
+        auto src2 = ureact::make_event_source<>( ctx );
+        ureact::events<> evt = merge( src1, src2 );
+
+        CHECK( evt.is_valid() );
+    }
+
+    // copy and move construction of events
+    SUBCASE( "copy and move constructed" )
+    {
+        ureact::events<> evt = ureact::make_event_source<>( ctx );
+        CHECK( evt.is_valid() );
+
+        SUBCASE( "copy constructed" )
+        {
+            ureact::events<> evt_copy = evt;
+            CHECK( evt_copy.is_valid() );
+            CHECK( evt.is_valid() );
+        }
+
+        SUBCASE( "move constructed" )
+        {
+            ureact::events<> evt_move = std::move( evt );
+            CHECK( evt_move.is_valid() );
+            CHECK_FALSE( evt.is_valid() );
+        }
+    }
+}
+
+TEST_CASE( "EventsAssignmentConstruction" )
+{
+    ureact::context ctx;
+
+    ureact::events<> src = ureact::make_event_source<>( ctx );
+    CHECK( src.is_valid() );
+
+    SUBCASE( "copy assignment" )
+    {
+        ureact::events<> src_copy;
+        CHECK_FALSE( src_copy.is_valid() );
+
+        src_copy = src;
+        CHECK( src_copy.is_valid() );
+        CHECK( src.is_valid() );
+    }
+
+    SUBCASE( "move assignment" )
+    {
+        ureact::events<> src_move;
+        CHECK_FALSE( src_move.is_valid() );
+
+        src_move = std::move( src );
+        CHECK( src_move.is_valid() );
+        CHECK_FALSE( src.is_valid() );
+    }
+}
+
 TEST_CASE( "EventSourceConstruction" )
 {
     ureact::context ctx;
 
     // default constructed event_source isn't linked to a reactive node, thus
     // can't be used for anything but for following assignment
+    SUBCASE( "default constructed" )
     {
         ureact::event_source<> null_src;
         CHECK_FALSE( null_src.is_valid() );
@@ -102,12 +207,14 @@ TEST_CASE( "EventSourceConstruction" )
 
     // event_source can be created via free function semantically close to std::make_shared
     // Event value type E has to be specified explicitly. It would be token if it is omitted
+    SUBCASE( "make_event_source<>()" )
     {
-        auto src = ureact::make_event_source<int>( ctx );
+        auto src = ureact::make_event_source<>( ctx );
         CHECK( src.is_valid() );
     }
 
     // event_source can be created using constructor receiving context reference
+    SUBCASE( "fully constructed" )
     {
         ureact::event_source<int> src{ ctx };
         CHECK( src.is_valid() );
@@ -115,9 +222,59 @@ TEST_CASE( "EventSourceConstruction" )
 
     // event_source can be created using constructor receiving context reference
     // in the form of AAA
+    SUBCASE( "fully constructed AAA" )
     {
         auto src = ureact::event_source<int>{ ctx };
         CHECK( src.is_valid() );
+    }
+
+    // copy and move construction of event_source
+    SUBCASE( "copy and move constructed" )
+    {
+        ureact::event_source<int> src{ ctx };
+        CHECK( src.is_valid() );
+
+        SUBCASE( "copy constructed" )
+        {
+            ureact::event_source<int> src_copy = src;
+            CHECK( src_copy.is_valid() );
+            CHECK( src.is_valid() );
+        }
+
+        SUBCASE( "move constructed" )
+        {
+            ureact::event_source<int> src_move = std::move( src );
+            CHECK( src_move.is_valid() );
+            CHECK_FALSE( src.is_valid() );
+        }
+    }
+}
+
+TEST_CASE( "EventSourceAssignmentConstruction" )
+{
+    ureact::context ctx;
+
+    ureact::event_source<int> src{ ctx };
+    CHECK( src.is_valid() );
+
+    SUBCASE( "copy assignment" )
+    {
+        ureact::event_source<int> src_copy;
+        CHECK_FALSE( src_copy.is_valid() );
+
+        src_copy = src;
+        CHECK( src_copy.is_valid() );
+        CHECK( src.is_valid() );
+    }
+
+    SUBCASE( "move assignment" )
+    {
+        ureact::event_source<int> src_move;
+        CHECK_FALSE( src_move.is_valid() );
+
+        src_move = std::move( src );
+        CHECK( src_move.is_valid() );
+        CHECK_FALSE( src.is_valid() );
     }
 }
 

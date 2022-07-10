@@ -52,7 +52,7 @@ std::ostream& operator<<( std::ostream& os, const Company& company )
 class Employee
 {
 public:
-    var_signal<Company&> company;
+    var_signal<std::reference_wrapper<Company>> company;
 
     Employee( context& ctx, Company& company )
         : company( make_var( ctx, std::ref( company ) ) )

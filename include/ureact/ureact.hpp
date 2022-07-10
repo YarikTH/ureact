@@ -1460,7 +1460,7 @@ private:
 
 /*!
  * @brief Reactive variable that can propagate its changes to dependents and react to changes of
- * its dependencies (Specialization for non-reference types)
+ * its dependencies
  *
  *  A signal is a reactive variable that can propagate its changes to dependents
  *  and react to changes of its dependencies.
@@ -1513,62 +1513,7 @@ public:
 };
 
 /*!
- * @brief Reactive variable that can propagate its changes to dependents and react to changes of
- * its dependencies (Specialization for references)
- *
- *  A signal is a reactive variable that can propagate its changes to dependents
- *  and react to changes of its dependencies.
- *
- *  Instances of this class act as a proxies to signal nodes. It takes shared
- *  ownership of the node, so while it exists, the node will not be destroyed.
- *  Copy, move and assignment semantics are similar to std::shared_ptr.
- */
-template <typename S>
-class signal<S&> : public detail::signal_base<std::reference_wrapper<S>>
-{
-protected:
-    using node_t = detail::signal_node<std::reference_wrapper<S>>;
-
-public:
-    /*!
-     * @brief Alias to value type to use in metaprogramming
-     */
-    using value_t = S;
-
-    /*!
-     * @brief Default construct @ref signal
-     *
-     * Default constructed @ref signal is not attached to node, so it is not valid
-     */
-    signal() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit signal( std::shared_ptr<node_t>&& node )
-        : signal::signal_base( std::move( node ) )
-    {}
-
-    /*!
-     * @brief Return value of linked node
-     */
-    UREACT_WARN_UNUSED_RESULT const S& get() const
-    {
-        return this->get_value();
-    }
-
-    /*!
-     * @brief Return value of linked node
-     */
-    UREACT_WARN_UNUSED_RESULT const S& operator()() const
-    {
-        return this->get_value();
-    }
-};
-
-/*!
  * @brief Source signals which values can be manually changed
- * (Specialization for non-reference types)
  *
  *  This class extends the immutable signal interface with functions that support
  *  imperative value input. In the dataflow graph, input signals are sources.
@@ -1677,62 +1622,6 @@ public:
 };
 
 /*!
- * @brief Source signals which values can be manually changed
- * (Specialization for references)
- *
- *  This class extends the immutable signal interface with functions that support
- *  imperative value input. In the dataflow graph, input signals are sources.
- *  As such, they don't have any predecessors.
- */
-template <typename S>
-class var_signal<S&> final : public signal<std::reference_wrapper<S>>
-{
-private:
-    using node_t = detail::var_node<std::reference_wrapper<S>>;
-
-public:
-    /*!
-     * @brief Default construct @ref var_signal
-     *
-     * Default constructed @ref var_signal is not attached to node, so it is not valid.
-     */
-    var_signal() = default;
-
-    /*!
-     * @brief Construct a fully functional var signal
-     */
-    var_signal( context& context, std::reference_wrapper<S> value )
-        : var_signal::signal( std::make_shared<node_t>( context, value ) )
-    {}
-
-    /*!
-     * @brief Set new signal value
-     *
-     * Set the the signal value of the linked variable signal node to a new_value.
-     * If the old value equals the new value, the call has no effect.
-     *
-     * Furthermore, if set was called inside of a transaction function, it will
-     * return after the changed value has been set and change propagation is delayed
-     * until the transaction function returns.
-     * Otherwise, propagation starts immediately and Set blocks until it's done.
-     */
-    void set( std::reference_wrapper<S> new_value ) const
-    {
-        this->set_value( new_value );
-    }
-
-    /*!
-     * @brief Operator version of set()
-     *
-     * Semantically equivalent to set().
-     */
-    void operator<<=( std::reference_wrapper<S> new_value ) const
-    {
-        this->set_value( new_value );
-    }
-};
-
-/*!
  * @brief This signal that exposes additional type information of the linked node, which enables
  * r-value based node merging at construction time
  *
@@ -1810,17 +1699,9 @@ public:
 namespace detail
 {
 
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, std::reference_wrapper<S> v )
-{
-    return var_signal<S&>{ context, v };
-}
-
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
-    //    static_assert( !detail::is_base_of_template<std::reference_wrapper, S>::value );
-
     if constexpr( is_signal_v<S> || is_event_v<S> )
     {
         using inner_t = typename S::value_t;
@@ -2464,7 +2345,7 @@ protected:
 } // namespace detail
 
 /*!
- * @brief Reactive event stream class (Specialization for non-reference types)
+ * @brief Reactive event stream class
  *
  *  An instance of this class acts as a proxy to an event stream node.
  *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
@@ -2498,39 +2379,7 @@ public:
 };
 
 /*!
- * @brief Reactive event stream class (Specialization for references)
- *
- *  An instance of this class acts as a proxy to an event stream node.
- *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
- *  Copy, move and assignment semantics are similar to std::shared_ptr.
- */
-template <typename E>
-class events<E&> : public detail::event_stream_base<std::reference_wrapper<E>>
-{
-private:
-    using node_t = detail::event_stream_node<std::reference_wrapper<E>>;
-
-public:
-    /// Alias to value type to use in metaprogramming
-    using value_t = E;
-
-    /*!
-     * @brief Default construct @ref events
-     *
-     * Default constructed @ref events is not attached to node, so it is not valid
-     */
-    events() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit events( std::shared_ptr<node_t>&& node )
-        : events::event_stream_base( std::move( node ) )
-    {}
-};
-
-/*!
- * @brief @ref events that support imperative input (Specialization for non-reference types)
+ * @brief @ref events that support imperative input
  *
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
@@ -2697,114 +2546,6 @@ public:
     iterator& operator=( E&& e )
     {
         m_parent->emit_event( std::move( e ) );
-        return *this;
-    }
-
-private:
-    const event_source* m_parent;
-};
-
-/*!
- * @brief @ref events that support imperative input (Specialization for references)
- *
- *  An event source extends the immutable @ref events interface with functions that support imperative input.
- */
-template <typename E>
-class event_source<E&> final : public events<std::reference_wrapper<E>>
-{
-private:
-    using node_t = detail::event_source_node<std::reference_wrapper<E>>;
-
-public:
-    class iterator;
-
-    /*!
-     * @brief Default construct @ref event_source
-     *
-     * Default constructed @ref event_source is not attached to node, so it is not valid
-     */
-    event_source() = default;
-
-    /*!
-     * @brief Construct a fully functional event source
-     */
-    explicit event_source( context& context )
-        : event_source::events( std::make_shared<node_t>( context ) )
-    {}
-
-    /*!
-     * @brief Adds e to the queue of outgoing events of the linked event source node
-     *
-     * If emit() was called inside of a transaction function, it will return after
-     * the event has been queued and propagation is delayed until the transaction
-     * function returns.
-     * Otherwise, propagation starts immediately and emit() blocks until it’s done.
-     */
-    void emit( std::reference_wrapper<E> e ) const
-    {
-        this->emit_event( e );
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events of the linked event source node
-     *
-     * Function object version of emit(std::reference_wrapper<E> e)
-     */
-    void operator()( std::reference_wrapper<E> e ) const
-    {
-        this->emit_event( e );
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events of the linked event source node
-     *
-     * Stream equivalent to emit(std::reference_wrapper<E> e)
-     *
-     * @note chaining multiple events in a single statement will not execute them in a single transaction
-     */
-    const event_source& operator<<( std::reference_wrapper<E> e ) const
-    {
-        this->emit_event( e );
-        return *this;
-    }
-
-    /*!
-     * @brief Returns std compatible iterator for emitting using std algorithms like std::copy()
-     */
-    auto begin() const
-    {
-        return iterator{ *this };
-    }
-};
-
-/*!
- * @brief Iterator for compatibility with std algorithms
- */
-template <typename E>
-class event_source<E&>::iterator final
-{
-public:
-    UREACT_MAKE_NOOP_ITERATOR( iterator );
-
-    using iterator_category = std::output_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = std::reference_wrapper<E>;
-    using pointer = value_type*;
-    using reference = value_type&;
-
-    /*!
-     * @brief Constructor
-     */
-    explicit iterator( const event_source& parent )
-        : m_parent( &parent )
-    {}
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     */
-    iterator& operator=( std::reference_wrapper<E> e )
-    {
-        m_parent->emit_event( e );
         return *this;
     }
 

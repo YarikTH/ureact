@@ -36,7 +36,7 @@ public:
 class Employee
 {
 public:
-    ureact::var_signal<Company&> company;
+    ureact::var_signal<std::reference_wrapper<Company>> company;
 
     Employee( ureact::context& ctx, Company& companyRef )
         : company( make_var( ctx, std::ref( companyRef ) ) )

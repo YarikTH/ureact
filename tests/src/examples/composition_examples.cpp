@@ -39,7 +39,7 @@ std::ostream& operator<<( std::ostream& os, const Company& company )
 class Employee
 {
 public:
-    ureact::var_signal<Company&> company;
+    ureact::var_signal<std::reference_wrapper<Company>> company;
 
     Employee( ureact::context& ctx, Company& company )
         : company( make_var( ctx, std::ref( company ) ) )

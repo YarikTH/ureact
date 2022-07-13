@@ -1504,6 +1504,7 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT const S& get() const
     {
+        assert( this->is_valid() && "Can't get value of signal not attached to a node" );
         return this->get_value();
     }
 
@@ -1512,6 +1513,7 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT const S& operator()() const
     {
+        assert( this->is_valid() && "Can't get value of signal not attached to a node" );
         return this->get_value();
     }
 };
@@ -1568,6 +1570,7 @@ public:
      */
     void set( const S& new_value ) const
     {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
         this->set_value( new_value );
     }
 
@@ -1578,6 +1581,7 @@ public:
      */
     void set( S&& new_value ) const
     {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
         this->set_value( std::move( new_value ) );
     }
 
@@ -1596,6 +1600,7 @@ public:
     {
         static_assert(
             std::is_invocable_r_v<void, F, S&>, "Modifier functions should be void(S&)" );
+        assert( this->is_valid() && "Can't modify value of var_signal not attached to a node" );
         this->modify_value( func );
     }
 
@@ -1606,6 +1611,7 @@ public:
      */
     void operator<<=( const S& new_value ) const
     {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
         this->set_value( new_value );
     }
 
@@ -1618,6 +1624,7 @@ public:
      */
     void operator<<=( S&& new_value ) const
     {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
         this->set_value( std::move( new_value ) );
     }
 
@@ -1631,6 +1638,7 @@ public:
     {
         static_assert(
             std::is_invocable_r_v<void, F, S&>, "Modifier functions should be void(S&)" );
+        assert( this->is_valid() && "Can't modify value of var_signal not attached to a node" );
         this->modify_value( func );
     }
 };

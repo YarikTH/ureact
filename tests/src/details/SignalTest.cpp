@@ -639,8 +639,8 @@ TEST_SUITE( "SignalTest" )
     {
         context ctx;
 
-        auto in1 = make_event_source<int>( ctx );
-        auto in2 = make_event_source<int>( ctx );
+        auto in1 = make_source<int>( ctx );
+        auto in2 = make_source<int>( ctx );
 
         auto sig = make_var( ctx, in1 );
 

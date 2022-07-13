@@ -3035,7 +3035,7 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
  *  Event value type E has to be specified explicitly. It would be token if it is omitted.
  */
 template <typename E = token>
-UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context ) -> event_source<E>
+UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
 {
     return event_source<E>{ context };
 }

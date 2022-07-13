@@ -110,8 +110,8 @@ TEST_SUITE( "OperationsTest" )
         auto prod = make_signal( with( in1, in2 ), []( int a, int b ) { return a * b; } );
         auto diff = make_signal( with( in1, in2 ), []( int a, int b ) { return a - b; } );
 
-        auto src1 = make_event_source( ctx );
-        auto src2 = make_event_source<int>( ctx );
+        auto src1 = make_source( ctx );
+        auto src2 = make_source<int>( ctx );
 
         observe( src1, with( sum, prod, diff ), []( token, int sum, int prod, int diff ) {
             CHECK_EQ( sum, 33 );
@@ -137,7 +137,7 @@ TEST_SUITE( "OperationsTest" )
     {
         context ctx;
 
-        auto src = make_event_source( ctx );
+        auto src = make_source( ctx );
 
         int count = 0;
 
@@ -169,7 +169,7 @@ TEST_SUITE( "OperationsTest" )
         auto prod = make_signal( with( in1, in2 ), []( int a, int b ) { return a * b; } );
         auto diff = make_signal( with( in1, in2 ), []( int a, int b ) { return a - b; } );
 
-        auto src = make_event_source( ctx );
+        auto src = make_source( ctx );
 
         int count = 0;
 

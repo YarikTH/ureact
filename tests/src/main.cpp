@@ -220,7 +220,7 @@ TEST_CASE( "VarSignalConstruction" )
     // var_signal can be created using constructor receiving context reference and value
     SUBCASE( "fully constructed" )
     {
-        ureact::var_signal<int> src{ ctx, 3 };
+        ureact::var_signal src{ ctx, 3 };
         CHECK( src.is_valid() );
     }
 
@@ -228,7 +228,7 @@ TEST_CASE( "VarSignalConstruction" )
     // in the form of AAA
     SUBCASE( "fully constructed AAA" )
     {
-        auto src = ureact::var_signal<int>{ ctx, 1 };
+        auto src = ureact::var_signal{ ctx, 1 };
         CHECK( src.is_valid() );
     }
 
@@ -344,7 +344,7 @@ TEST_CASE( "EventsConstruction" )
     // events can be created via object slicing from event_source object
     SUBCASE( "slicing" )
     {
-        auto src = ureact::make_event_source<>( ctx );
+        auto src = ureact::make_source<>( ctx );
         ureact::events<> evt = src;
 
         CHECK( evt.is_valid() );
@@ -353,8 +353,8 @@ TEST_CASE( "EventsConstruction" )
     // events can be created using various algorithms
     SUBCASE( "algorithm" )
     {
-        auto src1 = ureact::make_event_source<>( ctx );
-        auto src2 = ureact::make_event_source<>( ctx );
+        auto src1 = ureact::make_source<>( ctx );
+        auto src2 = ureact::make_source<>( ctx );
         ureact::events<> evt = merge( src1, src2 );
 
         CHECK( evt.is_valid() );
@@ -363,7 +363,7 @@ TEST_CASE( "EventsConstruction" )
     // copy and move construction of events
     SUBCASE( "copy and move constructed" )
     {
-        ureact::events<> evt = ureact::make_event_source<>( ctx );
+        ureact::events<> evt = ureact::make_source<>( ctx );
         CHECK( evt.is_valid() );
 
         SUBCASE( "copy constructed" )
@@ -386,7 +386,7 @@ TEST_CASE( "EventsAssignmentConstruction" )
 {
     ureact::context ctx;
 
-    ureact::events<> src = ureact::make_event_source<>( ctx );
+    ureact::events<> src = ureact::make_source<>( ctx );
     CHECK( src.is_valid() );
 
     SUBCASE( "copy assignment" )
@@ -424,9 +424,9 @@ TEST_CASE( "EventSourceConstruction" )
 
     // event_source can be created via free function semantically close to std::make_shared
     // Event value type E has to be specified explicitly. It would be token if it is omitted
-    SUBCASE( "make_event_source<>()" )
+    SUBCASE( "make_source<>()" )
     {
-        auto src = ureact::make_event_source<>( ctx );
+        auto src = ureact::make_source<>( ctx );
         CHECK( src.is_valid() );
     }
 
@@ -540,7 +540,7 @@ TEST_CASE( "EventSourceEmitting" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     auto _2 = 2;
 
     auto result = make_collector( src );
@@ -574,7 +574,7 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<>( ctx );
+    auto src = ureact::make_source<>( ctx );
     auto token = ureact::token::value;
 
     auto count = make_counter( src );
@@ -611,7 +611,7 @@ TEST_CASE( "FoldByValue" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::signal<int> sum;
     ureact::signal<int> product;
     int plus_calls = 0;
@@ -655,7 +655,7 @@ TEST_CASE( "FoldByRef" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::signal<int> sum_byval;
     ureact::signal<int> sum_byref;
     ureact::signal<int> product_byref;
@@ -728,7 +728,7 @@ TEST_CASE( "FoldByValueSynced" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     auto mult = ureact::make_var( ctx, 1 );
     ureact::signal<int> sum;
     ureact::signal<int> batch_sum;
@@ -794,7 +794,7 @@ TEST_CASE( "FoldByRefSynced" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     auto mult = ureact::make_var( ctx, 1 );
     ureact::signal<int> sum_byval;
     ureact::signal<int> sum_byref;
@@ -896,7 +896,7 @@ TEST_CASE( "FoldVsAccumulate" )
     {
         ureact::context ctx;
 
-        auto src = ureact::make_event_source<int>( ctx );
+        auto src = ureact::make_source<int>( ctx );
         ureact::signal<int> sum_s;
         ureact::signal<int> product_s;
         ureact::signal<std::string> dashed_s;
@@ -934,9 +934,9 @@ TEST_CASE( "Zip" )
 {
     ureact::context ctx;
 
-    auto x = ureact::make_event_source<int>( ctx );
-    auto y = ureact::make_event_source<std::string>( ctx );
-    auto z = ureact::make_event_source<char>( ctx );
+    auto x = ureact::make_source<int>( ctx );
+    auto y = ureact::make_source<std::string>( ctx );
+    auto z = ureact::make_source<char>( ctx );
 
     using zipped_t = std::tuple<int, std::string, char>;
 
@@ -964,9 +964,9 @@ TEST_CASE( "Merge" )
 {
     ureact::context ctx;
 
-    auto src1 = ureact::make_event_source<int>( ctx );
-    auto src2 = ureact::make_event_source<int>( ctx );
-    auto src3 = ureact::make_event_source<int>( ctx );
+    auto src1 = ureact::make_source<int>( ctx );
+    auto src2 = ureact::make_source<int>( ctx );
+    auto src3 = ureact::make_source<int>( ctx );
 
     ureact::events<int> src = merge( src1, src2, src3 );
 
@@ -986,7 +986,7 @@ TEST_CASE( "Process" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<std::pair<unsigned, int>>( ctx );
+    auto src = ureact::make_source<std::pair<unsigned, int>>( ctx );
     ureact::events<int> processed;
     int calls = 0;
 
@@ -1027,7 +1027,7 @@ TEST_CASE( "ProcessSynced" )
 
     using record_t = std::pair<std::string, int>;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     auto n = ureact::make_var<unsigned>( ctx, {} );
     auto timestamp = ureact::make_var<std::string>( ctx, {} );
     ureact::events<record_t> processed;
@@ -1082,7 +1082,7 @@ TEST_CASE( "Transform" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> squared;
     const auto square = []( auto i ) { return i * i; };
 
@@ -1110,7 +1110,7 @@ TEST_CASE( "TransformSynced" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     auto limit_range_begin = ureact::make_var( ctx, 4 );
     auto limit_range_size = ureact::make_var( ctx, 4 );
 
@@ -1170,7 +1170,7 @@ TEST_CASE( "Filter" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> filtered;
     const auto is_even = []( auto i ) { return i % 2 == 0; };
 
@@ -1199,7 +1199,7 @@ TEST_CASE( "FilterSynced" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     auto limit_range_begin = ureact::make_var( ctx, 4 );
     auto limit_range_size = ureact::make_var( ctx, 4 );
 
@@ -1257,7 +1257,7 @@ TEST_CASE( "TakeOrDropN" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> first_n;
     ureact::events<int> without_first_n;
 
@@ -1295,7 +1295,7 @@ TEST_CASE( "Once" )
 
     const auto is_negative = [&]( auto i ) { return i < 0; };
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> negatives = ureact::filter( src, is_negative );
     ureact::events<int> first;
     ureact::events<int> first_negative;
@@ -1330,7 +1330,7 @@ TEST_CASE( "TakeOrDropWhile" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> before_negative;
     ureact::events<int> from_negative;
 
@@ -1369,7 +1369,7 @@ TEST_CASE( "TakeOrDropWhileSynced" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> before_overflow;
     ureact::events<int> from_overflow;
 
@@ -1419,7 +1419,7 @@ TEST_CASE( "Unique" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::events<int> uniq;
 
     SUBCASE( "Functional syntax" )
@@ -1447,7 +1447,7 @@ TEST_CASE( "Hold" )
 {
     ureact::context ctx;
 
-    auto src = ureact::make_event_source<int>( ctx );
+    auto src = ureact::make_source<int>( ctx );
     ureact::signal<int> held;
 
     SUBCASE( "Functional syntax" )
@@ -1477,7 +1477,7 @@ TEST_CASE( "Snapshot" )
 {
     ureact::context ctx;
 
-    auto trigger = ureact::make_event_source( ctx );
+    auto trigger = ureact::make_source( ctx );
     auto target = ureact::make_var<int>( ctx, -1 );
     ureact::signal<int> snap;
 
@@ -1522,7 +1522,7 @@ TEST_CASE( "Pulse" )
 {
     ureact::context ctx;
 
-    auto trigger = ureact::make_event_source( ctx );
+    auto trigger = ureact::make_source( ctx );
     auto target = ureact::make_var<int>( ctx, -1 );
     ureact::events<int> beat;
 

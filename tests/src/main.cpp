@@ -112,6 +112,223 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( x.get().v == 1112 );
 }
 
+TEST_CASE( "SignalConstruction" )
+{
+    ureact::context ctx;
+
+    // default constructed signal isn't linked to a reactive node, thus
+    // can't be used for anything but for following assignment
+    SUBCASE( "default constructed" )
+    {
+        ureact::signal<int> null_signal;
+        CHECK_FALSE( null_signal.is_valid() );
+    }
+
+    // signal can be created via object slicing from var_signal object
+    SUBCASE( "slicing" )
+    {
+        auto var = ureact::make_var<int>( ctx, 5 );
+        ureact::signal sig = var;
+
+        CHECK( sig.is_valid() );
+    }
+
+    // signal can be created using various algorithms (in particular using overloaded operator)
+    SUBCASE( "algorithm" )
+    {
+        auto var = ureact::make_var<int>( ctx, 5 );
+        ureact::signal sig = make_signal( var, []( int a ) { return a; } );
+
+        CHECK( sig.is_valid() );
+    }
+
+    // copy and move construction of signal
+    SUBCASE( "copy and move constructed" )
+    {
+        ureact::signal<int> sig = ureact::make_var<int>( ctx, 42 );
+        CHECK( sig.is_valid() );
+
+        SUBCASE( "copy constructed" )
+        {
+            ureact::signal sig_copy = sig;
+            CHECK( sig_copy.is_valid() );
+            CHECK( sig.is_valid() );
+        }
+
+        SUBCASE( "move constructed" )
+        {
+            ureact::signal sig_move = std::move( sig );
+            CHECK( sig_move.is_valid() );
+            CHECK_FALSE( sig.is_valid() );
+        }
+    }
+}
+
+TEST_CASE( "SignalAssignmentConstruction" )
+{
+    ureact::context ctx;
+
+    ureact::signal<int> src = ureact::make_var<int>( ctx, 42 );
+    CHECK( src.is_valid() );
+
+    SUBCASE( "copy assignment" )
+    {
+        ureact::signal<int> src_copy;
+        CHECK_FALSE( src_copy.is_valid() );
+
+        src_copy = src;
+        CHECK( src_copy.is_valid() );
+        CHECK( src.is_valid() );
+    }
+
+    SUBCASE( "move assignment" )
+    {
+        ureact::signal<int> src_move;
+        CHECK_FALSE( src_move.is_valid() );
+
+        src_move = std::move( src );
+        CHECK( src_move.is_valid() );
+        CHECK_FALSE( src.is_valid() );
+    }
+}
+
+TEST_CASE( "VarSignalConstruction" )
+{
+    ureact::context ctx;
+
+    // default constructed var_signal isn't linked to a reactive node, thus
+    // can't be used for anything but for following assignment
+    SUBCASE( "default constructed" )
+    {
+        ureact::var_signal<int> null_var;
+        CHECK_FALSE( null_var.is_valid() );
+    }
+
+    // var_signal can be created via free function semantically close to std::make_shared
+    // Signal value type S can be specified explicitly, but doesn't have to.
+    SUBCASE( "make_var()" )
+    {
+        auto var = ureact::make_var( ctx, 8 );
+        CHECK( var.is_valid() );
+    }
+    SUBCASE( "make_var<T>()" )
+    {
+        auto var = ureact::make_var<float>( ctx, 6 );
+        CHECK( var.is_valid() );
+    }
+
+    // var_signal can be created using constructor receiving context reference and value
+    SUBCASE( "fully constructed" )
+    {
+        ureact::var_signal<int> src{ ctx, 3 };
+        CHECK( src.is_valid() );
+    }
+
+    // var_signal can be created using constructor receiving context reference
+    // in the form of AAA
+    SUBCASE( "fully constructed AAA" )
+    {
+        auto src = ureact::var_signal<int>{ ctx, 1 };
+        CHECK( src.is_valid() );
+    }
+
+    // copy and move construction of var_signal
+    SUBCASE( "copy and move constructed" )
+    {
+        ureact::var_signal<int> src{ ctx, 0 };
+        CHECK( src.is_valid() );
+
+        SUBCASE( "copy constructed" )
+        {
+            ureact::var_signal<int> src_copy = src;
+            CHECK( src_copy.is_valid() );
+            CHECK( src.is_valid() );
+        }
+
+        SUBCASE( "move constructed" )
+        {
+            ureact::var_signal<int> src_move = std::move( src );
+            CHECK( src_move.is_valid() );
+            CHECK_FALSE( src.is_valid() );
+        }
+    }
+}
+
+TEST_CASE( "VarSignalAssignmentConstruction" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal<int> src{ ctx, -1 };
+    CHECK( src.is_valid() );
+
+    SUBCASE( "copy assignment" )
+    {
+        ureact::var_signal<int> src_copy;
+        CHECK_FALSE( src_copy.is_valid() );
+
+        src_copy = src;
+        CHECK( src_copy.is_valid() );
+        CHECK( src.is_valid() );
+    }
+
+    SUBCASE( "move assignment" )
+    {
+        ureact::var_signal<int> src_move;
+        CHECK_FALSE( src_move.is_valid() );
+
+        src_move = std::move( src );
+        CHECK( src_move.is_valid() );
+        CHECK_FALSE( src.is_valid() );
+    }
+}
+
+// Signal has shared_ptr semantics. They are literally shared_ptr to reactive node
+// that does all the work and form dependency tree
+TEST_CASE( "SignalSmartPointerSemantics" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal<int> x{ ctx, 1 };
+
+    auto a = x * 2;
+
+    auto result_x2 = +a;
+
+    //       x       //
+    //       |       //
+    //    a(x * 2)   //
+    //       |       //
+    //   result_x2   //
+
+    // reassigning of 'a' doesn't affect result_x2, because it depends not on
+    // 'a' itself, but on reactive node it pointed before
+    a = x * 3;
+
+    auto result_x3 = +a;
+
+    //                x                 //
+    //          /           \           //
+    //   a(x * 2)           a(x * 3)    //
+    //       |                 |        //
+    //  result_x2          result_x3    //
+
+    CHECK( result_x2.get() == 2 );
+    CHECK( result_x3.get() == 3 );
+
+    x <<= 2;
+
+    CHECK( result_x2.get() == 4 );
+    CHECK( result_x3.get() == 6 );
+}
+
+
+
+
+
+
+
+
+
 TEST_CASE( "EventsConstruction" )
 {
     ureact::context ctx;

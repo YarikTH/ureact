@@ -1539,10 +1539,20 @@ public:
 
     /*!
      * @brief Construct a fully functional var signal
+     *
+     * @note replacing type of value with universal reference version prevents class template argument deduction
      */
-    template <class V>
-    var_signal( context& context, V&& value )
-        : var_signal::signal( std::make_shared<node_t>( context, std::forward<V>( value ) ) )
+    var_signal( context& context, const S& value )
+        : var_signal::signal( std::make_shared<node_t>( context, value ) )
+    {}
+
+    /*!
+     * @brief Construct a fully functional var signal
+     *
+     * @note replacing type of value with universal reference version prevents class template argument deduction
+     */
+    var_signal( context& context, S&& value )
+        : var_signal::signal( std::make_shared<node_t>( context, std::move( value ) ) )
     {}
 
     /*!
@@ -1646,7 +1656,7 @@ public:
      * @brief Construct a fully functional temp signal
      */
     template <typename... Args>
-    temp_signal( context& context, Args&&... args )
+    explicit temp_signal( context& context, Args&&... args )
         : temp_signal::signal( std::make_shared<node_t>( context, std::forward<Args>( args )... ) )
     {}
 

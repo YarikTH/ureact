@@ -76,14 +76,6 @@ auto make_collector( const ureact::events<E>& events )
     return ureact::fold( events, std::vector<E>{}, collector );
 }
 
-// use fold expression to count received events
-template <class E>
-auto make_counter( const ureact::events<E>& events )
-{
-    const auto counter = []( size_t& accum, const E& ) { ++accum; };
-    return ureact::fold( events, size_t{ 0 }, counter );
-}
-
 template <class T>
 auto make_deeper( T&& signal )
 {

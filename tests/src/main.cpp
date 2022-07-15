@@ -577,7 +577,7 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
     auto src = ureact::make_source<>( ctx );
     auto token = ureact::token::value;
 
-    auto count = make_counter( src );
+    auto counted = src | ureact::count();
 
     SUBCASE( "emit method" )
     {
@@ -603,7 +603,7 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
         std::generate_n( src.begin(), 2, [&]() -> ureact::token& { return token; } ); // L-value
     }
 
-    CHECK( count.get() == 3 );
+    CHECK( counted.get() == 3 );
 }
 
 // calculate sum and product of range of integers using value based function
@@ -684,8 +684,8 @@ TEST_CASE( "FoldByRef" )
         product_byref = src | ureact::fold( 1, batch_multiplies_ref );
     }
 
-    auto sum_byval_changes = make_counter( monitor( sum_byval ) );
-    auto sum_byref_changes = make_counter( monitor( sum_byref ) );
+    auto sum_byval_changes = count( monitor( sum_byval ) );
+    auto sum_byref_changes = count( monitor( sum_byref ) );
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -826,8 +826,8 @@ TEST_CASE( "FoldByRefSynced" )
     //        batch_sum_byref = src | ureact::fold( 0, with( mult ), batch_plus_ref );
     //    }
 
-    auto sum_byval_changes = make_counter( monitor( sum_byval ) );
-    auto sum_byref_changes = make_counter( monitor( sum_byref ) );
+    auto sum_byval_changes = count( monitor( sum_byval ) );
+    auto sum_byref_changes = count( monitor( sum_byref ) );
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -1584,8 +1584,8 @@ TEST_CASE( "Monitor" )
     }
 
     const auto result = make_collector( monitored );
-    const auto changes_count = make_counter( changes );
-    const auto changes_to_zero_count = make_counter( changes_to_zero );
+    const auto changes_count = count( changes );
+    const auto changes_to_zero_count = count( changes_to_zero );
 
     // pass values into src
     for( int i : { 0, 0, 0, 1, 1, 2, 3, 0 } )

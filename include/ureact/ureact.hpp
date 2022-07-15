@@ -304,6 +304,12 @@ using select_t = typename select_impl<Head, Tail...>::type;
 template <typename...>
 constexpr inline bool always_false = false;
 
+/*!
+ * @brief Helper class to mark failing of class match
+ */
+struct signature_mismatches
+{};
+
 } // namespace detail
 
 /*!
@@ -3844,10 +3850,10 @@ auto observe_events_impl(
             // void func(const E&, const deps_t& ...)
             condition<std::is_invocable_r_v<void, F, E, deps_t...>,
                       add_observer_range_wrapper<E, add_observer_action_next_ret<F>, deps_t...>>,
-            void>;
+            signature_mismatches>;
     // clang-format on
 
-    static_assert( !std::is_same_v<wrapper_t, void>,
+    static_assert( !std::is_same_v<wrapper_t, signature_mismatches>,
         "observe: Passed function does not match any of the supported signatures" );
 
     using node_t = events_observer_node<E, wrapper_t, deps_t...>;
@@ -4316,10 +4322,10 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
             // void func(S&, const E&, const deps_t& ...)
             condition<std::is_invocable_r_v<void, F, S&, E, deps_t...>,
                                   fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
-            void>;
+            signature_mismatches>;
     // clang-format on
 
-    static_assert( !std::is_same_v<node_t, void>,
+    static_assert( !std::is_same_v<node_t, signature_mismatches>,
         "fold: Passed function does not match any of the supported signatures" );
 
     context& context = events.get_context();

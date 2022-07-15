@@ -3085,7 +3085,7 @@ UREACT_WARN_UNUSED_RESULT auto merge(
  *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const deps_t& ...)
  *
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- *  @note The type of outgoing events T has to be specified explicitly, i.e. Process<T>(src, with(deps), op)
+ *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
  */
 template <typename out_t, typename in_t, typename Op, typename... deps_t>
 UREACT_WARN_UNUSED_RESULT auto process(
@@ -4431,6 +4431,37 @@ UREACT_WARN_UNUSED_RESULT auto fold( V&& init, f_in_t&& func )
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
             return fold( std::forward<arg_t>( source ), std::move( init ), func );
         } };
+}
+
+/*!
+ * @brief Counts amount of received events into signal<S>
+ *
+ *  Type of resulting signal can be explicitly specified.
+ *  Value type should be default constructing and prefix incremented
+ *
+ *  @warning Not to be confused with std::count(from, to, value)
+ */
+template <typename S = size_t, class E>
+UREACT_WARN_UNUSED_RESULT auto count( const events<E>& source ) -> signal<S>
+{
+    return fold( source,
+        S{},                       //
+        []( S& accum, const E& ) { //
+            ++accum;
+        } );
+}
+
+/*!
+ * @brief Curried version of count(const events<E>& source) algorithm used for "pipe" syntax
+ */
+template <typename S = size_t>
+UREACT_WARN_UNUSED_RESULT auto count()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return count<S>( std::forward<arg_t>( source ) );
+    } };
 }
 
 /*!

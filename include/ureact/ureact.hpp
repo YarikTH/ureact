@@ -298,6 +298,12 @@ struct select_impl<condition<B, T>>
 template <typename Head, typename... Tail>
 using select_t = typename select_impl<Head, Tail...>::type;
 
+/*!
+ * @brief Helper for static assert
+ */
+template <typename...>
+constexpr inline bool always_false = false;
+
 } // namespace detail
 
 /*!
@@ -4269,7 +4275,7 @@ public:
             }
             else
             {
-                static_assert( !std::is_same_v<S, S>, "Unsupported function signature" );
+                static_assert( always_false<S>, "Unsupported function signature" );
             }
         }
 

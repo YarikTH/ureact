@@ -454,7 +454,7 @@ UREACT_WARN_UNUSED_RESULT bool equals( const L& lhs, const R& rhs )
     else
     {
         // if operator == is not defined falling back to comparing addresses
-        return &lhs == &rhs;
+        return &lhs == &rhs; // TODO: check in tests
     }
 }
 
@@ -897,7 +897,7 @@ public:
         return *m_graph;
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or completly remove
     {
         return *m_graph;
     }
@@ -932,12 +932,12 @@ class context final : protected detail::context_internals
 public:
     UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
     {
-        return this == &rsh;
+        return this == &rsh; // TODO: check in tests
     }
 
     UREACT_WARN_UNUSED_RESULT bool operator!=( const context& rsh ) const
     {
-        return !( *this == rsh );
+        return !( *this == rsh ); // TODO: check in tests
     }
 
 private:
@@ -1010,7 +1010,7 @@ public:
         return _get_internals( m_context ).get_graph();
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or remove it completly
     {
         return _get_internals( m_context ).get_graph();
     }
@@ -1286,7 +1286,7 @@ public:
 
 private:
     S m_new_value;
-    bool m_is_input_added = false;
+    bool m_is_input_added = false; // TODO: replace 2 bools with enum class
     bool m_is_input_modified = false;
 };
 
@@ -1390,7 +1390,7 @@ public:
         return std::move( m_op );
     }
 
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
     {
         return m_was_op_stolen;
     }
@@ -1663,7 +1663,7 @@ public:
     /*!
      * @brief Checks if internal operator was already stolen
      */
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
     {
         auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
         return node_ptr->was_op_stolen();
@@ -2274,7 +2274,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT op_t steal_op()
+    UREACT_WARN_UNUSED_RESULT op_t steal_op() // TODO: check in tests
     {
         assert( !m_was_op_stolen && "Op was already stolen" );
         m_was_op_stolen = true;
@@ -2282,7 +2282,7 @@ public:
         return std::move( m_op );
     }
 
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
     {
         return m_was_op_stolen;
     }
@@ -2610,7 +2610,7 @@ public:
     /*!
      * @brief Returns a reverse random access const iterator to the end
      */
-    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const // TODO: check in tests
     {
         return m_data.rend();
     }
@@ -2626,7 +2626,7 @@ public:
     /*!
      * @brief Checks whether the container is empty
      */
-    UREACT_WARN_UNUSED_RESULT bool empty() const
+    UREACT_WARN_UNUSED_RESULT bool empty() const // TODO: check in tests
     {
         return m_data.empty();
     }
@@ -2666,7 +2666,7 @@ public:
      *
      * Iterator assign version of emit(const E& e). Prefer not to use it manually
      */
-    event_emitter& operator=( const E& e )
+    event_emitter& operator=( const E& e ) // TODO: check in tests
     {
         m_container->push_back( e );
         return *this;
@@ -2679,7 +2679,7 @@ public:
      *
      * Specialization of operator=(const E& e) for rvalue
      */
-    event_emitter& operator=( E&& e )
+    event_emitter& operator=( E&& e ) // TODO: check in tests
     {
         m_container->push_back( std::move( e ) );
         return *this;
@@ -2713,7 +2713,7 @@ public:
      *
      * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref token
      */
-    void emit()
+    void emit() // TODO: check in tests
     {
         static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
         m_container->push_back( token::value );
@@ -2724,7 +2724,7 @@ public:
      *
      * Function object version of emit(const E& e)
      */
-    void operator()( const E& e )
+    void operator()( const E& e ) // TODO: check in tests
     {
         m_container->push_back( e );
     }
@@ -2734,7 +2734,7 @@ public:
      *
      * Function object version of emit(E&& e)
      */
-    void operator()( E&& e )
+    void operator()( E&& e ) // TODO: check in tests
     {
         m_container->push_back( std::move( e ) );
     }
@@ -2745,7 +2745,7 @@ public:
      * Function object version of emit()
      *
      */
-    void operator()()
+    void operator()() // TODO: check in tests
     {
         static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
         m_container->push_back( token::value );
@@ -2756,7 +2756,7 @@ public:
      *
      * Stream version of emit(const E& e)
      */
-    event_emitter& operator<<( const E& e )
+    event_emitter& operator<<( const E& e ) // TODO: check in tests
     {
         m_container->push_back( e );
         return *this;
@@ -2791,7 +2791,7 @@ public:
         : event_merge_op::reactive_op_base( dont_move(), std::forward<deps_in_t>( deps )... )
     {}
 
-    event_merge_op( event_merge_op&& other ) noexcept
+    event_merge_op( event_merge_op&& other ) noexcept // TODO: check in tests
         : event_merge_op::reactive_op_base( std::move( other ) )
     {}
 
@@ -2802,7 +2802,7 @@ public:
     }
 
     template <typename turn_t_, typename collector_t, typename functor_t>
-    void collect_rec( const functor_t& functor ) const
+    void collect_rec( const functor_t& functor ) const // TODO: check in tests
     {
         apply( reinterpret_cast<const collect_functor<turn_t_, collector_t>&>( functor ),
             this->m_deps );
@@ -2823,7 +2823,7 @@ private:
         }
 
         template <typename T>
-        void collect( const T& op ) const
+        void collect( const T& op ) const // TODO: check in tests
         {
             op.template collect_rec<turn_t_, collector_t>( *this );
         }
@@ -3604,7 +3604,7 @@ public:
     /*!
      * @brief Tests if this instance is linked to a node
      */
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const // TODO: check in tests
     {
         return m_observer.is_valid();
     }
@@ -3647,7 +3647,7 @@ struct add_observer_range_wrapper
 {
     add_observer_range_wrapper( const add_observer_range_wrapper& other ) = default;
 
-    add_observer_range_wrapper( add_observer_range_wrapper&& other ) noexcept
+    add_observer_range_wrapper( add_observer_range_wrapper&& other ) noexcept // TODO: check in tests
         : m_func( std::move( other.m_func ) )
     {}
 
@@ -3949,7 +3949,7 @@ auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, 
  */
 template <typename F, typename E, typename... deps_t>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer
+auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer // TODO: check in tests
 {
     return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
 }
@@ -3975,7 +3975,7 @@ auto observe( const events<E>& subject, F&& func ) -> observer
  */
 template <typename F, typename E>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, F&& func ) -> observer
+auto observe( events<E>&& subject, F&& func ) -> observer // TODO: check in tests
 {
     return observe_events_impl( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
 }

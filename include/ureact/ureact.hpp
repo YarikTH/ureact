@@ -244,22 +244,6 @@ struct is_base_of_template_impl
 template <template <typename...> class base, typename derived>
 using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
 
-template <typename T>
-struct event_value_impl
-{};
-
-template <typename E>
-struct event_value_impl<events<E>>
-{
-    using type = E;
-};
-
-template <typename E>
-struct event_value_impl<event_source<E>>
-{
-    using type = E;
-};
-
 // chaining of std::conditional_t  based on
 // https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263
 
@@ -341,19 +325,6 @@ struct is_event : detail::is_base_of_template<events, T>
  */
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
-
-/*!
- * @brief Detect event type E of @ref events and @ref  event_source
- */
-template <typename T>
-struct event_value : detail::event_value_impl<T>
-{};
-
-/*!
- * @brief Helper type for event_value
- */
-template <typename T>
-using event_value_t = typename event_value<std::decay_t<T>>::type;
 
 namespace detail
 {

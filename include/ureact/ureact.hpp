@@ -307,8 +307,7 @@ constexpr inline bool always_false = false;
 /*!
  * @brief Helper class to mark failing of class match
  */
-struct signature_mismatches
-{};
+struct signature_mismatches;
 
 } // namespace detail
 
@@ -897,7 +896,7 @@ public:
         return *m_graph;
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or completly remove
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or completely remove
     {
         return *m_graph;
     }
@@ -1010,7 +1009,7 @@ public:
         return _get_internals( m_context ).get_graph();
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or remove it completly
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or remove it completely
     {
         return _get_internals( m_context ).get_graph();
     }
@@ -2523,7 +2522,7 @@ template <typename E>
 class event_source<E>::iterator final
 {
 public:
-    UREACT_MAKE_NOOP_ITERATOR( iterator );
+    UREACT_MAKE_NOOP_ITERATOR( iterator ); // NOLINT
 
     using iterator_category = std::output_iterator_tag;
     using difference_type = std::ptrdiff_t;
@@ -3536,7 +3535,7 @@ public:
     observer() = default;
 
     /*!
-     * @brief Manually detache the linked observer node from its subject
+     * @brief Manually detaches the linked observer node from its subject
      */
     void detach()
     {

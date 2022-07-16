@@ -1,5 +1,7 @@
 #pragma once
 
+#include <list>
+#include <set>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -45,8 +47,8 @@ std::ostream& operator<<( std::ostream& os, const std::pair<T, Y>& pair )
     return os << "]";
 }
 
-template <class T, class Allocator>
-doctest::String toString( const std::vector<T, Allocator>& value )
+template <class T>
+doctest::String containerToString( const T& value )
 {
     std::ostringstream ss;
 
@@ -54,7 +56,7 @@ doctest::String toString( const std::vector<T, Allocator>& value )
     for( auto it = value.begin(), ite = value.end(); it != ite; ++it )
     {
         ss << *it;
-        if( it + 1 != ite )
+        if( std::next( it ) != ite )
         {
             ss << ", ";
         }
@@ -62,6 +64,30 @@ doctest::String toString( const std::vector<T, Allocator>& value )
     ss << "]";
 
     return ss.str().c_str();
+}
+
+template <class T, class Allocator>
+doctest::String toString( const std::vector<T, Allocator>& value )
+{
+    return containerToString( value );
+}
+
+template <class T, class Allocator>
+doctest::String toString( const std::deque<T, Allocator>& value )
+{
+    return containerToString( value );
+}
+
+template <class T, class Allocator>
+doctest::String toString( const std::list<T, Allocator>& value )
+{
+    return containerToString( value );
+}
+
+template <class Key, class Compare = std::less<Key>, class Allocator = std::allocator<Key>>
+doctest::String toString( const std::set<Key, Compare, Allocator>& value )
+{
+    return containerToString( value );
 }
 
 } // namespace std

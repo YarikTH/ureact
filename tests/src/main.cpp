@@ -112,6 +112,29 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( x.get().v == 1112 );
 }
 
+// A transaction can be started inside an active transaction
+// Only the first transaction takes effect
+TEST_CASE( "RecursiveTransactions" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal src{ ctx, 1 };
+    auto change_count = src | ureact::monitor() | ureact::count();
+
+    do_transaction( ctx, [&] {
+        src <<= 7;
+
+        do_transaction( ctx, [&] { //
+            src <<= 4;
+        } );
+
+        src <<= 1;
+        src <<= 2;
+    } );
+
+    CHECK( change_count.get() == 1 );
+}
+
 TEST_CASE( "SignalConstruction" )
 {
     ureact::context ctx;
@@ -324,13 +347,73 @@ TEST_CASE( "SignalSmartPointerSemantics" )
     CHECK( result_x3.get() == 6 );
 }
 
+TEST_CASE( "SignalGetValue" )
+{
+    ureact::context ctx;
 
+    ureact::var_signal<int> src{ ctx, 1 };
+    const ureact::signal<int> sig = src;
 
+    CHECK( sig.get() == 1 ); // get method
+    CHECK( sig() == 1 );     // function object version
 
+    src.set( 7 );
 
+    CHECK( sig.get() == 7 );
+    CHECK( sig() == 7 );
+}
 
+TEST_CASE( "VarSignalSetValue" )
+{
+    ureact::context ctx;
 
+    ureact::var_signal<int> src{ ctx, 1 };
 
+    CHECK( src.get() == 1 );
+
+    int new_value{ 5 };
+
+    SUBCASE( "set method L-value" )
+    {
+        src.set( new_value );
+    }
+    SUBCASE( "set method R-value" )
+    {
+        src.set( 5 );
+    }
+    SUBCASE( "set operator L-value" )
+    {
+        src <<= new_value;
+    }
+    SUBCASE( "set operator R-value" )
+    {
+        src <<= 5;
+    }
+
+    CHECK( src.get() == 5 );
+}
+
+TEST_CASE( "VarSignalModifyValue" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal<int> src{ ctx, 9 };
+
+    CHECK( src.get() == 9 );
+
+    auto change_int_to_5 = []( int& v ) { v = 4; };
+
+    SUBCASE( "modify method" )
+    {
+        src.modify( change_int_to_5 );
+    }
+    SUBCASE( "modify operator" )
+    {
+        src <<= change_int_to_5;
+    }
+
+    CHECK( src.get() == 4 );
+}
 
 TEST_CASE( "EventsConstruction" )
 {

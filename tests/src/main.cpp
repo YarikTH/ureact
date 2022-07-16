@@ -179,6 +179,7 @@ TEST_CASE( "SignalAssignmentConstruction" )
         src_copy = src;
         CHECK( src_copy.is_valid() );
         CHECK( src.is_valid() );
+        CHECK( src_copy.equals( src ) );
     }
 
     SUBCASE( "move assignment" )
@@ -243,6 +244,7 @@ TEST_CASE( "VarSignalConstruction" )
             ureact::var_signal<int> src_copy = src;
             CHECK( src_copy.is_valid() );
             CHECK( src.is_valid() );
+            CHECK( src_copy.equals( src ) );
         }
 
         SUBCASE( "move constructed" )
@@ -269,6 +271,7 @@ TEST_CASE( "VarSignalAssignmentConstruction" )
         src_copy = src;
         CHECK( src_copy.is_valid() );
         CHECK( src.is_valid() );
+        CHECK( src_copy.equals( src ) );
     }
 
     SUBCASE( "move assignment" )
@@ -397,6 +400,7 @@ TEST_CASE( "EventsAssignmentConstruction" )
         src_copy = src;
         CHECK( src_copy.is_valid() );
         CHECK( src.is_valid() );
+        CHECK( src_copy.equals( src ) );
     }
 
     SUBCASE( "move assignment" )
@@ -456,6 +460,7 @@ TEST_CASE( "EventSourceConstruction" )
             ureact::event_source<int> src_copy = src;
             CHECK( src_copy.is_valid() );
             CHECK( src.is_valid() );
+            CHECK( src_copy.equals( src ) );
         }
 
         SUBCASE( "move constructed" )
@@ -482,6 +487,7 @@ TEST_CASE( "EventSourceAssignmentConstruction" )
         src_copy = src;
         CHECK( src_copy.is_valid() );
         CHECK( src.is_valid() );
+        CHECK( src_copy.equals( src ) );
     }
 
     SUBCASE( "move assignment" )

@@ -92,16 +92,6 @@ doctest::String toString( const std::set<Key, Compare, Allocator>& value )
 
 } // namespace std
 
-const auto always_true = []( auto&& ) { return true; };
-
-// use fold expression to collect all received events into a vector
-template <class E>
-auto make_collector( const ureact::events<E>& events )
-{
-    const auto collector = []( std::vector<E>& accum, const E& e ) { accum.push_back( e ); };
-    return ureact::fold( events, std::vector<E>{}, collector );
-}
-
 template <class T>
 auto make_deeper( T&& signal )
 {

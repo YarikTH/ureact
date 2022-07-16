@@ -508,7 +508,7 @@ TEST_CASE( "EventsSmartPointerSemantics" )
 
     auto filtered = src | ureact::filter( is_even );
 
-    auto result_even = make_collector( filtered );
+    auto result_even = ureact::collect<std::vector>( filtered );
 
     //      src         //
     //       |          //
@@ -520,7 +520,7 @@ TEST_CASE( "EventsSmartPointerSemantics" )
     // 'filtered' itself, but on reactive node it pointed before
     filtered = src | ureact::filter( is_odd );
 
-    auto result_odd = make_collector( filtered );
+    auto result_odd = ureact::collect<std::vector>( filtered );
 
     //               src                //
     //            /       \             //
@@ -543,7 +543,7 @@ TEST_CASE( "EventSourceEmitting" )
     auto src = ureact::make_source<int>( ctx );
     auto _2 = 2;
 
-    auto result = make_collector( src );
+    auto result = ureact::collect<std::vector>( src );
 
     SUBCASE( "emit method" )
     {
@@ -942,7 +942,7 @@ TEST_CASE( "Zip" )
 
     ureact::events<zipped_t> src = zip( x, y, z );
 
-    const auto result = make_collector( src );
+    const auto result = ureact::collect<std::vector>( src );
 
     // clang-format off
     x <<  1  <<  2  <<  3  <<  4;
@@ -970,7 +970,7 @@ TEST_CASE( "Merge" )
 
     ureact::events<int> src = merge( src1, src2, src3 );
 
-    const auto result = make_collector( src );
+    const auto result = ureact::collect<std::vector>( src );
 
     src1 << 1 << 5;
     src2 << -1;
@@ -1007,7 +1007,7 @@ TEST_CASE( "Process" )
         processed = src | ureact::process<int>( repeater );
     }
 
-    const auto result = make_collector( processed );
+    const auto result = ureact::collect<std::vector>( processed );
 
     src.emit( { 2u, -1 } );
     src.emit( { 0u, 666 } );
@@ -1051,7 +1051,7 @@ TEST_CASE( "ProcessSynced" )
     //        processed = src | ureact::process<record_t>( with( n, timestamp ), repeater );
     //    }
 
-    const auto result = make_collector( processed );
+    const auto result = ureact::collect<std::vector>( processed );
 
     n <<= 2;
     timestamp <<= "1 Jan 2020";
@@ -1095,7 +1095,7 @@ TEST_CASE( "Transform" )
         squared = src | ureact::transform( square );
     }
 
-    const auto result = make_collector( squared );
+    const auto result = ureact::collect<std::vector>( squared );
 
     for( int i = 0; i < 5; ++i )
         src << i;
@@ -1132,13 +1132,13 @@ TEST_CASE( "TransformSynced" )
     //        clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
     //    }
 
-    const auto result = make_collector( clamped );
+    const auto result = ureact::collect<std::vector>( clamped );
 
     // make not synced analog to show the difference
     const auto clamp_not_synced
         = [&]( auto i ) { return std::clamp( i, limit_min.get(), limit_max.get() ); };
     ureact::events<int> clamped_not_synced = ureact::transform( src, clamp_not_synced );
-    const auto result_not_synced = make_collector( clamped_not_synced );
+    const auto result_not_synced = ureact::collect<std::vector>( clamped_not_synced );
 
     for( int i : { -1, 4, 10, 0, 5, 2 } )
         src << i;
@@ -1183,7 +1183,7 @@ TEST_CASE( "Filter" )
         filtered = src | ureact::filter( is_even );
     }
 
-    const auto result = make_collector( filtered );
+    const auto result = ureact::collect<std::vector>( filtered );
 
     for( int i = 0; i < 10; ++i )
         src << i;
@@ -1221,13 +1221,13 @@ TEST_CASE( "FilterSynced" )
     //        filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
     //    }
 
-    const auto result = make_collector( filtered );
+    const auto result = ureact::collect<std::vector>( filtered );
 
     // make not synced analog to show the difference
     const auto in_range_not_synced
         = [&]( auto i ) { return i >= limit_min.get() && i <= limit_max.get(); };
     ureact::events<int> filtered_not_synced = ureact::filter( src, in_range_not_synced );
-    const auto result_not_synced = make_collector( filtered_not_synced );
+    const auto result_not_synced = ureact::collect<std::vector>( filtered_not_synced );
 
     for( int i = 0; i < 10; ++i )
         src << i;
@@ -1272,8 +1272,8 @@ TEST_CASE( "TakeOrDropN" )
         without_first_n = src | ureact::drop( 5 );
     }
 
-    const auto result_first_n = make_collector( first_n );
-    const auto result_without_first_n = make_collector( without_first_n );
+    const auto result_first_n = ureact::collect<std::vector>( first_n );
+    const auto result_without_first_n = ureact::collect<std::vector>( without_first_n );
 
     // pass integers as events
     for( int i : { 0, 1, 2, 3, 4, 5, -1, 6, 7, 8, 9 } )
@@ -1311,8 +1311,8 @@ TEST_CASE( "Once" )
         first_negative = negatives | ureact::once();
     }
 
-    const auto result_first = make_collector( first );
-    const auto result_first_negative = make_collector( first_negative );
+    const auto result_first = ureact::collect<std::vector>( first );
+    const auto result_first_negative = ureact::collect<std::vector>( first_negative );
 
     // pass integers as events
     for( int i : { 5, 1, 2, 4, -6, 0, -2 } )
@@ -1347,8 +1347,8 @@ TEST_CASE( "TakeOrDropWhile" )
         from_negative = src | ureact::drop_while( is_not_negative );
     }
 
-    const auto result_before_negative = make_collector( before_negative );
-    const auto result_from_negative = make_collector( from_negative );
+    const auto result_before_negative = ureact::collect<std::vector>( before_negative );
+    const auto result_from_negative = ureact::collect<std::vector>( from_negative );
 
     // pass integers as events
     for( int i : { 0, 1, 2, 3, 4, 5, -1, 6, 7, 8, 9 } )
@@ -1398,8 +1398,8 @@ TEST_CASE( "TakeOrDropWhileSynced" )
         from_overflow = ureact::drop_while( src, with( overflowed ), is_not_overflowed_2 );
     }
 
-    const auto result_before_overflow = make_collector( before_overflow );
-    const auto result_from_overflow = make_collector( from_overflow );
+    const auto result_before_overflow = ureact::collect<std::vector>( before_overflow );
+    const auto result_from_overflow = ureact::collect<std::vector>( from_overflow );
 
     // pass integers as events
     for( int i : { 10, 5, 1, 3 /*19*/, 6 /*25*/, 4, 1, 11 } )
@@ -1431,7 +1431,7 @@ TEST_CASE( "Unique" )
         uniq = src | ureact::unique();
     }
 
-    const auto result = make_collector( uniq );
+    const auto result = ureact::collect<std::vector>( uniq );
 
     // pass set containing several duplicate elements
     for( int i : { 1, 2, 1, 1, 3, 3, 3, 4, 5, 4 } )
@@ -1603,7 +1603,7 @@ TEST_CASE( "Pulse" )
              | ureact::pulse( target );
     }
 
-    auto result = make_collector( beat );
+    auto result = ureact::collect<std::vector>( beat );
 
     target <<= 1;
     for( int i = 0; i < 2; ++i )
@@ -1645,7 +1645,7 @@ TEST_CASE( "Monitor" )
         changes_to_zero = src | ureact::changed_to( 0 );
     }
 
-    const auto result = make_collector( monitored );
+    const auto result = ureact::collect<std::vector>( monitored );
     const auto changes_count = count( changes );
     const auto changes_to_zero_count = count( changes_to_zero );
 

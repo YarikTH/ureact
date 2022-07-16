@@ -480,6 +480,33 @@ UREACT_WARN_UNUSED_RESULT bool equals( const events<L>& lhs, const events<R>& rh
 #    pragma clang diagnostic pop
 #endif
 
+template <typename Cont, typename Value, typename = void>
+struct has_push_back_method : std::false_type
+{};
+
+template <typename Cont, class Value>
+struct has_push_back_method<Cont,
+    Value,
+    std::void_t<decltype( std::declval<Cont>().push_back( std::declval<Value>() ) )>>
+    : std::true_type
+{};
+
+template <typename Cont, class Value>
+inline constexpr bool has_push_back_method_v = has_push_back_method<Cont, Value>::value;
+
+template <typename Cont, typename Value, typename = void>
+struct has_insert_method : std::false_type
+{};
+
+template <typename Cont, class Value>
+struct has_insert_method<Cont,
+    Value,
+    std::void_t<decltype( std::declval<Cont>().insert( std::declval<Value>() ) )>> : std::true_type
+{};
+
+template <typename Cont, class Value>
+inline constexpr bool has_insert_method_v = has_insert_method<Cont, Value>::value;
+
 /*!
  * @brief counter that counts down from N to 0
  *
@@ -896,7 +923,8 @@ public:
         return *m_graph;
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or completely remove
+    UREACT_WARN_UNUSED_RESULT const react_graph&
+    get_graph() const // TODO: check in tests or completely remove
     {
         return *m_graph;
     }
@@ -1009,7 +1037,8 @@ public:
         return _get_internals( m_context ).get_graph();
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const // TODO: check in tests or remove it completely
+    UREACT_WARN_UNUSED_RESULT const react_graph&
+    get_graph() const // TODO: check in tests or remove it completely
     {
         return _get_internals( m_context ).get_graph();
     }
@@ -3646,7 +3675,8 @@ struct add_observer_range_wrapper
 {
     add_observer_range_wrapper( const add_observer_range_wrapper& other ) = default;
 
-    add_observer_range_wrapper( add_observer_range_wrapper&& other ) noexcept // TODO: check in tests
+    add_observer_range_wrapper(
+        add_observer_range_wrapper&& other ) noexcept // TODO: check in tests
         : m_func( std::move( other.m_func ) )
     {}
 
@@ -3948,7 +3978,8 @@ auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, 
  */
 template <typename F, typename E, typename... deps_t>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func ) -> observer // TODO: check in tests
+auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func )
+    -> observer // TODO: check in tests
 {
     return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
 }
@@ -4460,6 +4491,46 @@ UREACT_WARN_UNUSED_RESULT auto count()
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return count<S>( std::forward<arg_t>( source ) );
+    } };
+}
+
+/*!
+ * @brief Collects received events into signal<ContT<E>>
+ *
+ *  Type of resulting container must be specified explicitly, i.e. collect<std::vector>(src).
+ *  Container type ContT should has either push_back(const E&) method or has insert(const E&) method.
+ *  Mostly intended for testing purpose.
+ *
+ *  Semantically equivalent of ranges::to
+ *
+ *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
+ *           because any observer or signal/events node will prolong its lifetime.
+ */
+template <template <typename...> class ContT, class E, class Cont = ContT<E>>
+UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> signal<Cont>
+{
+    return fold( source,
+        Cont{},                         //
+        []( Cont& accum, const E& e ) { //
+            if constexpr( detail::has_push_back_method_v<Cont, E> )
+                accum.push_back( e );
+            else if constexpr( detail::has_insert_method_v<Cont, E> )
+                accum.insert( e );
+            else
+                static_assert( detail::always_false<Cont, E>, "Unsupported container" );
+        } );
+}
+
+/*!
+ * @brief Curried version of collect(const events<E>& source) algorithm used for "pipe" syntax
+ */
+template <template <typename...> class ContT>
+UREACT_WARN_UNUSED_RESULT auto collect()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return collect<ContT>( std::forward<arg_t>( source ) );
     } };
 }
 

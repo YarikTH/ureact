@@ -210,6 +210,9 @@ class signal_pack;
 template <typename E>
 class event_range;
 
+template <class F>
+class closure;
+
 namespace detail
 {
 
@@ -331,6 +334,19 @@ struct is_event : detail::is_base_of_template<events, T>
  */
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
+
+/*!
+ * @brief Return if type is closure
+ */
+template <typename T>
+struct is_closure : detail::is_base_of_template<closure, T>
+{};
+
+/*!
+ * @brief Helper variable template for closure
+ */
+template <typename T>
+inline constexpr bool is_closure_v = is_closure<T>::value;
 
 namespace detail
 {
@@ -989,25 +1005,72 @@ void do_transaction( context& ctx, F&& func )
 }
 
 /*!
- * @brief Special functor wrapper class to distinct partial algorithm implementation from normal functor
+ * @brief Closure objects used for partial application of reactive functions and chaining of algorithms
+ *
+ *  Closure objects take one reactive object as its only argument and may return a value.
+ *  They are callable via the pipe operator: if C is a closure object and
+ *  R is a reactive object, these two expressions are equivalent:
+ *  * C(R)
+ *  * R | C
+ *
+ *  Two closure objects can be chained by operator| to produce
+ *  another closure object: if C and D are closure objects,
+ *  then C | D is also a closure object if it is valid.
+ *  The effect and validity of the operator() of the result is determined as follows:
+ *  given a reactive object R, these two expressions are equivalent:
+ *  * R | C | D // (R | C) | D
+ *  * R | (C | D)
+ *
+ * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
  */
 template <class F>
 class closure
 {
 public:
+    // TODO: add type specialization to closure (not concrete type, but signal/events), so we can write specialized operator overloads
+    //       need to tag both input and output value. Also closure is single in, single out function. Or no output function
     explicit closure( F&& func )
         : m_func( std::move( func ) )
     {}
 
     template <typename... args_t, class = std::enable_if_t<std::is_invocable_v<F, args_t...>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( args_t... args )
+    UREACT_WARN_UNUSED_RESULT auto operator()( args_t&&... args ) const
     {
-        return m_func( args... );
+        return m_func( std::forward<args_t>( args )... );
     }
 
 private:
     F m_func;
 };
+
+/*!
+ * @brief operator| overload for closure object
+ *
+ *  See @ref closure
+ */
+template <typename Arg,
+    typename Closure,
+    class = std::enable_if_t<is_closure_v<std::decay_t<Closure>>>>
+UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj )
+{
+    if constexpr( is_closure_v<std::decay_t<Arg>> )
+    {
+        // chain two closures to make another one
+        using FirstClosure = Arg;
+        using SecondClosure = Closure;
+        return closure{
+            [first_closure = std::forward<FirstClosure>( arg ),
+                second_closure = std::forward<SecondClosure>( closure_obj )]( auto&& source ) {
+                using arg_t = decltype( source );
+                return second_closure( first_closure( std::forward<arg_t>( source ) ) );
+            } };
+    }
+    else
+    {
+        // apply arg to given closure and return its result
+        return std::forward<Closure>( closure_obj )( std::forward<Arg>( arg ) );
+    }
+}
 
 namespace detail
 {
@@ -1341,7 +1404,7 @@ private:
         template <typename... T>
         UREACT_WARN_UNUSED_RESULT S operator()( T&&... args )
         {
-            return m_func( eval( args )... );
+            return m_func( eval( std::forward<T>( args ) )... );
         }
 
         template <typename T>
@@ -3052,29 +3115,6 @@ template <typename E = token>
 UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
 {
     return event_source<E>{ context };
-}
-
-/*!
- * @brief apply a functor to a signal or an event source and return the resulting signal or event source
- *
- *  The signature of unary_op should be equivalent to:
- *  * signal<T> unary_op(const S& source)
- *  * events<T> unary_op(const S& source)
- *
- *  Intended for algorithm chaining
- */
-template <typename S,
-    typename UnaryOperation,
-    class s = std::decay_t<S>,
-    class = std::enable_if_t<std::disjunction_v<is_signal<s>, is_event<s>>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( S&& source, closure<UnaryOperation>&& unary_op )
-{
-    static_assert( std::is_invocable_v<UnaryOperation, decltype( source )>,
-        "Function should be invocable with source" );
-    using result_t = std::decay_t<std::invoke_result_t<UnaryOperation, decltype( source )>>;
-    static_assert( is_signal_v<result_t> || is_event_v<result_t>,
-        "Function result should be signal or event" );
-    return std::forward<closure<UnaryOperation>>( unary_op )( std::forward<S>( source ) );
 }
 
 /*!

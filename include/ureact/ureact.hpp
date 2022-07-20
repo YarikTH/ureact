@@ -4243,11 +4243,11 @@ public:
     {}
 
     // TODO: possible optimization - move accum as much as possible. See std::accumulate
-    S operator()( S accum, event_range<E> range, const args_t&... args )
+    S operator()( event_range<E> range, S accum, const args_t&... args )
     {
         for( const auto& e : range )
         {
-            accum = m_func( accum, e, args... );
+            accum = m_func( e, accum, args... );
         }
 
         return accum;
@@ -4266,11 +4266,11 @@ public:
         : m_func( std::forward<f_in_t>( func ) )
     {}
 
-    void operator()( S& accum, event_range<E> range, const args_t&... args )
+    void operator()( event_range<E> range, S& accum, const args_t&... args )
     {
         for( const auto& e : range )
         {
-            m_func( accum, e, args... );
+            m_func( e, accum, args... );
         }
     }
 
@@ -4313,12 +4313,12 @@ public:
 
         if( !m_events->events().empty() )
         {
-            if constexpr( std::is_invocable_r_v<S, func_t, S, event_range<E>, dep_values_t...> )
+            if constexpr( std::is_invocable_r_v<S, func_t, event_range<E>, S, dep_values_t...> )
             {
                 S new_value = apply(
                     [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        return m_func( this->m_value,
-                            event_range<E>( m_events->events() ),
+                        return m_func( event_range<E>( m_events->events() ),
+                            this->m_value,
                             args->value_ref()... );
                     },
                     m_deps );
@@ -4330,12 +4330,12 @@ public:
                 }
             }
             else if constexpr(
-                std::is_invocable_r_v<void, func_t, S&, event_range<E>, dep_values_t...> )
+                std::is_invocable_r_v<void, func_t, event_range<E>, S&, dep_values_t...> )
             {
                 apply(
                     [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                        m_func( this->m_value,
-                            event_range<E>( m_events->events() ),
+                        m_func( event_range<E>( m_events->events() ),
+                            this->m_value,
                             args->value_ref()... );
                     },
                     m_deps );
@@ -4375,16 +4375,16 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
     using node_t =
         select_t<
             // S func(const S&, event_range<E> range, const deps_t& ...)
-            condition<std::is_invocable_r_v<S, F, S, event_range<E>, deps_t...>,
+            condition<std::is_invocable_r_v<S, F, event_range<E>, S, deps_t...>,
                                   fold_node<S, E, F, deps_t...>>,
             // S func(const S&, const E&, const deps_t& ...)
-            condition<std::is_invocable_r_v<S, F, S, E, deps_t...>,
+            condition<std::is_invocable_r_v<S, F, E, S, deps_t...>,
                                   fold_node<S, E, add_fold_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
             // void func(S&, event_range<E> range, const deps_t& ...)
-            condition<std::is_invocable_r_v<void, F, S&, event_range<E>, deps_t...>,
+            condition<std::is_invocable_r_v<void, F, event_range<E>, S&, deps_t...>,
                                   fold_node<S, E, F, deps_t...>>,
             // void func(S&, const E&, const deps_t& ...)
-            condition<std::is_invocable_r_v<void, F, S&, E, deps_t...>,
+            condition<std::is_invocable_r_v<void, F, E, S&, deps_t...>,
                                   fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
             signature_mismatches>;
     // clang-format on
@@ -4446,10 +4446,15 @@ private:
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *
  *  The signature of func should be equivalent to:
- *  * S func(const S&, const E&, const deps_t& ...)
- *  * S func(const S&, event_range<E> range, const deps_t& ...)
- *  * void func(S&, const E&, const deps_t& ...)
- *  * void func(S&, event_range<E> range, const deps_t& ...)
+ *  * S func(const E& event, const S& accum, const deps_t& ...)
+ *  * S func(event_range<E> range, const S& accum, const deps_t& ...)
+ *  * void func(const E& event, S& accum, const deps_t& ...)
+ *  * void func(event_range<E> range, S& accum, const deps_t& ...)
+ *
+ *  The fold parameters:
+ *    [const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack]
+ *  match the corresponding arguments of the given function
+ *    [const E& event_value, const S& accumulator, const deps_t& ...deps]
  *
  *  Creates a signal with an initial value v = init.
  *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
@@ -4458,6 +4463,7 @@ private:
  *    This variant can be used if copying and comparing S is prohibitively expensive.
  *    Because the old and new values cannot be compared, updates will always trigger a change.
  *
+ *  @note order of arguments is inverse compared with std::accumulate() to correspond fold parameters
  *  @note The event_range<E> option allows to explicitly batch process single turn events
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
@@ -4510,7 +4516,7 @@ UREACT_WARN_UNUSED_RESULT auto count( const events<E>& source ) -> signal<S>
 {
     return fold( source,
         S{},                       //
-        []( S& accum, const E& ) { //
+        []( const E&, S& accum ) { //
             ++accum;
         } );
 }
@@ -4545,7 +4551,7 @@ UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> sig
 {
     return fold( source,
         Cont{},                         //
-        []( Cont& accum, const E& e ) { //
+        []( const E& e, Cont& accum ) { //
             if constexpr( detail::has_push_back_method_v<Cont, E> )
                 accum.push_back( e );
             else if constexpr( detail::has_insert_method_v<Cont, E> )
@@ -4579,7 +4585,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> sign
 {
     return fold( source,
         std::forward<V>( init ),                  //
-        []( const auto&, event_range<E> range ) { //
+        []( event_range<E> range, const auto& ) { //
             return *range.rbegin();
         } );
 }
@@ -4610,7 +4616,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
     return fold( trigger,
         target.get(),
         with( target ),
-        []( const S&, event_range<E> range, const S& value ) { //
+        []( event_range<E> range, const S&, const S& value ) { //
             return value;
         } );
 }

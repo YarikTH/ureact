@@ -352,7 +352,7 @@ TEST_CASE( "SignalGetValue" )
     ureact::context ctx;
 
     ureact::var_signal<int> src{ ctx, 1 };
-    const ureact::signal<int> sig = src;
+    const ureact::signal<int> sig = +src;
 
     CHECK( sig.get() == 1 ); // get method
     CHECK( sig() == 1 );     // function object version
@@ -706,11 +706,11 @@ TEST_CASE( "FoldByValue" )
     int plus_calls = 0;
     int multiplies_calls = 0;
 
-    auto plus = [&]( int accum, int value ) {
+    auto plus = [&]( int value, int accum ) {
         ++plus_calls;
         return accum + value;
     };
-    auto batch_multiplies = [&]( int accum, ureact::event_range<int> values ) {
+    auto batch_multiplies = [&]( ureact::event_range<int> values, int accum ) {
         ++multiplies_calls;
         return std::accumulate( values.begin(), values.end(), accum, std::multiplies<>() );
     };
@@ -751,11 +751,11 @@ TEST_CASE( "FoldByRef" )
     int plus_calls = 0;
     int multiplies_calls = 0;
 
-    auto plus_ref = [&]( int& accum, int value ) {
+    auto plus_ref = [&]( int value, int& accum ) {
         ++plus_calls;
         accum += value;
     };
-    auto batch_multiplies_ref = [&]( int& accum, ureact::event_range<int> values ) {
+    auto batch_multiplies_ref = [&]( ureact::event_range<int> values, int& accum ) {
         ++multiplies_calls;
         accum = std::accumulate( values.begin(), values.end(), accum, std::multiplies<>() );
     };
@@ -824,11 +824,11 @@ TEST_CASE( "FoldByValueSynced" )
     int plus_calls = 0;
     int batch_plus_calls = 0;
 
-    auto plus = [&]( int accum, int value, int mult ) {
+    auto plus = [&]( int value, int accum, int mult ) {
         ++plus_calls;
         return accum + value * mult;
     };
-    auto batch_plus = [&]( int accum, ureact::event_range<int> values, int mult ) {
+    auto batch_plus = [&]( ureact::event_range<int> values, int accum, int mult ) {
         ++batch_plus_calls;
         return accum + std::accumulate( values.begin(), values.end(), 0, std::plus<>() ) * mult;
     };
@@ -891,12 +891,12 @@ TEST_CASE( "FoldByRefSynced" )
     int plus_calls = 0;
     int batch_plus_calls = 0;
 
-    auto plus_val = []( int accum, int value, int mult ) { return accum + value * mult; };
-    auto plus_ref = [&]( int& accum, int value, int mult ) {
+    auto plus_val = []( int value, int accum, int mult ) { return accum + value * mult; };
+    auto plus_ref = [&]( int value, int& accum, int mult ) {
         ++plus_calls;
         accum += value * mult;
     };
-    auto batch_plus_ref = [&]( int& accum, ureact::event_range<int> values, int mult ) {
+    auto batch_plus_ref = [&]( ureact::event_range<int> values, int& accum, int mult ) {
         ++batch_plus_calls;
         accum += std::accumulate( values.begin(), values.end(), accum, std::plus<>() ) * mult;
     };
@@ -966,6 +966,12 @@ TEST_CASE( "FoldVsAccumulate" )
             return std::move( accum ) + '-' + std::to_string( i );
         };
 
+    // ureact::fold has inverse order of arguments compared with std::accumulate() for good reasons
+    const auto dash_fold_2 =                       //
+        [&dash_fold]( int i, std::string accum ) { //
+            return dash_fold( std::move( accum ), i );
+        };
+
     int sum;
     int product;
     std::string dashed;
@@ -996,13 +1002,14 @@ TEST_CASE( "FoldVsAccumulate" )
             product_s = ureact::fold( src, 1, std::multiplies<>() );
             dashed_s = ureact::fold( ureact::drop( src, 1 ), //
                 std::to_string( v[0] ),
-                dash_fold );
+                dash_fold_2 );
         }
         SUBCASE( "Piped syntax" )
         {
             sum_s = src | ureact::fold( 0, std::plus<>() );
             product_s = src | ureact::fold( 1, std::multiplies<>() );
-            dashed_s = src | ureact::drop( 1 ) | ureact::fold( std::to_string( v[0] ), dash_fold );
+            dashed_s
+                = src | ureact::drop( 1 ) | ureact::fold( std::to_string( v[0] ), dash_fold_2 );
         }
 
         std::copy( v.begin(), v.end(), src.begin() );

@@ -113,7 +113,7 @@ TEST_SUITE( "OperationsTest" )
         auto src1 = make_source( ctx );
         auto src2 = make_source<int>( ctx );
 
-        observe( src1, with( sum, prod, diff ), []( token, int sum, int prod, int diff ) {
+        observe( src1, with( sum, prod, diff ), []( unit, int sum, int prod, int diff ) {
             CHECK_EQ( sum, 33 );
             CHECK_EQ( prod, 242 );
             CHECK_EQ( diff, 11 );
@@ -141,7 +141,7 @@ TEST_SUITE( "OperationsTest" )
 
         int count = 0;
 
-        observe( src, [&]( token ) -> observer_action {
+        observe( src, [&]( unit ) -> observer_action {
             ++count;
             if( count == 1 )
             {
@@ -175,7 +175,7 @@ TEST_SUITE( "OperationsTest" )
 
         observe( src,
             with( sum, prod, diff ),
-            [&]( token, int sum, int prod, int diff ) -> observer_action {
+            [&]( unit, int sum, int prod, int diff ) -> observer_action {
                 ++count;
                 if( count == 1 )
                 {

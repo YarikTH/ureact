@@ -2213,12 +2213,22 @@ UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
 //==================================================================================================
 
 /*!
- * @brief This class is used as value type of token streams, which emit events without any value other than the fact that they occurred.
+ * @brief This class is used as value type of unit streams, which emit events without any value other than the fact that they occurred
+ *
+ *  See std::monostate https://en.cppreference.com/w/cpp/utility/variant/monostate
  */
-enum class token
-{
-    value
-};
+struct unit
+{};
+
+// clang-format off
+constexpr bool operator==(unit, unit) noexcept { return true; }
+constexpr bool operator!=(unit, unit) noexcept { return false; }
+constexpr bool operator< (unit, unit) noexcept { return false; }
+constexpr bool operator> (unit, unit) noexcept { return false; }
+constexpr bool operator<=(unit, unit) noexcept { return true; }
+constexpr bool operator>=(unit, unit) noexcept { return true; }
+//constexpr std::strong_ordering operator<=>(unit, unit) noexcept { return std::strong_ordering::equal; }
+// clang-format on
 
 namespace detail
 {
@@ -2426,7 +2436,7 @@ protected:
  *  It takes shared ownership of the node, so while it exists, the node will not be destroyed.
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
  */
-template <typename E = token>
+template <typename E = unit>
 class events : public detail::event_stream_base<E>
 {
 private:
@@ -2458,7 +2468,7 @@ public:
  *
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
-template <typename E = token>
+template <typename E = unit>
 class event_source final : public events<E>
 {
 private:
@@ -2507,15 +2517,15 @@ public:
     }
 
     /*!
-     * @brief Adds token to the queue of outgoing events of the linked event source node
+     * @brief Adds unit to the queue of outgoing events of the linked event source node
      *
-     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref token
+     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref unit
      */
     void emit() const
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
+        static_assert( std::is_same_v<E, unit>, "Can't emit on non unit stream" );
         assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
-        this->emit_event( token::value );
+        this->emit_event( unit{} );
     }
 
     /*!
@@ -2541,16 +2551,16 @@ public:
     }
 
     /*!
-     * @brief Adds token to the queue of outgoing events of the linked event source node
+     * @brief Adds unit to the queue of outgoing events of the linked event source node
      *
      * Function object version of emit()
      *
      */
     void operator()() const
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
+        static_assert( std::is_same_v<E, unit>, "Can't emit on non unit stream" );
         assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
-        this->emit_event( token::value );
+        this->emit_event( unit{} );
     }
 
     /*!
@@ -2645,7 +2655,7 @@ private:
  *
  *  TODO: think about making values movable, so values would be processed more efficiently
  */
-template <typename E = token>
+template <typename E = unit>
 class event_range final
 {
 public:
@@ -2786,14 +2796,14 @@ public:
     }
 
     /*!
-     * @brief Adds token to the queue of outgoing events
+     * @brief Adds unit to the queue of outgoing events
      *
-     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref token
+     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref unit
      */
     void emit() // TODO: check in tests
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
-        m_container->push_back( token::value );
+        static_assert( std::is_same_v<E, unit>, "Can't emit on non unit stream" );
+        m_container->push_back( unit{} );
     }
 
     /*!
@@ -2817,15 +2827,15 @@ public:
     }
 
     /*!
-     * @brief Adds token to the queue of outgoing events
+     * @brief Adds unit to the queue of outgoing events
      *
      * Function object version of emit()
      *
      */
     void operator()() // TODO: check in tests
     {
-        static_assert( std::is_same_v<E, token>, "Can't emit on non token stream" );
-        m_container->push_back( token::value );
+        static_assert( std::is_same_v<E, unit>, "Can't emit on non unit stream" );
+        m_container->push_back( unit{} );
     }
 
     /*!
@@ -3100,9 +3110,9 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 /*!
  * @brief Create a new event source node and links it to the returned event_source instance
  *
- *  Event value type E has to be specified explicitly. It would be token if it is omitted.
+ *  Event value type E has to be specified explicitly. It would be unit if it is omitted.
  */
-template <typename E = token>
+template <typename E = unit>
 UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
 {
     return event_source<E>{ context };
@@ -3512,27 +3522,25 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args
 }
 
 /*!
- * @brief Utility function to transform any event stream into a token stream
+ * @brief Utility function to transform any event stream into a unit stream
  *
- *  Emits a token for any event that passes source
- *
- *   @warning Not to be confused with ranges::tokenize()
+ *  Emits a unit for any event that passes source
  */
 template <typename E>
-UREACT_WARN_UNUSED_RESULT auto tokenize( const events<E>& source )
+UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
 {
-    return transform( source, []( const auto& ) { return token::value; } );
+    return transform( source, []( const auto& ) { return unit{}; } );
 }
 
 /*!
- * @brief Curried version of tokenize(events_t&& source) algorithm used for "pipe" syntax
+ * @brief Curried version of unify(events_t&& source) algorithm used for "pipe" syntax
  */
-UREACT_WARN_UNUSED_RESULT inline auto tokenize()
+UREACT_WARN_UNUSED_RESULT inline auto unify()
 {
     return closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return tokenize( std::forward<arg_t>( source ) );
+        return unify( std::forward<arg_t>( source ) );
     } };
 }
 
@@ -4677,14 +4685,14 @@ UREACT_WARN_UNUSED_RESULT inline auto monitor()
 }
 
 /*!
- * @brief Emits token when target signal was changed
+ * @brief Emits unit when target signal was changed
  *
- *  Creates a token stream that emits when target is changed.
+ *  Creates a unit stream that emits when target is changed.
  */
 template <typename S>
-UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<token>
+UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit>
 {
-    return monitor( target ) | tokenize();
+    return monitor( target ) | unify();
 }
 
 /*!
@@ -4700,14 +4708,14 @@ UREACT_WARN_UNUSED_RESULT inline auto changed()
 }
 
 /*!
- * @brief Emits token when target signal was changed to value
- *  Creates a token stream that emits when target is changed and 'target.get() == value'.
+ * @brief Emits unit when target signal was changed to value
+ *  Creates a unit stream that emits when target is changed and 'target.get() == value'.
  *  V and S should be comparable with ==.
  */
 template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<token>
+UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<unit>
 {
-    return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | tokenize();
+    return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | unify();
 }
 
 /*!

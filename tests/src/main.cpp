@@ -664,32 +664,32 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
     ureact::context ctx;
 
     auto src = ureact::make_source<>( ctx );
-    auto token = ureact::token::value;
+    auto unit = ureact::unit{};
 
     auto counted = src | ureact::count();
 
     SUBCASE( "emit method" )
     {
-        src.emit();                       // event_source<token> specialization without argument
-        src.emit( ureact::token::value ); // R-value
-        src.emit( token );                // L-value
+        src.emit();                 // event_source<token> specialization without argument
+        src.emit( ureact::unit{} ); // R-value
+        src.emit( unit );           // L-value
     }
     SUBCASE( "function object" )
     {
-        src();                       // event_source<token> specialization without argument
-        src( ureact::token::value ); // R-value
-        src( token );                // L-value
+        src();                 // event_source<token> specialization without argument
+        src( ureact::unit{} ); // R-value
+        src( unit );           // L-value
     }
     SUBCASE( "stream" )
     {
-        src << ureact::token::value // R-value
-            << token                // L-value
-            << token;               // L-value
+        src << ureact::unit{} // R-value
+            << unit           // L-value
+            << unit;          // L-value
     }
     SUBCASE( "stl iterator" )
     {
-        std::generate_n( src.begin(), 1, [] { return ureact::token::value; } );       // R-value
-        std::generate_n( src.begin(), 2, [&]() -> ureact::token& { return token; } ); // L-value
+        std::generate_n( src.begin(), 1, [] { return ureact::unit{}; } );           // R-value
+        std::generate_n( src.begin(), 2, [&]() -> ureact::unit& { return unit; } ); // L-value
     }
 
     CHECK( counted.get() == 3 );
@@ -1643,7 +1643,7 @@ TEST_CASE( "Snapshot" )
 
     SUBCASE( "Trigger can be any type" )
     {
-        snap = ureact::transform( trigger, []( ureact::token ) { return 1; } )
+        snap = ureact::transform( trigger, []( ureact::unit ) { return 1; } )
              | ureact::snapshot( target );
     }
 
@@ -1688,7 +1688,7 @@ TEST_CASE( "Pulse" )
 
     SUBCASE( "Trigger can be any type" )
     {
-        beat = ureact::transform( trigger, []( ureact::token ) { return 1; } )
+        beat = ureact::transform( trigger, []( ureact::unit ) { return 1; } )
              | ureact::pulse( target );
     }
 

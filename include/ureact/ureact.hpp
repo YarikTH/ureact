@@ -169,6 +169,16 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
     UREACT_MAKE_MOVABLE( ClassName )
 
+// Define function body using "Please repeat yourself twice" idiom
+#define UREACT_FUNCTION_BODY( EXPR )                                                               \
+    noexcept( noexcept( EXPR ) )->decltype( EXPR )                                                 \
+    {                                                                                              \
+        return ( EXPR );                                                                           \
+    }
+
+// Forward arg
+#define UREACT_FWD( X ) std::forward<decltype( X )>( X )
+
 // NOLINTNEXTLINE
 #define UREACT_MAKE_NOOP_ITERATOR( ClassName )                                                     \
     ClassName& operator*()                                                                         \
@@ -1945,40 +1955,38 @@ private:
 
 template <template <typename> class functor_op,
     typename signal_t,
-    typename val_t = typename signal_t::value_t,
-    class = std::enable_if_t<is_signal_v<signal_t>>,
-    typename F = functor_op<val_t>,
-    typename S = std::invoke_result_t<F, val_t>,
-    typename op_t = function_op<S, F, signal_node_ptr_t<val_t>>>
+    class = std::enable_if_t<is_signal_v<signal_t>>>
 auto unary_operator_impl( const signal_t& arg )
 {
+    using val_t = typename signal_t::value_t;
+    using F = functor_op<val_t>;
+    using S = std::invoke_result_t<F, val_t>;
+    using op_t = function_op<S, F, signal_node_ptr_t<val_t>>;
     return temp_signal<S, op_t>{ arg.get_context(), F(), get_node_ptr( arg ) };
 }
 
-template <template <typename> class functor_op,
-    typename val_t,
-    typename op_in_t,
-    typename F = functor_op<val_t>,
-    typename S = std::invoke_result_t<F, val_t>,
-    typename op_t = function_op<S, F, op_in_t>>
+template <template <typename> class functor_op, typename val_t, typename op_in_t>
 auto unary_operator_impl( temp_signal<val_t, op_in_t>&& arg )
 {
+    using F = functor_op<val_t>;
+    using S = std::invoke_result_t<F, val_t>;
+    using op_t = function_op<S, F, op_in_t>;
     return temp_signal<S, op_t>{ arg.get_context(), F(), arg.steal_op() };
 }
 
 template <template <typename, typename> class functor_op,
     typename left_signal_t,
     typename right_signal_t,
-    typename left_val_t = typename left_signal_t::value_t,
-    typename right_val_t = typename right_signal_t::value_t,
     class = std::enable_if_t<is_signal_v<left_signal_t>>,
-    class = std::enable_if_t<is_signal_v<right_signal_t>>,
-    typename F = functor_op<left_val_t, right_val_t>,
-    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
-    typename op_t
-    = function_op<S, F, signal_node_ptr_t<left_val_t>, signal_node_ptr_t<right_val_t>>>
+    class = std::enable_if_t<is_signal_v<right_signal_t>>>
 auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
 {
+    using left_val_t = typename left_signal_t::value_t;
+    using right_val_t = typename right_signal_t::value_t;
+    using F = functor_op<left_val_t, right_val_t>;
+    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
+    using op_t = function_op<S, F, signal_node_ptr_t<left_val_t>, signal_node_ptr_t<right_val_t>>;
+
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
@@ -2027,13 +2035,14 @@ template <template <typename, typename> class functor_op,
     typename left_val_t,
     typename left_op_t,
     typename right_val_t,
-    typename right_op_t,
-    typename F = functor_op<left_val_t, right_val_t>,
-    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
-    typename op_t = function_op<S, F, left_op_t, right_op_t>>
+    typename right_op_t>
 auto binary_operator_impl(
     temp_signal<left_val_t, left_op_t>&& lhs, temp_signal<right_val_t, right_op_t>&& rhs )
 {
+    using F = functor_op<left_val_t, right_val_t>;
+    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
+    using op_t = function_op<S, F, left_op_t, right_op_t>;
+
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
@@ -2044,13 +2053,14 @@ template <template <typename, typename> class functor_op,
     typename left_val_t,
     typename left_op_t,
     typename right_signal_t,
-    typename right_val_t = typename right_signal_t::value_t,
-    class = std::enable_if_t<is_signal_v<right_signal_t>>,
-    typename F = functor_op<left_val_t, right_val_t>,
-    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
-    typename op_t = function_op<S, F, left_op_t, signal_node_ptr_t<right_val_t>>>
+    class = std::enable_if_t<is_signal_v<right_signal_t>>>
 auto binary_operator_impl( temp_signal<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )
 {
+    using right_val_t = typename right_signal_t::value_t;
+    using F = functor_op<left_val_t, right_val_t>;
+    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
+    using op_t = function_op<S, F, left_op_t, signal_node_ptr_t<right_val_t>>;
+
     context& context = rhs.get_context();
 
     return temp_signal<S, op_t>{ context, F(), lhs.steal_op(), get_node_ptr( rhs ) };
@@ -2060,13 +2070,14 @@ template <template <typename, typename> class functor_op,
     typename left_signal_t,
     typename right_val_t,
     typename right_op_t,
-    typename left_val_t = typename left_signal_t::value_t,
-    class = std::enable_if_t<is_signal_v<left_signal_t>>,
-    typename F = functor_op<left_val_t, right_val_t>,
-    typename S = std::invoke_result_t<F, left_val_t, right_val_t>,
-    typename op_t = function_op<S, F, signal_node_ptr_t<left_val_t>, right_op_t>>
+    class = std::enable_if_t<is_signal_v<left_signal_t>>>
 auto binary_operator_impl( const left_signal_t& lhs, temp_signal<right_val_t, right_op_t>&& rhs )
 {
+    using left_val_t = typename left_signal_t::value_t;
+    using F = functor_op<left_val_t, right_val_t>;
+    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
+    using op_t = function_op<S, F, signal_node_ptr_t<left_val_t>, right_op_t>;
+
     context& context = lhs.get_context();
 
     return temp_signal<S, op_t>{ context, F(), get_node_ptr( lhs ), rhs.steal_op() };
@@ -2109,75 +2120,57 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
 
 } // namespace detail
 
-#if !defined( UREACT_DOC )
+#define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
+    namespace detail                                                                               \
+    {                                                                                              \
+    template <typename V>                                                                          \
+    struct op_functor_##name                                                                       \
+    {                                                                                              \
+        UREACT_WARN_UNUSED_RESULT auto operator()( const V& v ) const UREACT_FUNCTION_BODY( op v ) \
+    };                                                                                             \
+    } /* namespace detail */
 
-#    define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                            \
-        namespace detail                                                                           \
-        {                                                                                          \
-        namespace op_functors                                                                      \
-        {                                                                                          \
-        template <typename T>                                                                      \
-        struct op_functor_##name                                                                   \
-        {                                                                                          \
-            UREACT_WARN_UNUSED_RESULT auto operator()( const T& v ) const                          \
-            {                                                                                      \
-                return op v;                                                                       \
-            }                                                                                      \
-        };                                                                                         \
-        } /* namespace op_functors */                                                              \
-        } /* namespace detail */
+#define UREACT_DECLARE_UNARY_OP( op, name )                                                        \
+    template <typename signal_t,                                                                   \
+        template <typename> class functor_op = detail::op_functor_##name,                          \
+        class = std::enable_if_t<is_signal_v<std::decay_t<signal_t>>>>                             \
+    UREACT_WARN_UNUSED_RESULT auto operator op( signal_t&& arg )                                   \
+        UREACT_FUNCTION_BODY( detail::unary_operator_impl<functor_op>( UREACT_FWD( arg ) ) )
 
-#    define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                           \
-        namespace detail                                                                           \
-        {                                                                                          \
-        namespace op_functors                                                                      \
-        {                                                                                          \
-        template <typename L, typename R>                                                          \
-        struct op_functor_##name                                                                   \
-        {                                                                                          \
-            UREACT_WARN_UNUSED_RESULT auto operator()( const L& lhs, const R& rhs ) const          \
-            {                                                                                      \
-                return lhs op rhs;                                                                 \
-            }                                                                                      \
-        };                                                                                         \
-        } /* namespace op_functors */                                                              \
-        } /* namespace detail */
+#define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
+    UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
+    UREACT_DECLARE_UNARY_OP( op, name )
 
-#    define UREACT_DECLARE_UNARY_OP( op, name )                                                    \
-        template <typename arg_t,                                                                  \
-            template <typename> class functor_op = detail::op_functors::op_functor_##name>         \
-        UREACT_WARN_UNUSED_RESULT auto operator op( arg_t&& arg )                                  \
-            ->decltype( detail::unary_operator_impl<functor_op>( std::forward<arg_t>( arg ) ) )    \
-        {                                                                                          \
-            return detail::unary_operator_impl<functor_op>( std::forward<arg_t&&>( arg ) );        \
-        }
+#define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
+    namespace detail                                                                               \
+    {                                                                                              \
+    template <typename L, typename R>                                                              \
+    struct op_functor_##name                                                                       \
+    {                                                                                              \
+        UREACT_WARN_UNUSED_RESULT auto operator()( const L& lhs, const R& rhs ) const              \
+            UREACT_FUNCTION_BODY( lhs op rhs )                                                     \
+    };                                                                                             \
+    } /* namespace detail */
 
-#    define UREACT_DECLARE_BINARY_OP( op, name )                                                   \
-        template <typename lhs_t,                                                                  \
-            typename rhs_t,                                                                        \
-            template <typename, typename> class functor_op                                         \
-            = detail::op_functors::op_functor_##name>                                              \
-        UREACT_WARN_UNUSED_RESULT auto operator op( lhs_t&& lhs, rhs_t&& rhs )                     \
-            ->decltype( detail::binary_operator_impl<functor_op>(                                  \
-                std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) ) )                     \
-        {                                                                                          \
-            return detail::binary_operator_impl<functor_op>(                                       \
-                std::forward<lhs_t&&>( lhs ), std::forward<rhs_t&&>( rhs ) );                      \
-        }
+#define UREACT_DECLARE_BINARY_OP( op, name )                                                       \
+    template <typename lhs_t,                                                                      \
+        typename rhs_t,                                                                            \
+        template <typename, typename> class functor_op = detail::op_functor_##name,                \
+        class = std::enable_if_t<                                                                  \
+            std::disjunction_v<is_signal<std::decay_t<lhs_t>>, is_signal<std::decay_t<rhs_t>>>>>   \
+    UREACT_WARN_UNUSED_RESULT auto operator op( lhs_t&& lhs, rhs_t&& rhs ) /*                */    \
+        UREACT_FUNCTION_BODY(                                                                      \
+            detail::binary_operator_impl<functor_op>( UREACT_FWD( lhs ), UREACT_FWD( rhs ) ) )
 
-#    define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                              \
-        UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
-        UREACT_DECLARE_UNARY_OP( op, name )
+#define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
+    UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
+    UREACT_DECLARE_BINARY_OP( op, name )
 
-#    define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                             \
-        UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
-        UREACT_DECLARE_BINARY_OP( op, name )
-
-#    if defined( __clang__ ) && defined( __clang_minor__ )
-#        pragma clang diagnostic push
-#        pragma clang diagnostic ignored "-Wunknown-warning-option"
-#        pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
-#    endif
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunknown-warning-option"
+#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
 
 // arithmetic operators
 
@@ -2204,18 +2197,16 @@ UREACT_DECLARE_BINARY_OPERATOR( &&, logical_and )
 UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
 UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
 
-#    if defined( __clang__ ) && defined( __clang_minor__ )
-#        pragma clang diagnostic pop
-#    endif
+#if defined( __clang__ ) && defined( __clang_minor__ )
+#    pragma clang diagnostic pop
+#endif
 
-#    undef UREACT_DECLARE_UNARY_OPERATOR
-#    undef UREACT_DECLARE_UNARY_OP_FUNCTOR
-#    undef UREACT_DECLARE_UNARY_OP
-#    undef UREACT_DECLARE_BINARY_OPERATOR
-#    undef UREACT_DECLARE_BINARY_OP_FUNCTOR
-#    undef UREACT_DECLARE_BINARY_OP
-
-#endif // !defined(UREACT_DOC)
+#undef UREACT_DECLARE_UNARY_OPERATOR
+#undef UREACT_DECLARE_UNARY_OP_FUNCTOR
+#undef UREACT_DECLARE_UNARY_OP
+#undef UREACT_DECLARE_BINARY_OPERATOR
+#undef UREACT_DECLARE_BINARY_OP_FUNCTOR
+#undef UREACT_DECLARE_BINARY_OP
 
 //==================================================================================================
 // [[section]] Events

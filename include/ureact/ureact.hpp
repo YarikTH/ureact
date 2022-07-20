@@ -1492,9 +1492,9 @@ class signal_base : public reactive_base<signal_node<S>>
 public:
     signal_base() = default;
 
-    template <typename T, class = disable_if_same_t<T, signal_base>>
-    explicit signal_base( T&& t )
-        : signal_base::reactive_base( std::forward<T>( t ) )
+    template <typename node_t>
+    explicit signal_base( std::shared_ptr<node_t>&& node )
+        : signal_base::reactive_base( std::move( node ) )
     {}
 
 protected:
@@ -2403,9 +2403,9 @@ public:
     UREACT_MAKE_COPYABLE( event_stream_base );
     UREACT_MAKE_MOVABLE( event_stream_base );
 
-    template <typename T, class = disable_if_same_t<T, event_stream_base>>
-    explicit event_stream_base( T&& t )
-        : event_stream_base::reactive_base( std::forward<T>( t ) )
+    template <typename node_t>
+    explicit event_stream_base( std::shared_ptr<node_t>&& node )
+        : event_stream_base::reactive_base( std::move( node ) )
     {}
 
 private:

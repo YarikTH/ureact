@@ -79,7 +79,7 @@ BINARY_OPERATOR( +, addition )
         }                                                                                          \
                                                                                                    \
         template <typename left_t, typename right_t>                                               \
-        static auto make_signal( ureact::context& ctx,                                             \
+        static auto lift( ureact::context& ctx,                                                    \
             const binary_operator_type type,                                                       \
             const left_t& lhs,                                                                     \
             const right_t& rhs )                                                                   \
@@ -181,7 +181,7 @@ template <typename traits, typename left_t, typename right_t>
 void test_binary_operator_impl( binary_operator_type type, const left_t& lhs, const right_t& rhs )
 {
     ureact::context ctx;
-    auto signal_to_test = traits::make_signal( ctx, type, lhs, rhs );
+    auto signal_to_test = traits::lift( ctx, type, lhs, rhs );
     auto value_from_signal = signal_to_test.get();
     auto value_from_operator = traits::execute_operator( lhs, rhs );
     static_assert(

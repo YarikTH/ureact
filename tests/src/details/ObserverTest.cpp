@@ -16,7 +16,7 @@ TEST_SUITE( "OperationsTest" )
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
 
-        auto result = make_signal( with( a1, a2 ), []( int a, int b ) { return a + b; } );
+        auto result = lift( with( a1, a2 ), []( int a, int b ) { return a + b; } );
 
         int observeCount1 = 0;
         int observeCount2 = 0;
@@ -106,9 +106,9 @@ TEST_SUITE( "OperationsTest" )
         auto in1 = make_var( ctx, 1 );
         auto in2 = make_var( ctx, 1 );
 
-        auto sum = make_signal( with( in1, in2 ), []( int a, int b ) { return a + b; } );
-        auto prod = make_signal( with( in1, in2 ), []( int a, int b ) { return a * b; } );
-        auto diff = make_signal( with( in1, in2 ), []( int a, int b ) { return a - b; } );
+        auto sum = lift( with( in1, in2 ), []( int a, int b ) { return a + b; } );
+        auto prod = lift( with( in1, in2 ), []( int a, int b ) { return a * b; } );
+        auto diff = lift( with( in1, in2 ), []( int a, int b ) { return a - b; } );
 
         auto src1 = make_source( ctx );
         auto src2 = make_source<int>( ctx );
@@ -165,9 +165,9 @@ TEST_SUITE( "OperationsTest" )
         auto in1 = make_var( ctx, 1 );
         auto in2 = make_var( ctx, 1 );
 
-        auto sum = make_signal( with( in1, in2 ), []( int a, int b ) { return a + b; } );
-        auto prod = make_signal( with( in1, in2 ), []( int a, int b ) { return a * b; } );
-        auto diff = make_signal( with( in1, in2 ), []( int a, int b ) { return a - b; } );
+        auto sum = lift( with( in1, in2 ), []( int a, int b ) { return a + b; } );
+        auto prod = lift( with( in1, in2 ), []( int a, int b ) { return a * b; } );
+        auto diff = lift( with( in1, in2 ), []( int a, int b ) { return a - b; } );
 
         auto src = make_source( ctx );
 

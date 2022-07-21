@@ -333,6 +333,19 @@ template <typename T>
 inline constexpr bool is_signal_v = is_signal<T>::value;
 
 /*!
+ * @brief Return if type is signal_pack
+ */
+template <typename T>
+struct is_signal_pack : detail::is_base_of_template<signal_pack, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_signal_pack
+ */
+template <typename T>
+inline constexpr bool is_signal_pack_v = is_signal_pack<T>::value;
+
+/*!
  * @brief Return if type is events or its inheritor
  */
 template <typename T>
@@ -1848,7 +1861,7 @@ template <typename... values_t,
     typename F = std::decay_t<in_f>,
     typename S = std::invoke_result_t<F, values_t...>,
     typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<values_t>...>>
-UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func )
+UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<values_t...>& arg_pack, in_f&& func )
 {
     context& context = std::get<0>( arg_pack.data ).get_context();
 
@@ -1867,37 +1880,24 @@ UREACT_WARN_UNUSED_RESULT auto make_signal( const signal_pack<values_t...>& arg_
  *  * S func(const value_t&)
  */
 template <typename value_t, typename in_f>
-UREACT_WARN_UNUSED_RESULT auto make_signal( const signal<value_t>& arg, in_f&& func )
+UREACT_WARN_UNUSED_RESULT auto lift( const signal<value_t>& arg, in_f&& func )
 {
-    return make_signal( with( arg ), std::forward<in_f>( func ) );
+    return lift( with( arg ), std::forward<in_f>( func ) );
 }
 
 /*!
- * @brief operator| overload to connect a signal to a function and return the resulting signal
- *
- *  The signature of func should be equivalent to:
- *  * S func(const value_t&)
- *
- *  the same as make_signal(arg, func)
+ * @brief Curried version of lift(const signal_pack<values_t...>& arg_pack, in_f&& func) algorithm used for "pipe" syntax
  */
-template <typename F, typename T, class = std::enable_if_t<is_signal_v<T>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( const T& arg, F&& func )
+template <typename in_f>
+UREACT_WARN_UNUSED_RESULT inline auto lift( in_f&& func )
 {
-    return make_signal( arg, std::forward<F>( func ) );
-}
-
-/*!
- * @brief operator| overload to connect multiple signals to a function and return the resulting signal
- *
- *  The signature of func should be equivalent to:
- *  * S func(const values_t& ...)
- *
- *  the same as make_signal(with(args), func)
- */
-template <typename F, typename... values_t>
-UREACT_WARN_UNUSED_RESULT auto operator|( const signal_pack<values_t...>& arg_pack, F&& func )
-{
-    return make_signal( arg_pack, std::forward<F>( func ) );
+    return closure{ [func = std::forward<in_f>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert(
+            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_signal_pack<std::decay_t<arg_t>>>,
+            "Signal type or signal_pack is required" );
+        return lift( std::forward<arg_t>( source ), func );
+    } };
 }
 
 namespace detail
@@ -4206,7 +4206,7 @@ template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 UREACT_WARN_UNUSED_RESULT auto reactive_ref(
     const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
 {
-    return flatten( make_signal(
+    return flatten( lift(
         outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
 }
 
@@ -4222,7 +4222,7 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref(
 template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
 UREACT_WARN_UNUSED_RESULT auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
 {
-    return flatten( make_signal(
+    return flatten( lift(
         outer, [attribute]( const S* s ) { return static_cast<decayed_r>( s->*attribute ); } ) );
 }
 

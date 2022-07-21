@@ -89,7 +89,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Signals1" )
     {
-        auto summ = []( int a, int b ) { return a + b; };
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
         context ctx;
 
@@ -98,9 +98,9 @@ TEST_SUITE( "SignalTest" )
         auto v3 = make_var( ctx, 3 );
         auto v4 = make_var( ctx, 4 );
 
-        auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) { return a + b; } );
+        auto s1 = lift( with( v1, v2 ), []( int a, int b ) { return a + b; } );
 
-        auto s2 = make_signal( with( v3, v4 ), []( int a, int b ) { return a + b; } );
+        auto s2 = lift( with( v3, v4 ), []( int a, int b ) { return a + b; } );
 
         auto s3 = with( s1, s2 ) | summ;
 
@@ -139,8 +139,8 @@ TEST_SUITE( "SignalTest" )
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
 
-        auto plus0 = []( int value ) { return value + 0; };
-        auto summ = []( int a, int b ) { return a + b; };
+        auto plus0 = ureact::lift( []( int value ) { return value + 0; } );
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
         auto b1 = a1 | plus0;
         auto b2 = with( a1, a2 ) | summ;
@@ -213,8 +213,8 @@ TEST_SUITE( "SignalTest" )
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
 
-        auto plus0 = []( int value ) { return value + 0; };
-        auto summ = []( int a, int b ) { return a + b; };
+        auto plus0 = ureact::lift( []( int value ) { return value + 0; } );
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
         auto b1 = a1 | plus0;
         auto b2 = with( a1, a2 ) | summ;
@@ -271,7 +271,7 @@ TEST_SUITE( "SignalTest" )
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
 
-        auto summ = []( int a, int b ) { return a + b; };
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
         auto b1 = with( a1, a2 ) | summ;
         auto b2 = with( b1, a2 ) | summ;
@@ -299,7 +299,8 @@ TEST_SUITE( "SignalTest" )
         auto v2 = make_var( ctx, 30 );
         auto v3 = make_var( ctx, 10 );
 
-        auto signal = with( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
+        auto signal = with( v1, v2, v3 )
+                    | ureact::lift( [=]( int a, int b, int c ) -> int { return a * b * c; } );
 
         CHECK_EQ( signal(), 600 );
         v3 <<= 100;
@@ -313,12 +314,13 @@ TEST_SUITE( "SignalTest" )
         auto a = make_var( ctx, 1 );
         auto b = make_var( ctx, 1 );
 
-        auto summ = []( int a, int b ) { return a + b; };
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
-        auto c = with( with( a, b ) | summ, with( a, make_var( ctx, 100 ) ) | summ ) | &myfunc;
-        auto d = c | &myfunc2;
-        auto e = with( d, d ) | &myfunc3;
-        auto f = make_signal( e, []( float value ) { return -value + 100; } );
+        auto c = with( with( a, b ) | summ, with( a, make_var( ctx, 100 ) ) | summ )
+               | ureact::lift( &myfunc );
+        auto d = c | ureact::lift( &myfunc2 );
+        auto e = with( d, d ) | ureact::lift( &myfunc3 );
+        auto f = lift( e, []( float value ) { return -value + 100; } );
 
         CHECK_EQ( c(), 103 );
         CHECK_EQ( d(), 51.5f );
@@ -380,12 +382,12 @@ TEST_SUITE( "SignalTest" )
         auto plus0 = []( int value ) { return value + 0; };
 
         auto a1 = make_var( ctx, 300 );
-        auto a2 = make_signal( a1, plus0 );
-        auto a3 = make_signal( a2, plus0 );
-        auto a4 = make_signal( a3, plus0 );
-        auto a5 = make_signal( a4, plus0 );
-        auto a6 = make_signal( a5, plus0 );
-        auto inner2 = make_signal( a6, plus0 );
+        auto a2 = lift( a1, plus0 );
+        auto a3 = lift( a2, plus0 );
+        auto a4 = lift( a3, plus0 );
+        auto a5 = lift( a4, plus0 );
+        auto a6 = lift( a5, plus0 );
+        auto inner2 = lift( a6, plus0 );
 
         CHECK_EQ( inner1(), 200 );
         CHECK_EQ( inner2(), 300 );
@@ -400,10 +402,10 @@ TEST_SUITE( "SignalTest" )
 
         observe( flattened, [&observeCount]( int v ) { observeCount++; } );
 
-        auto o1 = make_signal( with( a0, flattened ), []( int a, int b ) { return a + b; } );
-        auto o2 = make_signal( o1, plus0 );
-        auto o3 = make_signal( o2, plus0 );
-        auto result = make_signal( o3, plus0 );
+        auto o1 = lift( with( a0, flattened ), []( int a, int b ) { return a + b; } );
+        auto o2 = lift( o1, plus0 );
+        auto o3 = lift( o2, plus0 );
+        auto result = lift( o3, plus0 );
 
         CHECK_EQ( result(), 100 + 200 );
 
@@ -428,8 +430,8 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Flatten3" )
     {
-        auto plus0 = []( int value ) { return value + 0; };
-        auto summ = []( int a, int b ) { return a + b; };
+        auto plus0 = ureact::lift( []( int value ) { return value + 0; } );
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
         context ctx;
 
@@ -486,8 +488,8 @@ TEST_SUITE( "SignalTest" )
     {
         std::vector<int> results;
 
-        auto plus0 = []( int value ) { return value + 0; };
-        auto summ = []( int a, int b ) { return a + b; };
+        auto plus0 = ureact::lift( []( int value ) { return value + 0; } );
+        auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
         context ctx;
 

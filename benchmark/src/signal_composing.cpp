@@ -27,7 +27,7 @@ void signal_functions_baseline( ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
     auto a = make_var( ctx, 1 );
-    auto d = make_signal( a,
+    auto d = lift( a,
         []( int a ) { //
             return ( ( a + a ) * ( a + a ) ) + ( ( a + a ) * ( a + a ) );
         } );
@@ -52,15 +52,15 @@ void signal_functions_separate( ankerl::nanobench::Bench& bench )
     ureact::context ctx;
     auto a = make_var( ctx, 1 );
 
-    auto b1 = make_signal( with( a, a ), std::plus<>() );
-    auto b2 = make_signal( with( a, a ), std::plus<>() );
-    auto b3 = make_signal( with( a, a ), std::plus<>() );
-    auto b4 = make_signal( with( a, a ), std::plus<>() );
+    auto b1 = lift( with( a, a ), std::plus<>() );
+    auto b2 = lift( with( a, a ), std::plus<>() );
+    auto b3 = lift( with( a, a ), std::plus<>() );
+    auto b4 = lift( with( a, a ), std::plus<>() );
 
-    auto c1 = make_signal( with( b1, b2 ), std::multiplies<>() );
-    auto c2 = make_signal( with( b3, b4 ), std::multiplies<>() );
+    auto c1 = lift( with( b1, b2 ), std::multiplies<>() );
+    auto c2 = lift( with( b3, b4 ), std::multiplies<>() );
 
-    auto d = make_signal( with( c1, c2 ), std::plus<>() );
+    auto d = lift( with( c1, c2 ), std::plus<>() );
 
     perform_test( "separate", bench, a, d );
 }

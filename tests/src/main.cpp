@@ -160,7 +160,7 @@ TEST_CASE( "SignalConstruction" )
     SUBCASE( "algorithm" )
     {
         auto var = ureact::make_var<int>( ctx, 5 );
-        ureact::signal sig = make_signal( var, []( int a ) { return a; } );
+        ureact::signal sig = lift( var, []( int a ) { return a; } );
 
         CHECK( sig.is_valid() );
     }

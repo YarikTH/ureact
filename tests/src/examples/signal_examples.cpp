@@ -30,15 +30,15 @@ TEST_SUITE( "Examples" )
             bothWords = firstWord + " " + secondWord;
         }
 
-        SUBCASE( "using make_signal()" )
+        SUBCASE( "using lift()" )
         {
-            bothWords = make_signal( with( firstWord, secondWord ), concatFunc );
+            bothWords = lift( with( firstWord, secondWord ), concatFunc );
         }
 
         SUBCASE( "operators , and |" )
         {
-            // operator "|" can be used instead of make_signal()
-            bothWords = with( firstWord, secondWord ) | concatFunc;
+            // operator "|" can be used instead of lift()
+            bothWords = with( firstWord, secondWord ) | ureact::lift( concatFunc );
         }
 
         // Imperative value access
@@ -111,7 +111,7 @@ TEST_SUITE( "Examples" )
         ureact::context ctx;
 
         ureact::var_signal<int> x = make_var( ctx, 1 );
-        ureact::signal<int> xAbs = make_signal( x, []( int value ) { return abs( value ); } );
+        ureact::signal<int> xAbs = lift( x, []( int value ) { return abs( value ); } );
 
         std::vector<int> xAbs_values;
         observe( xAbs, [&]( int new_value ) { xAbs_values.push_back( new_value ); } );

@@ -65,9 +65,9 @@ TEST_CASE( "Signals1" )
     auto v3 = make_var( ctx, 3 );
     auto v4 = make_var( ctx, 4 );
 
-    auto s1 = make_signal( with( v1, v2 ), []( int a, int b ) { return a + b; } );
+    auto s1 = lift( with( v1, v2 ), []( int a, int b ) { return a + b; } );
 
-    auto s2 = make_signal( with( v3, v4 ), []( int a, int b ) { return a + b; } );
+    auto s2 = lift( with( v3, v4 ), []( int a, int b ) { return a + b; } );
 
     auto s3 = s1 + s2;
 
@@ -252,7 +252,8 @@ TEST_CASE( "FunctionBind1" )
     auto v2 = make_var( ctx, 30 );
     auto v3 = make_var( ctx, 10 );
 
-    auto signal = with( v1, v2, v3 ) | [=]( int a, int b, int c ) -> int { return a * b * c; };
+    auto signal = with( v1, v2, v3 )
+                | ureact::lift( [=]( int a, int b, int c ) -> int { return a * b * c; } );
 
     CHECK( signal.get() == 600 );
     v3 <<= 100;
@@ -266,9 +267,9 @@ TEST_CASE( "FunctionBind2" )
     auto a = make_var( ctx, 1 );
     auto b = make_var( ctx, 1 );
 
-    auto c = with( a + b, a + 100 ) | &add;
-    auto d = c | &halve;
-    auto e = with( d, d ) | &multiply;
+    auto c = with( a + b, a + 100 ) | ureact::lift( &add );
+    auto d = c | ureact::lift( &halve );
+    auto e = with( d, d ) | ureact::lift( &multiply );
     auto f = -e + 100.f;
 
     CHECK( c.get() == 103 );
@@ -290,9 +291,9 @@ TEST_CASE( "Compose signals" )
 
     auto a = make_var( ctx, 1 );
     auto b = make_var( ctx, 1 );
-    auto inverse_value = []( int i ) { return -i; };
-    auto double_value = []( int i ) { return i * 2; };
-    auto sum_values = []( int i, int j ) { return i + j; };
+    auto inverse_value = ureact::lift( []( int i ) { return -i; } );
+    auto double_value = ureact::lift( []( int i ) { return i * 2; } );
+    auto sum_values = ureact::lift( []( int i, int j ) { return i + j; } );
 
     // x = a * 2 * 2 * 2 == a * 8
     auto x = a | double_value | double_value | double_value;

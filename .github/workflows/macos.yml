@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: macos-10.15
+    runs-on: macos-11
     strategy:
       matrix:
         build_type: [Release]

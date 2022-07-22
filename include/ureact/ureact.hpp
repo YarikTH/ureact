@@ -1829,10 +1829,23 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 } // namespace detail
 
 /*!
- * @brief Create a new input signal node and links it to the returned make_var instance
+ * @brief Create a new input signal node and links it to the returned var_signal instance
  */
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
+{
+    return make_var_impl( context, std::forward<V>( value ) );
+}
+
+/*!
+ * @brief Create a new signal node and links it to the returned signal instance
+ *
+ *  Returned value doesn't have input interface and can be used a placeholder where signal is required.
+ *  Currently it's just cosmetic function that can be expressed as signal{ make_var(context, value) }
+ *  but it can be optimized in future.
+ */
+template <typename V, typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT auto make_const( context& context, V&& value ) -> signal<S>
 {
     return make_var_impl( context, std::forward<V>( value ) );
 }
@@ -3114,6 +3127,21 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
  */
 template <typename E = unit>
 UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
+{
+    return event_source<E>{ context };
+}
+
+/*!
+ * @brief Create a new events node and links it to the returned events instance
+ *
+ *  Event value type E has to be specified explicitly. It would be unit if it is omitted.
+ *
+ *  Returned value doesn't have input interface and can be used a placeholder where events is required.
+ *  Currently it's just cosmetic function that can be expressed as events<E>{ make_source<E>(context) }
+ *  but it can be optimized in future.
+ */
+template <typename E = unit>
+UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
 {
     return event_source<E>{ context };
 }

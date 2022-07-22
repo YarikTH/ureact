@@ -156,6 +156,14 @@ TEST_CASE( "SignalConstruction" )
         CHECK( sig.is_valid() );
     }
 
+    // signal can be created via make_const call
+    SUBCASE( "make_const" )
+    {
+        ureact::signal sig = ureact::make_const<int>( ctx, 5 );
+
+        CHECK( sig.is_valid() );
+    }
+
     // signal can be created using various algorithms (in particular using overloaded operator)
     SUBCASE( "algorithm" )
     {
@@ -432,6 +440,14 @@ TEST_CASE( "EventsConstruction" )
     {
         auto src = ureact::make_source<>( ctx );
         ureact::events<> evt = src;
+
+        CHECK( evt.is_valid() );
+    }
+
+    // events can be created via make_never call
+    SUBCASE( "make_never" )
+    {
+        ureact::events evt = ureact::make_never<>( ctx );
 
         CHECK( evt.is_valid() );
     }

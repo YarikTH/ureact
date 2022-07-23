@@ -135,6 +135,23 @@ TEST_CASE( "RecursiveTransactions" )
     CHECK( change_count.get() == 1 );
 }
 
+TEST_CASE( "ComplexTransaction" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal src{ ctx, 2 };
+
+    auto result = do_transaction(
+        ctx,
+        [&]( int i ) {      //
+            return src + i; // return value from the transaction functor
+        },                  //
+        3 );                // pass value to the transaction functor
+
+    CHECK( result.is_valid() );
+    CHECK( result.get() == 5 );
+}
+
 TEST_CASE( "SignalConstruction" )
 {
     ureact::context ctx;

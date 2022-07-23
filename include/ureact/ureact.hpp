@@ -693,20 +693,31 @@ private:
 class react_graph
 {
 public:
-    react_graph() = default;
-
-    template <typename F>
-    void do_transaction( F&& func )
+    struct transaction_guard
     {
-        ++m_transaction_level;
-        func();
-        --m_transaction_level;
+        react_graph& self;
 
-        if( m_transaction_level == 0 )
+        explicit transaction_guard( react_graph& self )
+            : self( self )
         {
-            finalize_transaction();
+            ++self.m_transaction_level;
         }
-    }
+
+        ~transaction_guard()
+        {
+            --self.m_transaction_level;
+
+            if( self.m_transaction_level == 0 )
+            {
+                self.finalize_transaction();
+            }
+        }
+
+        UREACT_MAKE_NONCOPYABLE( transaction_guard );
+        UREACT_MAKE_NONMOVABLE( transaction_guard );
+    };
+
+    react_graph() = default;
 
     void finalize_transaction()
     {
@@ -963,13 +974,6 @@ public:
         return *m_graph;
     }
 
-    /// Perform several changes atomically
-    template <typename F>
-    void do_transaction( F&& func )
-    {
-        m_graph->do_transaction( std::forward<F>( func ) );
-    }
-
 private:
     std::unique_ptr<react_graph> m_graph;
 };
@@ -978,9 +982,6 @@ private:
 class node_base;
 
 } // namespace detail
-
-template <typename F>
-void do_transaction( context& ctx, F&& func );
 
 /*!
  * @brief Core class that connects all reactive nodes together.
@@ -1004,9 +1005,6 @@ public:
 private:
     friend class detail::node_base;
 
-    template <typename F>
-    friend void do_transaction( context& ctx, F&& func );
-
     /// Returns internals. Not intended to use in user code
     UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
     {
@@ -1017,14 +1015,25 @@ private:
 /*!
  * @brief Perform several changes atomically
  *
- *  The signature of func should be equivalent to:
- *  * void func()
+ *  Can pass additional arguments to the functiona and optionally return a result
  */
-template <typename F>
-void do_transaction( context& ctx, F&& func )
+template <typename F,
+    typename... args_t,
+    class = std::enable_if_t<std::is_invocable_v<F&&, args_t&&...>>>
+UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, args_t&&... args )
 {
-    static_assert( std::is_invocable_r_v<void, F>, "Transaction functions should be void()" );
-    ctx.do_transaction( std::forward<F>( func ) );
+    auto& graph = _get_internals( ctx ).get_graph();
+
+    detail::react_graph::transaction_guard _{ graph };
+
+    if constexpr( std::is_same_v<std::invoke_result_t<F&&, args_t&&...>, void> )
+    {
+        std::forward<F>( func )( std::forward<args_t>( args )... );
+    }
+    else
+    {
+        return std::forward<F>( func )( std::forward<args_t>( args )... );
+    }
 }
 
 /*!

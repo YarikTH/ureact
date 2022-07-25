@@ -5,22 +5,7 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 #
-add_executable(
-    ureact_test
-    main.cpp
-    examples/signal_examples.cpp
-    examples/complex_signal_examples.cpp
-    examples/composition_examples.cpp
-    examples/observer_examples.cpp
-    details/observer_test.cpp
-    details/signal_test.cpp
-    details/operators_test.cpp
-    details/dynamic_signals_test.cpp
-    details/ObserverTest.cpp
-    details/SignalTest.cpp
-)
-
-target_include_directories(ureact_test PRIVATE include)
+add_executable(ureact_test main.cpp legacy.cpp)
 
 target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)
 

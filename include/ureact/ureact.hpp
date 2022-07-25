@@ -3394,25 +3394,6 @@ UREACT_WARN_UNUSED_RESULT auto take( const N count )
 }
 
 /*!
- * @brief Take only the first element from another stream
- *
- *  The same as take(1)
- */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto once( const events<E>& source )
-{
-    return take( source, 1 );
-}
-
-/*!
- * @brief Curried version of once(const events<E>& source) algorithm used for "pipe" syntax
- */
-UREACT_WARN_UNUSED_RESULT inline auto once()
-{
-    return take( 1 );
-}
-
-/*!
  * @brief Skips the first elements of the source stream that satisfy the predicate
  *
  *  Takes events beginning at the first for which the predicate returns false.

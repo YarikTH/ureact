@@ -1417,43 +1417,6 @@ TEST_CASE( "TakeOrDropN" )
     CHECK( result_without_first_n.get() == expected_without_first_n );
 }
 
-// take only first event from the source
-TEST_CASE( "Once" )
-{
-    ureact::context ctx;
-
-    const auto is_negative = [&]( auto i ) { return i < 0; };
-
-    auto src = ureact::make_source<int>( ctx );
-    ureact::events<int> negatives = ureact::filter( src, is_negative );
-    ureact::events<int> first;
-    ureact::events<int> first_negative;
-
-    SUBCASE( "Functional syntax" )
-    {
-        first = ureact::once( src );
-        first_negative = ureact::once( negatives );
-    }
-    SUBCASE( "Piped syntax" )
-    {
-        first = src | ureact::once();
-        first_negative = negatives | ureact::once();
-    }
-
-    const auto result_first = ureact::collect<std::vector>( first );
-    const auto result_first_negative = ureact::collect<std::vector>( first_negative );
-
-    // pass integers as events
-    for( int i : { 5, 1, 2, 4, -6, 0, -2 } )
-        src << i;
-
-    const std::vector<int> expected_first = { 5 };
-    CHECK( result_first.get() == expected_first );
-
-    const std::vector<int> expected_first_negative = { -6 };
-    CHECK( result_first_negative.get() == expected_first_negative );
-}
-
 // filters that take first elements or skip first elements according to given predicate
 TEST_CASE( "TakeOrDropWhile" )
 {

@@ -292,17 +292,11 @@ TEST_CASE( "SelfObserverDetachTest" )
 
 TEST_SUITE_END();
 
-namespace
-{
-using namespace ureact;
-
-} // namespace
-
 TEST_SUITE( "OperationsTest" )
 {
     TEST_CASE( "detach" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
@@ -374,12 +368,12 @@ TEST_SUITE( "OperationsTest" )
     {
         std::vector<int> results;
 
-        context ctx;
+        ureact::context ctx;
 
         auto in = make_var( ctx, 1 );
 
         {
-            scoped_observer obs = observe( in, [&]( int v ) { results.push_back( v ); } );
+            ureact::scoped_observer obs = observe( in, [&]( int v ) { results.push_back( v ); } );
 
             in <<= 2;
         }
@@ -392,7 +386,7 @@ TEST_SUITE( "OperationsTest" )
 
     TEST_CASE( "SyncedObserveTest" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto in1 = make_var( ctx, 1 );
         auto in2 = make_var( ctx, 1 );
@@ -401,10 +395,10 @@ TEST_SUITE( "OperationsTest" )
         auto prod = lift( with( in1, in2 ), []( int a, int b ) { return a * b; } );
         auto diff = lift( with( in1, in2 ), []( int a, int b ) { return a - b; } );
 
-        auto src1 = make_source( ctx );
-        auto src2 = make_source<int>( ctx );
+        auto src1 = ureact::make_source( ctx );
+        auto src2 = ureact::make_source<int>( ctx );
 
-        observe( src1, with( sum, prod, diff ), []( unit, int sum, int prod, int diff ) {
+        observe( src1, with( sum, prod, diff ), []( ureact::unit, int sum, int prod, int diff ) {
             CHECK_EQ( sum, 33 );
             CHECK_EQ( prod, 242 );
             CHECK_EQ( diff, 11 );
@@ -426,19 +420,19 @@ TEST_SUITE( "OperationsTest" )
 
     TEST_CASE( "DetachThisObserver1" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto src = make_source( ctx );
 
         int count = 0;
 
-        observe( src, [&]( unit ) -> observer_action {
+        observe( src, [&]( ureact::unit ) -> ureact::observer_action {
             ++count;
             if( count == 1 )
             {
-                return observer_action::next;
+                return ureact::observer_action::next;
             }
-            return observer_action::stop_and_detach;
+            return ureact::observer_action::stop_and_detach;
         } );
 
         src.emit();
@@ -451,7 +445,7 @@ TEST_SUITE( "OperationsTest" )
 
     TEST_CASE( "DetachThisObserver2" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto in1 = make_var( ctx, 1 );
         auto in2 = make_var( ctx, 1 );
@@ -466,13 +460,13 @@ TEST_SUITE( "OperationsTest" )
 
         observe( src,
             with( sum, prod, diff ),
-            [&]( unit, int sum, int prod, int diff ) -> observer_action {
+            [&]( ureact::unit, int sum, int prod, int diff ) -> ureact::observer_action {
                 ++count;
                 if( count == 1 )
                 {
-                    return observer_action::next;
+                    return ureact::observer_action::next;
                 }
-                return observer_action::stop_and_detach;
+                return ureact::observer_action::stop_and_detach;
             } );
 
         in1 <<= 22;
@@ -488,7 +482,7 @@ TEST_SUITE( "OperationsTest" )
 
     TEST_CASE( "Detaching observers using return value" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto x = make_var( ctx, 0 );
 
@@ -499,12 +493,12 @@ TEST_SUITE( "OperationsTest" )
         auto obs = observe( x, [&]( const int v ) {
             if( v < 0 )
             {
-                return observer_action::stop_and_detach;
+                return ureact::observer_action::stop_and_detach;
             }
             else
             {
                 x_values.push_back( v );
-                return observer_action::next;
+                return ureact::observer_action::next;
             }
         } );
 
@@ -1525,7 +1519,6 @@ TEST_SUITE_END();
 
 namespace
 {
-using namespace ureact;
 
 int myfunc( int a, int b )
 {
@@ -1548,7 +1541,7 @@ TEST_SUITE( "SignalTest" )
 {
     TEST_CASE( "MakeVars" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto v1 = make_var( ctx, 1 );
         auto v2 = make_var( ctx, 2 );
@@ -1575,7 +1568,7 @@ TEST_SUITE( "SignalTest" )
     {
         auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
-        context ctx;
+        ureact::context ctx;
 
         auto v1 = make_var( ctx, 1 );
         auto v2 = make_var( ctx, 2 );
@@ -1603,22 +1596,22 @@ TEST_SUITE( "SignalTest" )
 
         bool b = false;
 
-        b = is_signal<decltype( v1 )>::value;
+        b = ureact::is_signal<decltype( v1 )>::value;
         CHECK( b );
 
-        b = is_signal<decltype( s1 )>::value;
+        b = ureact::is_signal<decltype( s1 )>::value;
         CHECK( b );
 
-        b = is_signal<decltype( s2 )>::value;
+        b = ureact::is_signal<decltype( s2 )>::value;
         CHECK( b );
 
-        b = is_signal<decltype( 10 )>::value;
+        b = ureact::is_signal<decltype( 10 )>::value;
         CHECK_FALSE( b );
     }
 
     TEST_CASE( "Signals2" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
@@ -1692,7 +1685,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Signals3" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
@@ -1750,7 +1743,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Signals4" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto a1 = make_var( ctx, 1 );
         auto a2 = make_var( ctx, 1 );
@@ -1777,7 +1770,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "FunctionBind1" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto v1 = make_var( ctx, 2 );
         auto v2 = make_var( ctx, 30 );
@@ -1793,7 +1786,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "FunctionBind2" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto a = make_var( ctx, 1 );
         auto b = make_var( ctx, 1 );
@@ -1821,7 +1814,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Flatten1" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto inner1 = make_var( ctx, 123 );
         auto inner2 = make_var( ctx, 789 );
@@ -1857,7 +1850,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Flatten2" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto a0 = make_var( ctx, 100 );
 
@@ -1917,7 +1910,7 @@ TEST_SUITE( "SignalTest" )
         auto plus0 = ureact::lift( []( int value ) { return value + 0; } );
         auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
-        context ctx;
+        ureact::context ctx;
 
         auto inner1 = make_var( ctx, 10 );
 
@@ -1975,7 +1968,7 @@ TEST_SUITE( "SignalTest" )
         auto plus0 = ureact::lift( []( int value ) { return value + 0; } );
         auto summ = ureact::lift( []( int a, int b ) { return a + b; } );
 
-        context ctx;
+        ureact::context ctx;
 
         auto a1 = make_var( ctx, 100 );
         auto inner1 = a1 | plus0;
@@ -2005,7 +1998,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Member1" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto outer = make_var( ctx, 10 );
         auto inner = make_var( ctx, outer );
@@ -2019,7 +2012,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Modify1" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto v = make_var( ctx, std::vector<int>{} );
 
@@ -2050,7 +2043,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Modify2" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto v = make_var( ctx, std::vector<int>{} );
 
@@ -2075,7 +2068,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Modify3" )
     {
-        context ctx;
+        ureact::context ctx;
 
         auto vect = make_var( ctx, std::vector<int>{} );
 
@@ -2098,7 +2091,7 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Signals of references" )
     {
-        context ctx;
+        ureact::context ctx;
 
         Company company1( ctx, 1, "MetroTec" );
         Company company2( ctx, 2, "ACME" );
@@ -2123,16 +2116,16 @@ TEST_SUITE( "SignalTest" )
 
     TEST_CASE( "Signal of events" )
     {
-        context ctx;
+        ureact::context ctx;
 
-        auto in1 = make_source<int>( ctx );
-        auto in2 = make_source<int>( ctx );
+        auto in1 = ureact::make_source<int>( ctx );
+        auto in2 = ureact::make_source<int>( ctx );
 
         auto sig = make_var( ctx, in1 );
 
         int reassign_count = 0;
 
-        observe( sig, [&]( const events<int>& ) { ++reassign_count; } );
+        observe( sig, [&]( const ureact::events<int>& ) { ++reassign_count; } );
 
         auto f = flatten( sig );
 

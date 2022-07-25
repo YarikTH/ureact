@@ -2238,9 +2238,19 @@ UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
  * @brief This class is used as value type of unit streams, which emit events without any value other than the fact that they occurred
  *
  *  See std::monostate https://en.cppreference.com/w/cpp/utility/variant/monostate
+ *  See Regular Void https://open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0146r1.html#ThinkingAboutVoid
  */
 struct unit
-{};
+{
+    constexpr unit() = default;
+    constexpr unit( const unit& ) = default;
+    constexpr unit& operator=( const unit& ) = default;
+
+    // unit can be constructed from any value
+    template <class T>
+    explicit constexpr unit( T&& ) noexcept // NOLINT(bugprone-forwarding-reference-overload)
+    {}
+};
 
 // clang-format off
 constexpr bool operator==(unit, unit) noexcept { return true; }

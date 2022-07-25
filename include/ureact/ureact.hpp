@@ -3346,6 +3346,37 @@ UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
 }
 
 /*!
+ * @brief Create a new event stream that casts events from other stream using static_cast
+ *
+ *  For every event e in source, emit t = static_cast<out_t>(e).
+ *
+ *  Type of resulting signal have to be explicitly specified.
+ */
+template <typename out_t, typename in_t>
+UREACT_WARN_UNUSED_RESULT auto cast( const events<in_t>& source ) -> events<out_t>
+{
+    return detail::process_impl<out_t>( source,
+        signal_pack<>(), //
+        []( event_range<in_t> range, event_emitter<out_t> out ) mutable {
+            for( const auto& e : range )
+                out.emit( static_cast<out_t>( e ) );
+        } );
+}
+
+/*!
+ * @brief Curried version of cast(const events<in_t>& source) algorithm used for "pipe" syntax
+ */
+template <typename out_t>
+UREACT_WARN_UNUSED_RESULT auto cast()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return cast<out_t>( std::forward<arg_t>( source ) );
+    } };
+}
+
+/*!
  * @brief Skips first N elements from the source stream
  *
  *  Semantically equivalent of std::ranges::views::drop
@@ -3557,7 +3588,7 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args
 template <typename E>
 UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
 {
-    return transform( source, []( const auto& ) { return unit{}; } );
+    return cast<unit>( source );
 }
 
 /*!
@@ -3565,11 +3596,7 @@ UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
  */
 UREACT_WARN_UNUSED_RESULT inline auto unify()
 {
-    return closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return unify( std::forward<arg_t>( source ) );
-    } };
+    return cast<unit>();
 }
 
 //==================================================================================================

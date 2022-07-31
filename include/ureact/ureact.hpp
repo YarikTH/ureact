@@ -1801,11 +1801,47 @@ class signal_pack final
 {
 public:
     /*!
+     * @brief Class to store signals instead of signal references
+     */
+    class stored
+    {
+    public:
+        /*!
+         * @brief Construct from signals
+         */
+        explicit stored( const signal<Values>&... deps )
+            : data( std::tie( deps... ) )
+        {}
+
+        /*!
+         * @brief The wrapped tuple
+         */
+        std::tuple<signal<Values>...> data;
+    };
+
+    /*!
      * @brief Construct from signals
      */
     explicit signal_pack( const signal<Values>&... deps )
         : data( std::tie( deps... ) )
     {}
+
+    /*!
+     * @brief Construct from stored signals
+     */
+    explicit signal_pack( const stored& value )
+        : data( std::apply(
+            []( const signal<Values>&... deps ) { return std::tie( deps... ); }, value.data ) )
+    {}
+
+    /*!
+     * @brief Convert signal references to signals so they can be stored
+     */
+    UREACT_WARN_UNUSED_RESULT stored store() const
+    {
+        return std::apply(
+            []( const signal<Values>&... deps ) { return stored{ deps... }; }, data );
+    }
 
     /*!
      * @brief The wrapped tuple
@@ -3205,6 +3241,19 @@ UREACT_WARN_UNUSED_RESULT auto process(
 }
 
 /*!
+ * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
+ */
+template <typename OutE, typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
+{
+    return closure{ [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
+    } };
+}
+
+/*!
  * @brief Create a new event stream by batch processing events from other stream
  *
  *  Version without synchronization with additional signals
@@ -3263,6 +3312,19 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 }
 
 /*!
+ * @brief Curried version of filter(const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred) algorithm used for "pipe" syntax
+ */
+template <typename Pred, typename... DepValues>
+UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
+{
+    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
+    } };
+}
+
+/*!
  * @brief Create a new event stream that filters events from other stream
  *
  *  Version without synchronization with additional signals
@@ -3315,6 +3377,19 @@ UREACT_WARN_UNUSED_RESULT auto transform(
             for( const auto& e : range )
                 out.emit( func( e, deps... ) );
         } );
+}
+
+/*!
+ * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func) algorithm used for "pipe" syntax
+ */
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
+{
+    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
+    } };
 }
 
 /*!
@@ -3455,6 +3530,20 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
 }
 
 /*!
+ * @brief Curried version of drop_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred) algorithm used for "pipe" syntax
+ */
+template <typename... Deps, typename Pred>
+UREACT_WARN_UNUSED_RESULT inline auto drop_while(
+    const signal_pack<Deps...>& dep_pack, Pred&& pred )
+{
+    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return drop_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+    } };
+}
+
+/*!
  * @brief Skips the first elements of the source stream that satisfy the unary predicate
  *
  *  Takes events beginning at the first for which the predicate returns false.
@@ -3500,6 +3589,20 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
     };
 
     return filter( source, dep_pack, taker_while );
+}
+
+/*!
+ * @brief Curried version of take_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred) algorithm used for "pipe" syntax
+ */
+template <typename... Deps, typename Pred>
+UREACT_WARN_UNUSED_RESULT inline auto take_while(
+    const signal_pack<Deps...>& dep_pack, Pred&& pred )
+{
+    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return take_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+    } };
 }
 
 /*!
@@ -4522,6 +4625,22 @@ UREACT_WARN_UNUSED_RESULT auto fold(
     -> signal<S>
 {
     return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<FIn>( func ) );
+}
+
+/*!
+ * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func) algorithm used for "pipe" syntax
+ */
+template <typename V, typename FIn, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
+{
+    return closure{ [init = std::forward<V>( init ),
+                        deps = dep_pack.store(),
+                        func = std::forward<FIn>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return fold(
+            std::forward<arg_t>( source ), std::move( init ), signal_pack<Deps...>( deps ), func );
+    } };
 }
 
 /*!

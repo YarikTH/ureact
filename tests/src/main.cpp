@@ -871,12 +871,11 @@ TEST_CASE( "FoldByValueSynced" )
         sum = ureact::fold( src, 0, with( mult ), plus );
         batch_sum = ureact::fold( src, 0, with( mult ), batch_plus );
     }
-    // todo: Piped syntax is not yet supported for synced version
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        sum = src | ureact::fold( 0, with(mult), plus );
-    //        batch_sum = src | ureact::fold( 1, with(mult), batch_plus );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        sum = src | ureact::fold( 0, with( mult ), plus );
+        batch_sum = src | ureact::fold( 0, with( mult ), batch_plus );
+    }
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -940,13 +939,12 @@ TEST_CASE( "FoldByRefSynced" )
         sum_byref = ureact::fold( src, 0, with( mult ), plus_ref );
         batch_sum_byref = ureact::fold( src, 0, with( mult ), batch_plus_ref );
     }
-    // todo: Piped syntax is not yet supported for synced version
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        sum_byval = src | ureact::fold( 0, with( mult ), plus_val );
-    //        sum_byref = src | ureact::fold( 0, with( mult ), plus_ref );
-    //        batch_sum_byref = src | ureact::fold( 0, with( mult ), batch_plus_ref );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        sum_byval = src | ureact::fold( 0, with( mult ), plus_val );
+        sum_byref = src | ureact::fold( 0, with( mult ), plus_ref );
+        batch_sum_byref = src | ureact::fold( 0, with( mult ), batch_plus_ref );
+    }
 
     auto sum_byval_changes = count( monitor( sum_byval ) );
     auto sum_byref_changes = count( monitor( sum_byref ) );
@@ -1174,11 +1172,10 @@ TEST_CASE( "ProcessSynced" )
     {
         processed = ureact::process<record_t>( src, with( n, timestamp ), repeater );
     }
-    // todo: Piped syntax is not yet supported for synced version
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        processed = src | ureact::process<record_t>( with( n, timestamp ), repeater );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        processed = src | ureact::process<record_t>( with( n, timestamp ), repeater );
+    }
 
     const auto result = ureact::collect<std::vector>( processed );
 
@@ -1255,11 +1252,10 @@ TEST_CASE( "TransformSynced" )
     {
         clamped = ureact::transform( src, with( limit_min, limit_max ), clamp );
     }
-    // todo: Piped syntax is not yet supported for synced version
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
+    }
 
     const auto result = ureact::collect<std::vector>( clamped );
 
@@ -1344,11 +1340,10 @@ TEST_CASE( "FilterSynced" )
     {
         filtered = ureact::filter( src, with( limit_min, limit_max ), in_range );
     }
-    // todo: Piped syntax is not yet supported for synced version
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
+    }
 
     const auto result = ureact::collect<std::vector>( filtered );
 
@@ -1478,12 +1473,11 @@ TEST_CASE( "TakeOrDropWhileSynced" )
         before_overflow = ureact::take_while( src, with( sum, blackjack ), is_not_overflowed );
         from_overflow = ureact::drop_while( src, with( sum, blackjack ), is_not_overflowed );
     }
-    // todo: Piped syntax is not yet supported for synced version
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        before_overflow = src | ureact::take_while( with(sum, blackjack), is_not_overflowed );
-    //        from_overflow = src | ureact::drop_while( with(sum, blackjack), is_not_overflowed );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        before_overflow = src | ureact::take_while( with( sum, blackjack ), is_not_overflowed );
+        from_overflow = src | ureact::drop_while( with( sum, blackjack ), is_not_overflowed );
+    }
     SUBCASE( "Calculated bool condition" )
     {
         before_overflow = ureact::take_while( src, with( overflowed ), is_not_overflowed_2 );

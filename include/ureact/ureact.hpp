@@ -205,7 +205,7 @@ class signal;
 template <typename S>
 class var_signal;
 
-template <typename S, typename op_t>
+template <typename S, typename Op>
 class temp_signal;
 
 template <typename E>
@@ -214,7 +214,7 @@ class events;
 template <typename E>
 class event_source;
 
-template <typename... values_t>
+template <typename... Values>
 class signal_pack;
 
 template <typename E>
@@ -234,11 +234,11 @@ class event_stream_node;
 
 // Got from https://stackoverflow.com/a/34672753
 // std::is_base_of for template classes
-template <template <typename...> class base, typename derived>
+template <template <typename...> class Base, typename Derived>
 struct is_base_of_template_impl
 {
     template <typename... Ts>
-    static constexpr std::true_type test( const base<Ts...>* )
+    static constexpr std::true_type test( const Base<Ts...>* )
     {
         return {};
     }
@@ -246,11 +246,11 @@ struct is_base_of_template_impl
     {
         return {};
     }
-    using type = decltype( test( std::declval<derived*>() ) );
+    using type = decltype( test( std::declval<Derived*>() ) );
 };
 
-template <template <typename...> class base, typename derived>
-using is_base_of_template = typename is_base_of_template_impl<base, derived>::type;
+template <template <typename...> class Base, typename Derived>
+using is_base_of_template = typename is_base_of_template_impl<Base, Derived>::type;
 
 // chaining of std::conditional_t  based on
 // https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263
@@ -386,8 +386,8 @@ using std::partition;
 
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/find
-template <typename forward_it, typename T>
-inline forward_it find( forward_it first, forward_it last, const T& val )
+template <typename ForwardIt, typename Value>
+inline ForwardIt find( ForwardIt first, ForwardIt last, const Value& val )
 {
     for( auto it = first, ite = last; it != ite; ++it )
     {
@@ -401,12 +401,12 @@ inline forward_it find( forward_it first, forward_it last, const T& val )
 
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/find
-template <class forward_it, class unary_predicate>
-forward_it find_if_not( forward_it first, forward_it last, unary_predicate q )
+template <typename ForwardIt, typename Pred>
+ForwardIt find_if_not( ForwardIt first, ForwardIt last, Pred pred )
 {
     for( ; first != last; ++first )
     {
-        if( !q( *first ) )
+        if( !pred( *first ) )
         {
             return first;
         }
@@ -416,8 +416,8 @@ forward_it find_if_not( forward_it first, forward_it last, unary_predicate q )
 
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/iter_swap
-template <class forward_it_1, class forward_it_2>
-void iter_swap( forward_it_1 a, forward_it_2 b )
+template <typename LhsForwardIt, typename RhsForwardIt>
+void iter_swap( LhsForwardIt a, RhsForwardIt b )
 {
     using std::swap;
     swap( *a, *b );
@@ -425,18 +425,18 @@ void iter_swap( forward_it_1 a, forward_it_2 b )
 
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/partition
-template <class forward_it, class unary_predicate>
-forward_it partition( forward_it first, forward_it last, unary_predicate p )
+template <typename ForwardIt, typename Pred>
+ForwardIt partition( ForwardIt first, ForwardIt last, Pred pred )
 {
-    first = detail::find_if_not( first, last, p );
+    first = detail::find_if_not( first, last, pred );
     if( first == last )
     {
         return first;
     }
 
-    for( forward_it i = std::next( first ); i != last; ++i )
+    for( ForwardIt i = std::next( first ); i != last; ++i )
     {
-        if( p( *i ) )
+        if( pred( *i ) )
         {
             detail::iter_swap( i, first );
             ++first;
@@ -450,31 +450,31 @@ forward_it partition( forward_it first, forward_it last, unary_predicate p )
 struct dont_move
 {};
 
-template <typename T, typename U>
-using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::decay_t<U>>>;
+template <typename L, typename R>
+using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
-template <typename T1, typename T2>
-using is_same_decay = std::is_same<std::decay_t<T1>, std::decay_t<T2>>;
+template <typename L, typename R>
+using is_same_decay = std::is_same<std::decay_t<L>, std::decay_t<R>>;
 
-template <typename T1, typename T2>
-inline constexpr bool is_same_decay_v = is_same_decay<T1, T2>::value;
+template <typename L, typename R>
+inline constexpr bool is_same_decay_v = is_same_decay<L, R>::value;
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
-template <typename L, class R, typename = void>
+template <typename L, typename R, typename = void>
 struct equality_comparable_with : std::false_type
 {};
 
-template <typename L, class R>
+template <typename L, typename R>
 struct equality_comparable_with<L,
     R,
     std::void_t<decltype( std::declval<L>() == std::declval<R>() )>> : std::true_type
 {};
 
-template <typename L, class R>
+template <typename L, typename R>
 inline constexpr bool equality_comparable_with_v = equality_comparable_with<L, R>::value;
 
 template <typename L, typename R>
@@ -586,16 +586,16 @@ private:
     size_t m_value;
 };
 
-template <typename node_type>
+template <typename Node>
 class node_vector
 {
 public:
-    void add( node_type& node )
+    void add( Node& node )
     {
         m_data.push_back( &node );
     }
 
-    void remove( const node_type& node )
+    void remove( const Node& node )
     {
         const auto it = detail::find( m_data.begin(), m_data.end(), &node );
         m_data.erase( it );
@@ -612,7 +612,7 @@ public:
     }
 
 private:
-    std::vector<node_type*> m_data;
+    std::vector<Node*> m_data;
 };
 
 using turn_type = unsigned;
@@ -1014,25 +1014,27 @@ private:
 
 /*!
  * @brief Perform several changes atomically
+ * @tparam F type of passed functor
+ * @tparam Args types of additional arguments passed to functor F
  *
  *  Can pass additional arguments to the functiona and optionally return a result
  */
 template <typename F,
-    typename... args_t,
-    class = std::enable_if_t<std::is_invocable_v<F&&, args_t&&...>>>
-UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, args_t&&... args )
+    typename... Args,
+    class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
+UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&... args )
 {
     auto& graph = _get_internals( ctx ).get_graph();
 
     detail::react_graph::transaction_guard _{ graph };
 
-    if constexpr( std::is_same_v<std::invoke_result_t<F&&, args_t&&...>, void> )
+    if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
     {
-        std::forward<F>( func )( std::forward<args_t>( args )... );
+        std::forward<F>( func )( std::forward<Args>( args )... );
     }
     else
     {
-        return std::forward<F>( func )( std::forward<args_t>( args )... );
+        return std::forward<F>( func )( std::forward<Args>( args )... );
     }
 }
 
@@ -1065,10 +1067,10 @@ public:
         : m_func( std::move( func ) )
     {}
 
-    template <typename... args_t, class = std::enable_if_t<std::is_invocable_v<F, args_t...>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( args_t&&... args ) const
+    template <typename... Args, class = std::enable_if_t<std::is_invocable_v<F, Args...>>>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Args&&... args ) const
     {
-        return m_func( std::forward<args_t>( args )... );
+        return m_func( std::forward<Args>( args )... );
     }
 
 private:
@@ -1157,14 +1159,14 @@ public:
     {}
 };
 
-template <typename node_t, typename... deps_t>
+template <typename Node, typename... Deps>
 struct attach_functor
 {
-    explicit attach_functor( node_t& node )
+    explicit attach_functor( Node& node )
         : m_node( node )
     {}
 
-    void operator()( const deps_t&... deps ) const
+    void operator()( const Deps&... deps ) const
     {
         ( attach( deps ), ... );
     }
@@ -1172,7 +1174,7 @@ struct attach_functor
     template <typename T>
     void attach( const T& op ) const
     {
-        op.template attach_rec<node_t>( *this );
+        op.template attach_rec<Node>( *this );
     }
 
     template <typename T>
@@ -1181,17 +1183,17 @@ struct attach_functor
         m_node.get_graph().on_node_attach( m_node, *dep_ptr );
     }
 
-    node_t& m_node;
+    Node& m_node;
 };
 
-template <typename node_t, typename... deps_t>
+template <typename Node, typename... Deps>
 struct detach_functor
 {
-    explicit detach_functor( node_t& node )
+    explicit detach_functor( Node& node )
         : m_node( node )
     {}
 
-    void operator()( const deps_t&... deps ) const
+    void operator()( const Deps&... deps ) const
     {
         ( detach( deps ), ... );
     }
@@ -1199,7 +1201,7 @@ struct detach_functor
     template <typename T>
     void detach( const T& op ) const
     {
-        op.template detach_rec<node_t>( *this );
+        op.template detach_rec<Node>( *this );
     }
 
     template <typename T>
@@ -1208,59 +1210,59 @@ struct detach_functor
         m_node.get_graph().on_node_detach( m_node, *dep_ptr );
     }
 
-    node_t& m_node;
+    Node& m_node;
 };
 
-template <typename... deps_t>
+template <typename... Deps>
 class reactive_op_base
 {
 public:
-    using dep_holder_t = std::tuple<deps_t...>;
+    using dep_holder_t = std::tuple<Deps...>;
 
-    template <typename... deps_in_t>
-    explicit reactive_op_base( dont_move, deps_in_t&&... deps )
-        : m_deps( std::forward<deps_in_t>( deps )... )
+    template <typename... Args>
+    explicit reactive_op_base( dont_move, Args&&... args )
+        : m_deps( std::forward<Args>( args )... )
     {}
 
     reactive_op_base( reactive_op_base&& ) noexcept = default;
     reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
 
-    template <typename node_t>
-    void attach( node_t& node ) const
+    template <typename Node>
+    void attach( Node& node ) const
     {
-        std::apply( attach_functor<node_t, deps_t...>{ node }, m_deps );
+        std::apply( attach_functor<Node, Deps...>{ node }, m_deps );
     }
 
-    template <typename node_t>
-    void detach( node_t& node ) const
+    template <typename Node>
+    void detach( Node& node ) const
     {
-        std::apply( detach_functor<node_t, deps_t...>{ node }, m_deps );
+        std::apply( detach_functor<Node, Deps...>{ node }, m_deps );
     }
 
-    template <typename node_t, typename functor_t>
-    void attach_rec( const functor_t& functor ) const
+    template <typename Node, typename Functor>
+    void attach_rec( const Functor& functor ) const
     {
         // Same memory layout, different func
-        std::apply( reinterpret_cast<const attach_functor<node_t, deps_t...>&>( functor ), m_deps );
+        std::apply( reinterpret_cast<const attach_functor<Node, Deps...>&>( functor ), m_deps );
     }
 
-    template <typename node_t, typename functor_t>
-    void detach_rec( const functor_t& functor ) const
+    template <typename Node, typename Functor>
+    void detach_rec( const Functor& functor ) const
     {
-        std::apply( reinterpret_cast<const detach_functor<node_t, deps_t...>&>( functor ), m_deps );
+        std::apply( reinterpret_cast<const detach_functor<Node, Deps...>&>( functor ), m_deps );
     }
 
 protected:
     dep_holder_t m_deps;
 };
 
-template <typename node_t>
+template <typename Node>
 class reactive_base
 {
 public:
     reactive_base() = default;
 
-    explicit reactive_base( std::shared_ptr<node_t>&& node )
+    explicit reactive_base( std::shared_ptr<Node>&& node )
         : m_node( std::move( node ) )
     {}
 
@@ -1280,15 +1282,15 @@ public:
     }
 
 protected:
-    std::shared_ptr<node_t> m_node;
+    std::shared_ptr<Node> m_node;
 
-    template <typename node_t_>
-    friend const std::shared_ptr<node_t_>& get_node_ptr( const reactive_base<node_t_>& node );
+    template <typename NodeT>
+    friend const std::shared_ptr<NodeT>& get_node_ptr( const reactive_base<NodeT>& node );
 };
 
-template <typename node_t>
-UREACT_WARN_UNUSED_RESULT const std::shared_ptr<node_t>& get_node_ptr(
-    const reactive_base<node_t>& node )
+template <typename Node>
+UREACT_WARN_UNUSED_RESULT const std::shared_ptr<Node>& get_node_ptr(
+    const reactive_base<Node>& node )
 {
     return node.m_node;
 }
@@ -1408,14 +1410,14 @@ private:
     bool m_is_input_modified = false;
 };
 
-template <typename S, typename F, typename... deps_t>
-class function_op : public reactive_op_base<deps_t...>
+template <typename S, typename F, typename... Deps>
+class function_op : public reactive_op_base<Deps...>
 {
 public:
-    template <typename f_in_t, typename... deps_in_t>
-    explicit function_op( f_in_t&& func, deps_in_t&&... deps )
-        : function_op::reactive_op_base( dont_move(), std::forward<deps_in_t>( deps )... )
-        , m_func( std::forward<f_in_t>( func ) )
+    template <typename FIn, typename... Args>
+    explicit function_op( FIn&& func, Args&&... args )
+        : function_op::reactive_op_base( dont_move(), std::forward<Args>( args )... )
+        , m_func( std::forward<FIn>( func ) )
     {}
 
     function_op( function_op&& ) noexcept = default;
@@ -1423,7 +1425,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT S evaluate()
     {
-        return apply( eval_functor( m_func ), this->m_deps );
+        return std::apply( eval_functor( m_func ), this->m_deps );
     }
 
 private:
@@ -1458,14 +1460,14 @@ private:
     F m_func;
 };
 
-template <typename S, typename op_t>
+template <typename S, typename Op>
 class signal_op_node final : public signal_node<S>
 {
 public:
-    template <typename... args_t>
-    explicit signal_op_node( context& context, args_t&&... args )
+    template <typename... Args>
+    explicit signal_op_node( context& context, Args&&... args )
         : signal_op_node::signal_node( context )
-        , m_op( std::forward<args_t>( args )... )
+        , m_op( std::forward<Args>( args )... )
     {
         this->m_value = m_op.evaluate();
 
@@ -1500,7 +1502,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT op_t steal_op()
+    UREACT_WARN_UNUSED_RESULT Op steal_op()
     {
         assert( !m_was_op_stolen && "Op was already stolen" );
         m_was_op_stolen = true;
@@ -1514,7 +1516,7 @@ public:
     }
 
 private:
-    op_t m_op;
+    Op m_op;
     bool m_was_op_stolen = false;
 };
 
@@ -1524,8 +1526,8 @@ class signal_base : public reactive_base<signal_node<S>>
 public:
     signal_base() = default;
 
-    template <typename node_t>
-    explicit signal_base( std::shared_ptr<node_t>&& node )
+    template <typename Node>
+    explicit signal_base( std::shared_ptr<Node>&& node )
         : signal_base::reactive_base( std::move( node ) )
     {}
 
@@ -1578,7 +1580,7 @@ template <typename S>
 class signal : public detail::signal_base<S>
 {
 protected:
-    using node_t = detail::signal_node<S>;
+    using Node = detail::signal_node<S>;
 
 public:
     /*!
@@ -1596,7 +1598,7 @@ public:
     /*!
      * @brief Construct from the given node
      */
-    explicit signal( std::shared_ptr<node_t>&& node )
+    explicit signal( std::shared_ptr<Node>&& node )
         : signal::signal_base( std::move( node ) )
     {}
 
@@ -1630,7 +1632,7 @@ template <typename S>
 class var_signal final : public signal<S>
 {
 private:
-    using node_t = detail::var_node<S>;
+    using Node = detail::var_node<S>;
 
 public:
     /*!
@@ -1646,7 +1648,7 @@ public:
      * @note replacing type of value with universal reference version prevents class template argument deduction
      */
     var_signal( context& context, const S& value )
-        : var_signal::signal( std::make_shared<node_t>( context, value ) )
+        : var_signal::signal( std::make_shared<Node>( context, value ) )
     {}
 
     /*!
@@ -1655,7 +1657,7 @@ public:
      * @note replacing type of value with universal reference version prevents class template argument deduction
      */
     var_signal( context& context, S&& value )
-        : var_signal::signal( std::make_shared<node_t>( context, std::move( value ) ) )
+        : var_signal::signal( std::make_shared<Node>( context, std::move( value ) ) )
     {}
 
     /*!
@@ -1754,11 +1756,11 @@ public:
  * temp_signal shouldn't be used as an l-value type, but instead implicitly
  * converted to signal.
  */
-template <typename S, typename op_t>
+template <typename S, typename Op>
 class temp_signal final : public signal<S>
 {
 private:
-    using node_t = detail::signal_op_node<S, op_t>;
+    using Node = detail::signal_op_node<S, Op>;
 
 public:
     /*!
@@ -1766,15 +1768,15 @@ public:
      */
     template <typename... Args>
     explicit temp_signal( context& context, Args&&... args )
-        : temp_signal::signal( std::make_shared<node_t>( context, std::forward<Args>( args )... ) )
+        : temp_signal::signal( std::make_shared<Node>( context, std::forward<Args>( args )... ) )
     {}
 
     /*!
      * @brief Return internal operator, leaving node invalid
      */
-    UREACT_WARN_UNUSED_RESULT op_t steal_op()
+    UREACT_WARN_UNUSED_RESULT Op steal_op()
     {
-        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
+        auto* node_ptr = static_cast<Node*>( this->m_node.get() );
         return node_ptr->steal_op();
     }
 
@@ -1783,31 +1785,32 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
     {
-        auto* node_ptr = static_cast<node_t*>( this->m_node.get() );
+        auto* node_ptr = static_cast<Node*>( this->m_node.get() );
         return node_ptr->was_op_stolen();
     }
 };
 
 /*!
  * @brief A wrapper type for a tuple of signal references
+ * @tparam Values types of signal values
  *
  *  Created with @ref with()
  */
-template <typename... values_t>
+template <typename... Values>
 class signal_pack final
 {
 public:
     /*!
      * @brief Construct from signals
      */
-    explicit signal_pack( const signal<values_t>&... deps )
+    explicit signal_pack( const signal<Values>&... deps )
         : data( std::tie( deps... ) )
     {}
 
     /*!
      * @brief The wrapped tuple
      */
-    std::tuple<const signal<values_t>&...> data;
+    std::tuple<const signal<Values>&...> data;
 };
 
 namespace detail
@@ -1861,34 +1864,37 @@ UREACT_WARN_UNUSED_RESULT auto make_const( context& context, V&& value ) -> sign
 
 /*!
  * @brief Utility function to create a signal_pack from given signals
+ * @tparam Values types of signal values
  *
  *  Creates a signal_pack from the signals passed as deps.
  *  Semantically, this is equivalent to std::tie.
  */
-template <typename... values_t>
-UREACT_WARN_UNUSED_RESULT auto with( const signal<values_t>&... deps )
+template <typename... Values>
+UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )
 {
-    return signal_pack<values_t...>( deps... );
+    return signal_pack<Values...>( deps... );
 }
 
 /*!
  * @brief Create a new signal node with value v = func(arg_pack.get(), ...).
+ * @tparam Values types of signal values
+ *
  * This value is set on construction and updated when any args have changed
  *
  *  The signature of func should be equivalent to:
- *  * S func(const values_t& ...)
+ *  * S func(const Values& ...)
  */
-template <typename... values_t,
-    typename in_f,
-    typename F = std::decay_t<in_f>,
-    typename S = std::invoke_result_t<F, values_t...>,
-    typename op_t = detail::function_op<S, F, detail::signal_node_ptr_t<values_t>...>>
-UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<values_t...>& arg_pack, in_f&& func )
+template <typename... Values,
+    typename InF,
+    typename F = std::decay_t<InF>,
+    typename S = std::invoke_result_t<F, Values...>,
+    typename Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>>
+UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF&& func )
 {
     context& context = std::get<0>( arg_pack.data ).get_context();
 
-    auto node_builder = [&context, &func]( const signal<values_t>&... args ) {
-        return temp_signal<S, op_t>{ context, std::forward<in_f>( func ), get_node_ptr( args )... };
+    auto node_builder = [&context, &func]( const signal<Values>&... args ) {
+        return temp_signal<S, Op>{ context, std::forward<InF>( func ), get_node_ptr( args )... };
     };
 
     return std::apply( node_builder, arg_pack.data );
@@ -1901,19 +1907,19 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<values_t...>& arg_pack, i
  *  The signature of func should be equivalent to:
  *  * S func(const value_t&)
  */
-template <typename value_t, typename in_f>
-UREACT_WARN_UNUSED_RESULT auto lift( const signal<value_t>& arg, in_f&& func )
+template <typename Value, typename InF>
+UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
 {
-    return lift( with( arg ), std::forward<in_f>( func ) );
+    return lift( with( arg ), std::forward<InF>( func ) );
 }
 
 /*!
- * @brief Curried version of lift(const signal_pack<values_t...>& arg_pack, in_f&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func) algorithm used for "pipe" syntax
  */
-template <typename in_f>
-UREACT_WARN_UNUSED_RESULT inline auto lift( in_f&& func )
+template <typename InF>
+UREACT_WARN_UNUSED_RESULT inline auto lift( InF&& func )
 {
-    return closure{ [func = std::forward<in_f>( func )]( auto&& source ) {
+    return closure{ [func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert(
             std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_signal_pack<std::decay_t<arg_t>>>,
@@ -1927,10 +1933,10 @@ namespace detail
 
 // Full analog of std::binder1st that removed in c++17
 // See https://en.cppreference.com/w/cpp/utility/functional/binder12
-template <template <typename, typename> class functor_binary_op,
-    typename first_argument_type,
-    typename second_argument_type,
-    typename Fn = functor_binary_op<first_argument_type, second_argument_type>>
+template <template <typename, typename> class FunctorBinaryOp,
+    typename FirstArgument,
+    typename SecondArgument,
+    typename Fn = FunctorBinaryOp<FirstArgument, SecondArgument>>
 class binder1st
 {
 public:
@@ -1947,15 +1953,15 @@ public:
 
 private:
     Fn m_fn{};
-    first_argument_type m_first_argument;
+    FirstArgument m_first_argument;
 };
 
 // Full analog of std::binder2nd that removed in c++17
 // See https://en.cppreference.com/w/cpp/utility/functional/binder12
-template <template <typename, typename> class functor_binary_op,
-    typename first_argument_type,
-    typename second_argument_type,
-    typename Fn = functor_binary_op<first_argument_type, second_argument_type>>
+template <template <typename, typename> class FunctorBinaryOp,
+    typename FirstArgument,
+    typename SecondArgument,
+    typename Fn = FunctorBinaryOp<FirstArgument, SecondArgument>>
 class binder2nd
 {
 public:
@@ -1972,172 +1978,169 @@ public:
 
 private:
     Fn m_fn{};
-    second_argument_type m_second_argument;
+    SecondArgument m_second_argument;
 };
 
-template <template <typename> class functor_op,
-    typename signal_t,
-    class = std::enable_if_t<is_signal_v<signal_t>>>
-auto unary_operator_impl( const signal_t& arg )
+template <template <typename> class FunctorOp,
+    typename Signal,
+    class = std::enable_if_t<is_signal_v<Signal>>>
+auto unary_operator_impl( const Signal& arg )
 {
-    using val_t = typename signal_t::value_t;
-    using F = functor_op<val_t>;
+    using val_t = typename Signal::value_t;
+    using F = FunctorOp<val_t>;
     using S = std::invoke_result_t<F, val_t>;
-    using op_t = function_op<S, F, signal_node_ptr_t<val_t>>;
-    return temp_signal<S, op_t>{ arg.get_context(), F(), get_node_ptr( arg ) };
+    using Op = function_op<S, F, signal_node_ptr_t<val_t>>;
+    return temp_signal<S, Op>{ arg.get_context(), F(), get_node_ptr( arg ) };
 }
 
-template <template <typename> class functor_op, typename val_t, typename op_in_t>
-auto unary_operator_impl( temp_signal<val_t, op_in_t>&& arg )
+template <template <typename> class FunctorOp, typename Val, typename OpIn>
+auto unary_operator_impl( temp_signal<Val, OpIn>&& arg )
 {
-    using F = functor_op<val_t>;
-    using S = std::invoke_result_t<F, val_t>;
-    using op_t = function_op<S, F, op_in_t>;
-    return temp_signal<S, op_t>{ arg.get_context(), F(), arg.steal_op() };
+    using F = FunctorOp<Val>;
+    using S = std::invoke_result_t<F, Val>;
+    using Op = function_op<S, F, OpIn>;
+    return temp_signal<S, Op>{ arg.get_context(), F(), arg.steal_op() };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_signal_t,
-    typename right_signal_t,
-    class = std::enable_if_t<is_signal_v<left_signal_t>>,
-    class = std::enable_if_t<is_signal_v<right_signal_t>>>
-auto binary_operator_impl( const left_signal_t& lhs, const right_signal_t& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftSignal,
+    typename RightSignal,
+    class = std::enable_if_t<is_signal_v<LeftSignal>>,
+    class = std::enable_if_t<is_signal_v<RightSignal>>>
+auto binary_operator_impl( const LeftSignal& lhs, const RightSignal& rhs )
 {
-    using left_val_t = typename left_signal_t::value_t;
-    using right_val_t = typename right_signal_t::value_t;
-    using F = functor_op<left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
-    using op_t = function_op<S, F, signal_node_ptr_t<left_val_t>, signal_node_ptr_t<right_val_t>>;
+    using LeftVal = typename LeftSignal::value_t;
+    using RightVal = typename RightSignal::value_t;
+    using F = FunctorOp<LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, LeftVal, RightVal>;
+    using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, signal_node_ptr_t<RightVal>>;
 
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, op_t>{ context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) };
+    return temp_signal<S, Op>{ context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_signal_t,
-    typename right_val_in_t,
-    typename left_val_t = typename left_signal_t::value_t,
-    typename right_val_t = std::decay_t<right_val_in_t>,
-    class = std::enable_if_t<is_signal_v<left_signal_t>>,
-    class = std::enable_if_t<!is_signal_v<right_val_t>>>
-auto binary_operator_impl( const left_signal_t& lhs, right_val_in_t&& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftSignal,
+    typename RightValIn,
+    typename LeftVal = typename LeftSignal::value_t,
+    typename RightVal = std::decay_t<RightValIn>,
+    class = std::enable_if_t<is_signal_v<LeftSignal>>,
+    class = std::enable_if_t<!is_signal_v<RightVal>>>
+auto binary_operator_impl( const LeftSignal& lhs, RightValIn&& rhs )
 {
-    using F = binder2nd<functor_op, left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, left_val_t>;
-    using op_t = function_op<S, F, signal_node_ptr_t<left_val_t>>;
+    using F = binder2nd<FunctorOp, LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, LeftVal>;
+    using Op = function_op<S, F, signal_node_ptr_t<LeftVal>>;
 
     context& context = lhs.get_context();
 
-    return temp_signal<S, op_t>{
-        context, F( std::forward<right_val_in_t>( rhs ) ), get_node_ptr( lhs ) };
+    return temp_signal<S, Op>{ context, F( std::forward<RightValIn>( rhs ) ), get_node_ptr( lhs ) };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_val_in_t,
-    typename right_signal_t,
-    typename left_val_t = std::decay_t<left_val_in_t>,
-    typename right_val_t = typename right_signal_t::value_t,
-    class = std::enable_if_t<!is_signal_v<left_val_t>>,
-    class = std::enable_if_t<is_signal_v<right_signal_t>>>
-auto binary_operator_impl( left_val_in_t&& lhs, const right_signal_t& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftValIn,
+    typename RightSignal,
+    typename LeftVal = std::decay_t<LeftValIn>,
+    typename RightVal = typename RightSignal::value_t,
+    class = std::enable_if_t<!is_signal_v<LeftVal>>,
+    class = std::enable_if_t<is_signal_v<RightSignal>>>
+auto binary_operator_impl( LeftValIn&& lhs, const RightSignal& rhs )
 {
-    using F = binder1st<functor_op, left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, right_val_t>;
-    using op_t = function_op<S, F, signal_node_ptr_t<right_val_t>>;
+    using F = binder1st<FunctorOp, LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, RightVal>;
+    using Op = function_op<S, F, signal_node_ptr_t<RightVal>>;
 
     context& context = rhs.get_context();
 
-    return temp_signal<S, op_t>{
-        context, F( std::forward<left_val_in_t>( lhs ) ), get_node_ptr( rhs ) };
+    return temp_signal<S, Op>{ context, F( std::forward<LeftValIn>( lhs ) ), get_node_ptr( rhs ) };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_val_t,
-    typename left_op_t,
-    typename right_val_t,
-    typename right_op_t>
+template <template <typename, typename> class FunctorOp,
+    typename LeftVal,
+    typename LeftOp,
+    typename RightVal,
+    typename RightOp>
 auto binary_operator_impl(
-    temp_signal<left_val_t, left_op_t>&& lhs, temp_signal<right_val_t, right_op_t>&& rhs )
+    temp_signal<LeftVal, LeftOp>&& lhs, temp_signal<RightVal, RightOp>&& rhs )
 {
-    using F = functor_op<left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
-    using op_t = function_op<S, F, left_op_t, right_op_t>;
+    using F = FunctorOp<LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, LeftVal, RightVal>;
+    using Op = function_op<S, F, LeftOp, RightOp>;
 
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, op_t>{ context, F(), lhs.steal_op(), rhs.steal_op() };
+    return temp_signal<S, Op>{ context, F(), lhs.steal_op(), rhs.steal_op() };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_val_t,
-    typename left_op_t,
-    typename right_signal_t,
-    class = std::enable_if_t<is_signal_v<right_signal_t>>>
-auto binary_operator_impl( temp_signal<left_val_t, left_op_t>&& lhs, const right_signal_t& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftVal,
+    typename LeftOp,
+    typename RightSignal,
+    class = std::enable_if_t<is_signal_v<RightSignal>>>
+auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, const RightSignal& rhs )
 {
-    using right_val_t = typename right_signal_t::value_t;
-    using F = functor_op<left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
-    using op_t = function_op<S, F, left_op_t, signal_node_ptr_t<right_val_t>>;
+    using RightVal = typename RightSignal::value_t;
+    using F = FunctorOp<LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, LeftVal, RightVal>;
+    using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
     context& context = rhs.get_context();
 
-    return temp_signal<S, op_t>{ context, F(), lhs.steal_op(), get_node_ptr( rhs ) };
+    return temp_signal<S, Op>{ context, F(), lhs.steal_op(), get_node_ptr( rhs ) };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_signal_t,
-    typename right_val_t,
-    typename right_op_t,
-    class = std::enable_if_t<is_signal_v<left_signal_t>>>
-auto binary_operator_impl( const left_signal_t& lhs, temp_signal<right_val_t, right_op_t>&& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftSignal,
+    typename RightVal,
+    typename RightOp,
+    class = std::enable_if_t<is_signal_v<LeftSignal>>>
+auto binary_operator_impl( const LeftSignal& lhs, temp_signal<RightVal, RightOp>&& rhs )
 {
-    using left_val_t = typename left_signal_t::value_t;
-    using F = functor_op<left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, left_val_t, right_val_t>;
-    using op_t = function_op<S, F, signal_node_ptr_t<left_val_t>, right_op_t>;
+    using LeftVal = typename LeftSignal::value_t;
+    using F = FunctorOp<LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, LeftVal, RightVal>;
+    using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
     context& context = lhs.get_context();
 
-    return temp_signal<S, op_t>{ context, F(), get_node_ptr( lhs ), rhs.steal_op() };
+    return temp_signal<S, Op>{ context, F(), get_node_ptr( lhs ), rhs.steal_op() };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_val_t,
-    typename left_op_t,
-    typename right_val_in_t,
-    typename right_val_t = std::decay_t<right_val_in_t>,
-    class = std::enable_if_t<!is_signal_v<right_val_t>>>
-auto binary_operator_impl( temp_signal<left_val_t, left_op_t>&& lhs, right_val_in_t&& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftVal,
+    typename LeftOp,
+    typename RightValIn,
+    typename RightVal = std::decay_t<RightValIn>,
+    class = std::enable_if_t<!is_signal_v<RightVal>>>
+auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, RightValIn&& rhs )
 {
-    using F = binder2nd<functor_op, left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, left_val_t>;
-    using op_t = function_op<S, F, left_op_t>;
+    using F = binder2nd<FunctorOp, LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, LeftVal>;
+    using Op = function_op<S, F, LeftOp>;
 
     context& context = lhs.get_context();
 
-    return temp_signal<S, op_t>{
-        context, F( std::forward<right_val_in_t>( rhs ) ), lhs.steal_op() };
+    return temp_signal<S, Op>{ context, F( std::forward<RightValIn>( rhs ) ), lhs.steal_op() };
 }
 
-template <template <typename, typename> class functor_op,
-    typename left_val_in_t,
-    typename right_val_t,
-    typename right_op_t,
-    typename left_val_t = std::decay_t<left_val_in_t>,
-    class = std::enable_if_t<!is_signal_v<left_val_t>>>
-auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_op_t>&& rhs )
+template <template <typename, typename> class FunctorOp,
+    typename LeftValIn,
+    typename RightVal,
+    typename RightOp,
+    typename LeftVal = std::decay_t<LeftValIn>,
+    class = std::enable_if_t<!is_signal_v<LeftVal>>>
+auto binary_operator_impl( LeftValIn&& lhs, temp_signal<RightVal, RightOp>&& rhs )
 {
-    using F = binder1st<functor_op, left_val_t, right_val_t>;
-    using S = std::invoke_result_t<F, right_val_t>;
-    using op_t = function_op<S, F, right_op_t>;
+    using F = binder1st<FunctorOp, LeftVal, RightVal>;
+    using S = std::invoke_result_t<F, RightVal>;
+    using Op = function_op<S, F, RightOp>;
 
     context& context = rhs.get_context();
 
-    return temp_signal<S, op_t>{ context, F( std::forward<left_val_in_t>( lhs ) ), rhs.steal_op() };
+    return temp_signal<S, Op>{ context, F( std::forward<LeftValIn>( lhs ) ), rhs.steal_op() };
 }
 
 } // namespace detail
@@ -2153,11 +2156,11 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
     } /* namespace detail */
 
 #define UREACT_DECLARE_UNARY_OP( op, name )                                                        \
-    template <typename signal_t,                                                                   \
-        template <typename> class functor_op = detail::op_functor_##name,                          \
-        class = std::enable_if_t<is_signal_v<std::decay_t<signal_t>>>>                             \
-    UREACT_WARN_UNUSED_RESULT auto operator op( signal_t&& arg )                                   \
-        UREACT_FUNCTION_BODY( detail::unary_operator_impl<functor_op>( UREACT_FWD( arg ) ) )
+    template <typename Signal,                                                                     \
+        template <typename> class FunctorOp = detail::op_functor_##name,                           \
+        class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>                               \
+    UREACT_WARN_UNUSED_RESULT auto operator op( Signal&& arg )                                     \
+        UREACT_FUNCTION_BODY( detail::unary_operator_impl<FunctorOp>( UREACT_FWD( arg ) ) )
 
 #define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
     UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
@@ -2175,14 +2178,14 @@ auto binary_operator_impl( left_val_in_t&& lhs, temp_signal<right_val_t, right_o
     } /* namespace detail */
 
 #define UREACT_DECLARE_BINARY_OP( op, name )                                                       \
-    template <typename lhs_t,                                                                      \
-        typename rhs_t,                                                                            \
-        template <typename, typename> class functor_op = detail::op_functor_##name,                \
+    template <typename Lhs,                                                                        \
+        typename Rhs,                                                                              \
+        template <typename, typename> class FunctorOp = detail::op_functor_##name,                 \
         class = std::enable_if_t<                                                                  \
-            std::disjunction_v<is_signal<std::decay_t<lhs_t>>, is_signal<std::decay_t<rhs_t>>>>>   \
-    UREACT_WARN_UNUSED_RESULT auto operator op( lhs_t&& lhs, rhs_t&& rhs ) /*                */    \
+            std::disjunction_v<is_signal<std::decay_t<Lhs>>, is_signal<std::decay_t<Rhs>>>>>       \
+    UREACT_WARN_UNUSED_RESULT auto operator op( Lhs&& lhs, Rhs&& rhs ) /*                */        \
         UREACT_FUNCTION_BODY(                                                                      \
-            detail::binary_operator_impl<functor_op>( UREACT_FWD( lhs ), UREACT_FWD( rhs ) ) )
+            detail::binary_operator_impl<FunctorOp>( UREACT_FWD( lhs ), UREACT_FWD( rhs ) ) )
 
 #define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
     UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
@@ -2361,14 +2364,14 @@ private:
     bool m_changed_flag = false;
 };
 
-template <typename E, typename op_t>
+template <typename E, typename Op>
 class event_op_node final : public event_stream_node<E>
 {
 public:
-    template <typename... args_t>
-    explicit event_op_node( context& context, args_t&&... args )
+    template <typename... Args>
+    explicit event_op_node( context& context, Args&&... args )
         : event_op_node::event_stream_node( context )
-        , m_op( std::forward<args_t>( args )... )
+        , m_op( std::forward<Args>( args )... )
     {
         m_op.attach( *this );
     }
@@ -2393,7 +2396,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT op_t steal_op() // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT Op steal_op() // TODO: check in tests
     {
         assert( !m_was_op_stolen && "Op was already stolen" );
         m_was_op_stolen = true;
@@ -2423,7 +2426,7 @@ private:
         data_t& m_events;
     };
 
-    op_t m_op;
+    Op m_op;
     bool m_was_op_stolen = false;
 };
 
@@ -2436,8 +2439,8 @@ public:
     UREACT_MAKE_COPYABLE( event_stream_base );
     UREACT_MAKE_MOVABLE( event_stream_base );
 
-    template <typename node_t>
-    explicit event_stream_base( std::shared_ptr<node_t>&& node )
+    template <typename Node>
+    explicit event_stream_base( std::shared_ptr<Node>&& node )
         : event_stream_base::reactive_base( std::move( node ) )
     {}
 
@@ -2472,7 +2475,7 @@ template <typename E = unit>
 class events : public detail::event_stream_base<E>
 {
 private:
-    using node_t = detail::event_stream_node<E>;
+    using Node = detail::event_stream_node<E>;
 
 public:
     /*!
@@ -2490,7 +2493,7 @@ public:
     /*!
      * @brief Construct from the given node
      */
-    explicit events( std::shared_ptr<node_t>&& node )
+    explicit events( std::shared_ptr<Node>&& node )
         : events::event_stream_base( std::move( node ) )
     {}
 };
@@ -2504,7 +2507,7 @@ template <typename E = unit>
 class event_source final : public events<E>
 {
 private:
-    using node_t = detail::event_source_node<E>;
+    using Node = detail::event_source_node<E>;
 
 public:
     class iterator;
@@ -2520,7 +2523,7 @@ public:
      * @brief Construct a fully functional event source
      */
     explicit event_source( context& context )
-        : event_source::events( std::make_shared<node_t>( context ) )
+        : event_source::events( std::make_shared<Node>( context ) )
     {}
 
     /*!
@@ -2901,42 +2904,41 @@ private:
 namespace detail
 {
 
-template <typename E, typename... deps_t>
-class event_merge_op : public reactive_op_base<deps_t...>
+template <typename E, typename... Deps>
+class event_merge_op : public reactive_op_base<Deps...>
 {
 public:
-    template <typename... deps_in_t>
-    explicit event_merge_op( deps_in_t&&... deps )
-        : event_merge_op::reactive_op_base( dont_move(), std::forward<deps_in_t>( deps )... )
+    template <typename... Args>
+    explicit event_merge_op( Args&&... args )
+        : event_merge_op::reactive_op_base( dont_move(), std::forward<Args>( args )... )
     {}
 
     event_merge_op( event_merge_op&& other ) noexcept // TODO: check in tests
         : event_merge_op::reactive_op_base( std::move( other ) )
     {}
 
-    template <typename turn_t_, typename collector_t>
-    void collect( const turn_t_& turn, const collector_t& collector ) const
+    template <typename Collector>
+    void collect( const turn_type& turn, const Collector& collector ) const
     {
-        apply( collect_functor<turn_t_, collector_t>( turn, collector ), this->m_deps );
+        std::apply( collect_functor<Collector>( turn, collector ), this->m_deps );
     }
 
-    template <typename turn_t_, typename collector_t, typename functor_t>
-    void collect_rec( const functor_t& functor ) const // TODO: check in tests
+    template <typename Collector, typename Functor>
+    void collect_rec( const Functor& functor ) const // TODO: check in tests
     {
-        apply( reinterpret_cast<const collect_functor<turn_t_, collector_t>&>( functor ),
-            this->m_deps );
+        std::apply( reinterpret_cast<const collect_functor<Collector>&>( functor ), this->m_deps );
     }
 
 private:
-    template <typename turn_t_, typename collector_t>
+    template <typename Collector>
     struct collect_functor
     {
-        collect_functor( const turn_t_& turn, const collector_t& collector )
+        collect_functor( const turn_type& turn, const Collector& collector )
             : m_turn( turn )
             , m_collector( collector )
         {}
 
-        void operator()( const deps_t&... deps ) const
+        void operator()( const Deps&... deps ) const
         {
             ( collect( deps ), ... );
         }
@@ -2944,7 +2946,7 @@ private:
         template <typename T>
         void collect( const T& op ) const // TODO: check in tests
         {
-            op.template collect_rec<turn_t_, collector_t>( *this );
+            op.template collect_rec<Collector>( *this );
         }
 
         template <typename T>
@@ -2958,20 +2960,20 @@ private:
             }
         }
 
-        const turn_t_& m_turn;
-        const collector_t& m_collector;
+        const turn_type& m_turn;
+        const Collector& m_collector;
     };
 };
 
-template <typename in_t, typename out_t, typename func_t, typename... dep_values_t>
-class event_processing_node final : public event_stream_node<out_t>
+template <typename InE, typename OutE, typename Func, typename... DepValues>
+class event_processing_node final : public event_stream_node<OutE>
 {
 public:
     template <typename F>
     event_processing_node( context& context,
-        const std::shared_ptr<event_stream_node<in_t>>& source,
+        const std::shared_ptr<event_stream_node<InE>>& source,
         F&& func,
-        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
+        const std::shared_ptr<signal_node<DepValues>>&... deps )
         : event_processing_node::event_stream_node( context )
         , m_source( source )
         , m_func( std::forward<F>( func ) )
@@ -2985,8 +2987,9 @@ public:
     {
         this->get_graph().on_node_detach( *this, *m_source );
 
-        apply( detach_functor<event_processing_node, std::shared_ptr<signal_node<dep_values_t>>...>(
-                   *this ),
+        std::apply(
+            detach_functor<event_processing_node, std::shared_ptr<signal_node<DepValues>>...>(
+                *this ),
             m_deps );
     }
 
@@ -2999,9 +3002,9 @@ public:
 
         if( !m_source->events().empty() )
         {
-            apply(
-                [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
-                    m_func( event_range<in_t>( m_source->events() ),
+            std::apply(
+                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    m_func( event_range<InE>( m_source->events() ),
                         event_emitter( this->m_events ),
                         args->value_ref()... );
                 },
@@ -3015,20 +3018,20 @@ public:
     }
 
 private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
+    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
 
-    std::shared_ptr<event_stream_node<in_t>> m_source;
+    std::shared_ptr<event_stream_node<InE>> m_source;
 
-    func_t m_func;
+    Func m_func;
     dep_holder_t m_deps;
 };
 
-template <typename... values_t>
-class event_zip_node final : public event_stream_node<std::tuple<values_t...>>
+template <typename... Values>
+class event_zip_node final : public event_stream_node<std::tuple<Values...>>
 {
 public:
     explicit event_zip_node(
-        context& context, const std::shared_ptr<event_stream_node<values_t>>&... sources )
+        context& context, const std::shared_ptr<event_stream_node<Values>>&... sources )
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
@@ -3037,8 +3040,8 @@ public:
 
     ~event_zip_node() override
     {
-        apply(
-            [this]( slot<values_t>&... slots ) {
+        std::apply(
+            [this]( slot<Values>&... slots ) {
                 ( this->get_graph().on_node_detach( *this, *slots.source ), ... );
             },
             m_slots );
@@ -3050,7 +3053,7 @@ public:
 
         {
             // Move events into buffers
-            apply( [&turn]( slot<values_t>&... slots ) { ( fetch_buffer( turn, slots ), ... ); },
+            std::apply( [&turn]( slot<Values>&... slots ) { ( fetch_buffer( turn, slots ), ... ); },
                 m_slots );
 
             while( true )
@@ -3058,8 +3061,8 @@ public:
                 bool is_ready = true;
 
                 // All slots ready?
-                apply(
-                    [&is_ready]( slot<values_t>&... slots ) {
+                std::apply(
+                    [&is_ready]( slot<Values>&... slots ) {
                         // Todo: combine return values instead
                         ( check_slot( slots, is_ready ), ... );
                     },
@@ -3071,8 +3074,8 @@ public:
                 }
 
                 // Pop values from buffers and emit tuple
-                apply(
-                    [this]( slot<values_t>&... slots ) {
+                std::apply(
+                    [this]( slot<Values>&... slots ) {
                         this->m_events.emplace_back( slots.buffer.front()... );
                         ( slots.buffer.pop_front(), ... );
                     },
@@ -3114,24 +3117,20 @@ private:
         is_ready = t;
     }
 
-    std::tuple<slot<values_t>...> m_slots;
+    std::tuple<slot<Values>...> m_slots;
 };
 
-template <typename out_t, typename in_t, typename Op, typename... dep_values_t>
+template <typename OutE, typename InE, typename Op, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto process_impl(
-    const events<in_t>& source, const signal_pack<dep_values_t...>& dep_pack, Op&& op )
-    -> events<out_t>
+    const events<InE>& source, const signal_pack<DepValues...>& dep_pack, Op&& op ) -> events<OutE>
 {
     using F = std::decay_t<Op>;
 
     context& context = source.get_context();
 
-    auto node_builder = [&context, &source, &op]( const signal<dep_values_t>&... deps ) {
-        return events<out_t>(
-            std::make_shared<event_processing_node<in_t, out_t, F, dep_values_t...>>( context,
-                get_node_ptr( source ),
-                std::forward<Op>( op ),
-                get_node_ptr( deps )... ) );
+    auto node_builder = [&context, &source, &op]( const signal<DepValues>&... deps ) {
+        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, DepValues...>>(
+            context, get_node_ptr( source ), std::forward<Op>( op ), get_node_ptr( deps )... ) );
     };
 
     return std::apply( node_builder, dep_pack.data );
@@ -3170,18 +3169,18 @@ UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
  *
  *  @warning Not to be confused with std::merge() or ranges::merge()
  */
-template <typename source_t, typename... sources_t, typename E = source_t>
+template <typename Source, typename... Sources, typename E = Source>
 UREACT_WARN_UNUSED_RESULT auto merge(
-    const events<source_t>& source1, const events<sources_t>&... sources ) -> events<E>
+    const events<Source>& source1, const events<Sources>&... sources ) -> events<E>
 {
-    static_assert( sizeof...( sources_t ) > 0, "merge: 2+ arguments are required" );
+    static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-    using op_t = detail::event_merge_op<E,
-        detail::event_stream_node_ptr_t<source_t>,
-        detail::event_stream_node_ptr_t<sources_t>...>;
+    using Op = detail::event_merge_op<E,
+        detail::event_stream_node_ptr_t<Source>,
+        detail::event_stream_node_ptr_t<Sources>...>;
 
     context& context = source1.get_context();
-    return events<E>( std::make_shared<detail::event_op_node<E, op_t>>(
+    return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
         context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
 }
 
@@ -3193,16 +3192,16 @@ UREACT_WARN_UNUSED_RESULT auto merge(
  *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
  *
  *  The signature of op should be equivalent to:
- *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const deps_t& ...)
+ *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
  *
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
  */
-template <typename out_t, typename in_t, typename Op, typename... deps_t>
+template <typename OutE, typename InE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process(
-    const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, Op&& op ) -> events<out_t>
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
 {
-    return detail::process_impl<out_t>( source, dep_pack, std::forward<Op>( op ) );
+    return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
 }
 
 /*!
@@ -3210,24 +3209,24 @@ UREACT_WARN_UNUSED_RESULT auto process(
  *
  *  Version without synchronization with additional signals
  *
- *  See process(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, Op&& op)
+ *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
  */
-template <typename out_t, typename in_t, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( const events<in_t>& source, Op&& op ) -> events<out_t>
+template <typename OutE, typename InE, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> events<OutE>
 {
-    return detail::process_impl<out_t>( source, signal_pack<>(), std::forward<Op>( op ) );
+    return detail::process_impl<OutE>( source, signal_pack<>(), std::forward<Op>( op ) );
 }
 
 /*!
  * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
  */
-template <typename out_t, typename Op>
+template <typename OutE, typename Op>
 UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
 {
     return closure{ [op = std::forward<Op>( op )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<out_t>( std::forward<arg_t>( source ), op );
+        return process<OutE>( std::forward<arg_t>( source ), op );
     } };
 }
 
@@ -3238,19 +3237,18 @@ UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
  *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
  *
  *  The signature of pred should be equivalent to:
- *  * bool pred(const E&, const deps_t& ...)
+ *  * bool pred(const E&, const Deps& ...)
  *
  *  Semantically equivalent of ranges::filter
  *
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename E, typename Pred, typename... dep_values_t>
+template <typename E, typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter(
-    const events<E>& source, const signal_pack<dep_values_t...>& dep_pack, Pred&& pred )
-    -> events<E>
+    const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred ) -> events<E>
 {
     using F = std::decay_t<Pred>;
-    using result_t = std::invoke_result_t<F, E, dep_values_t...>;
+    using result_t = std::invoke_result_t<F, E, DepValues...>;
     static_assert(
         std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
 
@@ -3269,7 +3267,7 @@ UREACT_WARN_UNUSED_RESULT auto filter(
  *
  *  Version without synchronization with additional signals
  *
- *  See filter(const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred)
+ *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
 template <typename E, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
@@ -3297,23 +3295,23 @@ UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *
  *  The signature of func should be equivalent to:
- *  * T func(const E&, const deps_t& ...)
+ *  * T func(const E&, const Deps& ...)
  *
  *  Semantically equivalent of ranges::transform
  *
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename in_t,
+template <typename InE,
     typename F,
-    typename... deps_t,
-    typename out_t = std::invoke_result_t<F, in_t, deps_t...>>
+    typename... Deps,
+    typename OutE = std::invoke_result_t<F, InE, Deps...>>
 UREACT_WARN_UNUSED_RESULT auto transform(
-    const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, F&& func ) -> events<out_t>
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) -> events<OutE>
 {
-    return detail::process_impl<out_t>( source,
+    return detail::process_impl<OutE>( source,
         dep_pack, //
         [func = std::forward<F>( func )](
-            event_range<in_t> range, event_emitter<out_t> out, const auto... deps ) mutable {
+            event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
             for( const auto& e : range )
                 out.emit( func( e, deps... ) );
         } );
@@ -3324,16 +3322,16 @@ UREACT_WARN_UNUSED_RESULT auto transform(
  *
  *  Version without synchronization with additional signals
  *
- *  See transform(const events<in_t>& source, const signal_pack<deps_t...>& dep_pack, F&& func)
+ *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-template <typename in_t, typename F, typename out_t = std::invoke_result_t<F, in_t>>
-UREACT_WARN_UNUSED_RESULT auto transform( const events<in_t>& source, F&& func ) -> events<out_t>
+template <typename InE, typename F, typename OutE = std::invoke_result_t<F, InE>>
+UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) -> events<OutE>
 {
     return transform( source, signal_pack<>(), std::forward<F>( func ) );
 }
 
 /*!
- * @brief Curried version of transform(const events<in_t>& source, f_in_t&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of transform(const events<InE>& source, F&& func) algorithm used for "pipe" syntax
  */
 template <typename F>
 UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
@@ -3348,31 +3346,31 @@ UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
 /*!
  * @brief Create a new event stream that casts events from other stream using static_cast
  *
- *  For every event e in source, emit t = static_cast<out_t>(e).
+ *  For every event e in source, emit t = static_cast<OutE>(e).
  *
  *  Type of resulting signal have to be explicitly specified.
  */
-template <typename out_t, typename in_t>
-UREACT_WARN_UNUSED_RESULT auto cast( const events<in_t>& source ) -> events<out_t>
+template <typename OutE, typename InE>
+UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
 {
-    return detail::process_impl<out_t>( source,
+    return detail::process_impl<OutE>( source,
         signal_pack<>(), //
-        []( event_range<in_t> range, event_emitter<out_t> out ) mutable {
+        []( event_range<InE> range, event_emitter<OutE> out ) mutable {
             for( const auto& e : range )
-                out.emit( static_cast<out_t>( e ) );
+                out.emit( static_cast<OutE>( e ) );
         } );
 }
 
 /*!
- * @brief Curried version of cast(const events<in_t>& source) algorithm used for "pipe" syntax
+ * @brief Curried version of cast(const events<InE>& source) algorithm used for "pipe" syntax
  */
-template <typename out_t>
+template <typename OutE>
 UREACT_WARN_UNUSED_RESULT auto cast()
 {
     return closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return cast<out_t>( std::forward<arg_t>( source ) );
+        return cast<OutE>( std::forward<arg_t>( source ) );
     } };
 }
 
@@ -3441,11 +3439,11 @@ UREACT_WARN_UNUSED_RESULT auto take( const N count )
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *
  *  The signature of pred should be equivalent to:
- *  * bool func(const E&, const deps_t& ...)
+ *  * bool func(const E&, const Deps& ...)
  */
-template <typename E, typename... deps_t, typename Pred>
+template <typename E, typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto drop_while(
-    const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
+    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
     auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
                              const auto& e, const auto... deps ) mutable {
@@ -3489,11 +3487,11 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *
  *  The signature of pred should be equivalent to:
- *  * bool func(const E&, const deps_t& ...)
+ *  * bool func(const E&, const Deps& ...)
  */
-template <typename E, typename... deps_t, typename Pred>
+template <typename E, typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto take_while(
-    const events<E>& source, const signal_pack<deps_t...>& dep_pack, Pred&& pred )
+    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
     auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
                            const auto& e, const auto... deps ) mutable {
@@ -3568,16 +3566,16 @@ UREACT_WARN_UNUSED_RESULT inline auto unique()
  *
  *  Semantically equivalent of ranges::zip
  */
-template <typename arg_t, typename... args_t>
-UREACT_WARN_UNUSED_RESULT auto zip( const events<arg_t>& arg1, const events<args_t>&... args )
-    -> events<std::tuple<arg_t, args_t...>>
+template <typename Source, typename... Sources>
+UREACT_WARN_UNUSED_RESULT auto zip( const events<Source>& source1,
+    const events<Sources>&... sources ) -> events<std::tuple<Source, Sources...>>
 {
-    static_assert( sizeof...( args_t ) >= 1, "zip: 2+ arguments are required" );
+    static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
 
-    context& context = arg1.get_context();
-    return events<std::tuple<arg_t, args_t...>>(
-        std::make_shared<detail::event_zip_node<arg_t, args_t...>>(
-            context, get_node_ptr( arg1 ), get_node_ptr( args )... ) );
+    context& context = source1.get_context();
+    return events<std::tuple<Source, Sources...>>(
+        std::make_shared<detail::event_zip_node<Source, Sources...>>(
+            context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
 }
 
 /*!
@@ -3618,12 +3616,12 @@ class observer;
 namespace detail
 {
 
-template <typename in_f, typename S>
-auto observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer;
+template <typename InF, typename S>
+auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer;
 
-template <typename f_in_t, typename E, typename... deps_t>
+template <typename FIn, typename E, typename... Deps>
 auto observe_events_impl(
-    const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func ) -> observer;
+    const events<E>& subject, const signal_pack<Deps...>& dep_pack, FIn&& func ) -> observer;
 
 } // namespace detail
 
@@ -3642,7 +3640,7 @@ class observer final
 {
 private:
     using subject_ptr_t = std::shared_ptr<detail::observable_node>;
-    using node_t = detail::observer_node;
+    using Node = detail::observer_node;
 
 public:
     UREACT_MAKE_MOVABLE_ONLY( observer );
@@ -3670,21 +3668,20 @@ public:
     }
 
 private:
-    observer( node_t* node, subject_ptr_t subject )
+    observer( Node* node, subject_ptr_t subject )
         : m_node( node )
         , m_subject( std::move( subject ) )
     {}
 
-    template <typename in_f, typename S>
-    friend auto detail::observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer;
+    template <typename InF, typename S>
+    friend auto detail::observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer;
 
-    template <typename f_in_t, typename E, typename... deps_t>
+    template <typename FIn, typename E, typename... Deps>
     friend auto detail::observe_events_impl(
-        const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
-        -> observer;
+        const events<E>& subject, const signal_pack<Deps...>& dep_pack, FIn&& func ) -> observer;
 
     /// Owned by subject
-    node_t* m_node = nullptr;
+    Node* m_node = nullptr;
 
     /// While the observer handle exists, the subject is not destroyed
     subject_ptr_t m_subject = nullptr;
@@ -3734,20 +3731,20 @@ namespace detail
 {
 
 /// Special wrapper to add specific return type to the void function
-template <typename F, typename ret_t, ret_t return_value>
+template <typename F, typename Ret, Ret return_value>
 class add_default_return_value_wrapper
 {
 public:
-    template <typename in_f,
-        class = std::enable_if_t<!is_same_decay_v<in_f, add_default_return_value_wrapper>>>
-    explicit add_default_return_value_wrapper( in_f&& func )
-        : m_func( std::forward<in_f>( func ) )
+    template <typename InF,
+        class = std::enable_if_t<!is_same_decay_v<InF, add_default_return_value_wrapper>>>
+    explicit add_default_return_value_wrapper( InF&& func )
+        : m_func( std::forward<InF>( func ) )
     {}
 
-    template <typename... args_t>
-    UREACT_WARN_UNUSED_RESULT ret_t operator()( args_t&&... args )
+    template <typename... Args>
+    UREACT_WARN_UNUSED_RESULT Ret operator()( Args&&... args )
     {
-        m_func( std::forward<args_t>( args )... );
+        m_func( std::forward<Args>( args )... );
         return return_value;
     }
 
@@ -3759,7 +3756,7 @@ template <class F>
 using add_observer_action_next_ret
     = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
 
-template <typename E, typename F, typename... args_t>
+template <typename E, typename F, typename... Args>
 struct add_observer_range_wrapper
 {
     add_observer_range_wrapper( const add_observer_range_wrapper& other ) = default;
@@ -3769,12 +3766,13 @@ struct add_observer_range_wrapper
         : m_func( std::move( other.m_func ) )
     {}
 
-    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_observer_range_wrapper>>
-    explicit add_observer_range_wrapper( f_in_t&& func )
-        : m_func( std::forward<f_in_t>( func ) )
+    template <typename FIn, class = disable_if_same_t<FIn, add_observer_range_wrapper>>
+    explicit add_observer_range_wrapper( FIn&& func )
+        : m_func( std::forward<FIn>( func ) )
     {}
 
-    observer_action operator()( event_range<E> range, const args_t&... args )
+    // TODO: move 'typename... Args' here
+    observer_action operator()( event_range<E> range, const Args&... args )
     {
         for( const auto& e : range )
         {
@@ -3790,16 +3788,16 @@ struct add_observer_range_wrapper
     F m_func;
 };
 
-template <typename S, typename func_t>
+template <typename S, typename F>
 class signal_observer_node final : public observer_node
 {
 public:
-    template <typename F>
+    template <typename InF>
     signal_observer_node(
-        context& context, const std::shared_ptr<signal_node<S>>& subject, F&& func )
+        context& context, const std::shared_ptr<signal_node<S>>& subject, InF&& func )
         : signal_observer_node::observer_node( context )
         , m_subject( subject )
-        , m_func( std::forward<F>( func ) )
+        , m_func( std::forward<InF>( func ) )
     {
         get_graph().on_node_attach( *this, *subject );
     }
@@ -3841,21 +3839,21 @@ private:
     }
 
     std::weak_ptr<signal_node<S>> m_subject;
-    func_t m_func;
+    F m_func;
 };
 
-template <typename E, typename func_t, typename... dep_values_t>
+template <typename E, typename F, typename... DepValues>
 class events_observer_node final : public observer_node
 {
 public:
-    template <typename F>
+    template <typename InF>
     events_observer_node( context& context,
         const std::shared_ptr<event_stream_node<E>>& subject,
-        F&& func,
-        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
+        InF&& func,
+        const std::shared_ptr<signal_node<DepValues>>&... deps )
         : events_observer_node::observer_node( context )
         , m_subject( subject )
-        , m_func( std::forward<F>( func ) )
+        , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
         get_graph().on_node_attach( *this, *subject );
@@ -3874,8 +3872,8 @@ public:
 
             {
                 should_detach
-                    = apply(
-                          [this, &p]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
+                    = std::apply(
+                          [this, &p]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
                               return m_func( event_range<E>( p->events() ), args->value_ref()... );
                           },
                           m_deps )
@@ -3898,12 +3896,12 @@ public:
     }
 
 private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
+    using DepHolder = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
 
     std::weak_ptr<event_stream_node<E>> m_subject;
 
-    func_t m_func;
-    dep_holder_t m_deps;
+    F m_func;
+    DepHolder m_deps;
 
     void detach_observer() override
     {
@@ -3911,8 +3909,8 @@ private:
         {
             get_graph().on_node_detach( *this, *p );
 
-            apply(
-                detach_functor<events_observer_node, std::shared_ptr<signal_node<dep_values_t>>...>(
+            std::apply(
+                detach_functor<events_observer_node, std::shared_ptr<signal_node<DepValues>>...>(
                     *this ),
                 m_deps );
 
@@ -3921,25 +3919,25 @@ private:
     }
 };
 
-template <typename in_f, typename S>
-auto observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer
+template <typename InF, typename S>
+auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
 {
-    static_assert( std::is_invocable_v<in_f, S>,
+    static_assert( std::is_invocable_v<InF, S>,
         "Passed functor should be callable with S. See documentation for ureact::observe()" );
 
-    using F = std::decay_t<in_f>;
-    using R = std::invoke_result_t<in_f, S>;
+    using F = std::decay_t<InF>;
+    using R = std::invoke_result_t<InF, S>;
 
     // If return value of passed function is void, add observer_action::next as
     // default return value.
-    using node_t = std::conditional_t<std::is_same_v<void, R>,
+    using Node = std::conditional_t<std::is_same_v<void, R>,
         signal_observer_node<S, add_observer_action_next_ret<F>>,
         signal_observer_node<S, F>>;
 
     const auto& subject_ptr = get_node_ptr( subject );
 
     std::unique_ptr<observer_node> node(
-        new node_t( subject.get_context(), subject_ptr, std::forward<in_f>( func ) ) );
+        new Node( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
     observer_node* raw_node_ptr = node.get();
 
     subject_ptr->register_observer( std::move( node ) );
@@ -3947,42 +3945,40 @@ auto observe_signal_impl( const signal<S>& subject, in_f&& func ) -> observer
     return observer( raw_node_ptr, subject_ptr );
 }
 
-template <typename f_in_t, typename E, typename... deps_t>
+template <typename FIn, typename E, typename... Deps>
 auto observe_events_impl(
-    const events<E>& subject, const signal_pack<deps_t...>& dep_pack, f_in_t&& func ) -> observer
+    const events<E>& subject, const signal_pack<Deps...>& dep_pack, FIn&& func ) -> observer
 {
-    using F = std::decay_t<f_in_t>;
+    using F = std::decay_t<FIn>;
 
     // clang-format off
     using wrapper_t =
         select_t<
-            // observer_action func(event_range<E> range, const deps_t& ...)
-            condition<std::is_invocable_r_v<observer_action, F, event_range<E>, deps_t...>,
+            // observer_action func(event_range<E> range, const Deps& ...)
+            condition<std::is_invocable_r_v<observer_action, F, event_range<E>, Deps...>,
                       F>,
-            // observer_action func(const E&, const deps_t& ...)
-            condition<std::is_invocable_r_v<observer_action, F, E, deps_t...>,
-                      add_observer_range_wrapper<E, F, deps_t...>>,
-            // void func(event_range<E> range, const deps_t& ...)
-            condition<std::is_invocable_r_v<void, F, event_range<E>, deps_t...>,
+            // observer_action func(const E&, const Deps& ...)
+            condition<std::is_invocable_r_v<observer_action, F, E, Deps...>,
+                      add_observer_range_wrapper<E, F, Deps...>>,
+            // void func(event_range<E> range, const Deps& ...)
+            condition<std::is_invocable_r_v<void, F, event_range<E>, Deps...>,
                       add_observer_action_next_ret<F>>,
-            // void func(const E&, const deps_t& ...)
-            condition<std::is_invocable_r_v<void, F, E, deps_t...>,
-                      add_observer_range_wrapper<E, add_observer_action_next_ret<F>, deps_t...>>,
+            // void func(const E&, const Deps& ...)
+            condition<std::is_invocable_r_v<void, F, E, Deps...>,
+                      add_observer_range_wrapper<E, add_observer_action_next_ret<F>, Deps...>>,
             signature_mismatches>;
     // clang-format on
 
     static_assert( !std::is_same_v<wrapper_t, signature_mismatches>,
         "observe: Passed function does not match any of the supported signatures" );
 
-    using node_t = events_observer_node<E, wrapper_t, deps_t...>;
+    using Node = events_observer_node<E, wrapper_t, Deps...>;
 
     context& context = subject.get_context();
 
-    auto node_builder = [&context, &subject, &func]( const signal<deps_t>&... deps ) {
-        return new node_t( context,
-            get_node_ptr( subject ),
-            std::forward<f_in_t>( func ),
-            get_node_ptr( deps )... );
+    auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
+        return new Node(
+            context, get_node_ptr( subject ), std::forward<FIn>( func ), get_node_ptr( deps )... );
     };
 
     const auto& subject_node = get_node_ptr( subject );
@@ -4039,10 +4035,10 @@ auto observe( signal<S>&& subject, F&& func ) -> observer
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *
  *  The signature of func should be equivalent to:
- *  * observer_action func(event_range<E> range, const deps_t& ...)
- *  * observer_action func(const E&, const deps_t& ...)
- *  * void func(event_range<E> range, const deps_t& ...)
- *  * void func(const E&, const deps_t& ...)
+ *  * observer_action func(event_range<E> range, const Deps& ...)
+ *  * observer_action func(const E&, const Deps& ...)
+ *  * void func(event_range<E> range, const Deps& ...)
+ *  * void func(const E&, const Deps& ...)
  *
  *  By returning observer_action::stop_and_detach, the observer function can request
  *  its own detachment. Returning observer_action::next keeps the observer attached.
@@ -4052,9 +4048,8 @@ auto observe( signal<S>&& subject, F&& func ) -> observer
  *  @note The event_range<E> option allows to explicitly batch process single turn events
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename F, typename E, typename... deps_t>
-auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func )
-    -> observer
+template <typename F, typename E, typename... Deps>
+auto observe( const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) -> observer
 {
     return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
 }
@@ -4062,12 +4057,12 @@ auto observe( const events<E>& subject, const signal_pack<deps_t...>& dep_pack, 
 /*!
  * @brief Create observer for temporary event stream
  *
- *  Same as observe(const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func),
+ *  Same as observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func),
  *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
  */
-template <typename F, typename E, typename... deps_t>
+template <typename F, typename E, typename... Deps>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& func )
+auto observe( events<E>&& subject, const signal_pack<Deps...>& dep_pack, F&& func )
     -> observer // TODO: check in tests
 {
     return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
@@ -4078,7 +4073,7 @@ auto observe( events<E>&& subject, const signal_pack<deps_t...>& dep_pack, F&& f
  *
  *  Version without synchronization with additional signals
  *
- *  See observe(const events<E>& subject, const signal_pack<deps_t...>& dep_pack, F&& func)
+ *  See observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func)
  */
 template <typename F, typename E>
 auto observe( const events<E>& subject, F&& func ) -> observer
@@ -4102,14 +4097,14 @@ auto observe( events<E>&& subject, F&& func ) -> observer // TODO: check in test
 namespace detail
 {
 
-template <typename outer_t, typename inner_t>
-class flatten_node final : public signal_node<inner_t>
+template <typename OuterS, typename InnerS>
+class signal_flatten_node final : public signal_node<InnerS>
 {
 public:
-    flatten_node( context& context,
-        std::shared_ptr<signal_node<outer_t>> outer,
-        const std::shared_ptr<signal_node<inner_t>>& inner )
-        : flatten_node::signal_node( context, inner->value_ref() )
+    signal_flatten_node( context& context,
+        std::shared_ptr<signal_node<OuterS>> outer,
+        const std::shared_ptr<signal_node<InnerS>>& inner )
+        : signal_flatten_node::signal_node( context, inner->value_ref() )
         , m_outer( std::move( outer ) )
         , m_inner( inner )
     {
@@ -4117,7 +4112,7 @@ public:
         this->get_graph().on_node_attach( *this, *m_inner );
     }
 
-    ~flatten_node() override
+    ~signal_flatten_node() override
     {
         this->get_graph().on_node_detach( *this, *m_inner );
         this->get_graph().on_node_detach( *this, *m_outer );
@@ -4147,17 +4142,17 @@ public:
     }
 
 private:
-    std::shared_ptr<signal_node<outer_t>> m_outer;
-    std::shared_ptr<signal_node<inner_t>> m_inner;
+    std::shared_ptr<signal_node<OuterS>> m_outer;
+    std::shared_ptr<signal_node<InnerS>> m_inner;
 };
 
-template <typename outer_t, typename inner_t>
-class event_flatten_node final : public event_stream_node<inner_t>
+template <typename OuterS, typename InnerE>
+class event_flatten_node final : public event_stream_node<InnerE>
 {
 public:
     event_flatten_node( context& context,
-        const std::shared_ptr<signal_node<outer_t>>& outer,
-        const std::shared_ptr<event_stream_node<inner_t>>& inner )
+        const std::shared_ptr<signal_node<OuterS>>& outer,
+        const std::shared_ptr<event_stream_node<InnerE>>& inner )
         : event_flatten_node::event_stream_node( context )
         , m_outer( outer )
         , m_inner( inner )
@@ -4203,8 +4198,8 @@ public:
     }
 
 private:
-    std::shared_ptr<signal_node<outer_t>> m_outer;
-    std::shared_ptr<event_stream_node<inner_t>> m_inner;
+    std::shared_ptr<signal_node<OuterS>> m_outer;
+    std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
 template <typename T>
@@ -4227,25 +4222,23 @@ using decay_input_t = typename decay_input<T>::type;
 /*!
  * @brief Create a new signal by flattening a signal of a signal
  */
-template <typename inner_value_t>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<inner_value_t>>& outer )
+template <typename InnerS>
+UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<InnerS>>& outer ) -> signal<InnerS>
 {
     context& context = outer.get_context();
-    return signal<inner_value_t>(
-        std::make_shared<detail::flatten_node<signal<inner_value_t>, inner_value_t>>(
-            context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
+    return signal<InnerS>{ std::make_shared<detail::signal_flatten_node<signal<InnerS>, InnerS>>(
+        context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) };
 }
 
 /*!
  * @brief Create a new event stream by flattening a signal of an event stream
  */
-template <typename inner_value_t>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& outer )
+template <typename InnerE>
+UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) -> events<InnerE>
 {
     context& context = outer.get_context();
-    return events<inner_value_t>(
-        std::make_shared<detail::event_flatten_node<events<inner_value_t>, inner_value_t>>(
-            context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) );
+    return events<InnerE>{ std::make_shared<detail::event_flatten_node<events<InnerE>, InnerE>>(
+        context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) };
 }
 
 /*!
@@ -4257,12 +4250,12 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<inner_value_t>>& out
  *
  *  @sa reactive_ptr does the same, but receives signal<Foo*>
  */
-template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
+template <typename S, typename R, typename DecayedR = detail::decay_input_t<R>>
 UREACT_WARN_UNUSED_RESULT auto reactive_ref(
     const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
 {
     return flatten( lift(
-        outer, [attribute]( const S& s ) { return static_cast<decayed_r>( s.*attribute ); } ) );
+        outer, [attribute]( const S& s ) { return static_cast<DecayedR>( s.*attribute ); } ) );
 }
 
 /*!
@@ -4274,11 +4267,11 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref(
  *
  *  @sa reactive_ref does the same, but receives signal<Foo&>
  */
-template <typename S, typename R, typename decayed_r = detail::decay_input_t<R>>
+template <typename S, typename R, typename DecayedR = detail::decay_input_t<R>>
 UREACT_WARN_UNUSED_RESULT auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
 {
     return flatten( lift(
-        outer, [attribute]( const S* s ) { return static_cast<decayed_r>( s->*attribute ); } ) );
+        outer, [attribute]( const S* s ) { return static_cast<DecayedR>( s->*attribute ); } ) );
 }
 
 //==================================================================================================
@@ -4288,17 +4281,18 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ptr( const signal<S*>& outer, R S::*attr
 namespace detail
 {
 
-template <typename E, typename S, typename F, typename... args_t>
+template <typename E, typename S, typename F, typename... Args>
 class add_fold_range_wrapper
 {
 public:
-    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_fold_range_wrapper>>
-    explicit add_fold_range_wrapper( f_in_t&& func )
-        : m_func( std::forward<f_in_t>( func ) )
+    template <typename FIn, class = disable_if_same_t<FIn, add_fold_range_wrapper>>
+    explicit add_fold_range_wrapper( FIn&& func )
+        : m_func( std::forward<FIn>( func ) )
     {}
 
     // TODO: possible optimization - move accum as much as possible. See std::accumulate
-    S operator()( event_range<E> range, S accum, const args_t&... args )
+    // TODO: move 'typename... Args' here
+    S operator()( event_range<E> range, S accum, const Args&... args )
     {
         for( const auto& e : range )
         {
@@ -4312,16 +4306,17 @@ private:
     F m_func;
 };
 
-template <typename E, typename S, typename F, typename... args_t>
+template <typename E, typename S, typename F, typename... Args>
 class add_fold_by_ref_range_wrapper
 {
 public:
-    template <typename f_in_t, class = disable_if_same_t<f_in_t, add_fold_by_ref_range_wrapper>>
-    explicit add_fold_by_ref_range_wrapper( f_in_t&& func )
-        : m_func( std::forward<f_in_t>( func ) )
+    template <typename FIn, class = disable_if_same_t<FIn, add_fold_by_ref_range_wrapper>>
+    explicit add_fold_by_ref_range_wrapper( FIn&& func )
+        : m_func( std::forward<FIn>( func ) )
     {}
 
-    void operator()( event_range<E> range, S& accum, const args_t&... args )
+    // TODO: move 'typename... Args' here
+    void operator()( event_range<E> range, S& accum, const Args&... args )
     {
         for( const auto& e : range )
         {
@@ -4333,19 +4328,19 @@ private:
     F m_func;
 };
 
-template <typename S, typename E, typename func_t, typename... dep_values_t>
+template <typename S, typename E, typename F, typename... DepValues>
 class fold_node final : public signal_node<S>
 {
 public:
-    template <typename T, typename F>
+    template <typename InS, typename InF>
     fold_node( context& context,
-        T&& init,
+        InS&& init,
         const std::shared_ptr<event_stream_node<E>>& events,
-        F&& func,
-        const std::shared_ptr<signal_node<dep_values_t>>&... deps )
-        : fold_node::signal_node( context, std::forward<T>( init ) )
+        InF&& func,
+        const std::shared_ptr<signal_node<DepValues>>&... deps )
+        : fold_node::signal_node( context, std::forward<InS>( init ) )
         , m_events( events )
-        , m_func( std::forward<F>( func ) )
+        , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
         this->get_graph().on_node_attach( *this, *events );
@@ -4356,7 +4351,7 @@ public:
     {
         this->get_graph().on_node_detach( *this, *m_events );
 
-        apply( detach_functor<fold_node, std::shared_ptr<signal_node<dep_values_t>>...>( *this ),
+        std::apply( detach_functor<fold_node, std::shared_ptr<signal_node<DepValues>>...>( *this ),
             m_deps );
     }
 
@@ -4368,10 +4363,10 @@ public:
 
         if( !m_events->events().empty() )
         {
-            if constexpr( std::is_invocable_r_v<S, func_t, event_range<E>, S, dep_values_t...> )
+            if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, DepValues...> )
             {
-                S new_value = apply(
-                    [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
+                S new_value = std::apply(
+                    [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
                         return m_func( event_range<E>( m_events->events() ),
                             this->m_value,
                             args->value_ref()... );
@@ -4384,11 +4379,10 @@ public:
                     this->m_value = std::move( new_value );
                 }
             }
-            else if constexpr(
-                std::is_invocable_r_v<void, func_t, event_range<E>, S&, dep_values_t...> )
+            else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, DepValues...> )
             {
-                apply(
-                    [this]( const std::shared_ptr<signal_node<dep_values_t>>&... args ) {
+                std::apply(
+                    [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
                         m_func( event_range<E>( m_events->events() ),
                             this->m_value,
                             args->value_ref()... );
@@ -4411,49 +4405,49 @@ public:
     }
 
 private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<dep_values_t>>...>;
+    using DepHolder = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
 
     std::shared_ptr<event_stream_node<E>> m_events;
 
-    func_t m_func;
-    dep_holder_t m_deps;
+    F m_func;
+    DepHolder m_deps;
 };
 
-template <typename E, typename V, typename f_in_t, typename... deps_t, typename S = std::decay_t<V>>
+template <typename E, typename V, typename FIn, typename... Deps, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold_impl(
-    const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
+    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
     -> signal<S>
 {
-    using F = std::decay_t<f_in_t>;
+    using F = std::decay_t<FIn>;
 
     // clang-format off
-    using node_t =
+    using Node =
         select_t<
-            // S func(const S&, event_range<E> range, const deps_t& ...)
-            condition<std::is_invocable_r_v<S, F, event_range<E>, S, deps_t...>,
-                                  fold_node<S, E, F, deps_t...>>,
-            // S func(const S&, const E&, const deps_t& ...)
-            condition<std::is_invocable_r_v<S, F, E, S, deps_t...>,
-                                  fold_node<S, E, add_fold_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
-            // void func(S&, event_range<E> range, const deps_t& ...)
-            condition<std::is_invocable_r_v<void, F, event_range<E>, S&, deps_t...>,
-                                  fold_node<S, E, F, deps_t...>>,
-            // void func(S&, const E&, const deps_t& ...)
-            condition<std::is_invocable_r_v<void, F, E, S&, deps_t...>,
-                                  fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, deps_t...>, deps_t...>>,
+            // S func(const S&, event_range<E> range, const Deps& ...)
+            condition<std::is_invocable_r_v<S, F, event_range<E>, S, Deps...>,
+                                  fold_node<S, E, F, Deps...>>,
+            // S func(const S&, const E&, const Deps& ...)
+            condition<std::is_invocable_r_v<S, F, E, S, Deps...>,
+                                  fold_node<S, E, add_fold_range_wrapper<E, S, F, Deps...>, Deps...>>,
+            // void func(S&, event_range<E> range, const Deps& ...)
+            condition<std::is_invocable_r_v<void, F, event_range<E>, S&, Deps...>,
+                                  fold_node<S, E, F, Deps...>>,
+            // void func(S&, const E&, const Deps& ...)
+            condition<std::is_invocable_r_v<void, F, E, S&, Deps...>,
+                                  fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, Deps...>, Deps...>>,
             signature_mismatches>;
     // clang-format on
 
-    static_assert( !std::is_same_v<node_t, signature_mismatches>,
+    static_assert( !std::is_same_v<Node, signature_mismatches>,
         "fold: Passed function does not match any of the supported signatures" );
 
     context& context = events.get_context();
 
-    auto node_builder = [&context, &events, &init, &func]( const signal<deps_t>&... deps ) {
-        return signal<S>( std::make_shared<node_t>( context,
+    auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
+        return signal<S>( std::make_shared<Node>( context,
             std::forward<V>( init ),
             get_node_ptr( events ),
-            std::forward<f_in_t>( func ),
+            std::forward<FIn>( func ),
             get_node_ptr( deps )... ) );
     };
 
@@ -4501,15 +4495,15 @@ private:
  *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
  *
  *  The signature of func should be equivalent to:
- *  * S func(const E& event, const S& accum, const deps_t& ...)
- *  * S func(event_range<E> range, const S& accum, const deps_t& ...)
- *  * void func(const E& event, S& accum, const deps_t& ...)
- *  * void func(event_range<E> range, S& accum, const deps_t& ...)
+ *  * S func(const E& event, const S& accum, const Deps& ...)
+ *  * S func(event_range<E> range, const S& accum, const Deps& ...)
+ *  * void func(const E& event, S& accum, const Deps& ...)
+ *  * void func(event_range<E> range, S& accum, const Deps& ...)
  *
  *  The fold parameters:
- *    [const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack]
+ *    [const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack]
  *  match the corresponding arguments of the given function
- *    [const E& event_value, const S& accumulator, const deps_t& ...deps]
+ *    [const E& event_value, const S& accumulator, const Deps& ...deps]
  *
  *  Creates a signal with an initial value v = init.
  *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
@@ -4522,12 +4516,12 @@ private:
  *  @note The event_range<E> option allows to explicitly batch process single turn events
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename E, typename V, typename f_in_t, typename... deps_t, typename S = std::decay_t<V>>
+template <typename E, typename V, typename FIn, typename... Deps, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold(
-    const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack, f_in_t&& func )
+    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
     -> signal<S>
 {
-    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<f_in_t>( func ) );
+    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<FIn>( func ) );
 }
 
 /*!
@@ -4535,23 +4529,22 @@ UREACT_WARN_UNUSED_RESULT auto fold(
  *
  *  Version without synchronization with additional signals
  *
- *  See fold(const events<E>& events, V&& init, const signal_pack<deps_t...>& dep_pack, f_in_t&& func)
+ *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func)
  */
-template <typename E, typename V, typename f_in_t, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, f_in_t&& func ) -> signal<S>
+template <typename E, typename V, typename FIn, typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, FIn&& func ) -> signal<S>
 {
-    return fold_impl(
-        events, std::forward<V>( init ), signal_pack<>(), std::forward<f_in_t>( func ) );
+    return fold_impl( events, std::forward<V>( init ), signal_pack<>(), std::forward<FIn>( func ) );
 }
 
 /*!
- * @brief Curried version of fold(const events<E>& events, V&& init, f_in_t&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of fold(const events<E>& events, V&& init, FIn&& func) algorithm used for "pipe" syntax
  */
-template <typename V, typename f_in_t>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, f_in_t&& func )
+template <typename V, typename FIn>
+UREACT_WARN_UNUSED_RESULT auto fold( V&& init, FIn&& func )
 {
     return closure{
-        [init = std::forward<V>( init ), func = std::forward<f_in_t>( func )]( auto&& source ) {
+        [init = std::forward<V>( init ), func = std::forward<FIn>( func )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
             return fold( std::forward<arg_t>( source ), std::move( init ), func );

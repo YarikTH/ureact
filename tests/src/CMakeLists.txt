@@ -5,7 +5,11 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 #
-add_executable(ureact_test main.cpp legacy.cpp)
+add_executable(
+    ureact_test #
+    main.cpp
+    legacy.cpp
+)
 
 target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)
 

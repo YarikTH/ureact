@@ -7,7 +7,7 @@
 //
 #include <string>
 
-#include "tests_stdafx.hpp"
+#include "doctest_extra.h"
 #include "ureact/ureact.hpp"
 
 namespace

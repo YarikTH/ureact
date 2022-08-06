@@ -12,7 +12,8 @@
 
 #include <numeric>
 
-#include "tests_stdafx.hpp"
+#include "doctest_extra.h"
+#include "copy_stats.hpp"
 #include "ureact/ureact.hpp"
 
 // type_traits to test:

@@ -1,14 +1,12 @@
 #pragma once
 
-#include "doctest_extra.h"
-#include "ureact/ureact.hpp"
-
 struct copy_stats
 {
     int copy_count = 0;
     int move_count = 0;
 };
 
+// TODO: template type of included value
 struct copy_counter
 {
     int v = 0;

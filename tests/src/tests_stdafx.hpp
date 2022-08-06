@@ -3,15 +3,6 @@
 #include "doctest_extra.h"
 #include "ureact/ureact.hpp"
 
-template <class T>
-auto make_deeper( T&& signal )
-{
-    ureact::signal<int> result = signal;
-    for( int i = 0; i < 100; ++i )
-        result = +result;
-    return result;
-}
-
 struct copy_stats
 {
     int copy_count = 0;

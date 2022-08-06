@@ -1237,13 +1237,8 @@ TEST_CASE( "TransformSynced" )
     ureact::context ctx;
 
     auto src = ureact::make_source<int>( ctx );
-    auto limit_range_begin = ureact::make_var( ctx, 4 );
-    auto limit_range_size = ureact::make_var( ctx, 4 );
-
-    // make deep dependent signals
-    // so they are calculated later than not synced event filter
-    auto limit_min = make_deeper( limit_range_begin );
-    auto limit_max = make_deeper( limit_range_begin + limit_range_size - 1 );
+    auto limit_min = ureact::make_var( ctx, 4 );
+    auto limit_max = ureact::make_var( ctx, 7 );
 
     ureact::events<int> clamped;
     const auto clamp = []( auto i, int min, int max ) { return std::clamp( i, min, max ); };
@@ -1259,12 +1254,6 @@ TEST_CASE( "TransformSynced" )
 
     const auto result = ureact::collect<std::vector>( clamped );
 
-    // make not synced analog to show the difference
-    const auto clamp_not_synced
-        = [&]( auto i ) { return std::clamp( i, limit_min.get(), limit_max.get() ); };
-    ureact::events<int> clamped_not_synced = ureact::transform( src, clamp_not_synced );
-    const auto result_not_synced = ureact::collect<std::vector>( clamped_not_synced );
-
     for( int i : { -1, 4, 10, 0, 5, 2 } )
         src << i;
 
@@ -1273,8 +1262,8 @@ TEST_CASE( "TransformSynced" )
         for( int i : { -1, 4, 10, 0, 5, 2 } )
             src << i;
 
-        limit_range_begin <<= 1;
-        limit_range_size <<= 3;
+        limit_min <<= 1;
+        limit_max <<= 3;
     } );
 
     // we expect only numbers in [limit_min, limit_max] range passed our filter
@@ -1282,11 +1271,6 @@ TEST_CASE( "TransformSynced" )
     const std::vector<int> expected
         = { /*first range*/ 4, 4, 7, 4, 5, 4, /*second range*/ 1, 3, 3, 1, 3, 2 };
     CHECK( result.get() == expected );
-
-    // we expect that second pass would use the old limit values because they are not recalculated yet
-    const std::vector<int> expected_not_synced
-        = { /*first range*/ 4, 4, 7, 4, 5, 4, /*second range*/ 4, 4, 7, 4, 5, 4 };
-    CHECK( result_not_synced.get() == expected_not_synced );
 }
 
 // filter only even integer events
@@ -1325,13 +1309,8 @@ TEST_CASE( "FilterSynced" )
     ureact::context ctx;
 
     auto src = ureact::make_source<int>( ctx );
-    auto limit_range_begin = ureact::make_var( ctx, 4 );
-    auto limit_range_size = ureact::make_var( ctx, 4 );
-
-    // make deep dependent signals
-    // so they are calculated later than not synced event filter
-    auto limit_min = make_deeper( limit_range_begin );
-    auto limit_max = make_deeper( limit_range_begin + limit_range_size - 1 );
+    auto limit_min = ureact::make_var( ctx, 4 );
+    auto limit_max = ureact::make_var( ctx, 7 );
 
     ureact::events<int> filtered;
     const auto in_range = []( auto i, int min, int max ) { return i >= min && i <= max; };
@@ -1347,12 +1326,6 @@ TEST_CASE( "FilterSynced" )
 
     const auto result = ureact::collect<std::vector>( filtered );
 
-    // make not synced analog to show the difference
-    const auto in_range_not_synced
-        = [&]( auto i ) { return i >= limit_min.get() && i <= limit_max.get(); };
-    ureact::events<int> filtered_not_synced = ureact::filter( src, in_range_not_synced );
-    const auto result_not_synced = ureact::collect<std::vector>( filtered_not_synced );
-
     for( int i = 0; i < 10; ++i )
         src << i;
 
@@ -1361,19 +1334,14 @@ TEST_CASE( "FilterSynced" )
         for( int i = 0; i < 10; ++i )
             src << i;
 
-        limit_range_begin <<= 1;
-        limit_range_size <<= 3;
+        limit_min <<= 1;
+        limit_max <<= 3;
     } );
 
     // we expect only numbers in [limit_min, limit_max] range passed our filter
     // synced filtering performed only after new limit values are calculated
     const std::vector<int> expected = { /*first range*/ 4, 5, 6, 7, /*second range*/ 1, 2, 3 };
     CHECK( result.get() == expected );
-
-    // we expect that second pass would use the old limit values because they are not recalculated yet
-    const std::vector<int> expected_not_synced
-        = { /*first range*/ 4, 5, 6, 7, /*second range*/ 4, 5, 6, 7 };
-    CHECK( result_not_synced.get() == expected_not_synced );
 }
 
 // filters that take first N elements or skip first N elements

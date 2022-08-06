@@ -33,6 +33,12 @@ public:
     }
 };
 
+std::ostream& operator<<( std::ostream& os, const Company& company )
+{
+    os << "Company{ index: " << company.index << ", name: \"" << company.name.get() << "\" }";
+    return os;
+}
+
 class Employee
 {
 public:
@@ -43,6 +49,12 @@ public:
     {}
 };
 
+std::ostream& operator<<( std::ostream& os, const Employee& employee )
+{
+    os << "Employee{ company: " << employee.company.get() << " }";
+    return os;
+}
+
 class Employee2
 {
 public:
@@ -52,6 +64,12 @@ public:
         : company( make_var( ctx, companyPtr ) )
     {}
 };
+
+std::ostream& operator<<( std::ostream& os, const Employee2& employee )
+{
+    os << "Employee{ company: " << *employee.company.get() << " }";
+    return os;
+}
 
 } // namespace
 
@@ -1371,7 +1389,8 @@ TEST_CASE( "Flatten4" )
 
     CHECK( results.size() == 1 );
 
-    CHECK( std::find( results.begin(), results.end(), 600 ) != results.end() );
+    const bool valueFound = std::find( results.begin(), results.end(), 600 ) != results.end();
+    CHECK( valueFound );
 }
 
 TEST_CASE( "Flatten5" )
@@ -1993,7 +2012,8 @@ TEST_SUITE( "SignalTest" )
 
         CHECK_EQ( results.size(), 1 );
 
-        CHECK( std::find( results.begin(), results.end(), 600 ) != results.end() );
+        const bool valueFound = std::find( results.begin(), results.end(), 600 ) != results.end();
+        CHECK( valueFound );
     }
 
     TEST_CASE( "Member1" )

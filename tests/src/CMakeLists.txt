@@ -17,12 +17,14 @@ target_sources(
         detail.cpp
         events.cpp
         filter.cpp
+        flatten.cpp
         fold.cpp
         hold.cpp
         lift_operators.cpp
         lift.cpp
         merge.cpp
         monitor.cpp
+        observer.cpp
         process.cpp
         pulse.cpp
         signal.cpp

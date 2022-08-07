@@ -30,3 +30,28 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( stats.move_count == 10 );
     CHECK( x.get().v == 1112 );
 }
+
+TEST_CASE( "LiftOperatorPriority" )
+{
+    // https://en.cppreference.com/w/cpp/language/operator_precedence
+    // 3.  +a -a          Unary plus and minus
+    //     ! ~            Logical NOT and bitwise NOT
+    // 5.  a*b  a/b  a%b  Multiplication, division, and remainder
+    // 6.  a+b  a-b       Addition and subtraction
+    // 8.  <=>            Three-way comparison operator (since C++20)
+    // 9.  <  <=          For relational operators < and ≤ respectively
+    //     >  >=          For relational operators > and ≥ respectively
+    // 10. ==  !=         For equality operators = and ≠ respectively
+    // 14. &&             Logical AND
+    // 15. ||             Logical OR
+
+    ureact::context ctx;
+
+    auto _2 = make_var( ctx, 2 );
+
+    auto result = _2 + _2 * _2;
+    CHECK( result.get() == 6 );
+
+    auto result2 = ( _2 + _2 ) * _2;
+    CHECK( result2.get() == 8 );
+}

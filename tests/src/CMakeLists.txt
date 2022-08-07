@@ -9,6 +9,23 @@ add_executable(
     ureact_test #
     main.cpp
     legacy.cpp
+    changed.cpp
+    collect.cpp
+    count.cpp
+    filter.cpp
+    fold.cpp
+    hold.cpp
+    merge.cpp
+    monitor.cpp
+    process.cpp
+    pulse.cpp
+    snapshot.cpp
+    take_or_drop.cpp
+    take_or_drop_while.cpp
+    transaction.cpp
+    transform.cpp
+    unique.cpp
+    zip.cpp
 )
 
 target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)

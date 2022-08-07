@@ -5,27 +5,34 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 #
-add_executable(
-    ureact_test #
-    main.cpp
-    legacy.cpp
-    changed.cpp
-    collect.cpp
-    count.cpp
-    filter.cpp
-    fold.cpp
-    hold.cpp
-    merge.cpp
-    monitor.cpp
-    process.cpp
-    pulse.cpp
-    snapshot.cpp
-    take_or_drop.cpp
-    take_or_drop_while.cpp
-    transaction.cpp
-    transform.cpp
-    unique.cpp
-    zip.cpp
+add_executable(ureact_test main.cpp legacy.cpp)
+
+target_sources(
+    ureact_test
+    PRIVATE
+        changed.cpp
+        collect.cpp
+        context.cpp
+        count.cpp
+        detail.cpp
+        events.cpp
+        filter.cpp
+        fold.cpp
+        hold.cpp
+        lift_operators.cpp
+        lift.cpp
+        merge.cpp
+        monitor.cpp
+        process.cpp
+        pulse.cpp
+        signal.cpp
+        snapshot.cpp
+        take_or_drop.cpp
+        take_or_drop_while.cpp
+        transaction.cpp
+        transform.cpp
+        unique.cpp
+        zip.cpp
 )
 
 target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)

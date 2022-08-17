@@ -1067,10 +1067,10 @@ public:
         : m_func( std::move( func ) )
     {}
 
-    template <typename... Args, class = std::enable_if_t<std::is_invocable_v<F, Args...>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( Args&&... args ) const
+    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg>>>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& args ) const
     {
-        return m_func( std::forward<Args>( args )... );
+        return m_func( std::forward<Arg>( args ) );
     }
 
 private:

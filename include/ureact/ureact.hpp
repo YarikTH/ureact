@@ -1281,19 +1281,14 @@ public:
         return m_node->get_context();
     }
 
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<Node>& get_node() const
+    {
+        return m_node;
+    }
+
 protected:
     std::shared_ptr<Node> m_node;
-
-    template <typename NodeT>
-    friend const std::shared_ptr<NodeT>& get_node_ptr( const reactive_base<NodeT>& node );
 };
-
-template <typename Node>
-UREACT_WARN_UNUSED_RESULT const std::shared_ptr<Node>& get_node_ptr(
-    const reactive_base<Node>& node )
-{
-    return node.m_node;
-}
 
 } // namespace detail
 
@@ -1930,7 +1925,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF
     context& context = std::get<0>( arg_pack.data ).get_context();
 
     auto node_builder = [&context, &func]( const signal<Values>&... args ) {
-        return temp_signal<S, Op>{ context, std::forward<InF>( func ), get_node_ptr( args )... };
+        return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
     };
 
     return std::apply( node_builder, arg_pack.data );
@@ -2026,7 +2021,7 @@ auto unary_operator_impl( const Signal& arg )
     using F = FunctorOp<val_t>;
     using S = std::invoke_result_t<F, val_t>;
     using Op = function_op<S, F, signal_node_ptr_t<val_t>>;
-    return temp_signal<S, Op>{ arg.get_context(), F(), get_node_ptr( arg ) };
+    return temp_signal<S, Op>{ arg.get_context(), F(), arg.get_node() };
 }
 
 template <template <typename> class FunctorOp, typename Val, typename OpIn>
@@ -2054,7 +2049,7 @@ auto binary_operator_impl( const LeftSignal& lhs, const RightSignal& rhs )
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, F(), get_node_ptr( lhs ), get_node_ptr( rhs ) };
+    return temp_signal<S, Op>{ context, F(), lhs.get_node(), rhs.get_node() };
 }
 
 template <template <typename, typename> class FunctorOp,
@@ -2072,7 +2067,7 @@ auto binary_operator_impl( const LeftSignal& lhs, RightValIn&& rhs )
 
     context& context = lhs.get_context();
 
-    return temp_signal<S, Op>{ context, F( std::forward<RightValIn>( rhs ) ), get_node_ptr( lhs ) };
+    return temp_signal<S, Op>{ context, F( std::forward<RightValIn>( rhs ) ), lhs.get_node() };
 }
 
 template <template <typename, typename> class FunctorOp,
@@ -2090,7 +2085,7 @@ auto binary_operator_impl( LeftValIn&& lhs, const RightSignal& rhs )
 
     context& context = rhs.get_context();
 
-    return temp_signal<S, Op>{ context, F( std::forward<LeftValIn>( lhs ) ), get_node_ptr( rhs ) };
+    return temp_signal<S, Op>{ context, F( std::forward<LeftValIn>( lhs ) ), rhs.get_node() };
 }
 
 template <template <typename, typename> class FunctorOp,
@@ -2125,7 +2120,7 @@ auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, const RightSignal
 
     context& context = rhs.get_context();
 
-    return temp_signal<S, Op>{ context, F(), lhs.steal_op(), get_node_ptr( rhs ) };
+    return temp_signal<S, Op>{ context, F(), lhs.steal_op(), rhs.get_node() };
 }
 
 template <template <typename, typename> class FunctorOp,
@@ -2142,7 +2137,7 @@ auto binary_operator_impl( const LeftSignal& lhs, temp_signal<RightVal, RightOp>
 
     context& context = lhs.get_context();
 
-    return temp_signal<S, Op>{ context, F(), get_node_ptr( lhs ), rhs.steal_op() };
+    return temp_signal<S, Op>{ context, F(), lhs.get_node(), rhs.steal_op() };
 }
 
 template <template <typename, typename> class FunctorOp,
@@ -3166,7 +3161,7 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 
     auto node_builder = [&context, &source, &op]( const signal<DepValues>&... deps ) {
         return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, DepValues...>>(
-            context, get_node_ptr( source ), std::forward<Op>( op ), get_node_ptr( deps )... ) );
+            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
     };
 
     return std::apply( node_builder, dep_pack.data );
@@ -3217,7 +3212,7 @@ UREACT_WARN_UNUSED_RESULT auto merge(
 
     context& context = source1.get_context();
     return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
-        context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
+        context, source1.get_node(), sources.get_node()... ) );
 }
 
 /*!
@@ -3678,7 +3673,7 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<Source>& source1,
     context& context = source1.get_context();
     return events<std::tuple<Source, Sources...>>(
         std::make_shared<detail::event_zip_node<Source, Sources...>>(
-            context, get_node_ptr( source1 ), get_node_ptr( sources )... ) );
+            context, source1.get_node(), sources.get_node()... ) );
 }
 
 /*!
@@ -4037,7 +4032,7 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
         signal_observer_node<S, add_observer_action_next_ret<F>>,
         signal_observer_node<S, F>>;
 
-    const auto& subject_ptr = get_node_ptr( subject );
+    const auto& subject_ptr = subject.get_node();
 
     std::unique_ptr<observer_node> node(
         new Node( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
@@ -4081,10 +4076,10 @@ auto observe_events_impl(
 
     auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
         return new Node(
-            context, get_node_ptr( subject ), std::forward<FIn>( func ), get_node_ptr( deps )... );
+            context, subject.get_node(), std::forward<FIn>( func ), deps.get_node()... );
     };
 
-    const auto& subject_node = get_node_ptr( subject );
+    const auto& subject_node = subject.get_node();
 
     std::unique_ptr<observer_node> node( std::apply( node_builder, dep_pack.data ) );
 
@@ -4223,7 +4218,7 @@ public:
 
     void tick( turn_type& ) override
     {
-        const auto& new_inner = get_node_ptr( m_outer->value_ref() );
+        const auto& new_inner = m_outer->value_ref().get_node();
 
         if( new_inner != m_inner )
         {
@@ -4275,7 +4270,7 @@ public:
         this->set_current_turn_force_update( turn );
         m_inner->set_current_turn( turn );
 
-        auto new_inner = get_node_ptr( m_outer->value_ref() );
+        auto new_inner = m_outer->value_ref().get_node();
 
         if( new_inner != m_inner )
         {
@@ -4330,7 +4325,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<InnerS>>& outer ) ->
 {
     context& context = outer.get_context();
     return signal<InnerS>{ std::make_shared<detail::signal_flatten_node<signal<InnerS>, InnerS>>(
-        context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) };
+        context, outer.get_node(), outer.get().get_node() ) };
 }
 
 /*!
@@ -4341,7 +4336,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) ->
 {
     context& context = outer.get_context();
     return events<InnerE>{ std::make_shared<detail::event_flatten_node<events<InnerE>, InnerE>>(
-        context, get_node_ptr( outer ), get_node_ptr( outer.get() ) ) };
+        context, outer.get_node(), outer.get().get_node() ) };
 }
 
 /*!
@@ -4549,9 +4544,9 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
     auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
         return signal<S>( std::make_shared<Node>( context,
             std::forward<V>( init ),
-            get_node_ptr( events ),
+            events.get_node(),
             std::forward<FIn>( func ),
-            get_node_ptr( deps )... ) );
+            deps.get_node()... ) );
     };
 
     return std::apply( node_builder, dep_pack.data );
@@ -4841,8 +4836,7 @@ template <typename S>
 UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
 {
     context& context = target.get_context();
-    return events<S>(
-        std::make_shared<detail::monitor_node<S>>( context, get_node_ptr( target ) ) );
+    return events<S>( std::make_shared<detail::monitor_node<S>>( context, target.get_node() ) );
 }
 
 /*!

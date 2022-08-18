@@ -2,26 +2,25 @@
 
 This reference intended to plan a clean and clear interface of a dream.
 Descriptions of concrete classes are not the subject of this reference.
+Note: this document is not yet contains information about newly added classes and methods
+
+* TODO: rename to Synopsis
+* TODO: add information about all new functions and classes
 
 ## `var_signal` related
 
-* TODO: modify method for `var_signal<S&>`?
-* TODO: operator version of `var_signal::modify()`?
-
 ### Creation
+
+Constructor version
+
+```cpp
+var_signal<S>::var_signal( context& context, const S& value );
+```
 
 Free function version
 
 ```cpp
-template<typename V>
 auto make_var( context& context, V&& value ) -> var_signal<auto>;
-```
-
-Member function version
-
-```cpp
-template<typename V>
-auto context::make_var( V&& value ) -> var_signal<auto>;
 ```
 
 Both versions are functionally equivalent.
@@ -32,14 +31,12 @@ Get value method (inherited from the signal)
 
 ```cpp
 const S& var_signal<S>::get() const;
-const S& var_signal<S&>::get() const;
 ```
 
 Get value operator (inherited from the signal)
 
 ```cpp
 const S& var_signal<S>::operator()() const;
-const S& var_signal<S&>::operator()() const;
 ```
 
 ### Modification
@@ -49,7 +46,6 @@ Set value method
 ```cpp
 void var_signal<S>::set( const S& new_value ) const;
 void var_signal<S>::set( S&& new_value ) const;
-void var_signal<S&>::set( std::reference_wrapper<S> new_value ) const;
 ```
 
 Set value operator
@@ -57,7 +53,6 @@ Set value operator
 ```cpp
 void var_signal<S>::operator<<=( const S& new_value ) const;
 void var_signal<S>::operator<<=( S&& new_value ) const;
-void var_signal<S&>::operator<<=( std::reference_wrapper<S> new_value ) const;
 ```
 
 Both versions (method and operator) are functionally equivalent.
@@ -65,9 +60,16 @@ Both versions (method and operator) are functionally equivalent.
 Modify method
 
 ```cpp
-template<typename F>
 void var_signal<S>::modify( const F& func ) const;
 ```
+
+Modify operator
+
+```cpp
+void var_signal<S>::operator<<=( const F& func ) const;
+```
+
+Both versions (method and operator) are functionally equivalent.
 
 ### Other
 
@@ -85,7 +87,6 @@ Free function to construct observers
 
 ```cpp
 // in_f is either void(const S&) or observer_action(const S&)
-template <typename in_f, typename S>
 auto observe( const signal<S>& subject, in_f&& func ) -> observer;
 ```
 
@@ -120,60 +121,42 @@ Free function to construct signal_pack
 auto with( const signal<values_t>&... deps ) -> signal_pack<auto>;
 ```
 
-Operator overload to construct signal_pack
-
-```cpp
-auto operator,( const signal<left_val_t>& a, const signal<right_val_t>& b ) -> signal_pack<auto>;
-auto operator,( const signal_pack<cur_values_t...>& cur, const signal<append_value_t>& append ) -> signal_pack<auto>;
-```
-
-Both versions are functionally equivalent
-
 ## `signal` related
 
 ### Creation
 
-Note: all creation functions return `detail::temp_signal<S, op_t>` which inherited from
-`signal<S>` so `signal<S>` are constructable from `detail::temp_signal<S, op_t>`.
-
-Free function to construct signals
+Free functions to construct signals
 
 ```cpp
-auto make_signal( const signal<value_t>& arg, in_f&& func ) -> detail::temp_signal<S, op_t>
-auto make_signal( const signal_pack<values_t...>& arg_pack, in_f&& func ) -> detail::temp_signal<S, op_t>
-```
-
-Operator overload to construct signals
-
-```cpp
-auto operator|( const signal_t<value_t>& arg, F&& func ) -> detail::temp_signal<S, op_t>;
-auto operator|( const signal_pack<values_t...>& arg_pack, F&& func ) -> detail::temp_signal<S, op_t>;
+auto make_const( context& context, V&& value ) -> signal<auto>;
+auto lift( const signal<value_t>& arg, in_f&& func ) -> temp_signal<S, op_t>
+auto lift( const signal_pack<values_t...>& arg_pack, in_f&& func ) -> temp_signal<S, op_t>
 ```
 
 Unary operator overloads to create signals from expressions
 
 ```cpp
-auto operator+( arg_t&& arg ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator-( arg_t&& arg ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator!( arg_t&& arg ) -> decltype( detail::temp_signal<S, op_t> );
+auto operator+( arg_t&& arg ) -> decltype( temp_signal<S, op_t> );
+auto operator-( arg_t&& arg ) -> decltype( temp_signal<S, op_t> );
+auto operator!( arg_t&& arg ) -> decltype( temp_signal<S, op_t> );
 ```
 
 Binary operator overloads to create signals from expressions
 
 ```cpp
-auto operator+ ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator- ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator* ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator/ ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator% ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator==( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator!=( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator< ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator<=( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator> ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator>=( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator&&( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
-auto operator||( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( detail::temp_signal<S, op_t> );
+auto operator+ ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator- ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator* ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator/ ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator% ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator==( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator!=( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator< ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator<=( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator> ( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator>=( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator&&( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
+auto operator||( lhs_t&& lhs, rhs_t&& rhs ) -> decltype( temp_signal<S, op_t> );
 ```
 
 ### Reading
@@ -182,14 +165,12 @@ Get value method
 
 ```cpp
 const S& signal<S>::get() const;
-const S& signal<S&>::get() const;
 ```
 
 Get value operator
 
 ```cpp
 const S& signal<S>::operator()() const;
-const S& signal<S&>::operator()() const;
 ```
 
 ### Other
@@ -205,8 +186,7 @@ bool signal<S>::is_valid() const;
 Perform several changes atomically
 
 ```cpp
-template<typename F>
-void context::do_transaction( F&& func );
+auto do_transaction( context& ctx, F&& func, Args&&... args );
 ```
 
 Return if the type is signal or its inheritor

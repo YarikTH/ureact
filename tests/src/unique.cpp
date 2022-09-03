@@ -7,7 +7,7 @@
 //
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
-#include "ureact/ureact.hpp"
+#include "ureact/unify.hpp"
 
 // demonstrate and test special filter function unique
 TEST_CASE( "Unique" )

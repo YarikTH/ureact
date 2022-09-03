@@ -33,6 +33,7 @@ target_sources(
         take_or_drop_while.cpp
         transaction.cpp
         transform.cpp
+        unify.cpp
         unique.cpp
         zip.cpp
 )

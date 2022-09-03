@@ -3676,25 +3676,6 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<Source>& source1,
             context, source1.get_node(), sources.get_node()... ) );
 }
 
-/*!
- * @brief Utility function to transform any event stream into a unit stream
- *
- *  Emits a unit for any event that passes source
- */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
-{
-    return cast<unit>( source );
-}
-
-/*!
- * @brief Curried version of unify(events_t&& source) algorithm used for "pipe" syntax
- */
-UREACT_WARN_UNUSED_RESULT inline auto unify()
-{
-    return cast<unit>();
-}
-
 //==================================================================================================
 // [[section]] Observers
 //==================================================================================================

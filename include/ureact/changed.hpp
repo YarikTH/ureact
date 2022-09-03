@@ -11,6 +11,7 @@
 #define UREACT_CHANGED_H_
 
 #include "monitor.hpp"
+#include "unify.hpp"
 
 UREACT_BEGIN_NAMESPACE
 

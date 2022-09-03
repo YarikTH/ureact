@@ -4704,35 +4704,6 @@ UREACT_WARN_UNUSED_RESULT auto collect()
     } };
 }
 
-/*!
- * @brief Holds the most recent event in a signal
- *
- *  Creates a @ref signal with an initial value v = init.
- *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
- */
-template <typename V, typename E>
-UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> signal<E>
-{
-    return fold( source,
-        std::forward<V>( init ),                  //
-        []( event_range<E> range, const auto& ) { //
-            return *range.rbegin();
-        } );
-}
-
-/*!
- * @brief Curried version of hold() algorithm used for "pipe" syntax
- */
-template <typename V>
-UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
-{
-    return closure{ [init = std::forward<V>( init )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return hold( std::forward<arg_t>( source ), std::move( init ) );
-    } };
-}
-
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UREACT_H_

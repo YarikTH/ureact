@@ -12,7 +12,7 @@
 #include "doctest_extra.h"
 #include "ureact/count.hpp"
 #include "ureact/monitor.hpp"
-#include "ureact/ureact.hpp"
+#include "ureact/take_drop.hpp"
 
 // calculate sum and product of range of integers using value based function
 TEST_CASE( "FoldByValue" )

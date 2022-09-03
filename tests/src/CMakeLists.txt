@@ -30,8 +30,8 @@ target_sources(
         pulse.cpp
         signal.cpp
         snapshot.cpp
-        take_or_drop.cpp
-        take_or_drop_while.cpp
+        take_drop.cpp
+        take_drop_while.cpp
         transaction.cpp
         transform.cpp
         unify.cpp

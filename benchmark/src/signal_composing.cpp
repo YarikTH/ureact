@@ -7,6 +7,7 @@
 //
 #include <nanobench.h>
 
+#include "ureact/lift.hpp"
 #include "ureact/ureact.hpp"
 
 namespace

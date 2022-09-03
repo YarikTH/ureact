@@ -7,7 +7,7 @@
 //
 #include "copy_stats.hpp"
 #include "doctest_extra.h"
-#include "ureact/ureact.hpp"
+#include "ureact/lift.hpp"
 
 // TODO: refactor operators tests not to use macros
 

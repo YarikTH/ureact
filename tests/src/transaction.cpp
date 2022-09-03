@@ -7,6 +7,7 @@
 //
 #include "doctest_extra.h"
 #include "ureact/count.hpp"
+#include "ureact/lift.hpp"
 #include "ureact/monitor.hpp"
 #include "ureact/ureact.hpp"
 

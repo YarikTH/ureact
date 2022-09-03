@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/lift.hpp"
 
 // filters that take first elements or skip first elements according to given predicate
 TEST_CASE( "TakeOrDropWhile" )

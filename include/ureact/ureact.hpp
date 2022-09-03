@@ -3238,37 +3238,6 @@ UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
 }
 
 /*!
- * @brief Create a new event stream that casts events from other stream using static_cast
- *
- *  For every event e in source, emit t = static_cast<OutE>(e).
- *
- *  Type of resulting signal have to be explicitly specified.
- */
-template <typename OutE, typename InE>
-UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
-{
-    return detail::process_impl<OutE>( source,
-        signal_pack<>(), //
-        []( event_range<InE> range, event_emitter<OutE> out ) mutable {
-            for( const auto& e : range )
-                out.emit( static_cast<OutE>( e ) );
-        } );
-}
-
-/*!
- * @brief Curried version of cast(const events<InE>& source) algorithm used for "pipe" syntax
- */
-template <typename OutE>
-UREACT_WARN_UNUSED_RESULT auto cast()
-{
-    return closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return cast<OutE>( std::forward<arg_t>( source ) );
-    } };
-}
-
-/*!
  * @brief Skips first N elements from the source stream
  *
  *  Semantically equivalent of std::ranges::views::drop

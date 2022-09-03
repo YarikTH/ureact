@@ -10,6 +10,7 @@ add_executable(ureact_test main.cpp)
 target_sources(
     ureact_test
     PRIVATE
+        cast.cpp
         changed.cpp
         collect.cpp
         context.cpp

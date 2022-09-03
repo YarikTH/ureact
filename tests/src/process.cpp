@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/transaction.hpp"
 
 // on every std::pair<N, value> pass value N times
 TEST_CASE( "Process" )

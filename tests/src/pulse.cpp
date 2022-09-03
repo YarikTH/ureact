@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/transaction.hpp"
 #include "ureact/transform.hpp"
 
 // Emits value of target signal when event is received

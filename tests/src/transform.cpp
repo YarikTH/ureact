@@ -11,6 +11,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/transaction.hpp"
 
 // squaring integer events
 TEST_CASE( "Transform" )

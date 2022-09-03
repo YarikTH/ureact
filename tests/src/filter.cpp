@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/transaction.hpp"
 
 // filter only even integer events
 // our check function depends only on event value

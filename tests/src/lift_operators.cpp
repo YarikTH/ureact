@@ -8,6 +8,7 @@
 #include "copy_stats.hpp"
 #include "doctest_extra.h"
 #include "ureact/lift.hpp"
+#include "ureact/transaction.hpp"
 
 // TODO: refactor operators tests not to use macros
 

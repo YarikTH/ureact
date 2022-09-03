@@ -10,7 +10,7 @@
 #ifndef UREACT_COUNT_HPP
 #define UREACT_COUNT_HPP
 
-#include "ureact.hpp"
+#include "fold.hpp"
 
 UREACT_BEGIN_NAMESPACE
 

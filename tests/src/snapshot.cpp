@@ -10,7 +10,7 @@
 #include "doctest_extra.h"
 #include "ureact/count.hpp"
 #include "ureact/monitor.hpp"
-#include "ureact/ureact.hpp"
+#include "ureact/transform.hpp"
 
 // sets signal value to value of other signal when event is received
 TEST_CASE( "Snapshot" )

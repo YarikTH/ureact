@@ -41,11 +41,9 @@
 #    include <algorithm>
 #endif
 
-//==================================================================================================
-// [[section]] Preprocessor feature detections
+// Preprocessor feature detections
 // Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
 // and on https://github.com/nemequ/hedley
-//==================================================================================================
 
 static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 
@@ -1217,14 +1215,6 @@ protected:
     std::shared_ptr<Node> m_node;
 };
 
-} // namespace detail
-
-//==================================================================================================
-// [[section]] Signals
-//==================================================================================================
-namespace detail
-{
-
 template <typename S>
 class signal_node : public observable_node
 {
@@ -1779,10 +1769,6 @@ UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )
 {
     return signal_pack<Values...>( deps... );
 }
-
-//==================================================================================================
-// [[section]] Events
-//==================================================================================================
 
 /*!
  * @brief This class is used as value type of unit streams, which emit events without any value other than the fact that they occurred
@@ -2473,10 +2459,6 @@ UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
 {
     return event_source<E>{ context };
 }
-
-//==================================================================================================
-// [[section]] Observers
-//==================================================================================================
 
 /*!
  * @brief Observer functions can return values of this type to control further processing.

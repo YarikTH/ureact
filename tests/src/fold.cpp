@@ -8,6 +8,7 @@
 #include <numeric>
 
 #include "doctest_extra.h"
+#include "ureact/monitor.hpp"
 #include "ureact/ureact.hpp"
 
 // calculate sum and product of range of integers using value based function

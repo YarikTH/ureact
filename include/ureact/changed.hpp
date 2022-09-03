@@ -10,7 +10,7 @@
 #ifndef UREACT_CHANGED_H_
 #define UREACT_CHANGED_H_
 
-#include "ureact.hpp"
+#include "monitor.hpp"
 
 UREACT_BEGIN_NAMESPACE
 

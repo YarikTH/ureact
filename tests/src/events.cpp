@@ -10,6 +10,7 @@
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
 #include "ureact/count.hpp"
+#include "ureact/merge.hpp"
 #include "ureact/ureact.hpp"
 
 // TODO: check type traits for events

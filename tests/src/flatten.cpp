@@ -5,12 +5,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "ureact/flatten.hpp"
+
 #include <algorithm>
 #include <queue>
 #include <variant>
 
 #include "doctest_extra.h"
-#include "ureact/ureact.hpp"
 
 // TODO: replace FlattenN tests with more meaningful ones
 

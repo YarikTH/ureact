@@ -7,7 +7,7 @@
 //
 #include "doctest_extra.h"
 #include "ureact/lift.hpp"
-#include "ureact/ureact.hpp"
+#include "ureact/observe.hpp"
 
 // default constructive
 static_assert( std::is_default_constructible_v<ureact::observer> );

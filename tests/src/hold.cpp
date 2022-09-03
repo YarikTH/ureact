@@ -8,6 +8,7 @@
 #include "ureact/hold.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/observe.hpp"
 #include "ureact/ureact.hpp"
 
 // hold the last event value as a signal

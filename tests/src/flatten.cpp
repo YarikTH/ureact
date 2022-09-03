@@ -12,6 +12,7 @@
 #include <variant>
 
 #include "doctest_extra.h"
+#include "ureact/observe.hpp"
 
 // TODO: replace FlattenN tests with more meaningful ones
 

@@ -4764,37 +4764,6 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
     } };
 }
 
-/*!
- * @brief Emits the value of a target signal when an event is received
- *
- *  Creates an event stream that emits target.get() when receiving an event from trigger.
- *  The values of the received events are irrelevant.
- */
-template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>& target )
-    -> events<S>
-{
-    return process<S>( trigger,
-        with( target ),
-        []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
-            for( size_t i = 0, ie = range.size(); i < ie; ++i )
-                out.emit( target_value );
-        } );
-}
-
-/*!
- * @brief Curried version of pulse() algorithm used for "pipe" syntax
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
-{
-    return closure{ [target = target]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return pulse( std::forward<arg_t>( source ), target );
-    } };
-}
-
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UREACT_H_

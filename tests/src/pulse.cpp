@@ -5,8 +5,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "ureact/pulse.hpp"
+
 #include "doctest_extra.h"
-#include "ureact/ureact.hpp"
 
 // Emits value of target signal when event is received
 TEST_CASE( "Pulse" )

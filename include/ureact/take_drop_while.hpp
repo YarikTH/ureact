@@ -10,7 +10,7 @@
 #ifndef UREACT_TAKE_DROP_WHILE_HPP
 #define UREACT_TAKE_DROP_WHILE_HPP
 
-#include "ureact.hpp"
+#include "filter.hpp"
 
 UREACT_BEGIN_NAMESPACE
 

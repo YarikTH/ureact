@@ -6,6 +6,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "doctest_extra.h"
+#include "ureact/count.hpp"
 #include "ureact/monitor.hpp"
 #include "ureact/ureact.hpp"
 

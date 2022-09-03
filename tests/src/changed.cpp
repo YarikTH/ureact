@@ -8,6 +8,7 @@
 #include "ureact/changed.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/count.hpp"
 
 // Emits value changes of signal as events
 TEST_CASE( "Changed" )

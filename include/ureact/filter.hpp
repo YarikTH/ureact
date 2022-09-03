@@ -10,7 +10,7 @@
 #ifndef UREACT_FILTER_HPP
 #define UREACT_FILTER_HPP
 
-#include "ureact.hpp"
+#include "process.hpp"
 
 UREACT_BEGIN_NAMESPACE
 

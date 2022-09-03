@@ -1,0 +1,160 @@
+//
+//         Copyright (C) 2014-2017 Sebastian Jeckel.
+//         Copyright (C) 2020-2022 Krylov Yaroslav.
+//
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#ifndef UREACT_PROCESS_HPP
+#define UREACT_PROCESS_HPP
+
+#include "ureact.hpp"
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename InE, typename OutE, typename Func, typename... DepValues>
+class event_processing_node final : public event_stream_node<OutE>
+{
+public:
+    template <typename F>
+    event_processing_node( context& context,
+        const std::shared_ptr<event_stream_node<InE>>& source,
+        F&& func,
+        const std::shared_ptr<signal_node<DepValues>>&... deps )
+        : event_processing_node::event_stream_node( context )
+        , m_source( source )
+        , m_func( std::forward<F>( func ) )
+        , m_deps( deps... )
+    {
+        this->get_graph().on_node_attach( *this, *source );
+        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+    }
+
+    ~event_processing_node() override
+    {
+        this->get_graph().on_node_detach( *this, *m_source );
+
+        std::apply(
+            detach_functor<event_processing_node, std::shared_ptr<signal_node<DepValues>>...>(
+                *this ),
+            m_deps );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        this->set_current_turn_force_update( turn );
+        // Update of this node could be triggered from deps,
+        // so make sure source doesn't contain events from last turn
+        m_source->set_current_turn( turn );
+
+        if( !m_source->events().empty() )
+        {
+            std::apply(
+                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    m_func( event_range<InE>( m_source->events() ),
+                        event_emitter( this->m_events ),
+                        args->value_ref()... );
+                },
+                m_deps );
+        }
+
+        if( !this->m_events.empty() )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+private:
+    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
+
+    std::shared_ptr<event_stream_node<InE>> m_source;
+
+    Func m_func;
+    dep_holder_t m_deps;
+};
+
+template <typename OutE, typename InE, typename Op, typename... DepValues>
+UREACT_WARN_UNUSED_RESULT auto process_impl(
+    const events<InE>& source, const signal_pack<DepValues...>& dep_pack, Op&& op ) -> events<OutE>
+{
+    using F = std::decay_t<Op>;
+
+    context& context = source.get_context();
+
+    auto node_builder = [&context, &source, &op]( const signal<DepValues>&... deps ) {
+        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, DepValues...>>(
+            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
+    };
+
+    return std::apply( node_builder, dep_pack.data );
+}
+
+} // namespace detail
+
+/*!
+ * @brief Create a new event stream by batch processing events from other stream
+ *
+ *  op is called with all events range from source in current turn.
+ *  New events are emitted through "out".
+ *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+ *
+ *  The signature of op should be equivalent to:
+ *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+ *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
+ */
+template <typename OutE, typename InE, typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto process(
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
+{
+    return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+}
+
+/*!
+ * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
+ */
+template <typename OutE, typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
+{
+    return closure{ [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
+    } };
+}
+
+/*!
+ * @brief Create a new event stream by batch processing events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
+ */
+template <typename OutE, typename InE, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> events<OutE>
+{
+    return detail::process_impl<OutE>( source, signal_pack<>(), std::forward<Op>( op ) );
+}
+
+/*!
+ * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
+ */
+template <typename OutE, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
+{
+    return closure{ [op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), op );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_PROCESS_HPP

@@ -10,7 +10,7 @@
 #ifndef UREACT_PULSE_HPP_
 #define UREACT_PULSE_HPP_
 
-#include "ureact.hpp"
+#include "process.hpp"
 
 UREACT_BEGIN_NAMESPACE
 

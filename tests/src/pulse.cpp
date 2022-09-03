@@ -8,6 +8,7 @@
 #include "ureact/pulse.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/collect.hpp"
 
 // Emits value of target signal when event is received
 TEST_CASE( "Pulse" )

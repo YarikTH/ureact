@@ -6,6 +6,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "doctest_extra.h"
+#include "ureact/collect.hpp"
 #include "ureact/ureact.hpp"
 
 // merge 3 event sources into 1

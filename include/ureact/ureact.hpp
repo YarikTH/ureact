@@ -4664,46 +4664,6 @@ UREACT_WARN_UNUSED_RESULT auto count()
     } };
 }
 
-/*!
- * @brief Collects received events into signal<ContT<E>>
- *
- *  Type of resulting container must be specified explicitly, i.e. collect<std::vector>(src).
- *  Container type ContT should has either push_back(const E&) method or has insert(const E&) method.
- *  Mostly intended for testing purpose.
- *
- *  Semantically equivalent of ranges::to
- *
- *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
- *           because any observer or signal/events node will prolong its lifetime.
- */
-template <template <typename...> class ContT, class E, class Cont = ContT<E>>
-UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> signal<Cont>
-{
-    return fold( source,
-        Cont{},                         //
-        []( const E& e, Cont& accum ) { //
-            if constexpr( detail::has_push_back_method_v<Cont, E> )
-                accum.push_back( e );
-            else if constexpr( detail::has_insert_method_v<Cont, E> )
-                accum.insert( e );
-            else
-                static_assert( detail::always_false<Cont, E>, "Unsupported container" );
-        } );
-}
-
-/*!
- * @brief Curried version of collect(const events<E>& source) algorithm used for "pipe" syntax
- */
-template <template <typename...> class ContT>
-UREACT_WARN_UNUSED_RESULT auto collect()
-{
-    return closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return collect<ContT>( std::forward<arg_t>( source ) );
-    } };
-}
-
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UREACT_H_

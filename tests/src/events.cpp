@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "doctest_extra.h"
+#include "ureact/collect.hpp"
 #include "ureact/ureact.hpp"
 
 // TODO: check type traits for events

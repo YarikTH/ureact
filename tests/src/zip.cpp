@@ -5,9 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "ureact/zip.hpp"
+
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
-#include "ureact/ureact.hpp"
 
 // zip 3 event sources into 1
 // based on example https://en.cppreference.com/w/cpp/ranges/zip_view

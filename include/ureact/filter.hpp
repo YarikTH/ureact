@@ -42,7 +42,7 @@ UREACT_WARN_UNUSED_RESULT auto filter(
             event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
             for( const auto& e : range )
                 if( pred( e, deps... ) )
-                    out.emit( e );
+                    out << e;
         } );
 }
 

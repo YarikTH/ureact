@@ -28,7 +28,7 @@ UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
         signal_pack<>(), //
         []( event_range<InE> range, event_emitter<OutE> out ) mutable {
             for( const auto& e : range )
-                out.emit( static_cast<OutE>( e ) );
+                out << static_cast<OutE>( e );
         } );
 }
 

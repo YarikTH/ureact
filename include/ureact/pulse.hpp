@@ -28,7 +28,7 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
         with( target ),
         []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
             for( size_t i = 0, ie = range.size(); i < ie; ++i )
-                out.emit( target_value );
+                out << target_value;
         } );
 }
 

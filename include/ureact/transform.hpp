@@ -39,7 +39,7 @@ UREACT_WARN_UNUSED_RESULT auto transform(
         [func = std::forward<F>( func )](
             event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
             for( const auto& e : range )
-                out.emit( func( e, deps... ) );
+                out << func( e, deps... );
         } );
 }
 

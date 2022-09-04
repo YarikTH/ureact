@@ -24,7 +24,7 @@ TEST_CASE( "Process" )
                               ureact::event_emitter<int> out ) {
         for( const auto& [n, value] : range )
             for( unsigned i = 0; i < n; ++i )
-                out.emit( value );
+                out << value;
         ++calls;
     };
 

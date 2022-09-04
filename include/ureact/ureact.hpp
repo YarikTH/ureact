@@ -2268,9 +2268,9 @@ private:
  * @brief Represents output stream of events.
  *
  *  It is std::back_insert_iterator analog, but not depending on heavy <iterator> header.
- *  Additionally to std::back_insert_iterator interface it provides emit() methods like event_stream has
+ *  Additionally to std::back_insert_iterator interface it provides operator<< overload
  */
-template <typename E>
+template <typename E = unit>
 class event_emitter final
 {
 public:
@@ -2292,8 +2292,6 @@ public:
 
     /*!
      * @brief Adds e to the queue of outgoing events
-     *
-     * Iterator assign version of emit(const E& e). Prefer not to use it manually
      */
     event_emitter& operator=( const E& e ) // TODO: check in tests
     {
@@ -2303,8 +2301,6 @@ public:
 
     /*!
      * @brief Adds e to the queue of outgoing events
-     *
-     * Iterator assign version of emit(E&& e). Prefer not to use it manually
      *
      * Specialization of operator=(const E& e) for rvalue
      */
@@ -2316,74 +2312,6 @@ public:
 
     /*!
      * @brief Adds e to the queue of outgoing events
-     *
-     * If emit() was called inside of a transaction function, it will return after
-     * the event has been queued and propagation is delayed until the transaction
-     * function returns.
-     * Otherwise, propagation starts immediately and emit() blocks until it’s done.
-     */
-    void emit( const E& e )
-    {
-        m_container->push_back( e );
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Specialization of emit(const E& e) for rvalue
-     */
-    void emit( E&& e )
-    {
-        m_container->push_back( std::move( e ) );
-    }
-
-    /*!
-     * @brief Adds unit to the queue of outgoing events
-     *
-     * Specialization of emit(const E& e) that allows to omit e value, when the emitted value is always @ref unit
-     */
-    void emit() // TODO: check in tests
-    {
-        static_assert( std::is_same_v<E, unit>, "Can't emit on non unit stream" );
-        m_container->push_back( unit{} );
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Function object version of emit(const E& e)
-     */
-    void operator()( const E& e ) // TODO: check in tests
-    {
-        m_container->push_back( e );
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Function object version of emit(E&& e)
-     */
-    void operator()( E&& e ) // TODO: check in tests
-    {
-        m_container->push_back( std::move( e ) );
-    }
-
-    /*!
-     * @brief Adds unit to the queue of outgoing events
-     *
-     * Function object version of emit()
-     *
-     */
-    void operator()() // TODO: check in tests
-    {
-        static_assert( std::is_same_v<E, unit>, "Can't emit on non unit stream" );
-        m_container->push_back( unit{} );
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Stream version of emit(const E& e)
      */
     event_emitter& operator<<( const E& e ) // TODO: check in tests
     {
@@ -2393,8 +2321,6 @@ public:
 
     /*!
      * @brief Adds e to the queue of outgoing events
-     *
-     * Stream version of emit(E&& e)
      *
      * Specialization of operator<<(const E& e) for rvalue
      */

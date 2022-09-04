@@ -166,22 +166,6 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
     UREACT_MAKE_MOVABLE( ClassName )
 
-// NOLINTNEXTLINE
-#define UREACT_MAKE_NOOP_ITERATOR( ClassName )                                                     \
-    ClassName& operator*()                                                                         \
-    {                                                                                              \
-        return *this;                                                                              \
-    }                                                                                              \
-    ClassName& operator++()                                                                        \
-    {                                                                                              \
-        return *this;                                                                              \
-    }                                                                                              \
-    ClassName operator++( int )                                                                    \
-    {                                                                                              \
-        return *this;                                                                              \
-    }                                                                                              \
-    static_assert( true ) /*enforce semicolon*/
-
 UREACT_BEGIN_NAMESPACE
 
 class context;
@@ -2136,8 +2120,6 @@ template <typename E>
 class event_source<E>::iterator final
 {
 public:
-    UREACT_MAKE_NOOP_ITERATOR( iterator ); // NOLINT
-
     using iterator_category = std::output_iterator_tag;
     using difference_type = std::ptrdiff_t;
     using value_type = E;
@@ -2150,6 +2132,12 @@ public:
     explicit iterator( const event_source& parent )
         : m_parent( &parent )
     {}
+
+    // clang-format off
+    iterator& operator*()       { return *this; }
+    iterator& operator++()      { return *this; }
+    iterator  operator++( int ) { return *this; } // NOLINT
+    // clang-format on
 
     /*!
      * @brief Adds e to the queue of outgoing events
@@ -2265,14 +2253,18 @@ public:
     using pointer = value_type*;
     using reference = value_type&;
 
-    UREACT_MAKE_NOOP_ITERATOR( event_emitter );
-
     /*!
      * @brief Constructor
      */
     explicit event_emitter( container_type& container )
         : m_container( &container )
     {}
+
+    // clang-format off
+    event_emitter& operator*()       { return *this; }
+    event_emitter& operator++()      { return *this; }
+    event_emitter  operator++( int ) { return *this; } // NOLINT
+    // clang-format on
 
     /*!
      * @brief Adds e to the queue of outgoing events

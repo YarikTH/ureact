@@ -450,12 +450,6 @@ struct dont_move
 template <typename L, typename R>
 using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
-template <typename L, typename R>
-using is_same_decay = std::is_same<std::decay_t<L>, std::decay_t<R>>;
-
-template <typename L, typename R>
-inline constexpr bool is_same_decay_v = is_same_decay<L, R>::value;
-
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wfloat-equal"

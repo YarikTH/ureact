@@ -166,16 +166,6 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
     UREACT_MAKE_MOVABLE( ClassName )
 
-// Define function body using "Please repeat yourself twice" idiom
-#define UREACT_FUNCTION_BODY( EXPR )                                                               \
-    noexcept( noexcept( EXPR ) )->decltype( EXPR )                                                 \
-    {                                                                                              \
-        return ( EXPR );                                                                           \
-    }
-
-// Forward arg
-#define UREACT_FWD( X ) std::forward<decltype( X )>( X )
-
 // NOLINTNEXTLINE
 #define UREACT_MAKE_NOOP_ITERATOR( ClassName )                                                     \
     ClassName& operator*()                                                                         \

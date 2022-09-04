@@ -342,6 +342,16 @@ auto binary_operator_impl( LeftValIn&& lhs, temp_signal<RightVal, RightOp>&& rhs
 
 } // namespace detail
 
+// Define function body using "Please repeat yourself twice" idiom
+#define UREACT_FUNCTION_BODY( EXPR )                                                               \
+    noexcept( noexcept( EXPR ) )->decltype( EXPR )                                                 \
+    {                                                                                              \
+        return ( EXPR );                                                                           \
+    }
+
+// Forward arg
+#define UREACT_FWD( X ) std::forward<decltype( X )>( X )
+
 #define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
     namespace detail                                                                               \
     {                                                                                              \

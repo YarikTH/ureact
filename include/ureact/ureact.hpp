@@ -2239,7 +2239,7 @@ public:
     /*!
      * @brief Returns a reverse random access const iterator to the end
      */
-    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
     {
         return m_data.rend();
     }
@@ -2255,7 +2255,7 @@ public:
     /*!
      * @brief Checks whether the container is empty
      */
-    UREACT_WARN_UNUSED_RESULT bool empty() const // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT bool empty() const
     {
         return m_data.empty();
     }
@@ -2293,7 +2293,7 @@ public:
     /*!
      * @brief Adds e to the queue of outgoing events
      */
-    event_emitter& operator=( const E& e ) // TODO: check in tests
+    event_emitter& operator=( const E& e )
     {
         m_container->push_back( e );
         return *this;
@@ -2304,7 +2304,7 @@ public:
      *
      * Specialization of operator=(const E& e) for rvalue
      */
-    event_emitter& operator=( E&& e ) // TODO: check in tests
+    event_emitter& operator=( E&& e )
     {
         m_container->push_back( std::move( e ) );
         return *this;
@@ -2313,7 +2313,7 @@ public:
     /*!
      * @brief Adds e to the queue of outgoing events
      */
-    event_emitter& operator<<( const E& e ) // TODO: check in tests
+    event_emitter& operator<<( const E& e )
     {
         m_container->push_back( e );
         return *this;

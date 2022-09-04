@@ -13,14 +13,6 @@
 #include "ureact/filter.hpp"
 #include "ureact/merge.hpp"
 
-// TODO: check type traits for events
-// * event_emitter
-// * event_range
-// * events<E>
-// * event_source<E>
-// * event_source<E>::iterator
-
-
 // copyable and nothrow movable
 static_assert( std::is_default_constructible_v<ureact::events<>> );
 static_assert( std::is_copy_constructible_v<ureact::events<>> );
@@ -29,7 +21,6 @@ static_assert( std::is_move_constructible_v<ureact::events<>> );
 static_assert( std::is_move_assignable_v<ureact::events<>> );
 static_assert( std::is_nothrow_move_constructible_v<ureact::events<>> );
 static_assert( std::is_nothrow_move_assignable_v<ureact::events<>> );
-
 
 // default constructive
 static_assert( std::is_default_constructible_v<ureact::event_source<>> );
@@ -87,51 +78,43 @@ TEST_CASE( "EventsConstruction" )
     // copy and move construction of events
     SUBCASE( "copy and move constructed" )
     {
-        ureact::events<> evt = ureact::make_source<>( ctx );
-        CHECK( evt.is_valid() );
+        ureact::events<> src = ureact::make_source<>( ctx );
+        CHECK( src.is_valid() );
 
         SUBCASE( "copy constructed" )
         {
-            ureact::events<> evt_copy = evt;
-            CHECK( evt_copy.is_valid() );
-            CHECK( evt.is_valid() );
+            ureact::events<> src_copy = src;
+            CHECK( src_copy.is_valid() );
+            CHECK( src.is_valid() );
         }
 
         SUBCASE( "move constructed" )
         {
-            ureact::events<> evt_move = std::move( evt );
-            CHECK( evt_move.is_valid() );
-            CHECK_FALSE( evt.is_valid() );
+            ureact::events<> src_move = std::move( src );
+            CHECK( src_move.is_valid() );
+            CHECK_FALSE( src.is_valid() );
         }
-    }
-}
 
-TEST_CASE( "EventsAssignmentConstruction" )
-{
-    ureact::context ctx;
+        SUBCASE( "copy assignment" )
+        {
+            ureact::events<> src_copy;
+            CHECK_FALSE( src_copy.is_valid() );
 
-    ureact::events<> src = ureact::make_source<>( ctx );
-    CHECK( src.is_valid() );
+            src_copy = src;
+            CHECK( src_copy.is_valid() );
+            CHECK( src.is_valid() );
+            CHECK( src_copy.equals( src ) );
+        }
 
-    SUBCASE( "copy assignment" )
-    {
-        ureact::events<> src_copy;
-        CHECK_FALSE( src_copy.is_valid() );
+        SUBCASE( "move assignment" )
+        {
+            ureact::events<> src_move;
+            CHECK_FALSE( src_move.is_valid() );
 
-        src_copy = src;
-        CHECK( src_copy.is_valid() );
-        CHECK( src.is_valid() );
-        CHECK( src_copy.equals( src ) );
-    }
-
-    SUBCASE( "move assignment" )
-    {
-        ureact::events<> src_move;
-        CHECK_FALSE( src_move.is_valid() );
-
-        src_move = std::move( src );
-        CHECK( src_move.is_valid() );
-        CHECK_FALSE( src.is_valid() );
+            src_move = std::move( src );
+            CHECK( src_move.is_valid() );
+            CHECK_FALSE( src.is_valid() );
+        }
     }
 }
 
@@ -190,35 +173,27 @@ TEST_CASE( "EventSourceConstruction" )
             CHECK( src_move.is_valid() );
             CHECK_FALSE( src.is_valid() );
         }
-    }
-}
 
-TEST_CASE( "EventSourceAssignmentConstruction" )
-{
-    ureact::context ctx;
+        SUBCASE( "copy assignment" )
+        {
+            ureact::event_source<int> src_copy;
+            CHECK_FALSE( src_copy.is_valid() );
 
-    ureact::event_source<int> src{ ctx };
-    CHECK( src.is_valid() );
+            src_copy = src;
+            CHECK( src_copy.is_valid() );
+            CHECK( src.is_valid() );
+            CHECK( src_copy.equals( src ) );
+        }
 
-    SUBCASE( "copy assignment" )
-    {
-        ureact::event_source<int> src_copy;
-        CHECK_FALSE( src_copy.is_valid() );
+        SUBCASE( "move assignment" )
+        {
+            ureact::event_source<int> src_move;
+            CHECK_FALSE( src_move.is_valid() );
 
-        src_copy = src;
-        CHECK( src_copy.is_valid() );
-        CHECK( src.is_valid() );
-        CHECK( src_copy.equals( src ) );
-    }
-
-    SUBCASE( "move assignment" )
-    {
-        ureact::event_source<int> src_move;
-        CHECK_FALSE( src_move.is_valid() );
-
-        src_move = std::move( src );
-        CHECK( src_move.is_valid() );
-        CHECK_FALSE( src.is_valid() );
+            src_move = std::move( src );
+            CHECK( src_move.is_valid() );
+            CHECK_FALSE( src.is_valid() );
+        }
     }
 }
 
@@ -331,4 +306,63 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
     }
 
     CHECK( counted.get() == 3 );
+}
+
+TEST_CASE( "EventRange" )
+{
+    SUBCASE( "empty range" )
+    {
+        std::vector<int> data;
+        ureact::event_range<int> range{ data };
+
+        CHECK( range.empty() );
+        CHECK( range.size() == 0 );
+        const bool are_begin_end_equal = range.begin() == range.end();
+        CHECK( are_begin_end_equal );
+        const bool are_rbegin_rend_equal = range.rbegin() == range.rend();
+        CHECK( are_rbegin_rend_equal );
+    }
+
+    SUBCASE( "non-empty range" )
+    {
+        std::vector<int> data{ 0, 1, 2, 3, 4 };
+        ureact::event_range<int> range{ data };
+
+        CHECK_FALSE( range.empty() );
+        CHECK( range.size() == 5 );
+        const bool are_begin_end_equal = range.begin() == range.end();
+        CHECK_FALSE( are_begin_end_equal );
+        const bool are_rbegin_rend_equal = range.rbegin() == range.rend();
+        CHECK_FALSE( are_rbegin_rend_equal );
+
+        const auto direct_range_copy = std::vector<int>{ data.begin(), data.end() };
+        const auto reverse_range_copy = std::vector<int>{ data.rbegin(), data.rend() };
+        CHECK( direct_range_copy == std::vector<int>{ 0, 1, 2, 3, 4 } );
+        CHECK( reverse_range_copy == std::vector<int>{ 4, 3, 2, 1, 0 } );
+    }
+}
+
+TEST_CASE( "EventEmitter" )
+{
+    std::vector<int> data;
+    ureact::event_emitter<int> emitter{ data };
+    auto _2 = 2;
+
+    SUBCASE( "operator =" )
+    {
+        emitter = 1;  // R-value
+        emitter = _2; // L-value
+    }
+    SUBCASE( "stream" )
+    {
+        emitter << 1   // R-value
+                << _2; // L-value
+    }
+    SUBCASE( "stl iterator" )
+    {
+        std::generate_n( emitter, 1, [] { return 1; } );                   // R-value
+        std::generate_n( emitter, 1, [&]() -> const int& { return _2; } ); // L-value
+    }
+
+    CHECK( data == std::vector<int>{ 1, 2 } );
 }

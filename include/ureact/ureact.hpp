@@ -146,21 +146,18 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
         {
 #endif
 
-#define UREACT_MAKE_NONCOPYABLE( ClassName )                                                       \
-    ClassName( const ClassName& ) = delete;                                                        \
-    ClassName& operator=( const ClassName& ) = delete
+#define UREACT_SETUP_COPY( ClassName, Action )                                                     \
+    ClassName( const ClassName& ) = Action;                                                        \
+    ClassName& operator=( const ClassName& ) = Action
 
-#define UREACT_MAKE_NONMOVABLE( ClassName )                                                        \
-    ClassName( ClassName&& ) noexcept = delete;                                                    \
-    ClassName& operator=( ClassName&& ) noexcept = delete
+#define UREACT_SETUP_MOVE( ClassName, Action )                                                     \
+    ClassName( ClassName&& ) noexcept = Action;                                                    \
+    ClassName& operator=( ClassName&& ) noexcept = Action
 
-#define UREACT_MAKE_COPYABLE( ClassName )                                                          \
-    ClassName( const ClassName& ) = default;                                                       \
-    ClassName& operator=( const ClassName& ) = default
-
-#define UREACT_MAKE_MOVABLE( ClassName )                                                           \
-    ClassName( ClassName&& ) noexcept = default;                                                   \
-    ClassName& operator=( ClassName&& ) noexcept = default
+#define UREACT_MAKE_NONCOPYABLE( ClassName ) UREACT_SETUP_COPY( ClassName, delete )
+#define UREACT_MAKE_COPYABLE( ClassName ) UREACT_SETUP_COPY( ClassName, default )
+#define UREACT_MAKE_NONMOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, delete )
+#define UREACT_MAKE_MOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, default )
 
 UREACT_BEGIN_NAMESPACE
 

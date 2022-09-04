@@ -22,8 +22,7 @@ template <typename F, typename Ret, Ret return_value>
 class add_default_return_value_wrapper
 {
 public:
-    template <typename InF,
-        class = std::enable_if_t<!is_same_decay_v<InF, add_default_return_value_wrapper>>>
+    template <typename InF, class = disable_if_same_t<InF, add_default_return_value_wrapper>>
     explicit add_default_return_value_wrapper( InF&& func )
         : m_func( std::forward<InF>( func ) )
     {}
@@ -44,21 +43,16 @@ using add_observer_action_next_ret
     = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
 
 template <typename E, typename F, typename... Args>
-struct add_observer_range_wrapper
+class add_observer_range_wrapper
 {
-    add_observer_range_wrapper( const add_observer_range_wrapper& other ) = default;
-
-    add_observer_range_wrapper(
-        add_observer_range_wrapper&& other ) noexcept // TODO: check in tests
-        : m_func( std::move( other.m_func ) )
-    {}
-
+public:
     template <typename FIn, class = disable_if_same_t<FIn, add_observer_range_wrapper>>
     explicit add_observer_range_wrapper( FIn&& func )
         : m_func( std::forward<FIn>( func ) )
     {}
 
-    // TODO: move 'typename... Args' here
+    // NOTE: args can't be universal reference since its type is specified in class
+    // NOTE: can't be const because m_func can be mutable
     observer_action operator()( event_range<E> range, const Args&... args )
     {
         for( const auto& e : range )
@@ -72,6 +66,7 @@ struct add_observer_range_wrapper
         return observer_action::next;
     }
 
+private:
     F m_func;
 };
 

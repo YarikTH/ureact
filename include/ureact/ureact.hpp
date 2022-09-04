@@ -162,10 +162,6 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     ClassName( ClassName&& ) noexcept = default;                                                   \
     ClassName& operator=( ClassName&& ) noexcept = default
 
-#define UREACT_MAKE_MOVABLE_ONLY( ClassName )                                                      \
-    UREACT_MAKE_NONCOPYABLE( ClassName );                                                          \
-    UREACT_MAKE_MOVABLE( ClassName )
-
 UREACT_BEGIN_NAMESPACE
 
 class context;
@@ -2378,7 +2374,8 @@ private:
     using Node = detail::observer_node;
 
 public:
-    UREACT_MAKE_MOVABLE_ONLY( observer );
+    UREACT_MAKE_NONCOPYABLE( observer );
+    UREACT_MAKE_MOVABLE( observer );
 
     /*!
      * @brief Default constructor
@@ -2428,7 +2425,8 @@ private:
 class scoped_observer final
 {
 public:
-    UREACT_MAKE_MOVABLE_ONLY( scoped_observer );
+    UREACT_MAKE_NONCOPYABLE( scoped_observer );
+    UREACT_MAKE_MOVABLE( scoped_observer );
 
     /*!
      * @brief is not intended to be default constructive

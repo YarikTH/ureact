@@ -422,50 +422,58 @@ using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std:
 #    pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
-template <typename L, typename R, typename = void>
-struct equality_comparable_with : std::false_type
+/// c++17 analog of equality_comparable concept from c++20
+/// https://en.cppreference.com/w/cpp/concepts/equality_comparable
+template <typename T, typename = void>
+struct equality_comparable : std::false_type
 {};
 
-template <typename L, typename R>
-struct equality_comparable_with<L,
-    R,
-    std::void_t<decltype( std::declval<L>() == std::declval<R>() )>> : std::true_type
+template <typename T>
+struct equality_comparable<T, std::void_t<decltype( std::declval<T>() == std::declval<T>() )>>
+    : std::true_type
 {};
 
-template <typename L, typename R>
-inline constexpr bool equality_comparable_with_v = equality_comparable_with<L, R>::value;
+template <typename T>
+inline constexpr bool equality_comparable_v = equality_comparable<T>::value;
 
-template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equal_to( const L& lhs, const R& rhs )
+/*!
+ * @brief std::equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
+ *
+ *  Additionally:
+ *  * it equally compares signal<S> and events<E> even if their operator== is overloaded
+ *  * it equally compares reference wrappers because they can be used as S for signal<S> and their operator== does unexpected compare
+ *  * it returns false if types are not equially comparable otherwise
+ */
+template <typename T>
+UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const T& lhs, const T& rhs )
 {
-    if constexpr( equality_comparable_with_v<L, R> )
+    if constexpr( equality_comparable_v<T> )
     {
         return lhs == rhs;
     }
     else
     {
-        // if operator == is not defined falling back to comparing addresses
-        return &lhs == &rhs; // TODO: check in tests
+        return false;
     }
 }
 
-template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equal_to(
-    const std::reference_wrapper<L>& lhs, const std::reference_wrapper<R>& rhs )
-{
-    return lhs.get() == rhs.get();
-}
-
-template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equal_to( const signal<L>& lhs, const signal<R>& rhs )
+template <typename S>
+UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const signal<S>& lhs, const signal<S>& rhs )
 {
     return lhs.equal_to( rhs );
 }
 
-template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equal_to( const events<L>& lhs, const events<R>& rhs )
+template <typename E>
+UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const events<E>& lhs, const events<E>& rhs )
 {
     return lhs.equal_to( rhs );
+}
+
+template <typename T>
+UREACT_WARN_UNUSED_RESULT constexpr bool equal_to(
+    const std::reference_wrapper<T>& lhs, const std::reference_wrapper<T>& rhs )
+{
+    return equal_to( lhs.get(), rhs.get() );
 }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )

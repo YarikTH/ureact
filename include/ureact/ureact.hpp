@@ -436,7 +436,7 @@ template <typename L, typename R>
 inline constexpr bool equality_comparable_with_v = equality_comparable_with<L, R>::value;
 
 template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equals( const L& lhs, const R& rhs )
+UREACT_WARN_UNUSED_RESULT bool equal_to( const L& lhs, const R& rhs )
 {
     if constexpr( equality_comparable_with_v<L, R> )
     {
@@ -450,22 +450,22 @@ UREACT_WARN_UNUSED_RESULT bool equals( const L& lhs, const R& rhs )
 }
 
 template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equals(
+UREACT_WARN_UNUSED_RESULT bool equal_to(
     const std::reference_wrapper<L>& lhs, const std::reference_wrapper<R>& rhs )
 {
     return lhs.get() == rhs.get();
 }
 
 template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equals( const signal<L>& lhs, const signal<R>& rhs )
+UREACT_WARN_UNUSED_RESULT bool equal_to( const signal<L>& lhs, const signal<R>& rhs )
 {
-    return lhs.equals( rhs );
+    return lhs.equal_to( rhs );
 }
 
 template <typename L, typename R>
-UREACT_WARN_UNUSED_RESULT bool equals( const events<L>& lhs, const events<R>& rhs )
+UREACT_WARN_UNUSED_RESULT bool equal_to( const events<L>& lhs, const events<R>& rhs )
 {
-    return lhs.equals( rhs );
+    return lhs.equal_to( rhs );
 }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
@@ -1131,7 +1131,7 @@ public:
         return m_node != nullptr;
     }
 
-    UREACT_WARN_UNUSED_RESULT bool equals( const reactive_base& other ) const
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const reactive_base& other ) const
     {
         return this->m_node == other.m_node;
     }
@@ -1230,7 +1230,7 @@ public:
         {
             m_is_input_added = false;
 
-            if( !equals( this->m_value, m_new_value ) )
+            if( !equal_to( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
                 this->get_graph().on_input_change( *this );
@@ -1283,7 +1283,7 @@ public:
         {
             S new_value = m_op.evaluate();
 
-            if( !equals( this->m_value, new_value ) )
+            if( !equal_to( this->m_value, new_value ) )
             {
                 this->m_value = std::move( new_value );
                 changed = true;

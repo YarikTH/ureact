@@ -54,7 +54,7 @@ public:
             return;
         }
 
-        if( !equals( this->m_value, m_inner->value_ref() ) )
+        if( !equal_to( this->m_value, m_inner->value_ref() ) )
         {
             this->m_value = m_inner->value_ref();
             this->get_graph().on_node_pulse( *this );

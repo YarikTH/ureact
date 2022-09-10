@@ -96,7 +96,7 @@ TEST_CASE( "SignalAssignmentConstruction" )
         src_copy = src;
         CHECK( src_copy.is_valid() );
         CHECK( src.is_valid() );
-        CHECK( src_copy.equals( src ) );
+        CHECK( src_copy.equal_to( src ) );
     }
 
     SUBCASE( "move assignment" )
@@ -161,7 +161,7 @@ TEST_CASE( "VarSignalConstruction" )
             ureact::var_signal<int> src_copy = src;
             CHECK( src_copy.is_valid() );
             CHECK( src.is_valid() );
-            CHECK( src_copy.equals( src ) );
+            CHECK( src_copy.equal_to( src ) );
         }
 
         SUBCASE( "move constructed" )
@@ -188,7 +188,7 @@ TEST_CASE( "VarSignalAssignmentConstruction" )
         src_copy = src;
         CHECK( src_copy.is_valid() );
         CHECK( src.is_valid() );
-        CHECK( src_copy.equals( src ) );
+        CHECK( src_copy.equal_to( src ) );
     }
 
     SUBCASE( "move assignment" )

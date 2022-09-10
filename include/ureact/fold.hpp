@@ -109,7 +109,7 @@ public:
                     },
                     m_deps );
 
-                if( !equals( new_value, this->m_value ) )
+                if( !equal_to( new_value, this->m_value ) )
                 {
                     changed = true;
                     this->m_value = std::move( new_value );

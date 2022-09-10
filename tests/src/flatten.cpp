@@ -32,7 +32,7 @@ TEST_CASE( "Flatten1" )
 
     observe( flattened, [&]( int v ) { results.push( v ); } );
 
-    CHECK( outer.get().equals( inner1 ) );
+    CHECK( outer.get().equal_to( inner1 ) );
     CHECK( flattened.get() == 123 );
 
     inner1 <<= 456;
@@ -45,7 +45,7 @@ TEST_CASE( "Flatten1" )
 
     outer <<= inner2;
 
-    CHECK( outer.get().equals( inner2 ) );
+    CHECK( outer.get().equal_to( inner2 ) );
     CHECK( flattened.get() == 789 );
 
     CHECK( results.front() == 789 );
@@ -209,14 +209,14 @@ TEST_CASE( "Flatten5" )
 
     observe( flattened, [&]( int v ) { results.push( v ); } );
 
-    CHECK( outer.get().equals( inner1 ) );
+    CHECK( outer.get().equal_to( inner1 ) );
     CHECK( flattened.get() == 123 );
 
     CHECK( results.empty() );
 
     outer <<= inner2;
 
-    CHECK( outer.get().equals( inner2 ) );
+    CHECK( outer.get().equal_to( inner2 ) );
     CHECK( flattened.get() == 123 );
 
     // flattened observer shouldn't trigger if value isn't changed

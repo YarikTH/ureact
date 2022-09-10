@@ -6,6 +6,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "doctest_extra.h"
+#include "identity.hpp"
 #include "ureact/lift.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/transaction.hpp"
@@ -223,8 +224,6 @@ TEST_CASE( "Observers" )
 
     auto x = make_var( ctx, 0 );
 
-    auto identity = []( const int value ) { return value; };
-
     std::vector<int> x_values;
 
     auto on_x_value_change = [&]( const int new_value ) { x_values.push_back( new_value ); };
@@ -236,7 +235,7 @@ TEST_CASE( "Observers" )
         // Inner scope
         {
             // Create a signal in the function scope
-            auto my_signal = lift( x, identity );
+            auto my_signal = lift( x, identity{} );
 
             // The lifetime of the observer is bound to my_signal.
             // After scope my_signal is destroyed, and so is the observer
@@ -262,7 +261,7 @@ TEST_CASE( "Observers" )
 
             // Inner scope
             {
-                auto my_signal = lift( x, identity );
+                auto my_signal = lift( x, identity{} );
 
                 // Move-assign to obs
                 obs = observe( my_signal, on_x_value_change );

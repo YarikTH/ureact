@@ -165,33 +165,19 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) ->
  * @brief Utility to flatten public signal attribute of class pointed be reference
  *
  *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
- *  Also, we have signal that points to this class by reference: signal<Foo&> bar
- *  This utility receives a signal reference bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
- *
- *  @sa reactive_ptr does the same, but receives signal<Foo*>
- */
-template <typename S, typename R, typename DecayedR = detail::decay_input_t<R>>
-UREACT_WARN_UNUSED_RESULT auto reactive_ref(
-    const signal<std::reference_wrapper<S>>& outer, R S::*attribute )
-{
-    return flatten( lift(
-        outer, [attribute]( const S& s ) { return static_cast<DecayedR>( s.*attribute ); } ) );
-}
-
-/*!
- * @brief Utility to flatten public signal attribute of class pointed be pointer
- *
- *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
  *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
- *  This utility receives a signal reference bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
- *
- *  @sa reactive_ref does the same, but receives signal<Foo&>
+ *  This utility receives a signal pointer bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
  */
-template <typename S, typename R, typename DecayedR = detail::decay_input_t<R>>
-UREACT_WARN_UNUSED_RESULT auto reactive_ptr( const signal<S*>& outer, R S::*attribute )
+template <typename Signal,
+    typename InF,
+    class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
+UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
 {
-    return flatten( lift(
-        outer, [attribute]( const S* s ) { return static_cast<DecayedR>( s->*attribute ); } ) );
+    using S = typename std::decay_t<Signal>::value_t;
+    using F = std::decay_t<InF>;
+    using R = std::invoke_result_t<F, S>;
+    using DecayedR = detail::decay_input_t<std::decay_t<R>>;
+    return flatten( lift<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
 }
 
 UREACT_END_NAMESPACE

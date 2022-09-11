@@ -326,7 +326,7 @@ TEST_CASE( "DynamicSignalRefOrPtr" )
         Alice = Employee2{ ctx, &company1 };
 
         alice_company_name
-            = ureact::reactive_ptr( std::get<Employee2>( Alice ).company, &Company::name );
+            = ureact::reactive_ref( std::get<Employee2>( Alice ).company, &Company::name );
     }
 
     std::vector<std::string> alice_company_names;

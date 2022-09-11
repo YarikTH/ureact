@@ -81,7 +81,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
     {
-        get_graph().on_node_attach( *this, *subject );
+        this->get_graph().on_node_attach( *this, *subject );
     }
 
     void tick( turn_type& ) override
@@ -138,8 +138,8 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        get_graph().on_node_attach( *this, *subject );
-        ( get_graph().on_node_attach( *this, *deps ), ... );
+        this->get_graph().on_node_attach( *this, *subject );
+        ( this->get_graph().on_node_attach( *this, *deps ), ... );
     }
 
     void tick( turn_type& turn ) override

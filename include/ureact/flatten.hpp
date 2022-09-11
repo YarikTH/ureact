@@ -23,10 +23,10 @@ class signal_flatten_node final : public signal_node<InnerS>
 public:
     signal_flatten_node( context& context,
         std::shared_ptr<signal_node<OuterS>> outer,
-        const std::shared_ptr<signal_node<InnerS>>& inner )
+        std::shared_ptr<signal_node<InnerS>> inner )
         : signal_flatten_node::signal_node( context, inner->value_ref() )
         , m_outer( std::move( outer ) )
-        , m_inner( inner )
+        , m_inner( std::move( inner ) )
     {
         this->get_graph().on_node_attach( *this, *m_outer );
         this->get_graph().on_node_attach( *this, *m_inner );
@@ -68,11 +68,11 @@ class event_flatten_node final : public event_stream_node<InnerE>
 {
 public:
     event_flatten_node( context& context,
-        const std::shared_ptr<signal_node<OuterS>>& outer,
-        const std::shared_ptr<event_stream_node<InnerE>>& inner )
+        std::shared_ptr<signal_node<OuterS>> outer,
+        std::shared_ptr<event_stream_node<InnerE>> inner )
         : event_flatten_node::event_stream_node( context )
-        , m_outer( outer )
-        , m_inner( inner )
+        , m_outer( std::move( outer ) )
+        , m_inner( std::move( inner ) )
     {
         this->get_graph().on_node_attach( *this, *m_outer );
         this->get_graph().on_node_attach( *this, *m_inner );
@@ -80,8 +80,8 @@ public:
 
     ~event_flatten_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_outer );
         this->get_graph().on_node_detach( *this, *m_inner );
+        this->get_graph().on_node_detach( *this, *m_outer );
     }
 
     void tick( turn_type& turn ) override

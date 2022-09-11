@@ -27,6 +27,7 @@ target_sources(
         monitor.cpp
         observer.cpp
         process.cpp
+        propagation.cpp
         pulse.cpp
         signal.cpp
         snapshot.cpp

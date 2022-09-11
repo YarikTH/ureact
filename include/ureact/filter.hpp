@@ -47,7 +47,7 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 }
 
 /*!
- * @brief Curried version of filter(const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of filter(const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred)
  */
 template <typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
@@ -73,7 +73,7 @@ UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) ->
 }
 
 /*!
- * @brief Curried version of filter(const events<E>& source, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of filter(const events<E>& source, Pred&& pred)
  */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )

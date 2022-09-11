@@ -74,7 +74,7 @@ UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> sig
 }
 
 /*!
- * @brief Curried version of collect(const events<E>& source) algorithm used for "pipe" syntax
+ * @brief Curried version of collect(const events<E>& source)
  */
 template <template <typename...> class ContT>
 UREACT_WARN_UNUSED_RESULT auto collect()

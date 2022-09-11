@@ -28,7 +28,7 @@ UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit
 }
 
 /*!
- * @brief Curried version of changed(const signal<S>& target) algorithm used for "pipe" syntax
+ * @brief Curried version of changed(const signal<S>& target)
  */
 UREACT_WARN_UNUSED_RESULT inline auto changed()
 {
@@ -51,7 +51,7 @@ UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) 
 }
 
 /*!
- * @brief Curried version of changed_to(const signal<S>& target, V&& value) algorithm used for "pipe" syntax
+ * @brief Curried version of changed_to(const signal<S>& target, V&& value)
  */
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )

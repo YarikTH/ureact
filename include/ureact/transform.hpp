@@ -44,7 +44,7 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 }
 
 /*!
- * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
  */
 template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
@@ -70,7 +70,7 @@ UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) 
 }
 
 /*!
- * @brief Curried version of transform(const events<InE>& source, F&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of transform(const events<InE>& source, F&& func)
  */
 template <typename F>
 UREACT_WARN_UNUSED_RESULT auto transform( F&& func )

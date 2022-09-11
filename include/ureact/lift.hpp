@@ -117,7 +117,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
 }
 
 /*!
- * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
  */
 template <typename SIn = void, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )

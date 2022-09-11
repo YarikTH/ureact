@@ -33,7 +33,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
 }
 
 /*!
- * @brief Curried version of snapshot() algorithm used for "pipe" syntax
+ * @brief Curried version of snapshot()
  */
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )

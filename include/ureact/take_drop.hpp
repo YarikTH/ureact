@@ -80,7 +80,7 @@ UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
 }
 
 /*!
- * @brief Curried version of take(const events<E>& source, const size_t count) algorithm used for "pipe" syntax
+ * @brief Curried version of take(const events<E>& source, const size_t count)
  */
 template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
 UREACT_WARN_UNUSED_RESULT auto take( const N count )
@@ -109,7 +109,7 @@ UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const N count )
 }
 
 /*!
- * @brief Curried version of drop(const events<E>& source, const N count) algorithm used for "pipe" syntax
+ * @brief Curried version of drop(const events<E>& source, const N count)
  */
 template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
 UREACT_WARN_UNUSED_RESULT auto drop( const N count )

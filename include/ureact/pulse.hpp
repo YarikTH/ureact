@@ -33,7 +33,7 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
 }
 
 /*!
- * @brief Curried version of pulse() algorithm used for "pipe" syntax
+ * @brief Curried version of pulse()
  */
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )

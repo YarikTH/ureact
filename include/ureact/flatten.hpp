@@ -162,7 +162,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) ->
 }
 
 /*!
- * @brief Curried version of flatten(const signal<signal<InnerS>>& outer) algorithm used for "pipe" syntax
+ * @brief Curried version of flatten(const signal<signal<InnerS>>& outer)
  */
 UREACT_WARN_UNUSED_RESULT inline auto flatten()
 {

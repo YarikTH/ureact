@@ -33,7 +33,7 @@ UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
 }
 
 /*!
- * @brief Curried version of cast(const events<InE>& source) algorithm used for "pipe" syntax
+ * @brief Curried version of cast(const events<InE>& source)
  */
 template <typename OutE>
 UREACT_WARN_UNUSED_RESULT auto cast()

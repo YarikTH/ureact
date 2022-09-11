@@ -26,7 +26,7 @@ UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
 }
 
 /*!
- * @brief Curried version of unify(events_t&& source) algorithm used for "pipe" syntax
+ * @brief Curried version of unify(events_t&& source)
  */
 UREACT_WARN_UNUSED_RESULT inline auto unify()
 {

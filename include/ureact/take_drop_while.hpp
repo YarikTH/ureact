@@ -38,7 +38,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
 }
 
 /*!
- * @brief Curried version of take_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of take_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
 template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while(
@@ -65,7 +65,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred 
 }
 
 /*!
- * @brief Curried version of take_while(const events<E>& source, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of take_while(const events<E>& source, Pred&& pred)
  */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
@@ -100,7 +100,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
 }
 
 /*!
- * @brief Curried version of drop_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of drop_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
 template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while(
@@ -126,7 +126,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred 
 }
 
 /*!
- * @brief Curried version of drop_while(const events<E>& source, Pred&& pred) algorithm used for "pipe" syntax
+ * @brief Curried version of drop_while(const events<E>& source, Pred&& pred)
  */
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )

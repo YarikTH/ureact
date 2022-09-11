@@ -117,7 +117,7 @@ UREACT_WARN_UNUSED_RESULT auto process(
 }
 
 /*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
+ * @brief Curried version of process(const events<in_t>& source, Op&& op)
  */
 template <typename OutE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
@@ -143,7 +143,7 @@ UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> 
 }
 
 /*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op) algorithm used for "pipe" syntax
+ * @brief Curried version of process(const events<in_t>& source, Op&& op)
  */
 template <typename OutE, typename Op>
 UREACT_WARN_UNUSED_RESULT auto process( Op&& op )

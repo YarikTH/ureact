@@ -31,7 +31,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> sign
 }
 
 /*!
- * @brief Curried version of hold() algorithm used for "pipe" syntax
+ * @brief Curried version of hold()
  */
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto hold( V&& init )

@@ -64,7 +64,7 @@ UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
 }
 
 /*!
- * @brief Curried version of monitor(const signal<S>& target) algorithm used for "pipe" syntax
+ * @brief Curried version of monitor(const signal<S>& target)
  */
 UREACT_WARN_UNUSED_RESULT inline auto monitor()
 {

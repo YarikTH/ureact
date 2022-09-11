@@ -229,7 +229,7 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 }
 
 /*!
- * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func)
  */
 template <typename V, typename FIn, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
@@ -258,7 +258,7 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, FIn&& fu
 }
 
 /*!
- * @brief Curried version of fold(const events<E>& events, V&& init, FIn&& func) algorithm used for "pipe" syntax
+ * @brief Curried version of fold(const events<E>& events, V&& init, FIn&& func)
  */
 template <typename V, typename FIn>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, FIn&& func )

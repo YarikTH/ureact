@@ -33,7 +33,7 @@ UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
 }
 
 /*!
- * @brief Curried version of unique(const events<E>& source) algorithm used for "pipe" syntax
+ * @brief Curried version of unique(const events<E>& source)
  */
 UREACT_WARN_UNUSED_RESULT inline auto unique()
 {

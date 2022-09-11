@@ -170,38 +170,121 @@ TEST_CASE( "LiftUnary" )
 {
     ureact::context ctx;
 
-    ureact::var_signal v1 = make_var( ctx, 1 );
-    ureact::temp_signal v2 = ureact::lift( v1, []( auto i ) { return i * 2; } );
-    ureact::signal<int> minus_v1;
-    ureact::signal<int> minus_v2;
+    ureact::var_signal src = make_var( ctx, 1 );
+    ureact::temp_signal tmp = ureact::lift( src, []( auto i ) { return i * 2; } );
+    ureact::signal<int> result_1;
+    ureact::signal<int> result_2;
 
-    CHECK_FALSE( v2.was_op_stolen() );
+    CHECK_FALSE( tmp.was_op_stolen() );
 
     SUBCASE( "Overloaded operator" )
     {
-        minus_v1 = -v1;
-        minus_v2 = -std::move( v2 );
+        result_1 = -src;
+        result_2 = -std::move( tmp );
     }
     SUBCASE( "Functional syntax" )
     {
-        minus_v1 = ureact::lift( v1, std::negate<>{} );
-        minus_v2 = ureact::lift( std::move( v2 ), std::negate<>{} );
+        result_1 = ureact::lift( src, std::negate<>{} );
+        result_2 = ureact::lift( std::move( tmp ), std::negate<>{} );
     }
     SUBCASE( "Piped syntax" )
     {
-        minus_v1 = v1 | ureact::lift( std::negate<>{} );
-        minus_v2 = std::move( v2 ) | ureact::lift( std::negate<>{} );
+        result_1 = src | ureact::lift( std::negate<>{} );
+        result_2 = std::move( tmp ) | ureact::lift( std::negate<>{} );
     }
 
-    CHECK( v2.was_op_stolen() );
+    CHECK( tmp.was_op_stolen() );
 
-    CHECK( minus_v1.get() == -1 );
-    CHECK( minus_v2.get() == -2 );
+    CHECK( result_1.get() == -1 );
+    CHECK( result_2.get() == -2 );
 
-    v1 <<= -7;
+    src <<= -7;
 
-    CHECK( minus_v1.get() == 7 );
-    CHECK( minus_v2.get() == 14 );
+    CHECK( result_1.get() == 7 );
+    CHECK( result_2.get() == 14 );
+}
+
+TEST_CASE( "LiftBinary" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal lhs = make_var( ctx, 10 );
+    ureact::temp_signal lhs_tmp_1 = ureact::lift( lhs, identity{} );
+    ureact::temp_signal lhs_tmp_2 = ureact::lift( lhs, identity{} );
+    ureact::temp_signal lhs_tmp_3 = ureact::lift( lhs, identity{} );
+
+    ureact::var_signal rhs = make_var( ctx, 3 );
+    ureact::temp_signal rhs_tmp_1 = ureact::lift( rhs, identity{} );
+    ureact::temp_signal rhs_tmp_2 = ureact::lift( rhs, identity{} );
+    ureact::temp_signal rhs_tmp_3 = ureact::lift( rhs, identity{} );
+
+    ureact::signal<int> const_op_signal;
+    ureact::signal<int> const_op_temp;
+    ureact::signal<int> signal_op_const;
+    ureact::signal<int> signal_op_signal;
+    ureact::signal<int> signal_op_temp;
+    ureact::signal<int> temp_op_const;
+    ureact::signal<int> temp_op_signal;
+    ureact::signal<int> temp_op_temp;
+
+    CHECK_FALSE( lhs_tmp_1.was_op_stolen() );
+    CHECK_FALSE( lhs_tmp_2.was_op_stolen() );
+    CHECK_FALSE( lhs_tmp_3.was_op_stolen() );
+    CHECK_FALSE( rhs_tmp_1.was_op_stolen() );
+    CHECK_FALSE( rhs_tmp_2.was_op_stolen() );
+    CHECK_FALSE( rhs_tmp_3.was_op_stolen() );
+
+    SUBCASE( "Overloaded operator" )
+    {
+        // clang-format off
+        const_op_signal  = 10                     - rhs;
+        const_op_temp    = 10                     - std::move( rhs_tmp_1 );
+        signal_op_const  = lhs                    - 3;
+        signal_op_signal = lhs                    - rhs;
+        signal_op_temp   = lhs                    - std::move( rhs_tmp_2 );
+        temp_op_const    = std::move( lhs_tmp_1 ) - 3;
+        temp_op_signal   = std::move( lhs_tmp_2 ) - rhs;
+        temp_op_temp     = std::move( lhs_tmp_3 ) - std::move( rhs_tmp_3 );
+        // clang-format on
+    }
+
+    CHECK( lhs_tmp_1.was_op_stolen() );
+    CHECK( lhs_tmp_2.was_op_stolen() );
+    CHECK( lhs_tmp_3.was_op_stolen() );
+    CHECK( rhs_tmp_1.was_op_stolen() );
+    CHECK( rhs_tmp_2.was_op_stolen() );
+    CHECK( rhs_tmp_3.was_op_stolen() );
+
+    CHECK( const_op_signal.get() == 7 );
+    CHECK( const_op_temp.get() == 7 );
+    CHECK( signal_op_const.get() == 7 );
+    CHECK( signal_op_signal.get() == 7 );
+    CHECK( signal_op_temp.get() == 7 );
+    CHECK( temp_op_const.get() == 7 );
+    CHECK( temp_op_signal.get() == 7 );
+    CHECK( temp_op_temp.get() == 7 );
+
+    lhs <<= 20;
+
+    CHECK( const_op_signal.get() == 7 );
+    CHECK( const_op_temp.get() == 7 );
+    CHECK( signal_op_const.get() == 17 );
+    CHECK( signal_op_signal.get() == 17 );
+    CHECK( signal_op_temp.get() == 17 );
+    CHECK( temp_op_const.get() == 17 );
+    CHECK( temp_op_signal.get() == 17 );
+    CHECK( temp_op_temp.get() == 17 );
+
+    rhs <<= 5;
+
+    CHECK( const_op_signal.get() == 5 );
+    CHECK( const_op_temp.get() == 5 );
+    CHECK( signal_op_const.get() == 17 );
+    CHECK( signal_op_signal.get() == 15 );
+    CHECK( signal_op_temp.get() == 15 );
+    CHECK( temp_op_const.get() == 17 );
+    CHECK( temp_op_signal.get() == 15 );
+    CHECK( temp_op_temp.get() == 15 );
 }
 
 TEST_CASE( "Reactive class members" )

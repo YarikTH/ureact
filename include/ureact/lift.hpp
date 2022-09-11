@@ -72,25 +72,36 @@ private:
     F m_func;
 };
 
+// TODO: remove r-value reference only, leave simple references
+template <typename SIn, typename F, typename... Values>
+using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
+    std::invoke_result_t<F, Values...>,
+    SIn>;
+
+struct unary_plus
+{
+    template <typename T>
+    constexpr auto operator()( T&& t ) const noexcept( noexcept( +std::forward<T>( t ) ) )
+    {
+        return +std::forward<T>( t );
+    }
+
+    using is_transparent = void;
+};
+
 } // namespace detail
 
 /*!
- * @brief Create a new signal node with value v = func(arg_pack.get(), ...).
+ * @brief Create a new signal node with value v = std::invoke(func, arg_pack.get(), ...)
  * @tparam Values types of signal values
  *
  * This value is set on construction and updated when any args have changed
- *
- *  The signature of func should be equivalent to:
- *  * S func(const Values& ...)
  */
 template <typename SIn = void, typename... Values, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF&& func )
 {
     using F = std::decay_t<InF>;
-    // TODO: remove r-value reference only, leave simple references
-    using S = std::conditional_t<std::is_same_v<SIn, void>, //
-        std::invoke_result_t<F, Values...>,
-        SIn>;
+    using S = detail::deduce_s<SIn, F, Values...>;
     using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
 
     context& context = std::get<0>( arg_pack.data ).get_context();
@@ -103,17 +114,31 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF
 }
 
 /*!
- * @brief Create a new signal node with value v = func(arg.get()).
- * This value is set on construction and updated when arg have changed
+ * @brief Create a new signal node with value v = std::invoke(func, arg.get())
  *
- *  The signature of func should be equivalent to:
- *  * S func(const value_t&)
+ * This value is set on construction and updated when arg have changed
  */
 template <typename SIn = void, typename Value, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
 {
-    // TODO: replace with optimized version based on unary_operator_impl
-    return lift<SIn>( with( arg ), std::forward<InF>( func ) );
+    using F = std::decay_t<InF>;
+    using S = detail::deduce_s<SIn, F, Value>;
+    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
+    return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
+}
+
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, arg.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void, typename Value, typename OpIn, typename InF>
+UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func )
+{
+    using F = std::decay_t<InF>;
+    using S = detail::deduce_s<SIn, F, Value>;
+    using Op = detail::function_op<S, F, OpIn>;
+    return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.steal_op() };
 }
 
 /*!
@@ -183,27 +208,6 @@ private:
     Fn m_fn{};
     SecondArgument m_second_argument;
 };
-
-template <template <typename> class FunctorOp,
-    typename Signal,
-    class = std::enable_if_t<is_signal_v<Signal>>>
-auto unary_operator_impl( const Signal& arg )
-{
-    using val_t = typename Signal::value_t;
-    using F = FunctorOp<val_t>;
-    using S = std::invoke_result_t<F, val_t>;
-    using Op = function_op<S, F, signal_node_ptr_t<val_t>>;
-    return temp_signal<S, Op>{ arg.get_context(), F(), arg.get_node() };
-}
-
-template <template <typename> class FunctorOp, typename Val, typename OpIn>
-auto unary_operator_impl( temp_signal<Val, OpIn>&& arg )
-{
-    using F = FunctorOp<Val>;
-    using S = std::invoke_result_t<F, Val>;
-    using Op = function_op<S, F, OpIn>;
-    return temp_signal<S, Op>{ arg.get_context(), F(), arg.steal_op() };
-}
 
 template <template <typename, typename> class FunctorOp,
     typename LeftSignal,
@@ -358,26 +362,12 @@ auto binary_operator_impl( LeftValIn&& lhs, temp_signal<RightVal, RightOp>&& rhs
 // Forward arg
 #define UREACT_FWD( X ) std::forward<decltype( X )>( X )
 
-#define UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                \
-    namespace detail                                                                               \
-    {                                                                                              \
-    template <typename V>                                                                          \
-    struct op_functor_##name                                                                       \
-    {                                                                                              \
-        UREACT_WARN_UNUSED_RESULT auto operator()( const V& v ) const UREACT_FUNCTION_BODY( op v ) \
-    };                                                                                             \
-    } /* namespace detail */
-
-#define UREACT_DECLARE_UNARY_OP( op, name )                                                        \
-    template <typename Signal,                                                                     \
-        template <typename> class FunctorOp = detail::op_functor_##name,                           \
-        class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>                               \
+#define UREACT_DECLARE_UNARY_OPERATOR( op, fn )                                                    \
+    template <typename Signal, class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>        \
     UREACT_WARN_UNUSED_RESULT auto operator op( Signal&& arg )                                     \
-        UREACT_FUNCTION_BODY( detail::unary_operator_impl<FunctorOp>( UREACT_FWD( arg ) ) )
-
-#define UREACT_DECLARE_UNARY_OPERATOR( op, name )                                                  \
-    UREACT_DECLARE_UNARY_OP_FUNCTOR( op, name )                                                    \
-    UREACT_DECLARE_UNARY_OP( op, name )
+    {                                                                                              \
+        return lift( std::forward<Signal>( arg ), fn{} );                                          \
+    }
 
 #define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
     namespace detail                                                                               \
@@ -417,8 +407,8 @@ UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )
 UREACT_DECLARE_BINARY_OPERATOR( *, multiplication )
 UREACT_DECLARE_BINARY_OPERATOR( /, division )
 UREACT_DECLARE_BINARY_OPERATOR( %, modulo )
-UREACT_DECLARE_UNARY_OPERATOR( +, unary_plus )
-UREACT_DECLARE_UNARY_OPERATOR( -, unary_minus )
+UREACT_DECLARE_UNARY_OPERATOR( +, detail::unary_plus )
+UREACT_DECLARE_UNARY_OPERATOR( -, std::negate<> )
 
 // relational operators
 
@@ -433,7 +423,7 @@ UREACT_DECLARE_BINARY_OPERATOR( >=, greater_equal )
 
 UREACT_DECLARE_BINARY_OPERATOR( &&, logical_and )
 UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
-UREACT_DECLARE_UNARY_OPERATOR( !, logical_negation )
+UREACT_DECLARE_UNARY_OPERATOR( !, std::logical_not<> )
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic pop

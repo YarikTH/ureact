@@ -365,11 +365,20 @@ TEST_CASE( "Signal of events" )
 
     observe( sig, [&]( const ureact::events<int>& ) { ++reassign_count; } );
 
-    auto f = flatten( sig );
+    ureact::events<int> e;
+
+    SUBCASE( "Functional syntax" )
+    {
+        e = ureact::flatten( sig );
+    }
+    SUBCASE( "Piped syntax" )
+    {
+        e = sig | ureact::flatten();
+    }
 
     std::vector<int> saved_events;
 
-    observe( f, [&]( const int value ) { saved_events.push_back( value ); } );
+    observe( e, [&]( const int value ) { saved_events.push_back( value ); } );
 
     in1 << -1;
     in2 << 1;

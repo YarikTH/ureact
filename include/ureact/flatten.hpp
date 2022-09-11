@@ -162,6 +162,18 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) ->
 }
 
 /*!
+ * @brief Curried version of flatten(const signal<signal<InnerS>>& outer) algorithm used for "pipe" syntax
+ */
+UREACT_WARN_UNUSED_RESULT inline auto flatten()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+        return flatten( std::forward<arg_t>( source ) );
+    } };
+}
+
+/*!
  * @brief Utility to flatten public signal attribute of class pointed be reference
  *
  *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };

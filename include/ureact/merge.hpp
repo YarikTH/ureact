@@ -26,9 +26,7 @@ public:
         : event_merge_op::reactive_op_base( dont_move(), std::forward<Args>( args )... )
     {}
 
-    event_merge_op( event_merge_op&& other ) noexcept // TODO: check in tests
-        : event_merge_op::reactive_op_base( std::move( other ) )
-    {}
+    UREACT_MAKE_MOVABLE( event_merge_op );
 
     template <typename Collector>
     void collect( const turn_type& turn, const Collector& collector ) const
@@ -37,7 +35,7 @@ public:
     }
 
     template <typename Collector, typename Functor>
-    void collect_rec( const Functor& functor ) const // TODO: check in tests
+    void collect_rec( const Functor& functor ) const
     {
         std::apply( reinterpret_cast<const collect_functor<Collector>&>( functor ), this->m_deps );
     }
@@ -57,7 +55,7 @@ private:
         }
 
         template <typename T>
-        void collect( const T& op ) const // TODO: check in tests
+        void collect( const T& op ) const
         {
             op.template collect_rec<Collector>( *this );
         }

@@ -862,12 +862,6 @@ public:
         return *m_graph;
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph&
-    get_graph() const // TODO: check in tests or completely remove
-    {
-        return *m_graph;
-    }
-
 private:
     std::unique_ptr<react_graph> m_graph;
 };
@@ -888,12 +882,12 @@ class context final : protected detail::context_internals
 public:
     UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
     {
-        return this == &rsh; // TODO: check in tests
+        return this == &rsh;
     }
 
     UREACT_WARN_UNUSED_RESULT bool operator!=( const context& rsh ) const
     {
-        return !( *this == rsh ); // TODO: check in tests
+        return !( *this == rsh );
     }
 
 private:
@@ -1314,7 +1308,7 @@ public:
         return std::move( m_op );
     }
 
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
         return m_was_op_stolen;
     }
@@ -1587,7 +1581,7 @@ public:
     /*!
      * @brief Checks if internal operator was already stolen
      */
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
         auto* node_ptr = static_cast<Node*>( this->m_node.get() );
         return node_ptr->was_op_stolen();
@@ -1879,7 +1873,7 @@ public:
         this->pulse_if_has_events();
     }
 
-    UREACT_WARN_UNUSED_RESULT Op steal_op() // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT Op steal_op()
     {
         assert( !m_was_op_stolen && "Op was already stolen" );
         m_was_op_stolen = true;
@@ -1887,7 +1881,7 @@ public:
         return std::move( m_op );
     }
 
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const // TODO: check in tests
+    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
         return m_was_op_stolen;
     }

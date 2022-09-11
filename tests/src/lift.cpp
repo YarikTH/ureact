@@ -247,6 +247,19 @@ TEST_CASE( "LiftBinary" )
         temp_op_temp     = std::move( lhs_tmp_3 ) - std::move( rhs_tmp_3 );
         // clang-format on
     }
+    SUBCASE( "Functional syntax" )
+    {
+        // clang-format off
+        const_op_signal  = ureact::lift( 10                    , std::minus<>{}, rhs );
+        const_op_temp    = ureact::lift( 10                    , std::minus<>{}, std::move( rhs_tmp_1 ) );
+        signal_op_const  = ureact::lift( lhs                   , std::minus<>{}, 3 );
+        signal_op_signal = ureact::lift( lhs                   , std::minus<>{}, rhs );
+        signal_op_temp   = ureact::lift( lhs                   , std::minus<>{}, std::move( rhs_tmp_2 ) );
+        temp_op_const    = ureact::lift( std::move( lhs_tmp_1 ), std::minus<>{}, 3 );
+        temp_op_signal   = ureact::lift( std::move( lhs_tmp_2 ), std::minus<>{}, rhs );
+        temp_op_temp     = ureact::lift( std::move( lhs_tmp_3 ), std::minus<>{}, std::move( rhs_tmp_3 ) );
+        // clang-format on
+    }
 
     CHECK( lhs_tmp_1.was_op_stolen() );
     CHECK( lhs_tmp_2.was_op_stolen() );

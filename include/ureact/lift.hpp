@@ -156,51 +156,76 @@ UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
     } };
 }
 
-namespace detail
-{
-
-template <typename LeftSignal,
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void,
+    typename LeftSignal,
     typename InF,
     typename RightSignal,
     class = std::enable_if_t<is_signal_v<LeftSignal>>,
     class = std::enable_if_t<is_signal_v<RightSignal>>>
-auto binary_operator_impl( const LeftSignal& lhs, InF&& func, const RightSignal& rhs )
+UREACT_WARN_UNUSED_RESULT auto lift( const LeftSignal& lhs, InF&& func, const RightSignal& rhs )
 {
-    return lift( with( lhs, rhs ), std::forward<InF>( func ) );
+    return lift<SIn>( with( lhs, rhs ), std::forward<InF>( func ) );
 }
 
-template <typename LeftSignal,
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void,
+    typename LeftSignal,
     typename InF,
     typename RightVal,
     class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
     class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
-auto binary_operator_impl( LeftSignal&& lhs, InF&& func, RightVal&& rhs )
+UREACT_WARN_UNUSED_RESULT auto lift( LeftSignal&& lhs, InF&& func, RightVal&& rhs )
 {
-    return lift( std::forward<LeftSignal>( lhs ),
+    return lift<SIn>( std::forward<LeftSignal>( lhs ),
         std::bind(
             std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
 }
 
-template <typename LeftVal,
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void,
+    typename LeftVal,
     typename InF,
     typename RightSignal,
     class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
     class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
     typename Wtf = void>
-auto binary_operator_impl( LeftVal&& lhs, InF&& func, RightSignal&& rhs )
+UREACT_WARN_UNUSED_RESULT auto lift( LeftVal&& lhs, InF&& func, RightSignal&& rhs )
 {
-    return lift( std::forward<RightSignal>( rhs ),
+    return lift<SIn>( std::forward<RightSignal>( rhs ),
         std::bind(
             std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
 }
 
-template <typename LeftVal, typename LeftOp, typename InF, typename RightVal, typename RightOp>
-auto binary_operator_impl(
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void,
+    typename LeftVal,
+    typename LeftOp,
+    typename InF,
+    typename RightVal,
+    typename RightOp>
+UREACT_WARN_UNUSED_RESULT auto lift(
     temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
 {
     using F = std::decay_t<InF>;
-    using S = std::invoke_result_t<F, LeftVal, RightVal>;
-    using Op = function_op<S, F, LeftOp, RightOp>;
+    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+    using Op = detail::function_op<S, F, LeftOp, RightOp>;
 
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
@@ -208,17 +233,24 @@ auto binary_operator_impl(
     return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.steal_op(), rhs.steal_op() };
 }
 
-template <typename LeftVal,
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void,
+    typename LeftVal,
     typename LeftOp,
     typename InF,
     typename RightSignal,
     class = std::enable_if_t<is_signal_v<RightSignal>>>
-auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs )
+UREACT_WARN_UNUSED_RESULT auto lift(
+    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs )
 {
     using RightVal = typename RightSignal::value_t;
     using F = std::decay_t<InF>;
-    using S = std::invoke_result_t<F, LeftVal, RightVal>;
-    using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
+    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+    using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
 
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
@@ -226,25 +258,30 @@ auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const
     return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.steal_op(), rhs.get_node() };
 }
 
-template <typename LeftSignal,
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename SIn = void,
+    typename LeftSignal,
     typename InF,
     typename RightVal,
     typename RightOp,
     class = std::enable_if_t<is_signal_v<LeftSignal>>>
-auto binary_operator_impl( const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
+UREACT_WARN_UNUSED_RESULT auto lift(
+    const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
 {
     using LeftVal = typename LeftSignal::value_t;
     using F = std::decay_t<InF>;
-    using S = std::invoke_result_t<F, LeftVal, RightVal>;
-    using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
+    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
 
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
     return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.get_node(), rhs.steal_op() };
 }
-
-} // namespace detail
 
 #define UREACT_DECLARE_UNARY_OPERATOR( op, fn )                                                    \
     template <typename Signal, class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>        \
@@ -260,8 +297,7 @@ auto binary_operator_impl( const LeftSignal& lhs, InF&& func, temp_signal<RightV
             std::disjunction_v<is_signal<std::decay_t<Lhs>>, is_signal<std::decay_t<Rhs>>>>>       \
     UREACT_WARN_UNUSED_RESULT auto operator op( Lhs&& lhs, Rhs&& rhs ) /*                */        \
     {                                                                                              \
-        return detail::binary_operator_impl(                                                       \
-            std::forward<Lhs>( lhs ), fn{}, std::forward<Rhs>( rhs ) );                            \
+        return lift( std::forward<Lhs>( lhs ), fn{}, std::forward<Rhs>( rhs ) );                   \
     }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )

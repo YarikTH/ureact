@@ -110,9 +110,9 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( std::invoke( &User::age, src.get() ) == 32 );
 
         // TODO: invoke result is int&& that is not supported yet
-        //        auto age = ureact::lift( src, &User::age );
-        //
-        //        CHECK( age.get() == 32 );
+        auto age = ureact::lift<int>( src, &User::age );
+
+        CHECK( age.get() == 32 );
     }
 
     SUBCASE( "invoke a member function (pointer)" )
@@ -141,9 +141,9 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( std::invoke( &User::age, src.get() ) == 32 );
 
         // TODO: invoke result is int& that is not supported yet
-        //        auto age = ureact::lift( src, &User::age );
-        //
-        //        CHECK( age.get() == 32 );
+        auto age = ureact::lift<int>( src, &User::age );
+
+        CHECK( age.get() == 32 );
     }
 
     // TODO: check member functions and data member access for Foo& and Foo* types

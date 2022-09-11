@@ -83,11 +83,14 @@ private:
  *  The signature of func should be equivalent to:
  *  * S func(const Values& ...)
  */
-template <typename... Values, typename InF>
+template <typename SIn = void, typename... Values, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF&& func )
 {
     using F = std::decay_t<InF>;
-    using S = std::invoke_result_t<F, Values...>; // TODO: remove r-value reference only, leave simple references
+    // TODO: remove r-value reference only, leave simple references
+    using S = std::conditional_t<std::is_same_v<SIn, void>, //
+        std::invoke_result_t<F, Values...>,
+        SIn>;
     using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
 
     context& context = std::get<0>( arg_pack.data ).get_context();
@@ -106,17 +109,17 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF
  *  The signature of func should be equivalent to:
  *  * S func(const value_t&)
  */
-template <typename Value, typename InF>
+template <typename SIn = void, typename Value, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
 {
     // TODO: replace with optimized version based on unary_operator_impl
-    return lift( with( arg ), std::forward<InF>( func ) );
+    return lift<SIn>( with( arg ), std::forward<InF>( func ) );
 }
 
 /*!
  * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func) algorithm used for "pipe" syntax
  */
-template <typename InF>
+template <typename SIn = void, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
 {
     return closure{ [func = std::forward<InF>( func )]( auto&& source ) {
@@ -124,7 +127,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
         static_assert(
             std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_signal_pack<std::decay_t<arg_t>>>,
             "Signal type or signal_pack is required" );
-        return lift( std::forward<arg_t>( source ), func );
+        return lift<SIn>( std::forward<arg_t>( source ), func );
     } };
 }
 

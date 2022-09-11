@@ -9,13 +9,14 @@
 
 #include <functional>
 
+#include "copy_stats.hpp"
 #include "doctest_extra.h"
+#include "identity.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/transaction.hpp"
 #include "ureact/ureact.hpp"
 
 // TODO: move reworked lift_operators.cpp here
-// TODO: move almost all lift tests from signal.cpp here
 
 namespace
 {
@@ -165,6 +166,44 @@ TEST_CASE( "NonConstPointerBug" )
     CHECK( wtf.get() == -1 );
 }
 
+TEST_CASE( "LiftUnary" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal v1 = make_var( ctx, 1 );
+    ureact::temp_signal v2 = ureact::lift( v1, []( auto i ) { return i * 2; } );
+    ureact::signal<int> minus_v1;
+    ureact::signal<int> minus_v2;
+
+    CHECK_FALSE( v2.was_op_stolen() );
+
+    SUBCASE( "Overloaded operator" )
+    {
+        minus_v1 = -v1;
+        minus_v2 = -std::move( v2 );
+    }
+    SUBCASE( "Functional syntax" )
+    {
+        minus_v1 = ureact::lift( v1, std::negate<>{} );
+        minus_v2 = ureact::lift( std::move( v2 ), std::negate<>{} );
+    }
+    SUBCASE( "Piped syntax" )
+    {
+        minus_v1 = v1 | ureact::lift( std::negate<>{} );
+        minus_v2 = std::move( v2 ) | ureact::lift( std::negate<>{} );
+    }
+
+    CHECK( v2.was_op_stolen() );
+
+    CHECK( minus_v1.get() == -1 );
+    CHECK( minus_v2.get() == -2 );
+
+    v1 <<= -7;
+
+    CHECK( minus_v1.get() == 7 );
+    CHECK( minus_v2.get() == 14 );
+}
+
 TEST_CASE( "Reactive class members" )
 {
     ureact::context ctx;
@@ -253,4 +292,46 @@ TEST_CASE( "Hello World" )
     secondWord <<= std::string( "World!" );
 
     CHECK( bothWords.get() == "Hello World!" );
+}
+
+TEST_CASE( "CopyStatsForSignalCalculations" )
+{
+    ureact::context ctx;
+
+    copy_stats stats;
+
+    auto a = ureact::make_var( ctx, copy_counter{ 1, &stats } );
+    auto b = ureact::make_var( ctx, copy_counter{ 10, &stats } );
+    auto c = ureact::make_var( ctx, copy_counter{ 100, &stats } );
+    auto d = ureact::make_var( ctx, copy_counter{ 1000, &stats } );
+
+    // 4x move to m_value
+    // 4x copy to m_new_value (can't be uninitialized for references)
+    CHECK( stats.copy_count == 4 );
+    CHECK( stats.move_count == 4 );
+
+    auto x = a + b + c + d;
+
+    CHECK( stats.copy_count == 4 );
+    CHECK( stats.move_count == 7 );
+    CHECK( x.get().v == 1111 );
+
+    a <<= copy_counter{ 2, &stats };
+
+    CHECK( stats.copy_count == 4 );
+    CHECK( stats.move_count == 10 );
+    CHECK( x.get().v == 1112 );
+}
+
+TEST_CASE( "LiftOperatorPriority" )
+{
+    ureact::context ctx;
+
+    auto _2 = make_var( ctx, 2 );
+
+    auto result = _2 + _2 * _2;
+    CHECK( result.get() == 6 );
+
+    auto result2 = ( _2 + _2 ) * _2;
+    CHECK( result2.get() == 8 );
 }

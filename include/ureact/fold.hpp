@@ -95,48 +95,33 @@ public:
     {
         m_events->set_current_turn( turn );
 
-        bool changed = false;
+        if( m_events->events().empty() )
+            return;
 
-        if( !m_events->events().empty() )
+        if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, DepValues...> )
         {
-            if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, DepValues...> )
-            {
-                S new_value = std::apply(
-                    [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                        return m_func( event_range<E>( m_events->events() ),
-                            this->m_value,
-                            args->value_ref()... );
-                    },
-                    m_deps );
-
-                if( !equal_to( new_value, this->m_value ) )
-                {
-                    changed = true;
-                    this->m_value = std::move( new_value );
-                }
-            }
-            else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, DepValues...> )
-            {
-                std::apply(
-                    [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                        m_func( event_range<E>( m_events->events() ),
-                            this->m_value,
-                            args->value_ref()... );
-                    },
-                    m_deps );
-
-                // Always assume change
-                changed = true;
-            }
-            else
-            {
-                static_assert( always_false<S>, "Unsupported function signature" );
-            }
+            this->pulse_if_value_changed( std::apply(
+                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    return m_func(
+                        event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                },
+                m_deps ) );
         }
-
-        if( changed )
+        else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, DepValues...> )
         {
-            this->get_graph().on_node_pulse( *this );
+            std::apply(
+                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    m_func(
+                        event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                },
+                m_deps );
+
+            // Always assume change
+            this->pulse_after_modify();
+        }
+        else
+        {
+            static_assert( always_false<S>, "Unsupported function signature" );
         }
     }
 

@@ -39,10 +39,7 @@ public:
 
         this->m_events.push_back( m_target->value_ref() );
 
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
+        this->pulse_if_has_events();
     }
 
 private:

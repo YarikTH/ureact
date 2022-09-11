@@ -63,10 +63,7 @@ public:
                 m_deps );
         }
 
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
+        this->pulse_if_has_events();
     }
 
 private:

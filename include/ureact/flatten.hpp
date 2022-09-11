@@ -40,25 +40,22 @@ public:
 
     void tick( turn_type& ) override
     {
-        const auto& new_inner = m_outer->value_ref().get_node();
-
-        if( new_inner != m_inner )
         {
-            // Topology has been changed
-            auto old_inner = m_inner;
-            m_inner = new_inner;
+            const auto& new_inner = m_outer->value_ref().get_node();
+            if( !equal_to( new_inner, m_inner ) )
+            {
+                // Topology has been changed
+                auto old_inner = m_inner;
+                m_inner = new_inner;
 
-            this->get_graph().on_dynamic_node_detach( *this, *old_inner );
-            this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+                this->get_graph().on_dynamic_node_detach( *this, *old_inner );
+                this->get_graph().on_dynamic_node_attach( *this, *new_inner );
 
-            return;
+                return;
+            }
         }
 
-        if( !equal_to( this->m_value, m_inner->value_ref() ) )
-        {
-            this->m_value = m_inner->value_ref();
-            this->get_graph().on_node_pulse( *this );
-        }
+        this->pulse_if_value_changed( m_inner->value_ref() );
     }
 
 private:
@@ -92,29 +89,27 @@ public:
         this->set_current_turn_force_update( turn );
         m_inner->set_current_turn( turn );
 
-        auto new_inner = m_outer->value_ref().get_node();
-
-        if( new_inner != m_inner )
         {
-            new_inner->set_current_turn( turn );
+            const auto& new_inner = m_outer->value_ref().get_node();
+            if( !equal_to( new_inner, m_inner ) )
+            {
+                new_inner->set_current_turn( turn ); // events specific
 
-            // Topology has been changed
-            auto m_old_inner = m_inner;
-            m_inner = new_inner;
+                // Topology has been changed
+                auto old_inner = m_inner;
+                m_inner = new_inner;
 
-            this->get_graph().on_dynamic_node_detach( *this, *m_old_inner );
-            this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+                this->get_graph().on_dynamic_node_detach( *this, *old_inner );
+                this->get_graph().on_dynamic_node_attach( *this, *new_inner );
 
-            return;
+                return;
+            }
         }
 
         this->m_events.insert(
             this->m_events.end(), m_inner->events().begin(), m_inner->events().end() );
 
-        if( this->m_events.size() > 0 )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
+        this->pulse_if_has_events();
     }
 
 private:

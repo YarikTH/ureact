@@ -1177,6 +1177,23 @@ public:
         return m_value;
     }
 
+    // Assign a new value and do pulse only if new value is different from the current one
+    template <class T>
+    void pulse_if_value_changed( T&& new_value )
+    {
+        if( !equal_to( this->m_value, new_value ) )
+        {
+            this->m_value = std::forward<T>( new_value );
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
+    // Perform pulse after value modification was performed
+    void pulse_after_modify()
+    {
+        this->get_graph().on_node_pulse( *this );
+    }
+
 protected:
     S m_value;
 };
@@ -1286,22 +1303,7 @@ public:
 
     void tick( turn_type& ) override
     {
-        bool changed = false;
-
-        {
-            S new_value = m_op.evaluate();
-
-            if( !equal_to( this->m_value, new_value ) )
-            {
-                this->m_value = std::move( new_value );
-                changed = true;
-            }
-        }
-
-        if( changed )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
+        this->pulse_if_value_changed( m_op.evaluate() );
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()
@@ -1779,6 +1781,14 @@ public:
         return m_events;
     }
 
+    void pulse_if_has_events()
+    {
+        if( !m_events.empty() )
+        {
+            this->get_graph().on_node_pulse( *this );
+        }
+    }
+
 protected:
     data_t m_events;
 
@@ -1866,10 +1876,7 @@ public:
 
         m_op.collect( turn, event_collector( this->m_events ) );
 
-        if( !this->m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
+        this->pulse_if_has_events();
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op() // TODO: check in tests

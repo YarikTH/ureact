@@ -22,7 +22,6 @@ target_sources(
         flatten.cpp
         fold.cpp
         hold.cpp
-        lift_operators.cpp
         lift.cpp
         merge.cpp
         monitor.cpp

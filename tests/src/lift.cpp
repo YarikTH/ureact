@@ -16,8 +16,6 @@
 #include "ureact/transaction.hpp"
 #include "ureact/ureact.hpp"
 
-// TODO: move reworked lift_operators.cpp here
-
 namespace
 {
 
@@ -298,6 +296,61 @@ TEST_CASE( "LiftBinary" )
     CHECK( temp_op_const.get() == 17 );
     CHECK( temp_op_signal.get() == 15 );
     CHECK( temp_op_temp.get() == 15 );
+}
+
+TEST_CASE( "LiftArithmeticOperators" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal lhs = make_var( ctx, 10 );
+    ureact::var_signal rhs = make_var( ctx, 3 );
+
+    CHECK( ( lhs + rhs ).get() == ( 10 + 3 ) );
+    CHECK( ( lhs - rhs ).get() == ( 10 - 3 ) );
+    CHECK( ( lhs * rhs ).get() == ( 10 * 3 ) );
+    CHECK( ( lhs / rhs ).get() == ( 10 / 3 ) );
+    CHECK( ( lhs % rhs ).get() == ( 10 % 3 ) );
+    CHECK( ( +lhs ).get() == ( +10 ) );
+    CHECK( ( -lhs ).get() == ( -10 ) );
+}
+
+TEST_CASE( "LiftRelationalOperators" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal lhs = make_var( ctx, -5 );
+    ureact::var_signal rhs = make_var( ctx, 25 );
+
+    // clang-format off
+    CHECK( ( lhs == rhs ).get() == ( -5 == 25 ) );
+    CHECK( ( lhs != rhs ).get() == ( -5 != 25 ) );
+    CHECK( ( lhs <  rhs ).get() == ( -5 <  25 ) );
+    CHECK( ( lhs <= rhs ).get() == ( -5 <= 25 ) );
+    CHECK( ( lhs >  rhs ).get() == ( -5 >  25 ) );
+    CHECK( ( lhs >= rhs ).get() == ( -5 >= 25 ) );
+    // clang-format on
+}
+
+TEST_CASE( "LiftLogicalOperators" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal lhs = make_var( ctx, false );
+    ureact::var_signal rhs = make_var( ctx, false );
+
+    for( auto [l, r] : { //
+             std::pair{ false, false },
+             std::pair{ false, true },
+             std::pair{ true, false },
+             std::pair{ true, true } } )
+    {
+        lhs <<= l;
+        rhs <<= r;
+
+        CHECK( ( lhs && rhs ).get() == ( l && r ) );
+        CHECK( ( lhs || rhs ).get() == ( l || r ) );
+        CHECK( ( !lhs ).get() == ( !l ) );
+    }
 }
 
 TEST_CASE( "Reactive class members" )

@@ -159,208 +159,92 @@ UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
 namespace detail
 {
 
-// Full analog of std::binder1st that removed in c++17
-// See https://en.cppreference.com/w/cpp/utility/functional/binder12
-template <template <typename, typename> class FunctorBinaryOp,
-    typename FirstArgument,
-    typename SecondArgument,
-    typename Fn = FunctorBinaryOp<FirstArgument, SecondArgument>>
-class binder1st
-{
-public:
-    template <typename T, class = disable_if_same_t<T, binder1st>>
-    explicit binder1st( T&& first_argument )
-        : m_first_argument( std::forward<T>( first_argument ) )
-    {}
-
-    template <typename T>
-    UREACT_WARN_UNUSED_RESULT auto operator()( T&& second_argument ) const
-    {
-        return m_fn( m_first_argument, std::forward<T>( second_argument ) );
-    }
-
-private:
-    Fn m_fn{};
-    FirstArgument m_first_argument;
-};
-
-// Full analog of std::binder2nd that removed in c++17
-// See https://en.cppreference.com/w/cpp/utility/functional/binder12
-template <template <typename, typename> class FunctorBinaryOp,
-    typename FirstArgument,
-    typename SecondArgument,
-    typename Fn = FunctorBinaryOp<FirstArgument, SecondArgument>>
-class binder2nd
-{
-public:
-    template <typename T, class = disable_if_same_t<T, binder2nd>>
-    explicit binder2nd( T&& second_argument )
-        : m_second_argument( std::forward<T>( second_argument ) )
-    {}
-
-    template <typename T>
-    UREACT_WARN_UNUSED_RESULT auto operator()( T&& first_argument ) const
-    {
-        return m_fn( std::forward<T>( first_argument ), m_second_argument );
-    }
-
-private:
-    Fn m_fn{};
-    SecondArgument m_second_argument;
-};
-
-template <template <typename, typename> class FunctorOp,
-    typename LeftSignal,
+template <typename LeftSignal,
+    typename InF,
     typename RightSignal,
     class = std::enable_if_t<is_signal_v<LeftSignal>>,
     class = std::enable_if_t<is_signal_v<RightSignal>>>
-auto binary_operator_impl( const LeftSignal& lhs, const RightSignal& rhs )
+auto binary_operator_impl( const LeftSignal& lhs, InF&& func, const RightSignal& rhs )
 {
-    using LeftVal = typename LeftSignal::value_t;
-    using RightVal = typename RightSignal::value_t;
-    using F = FunctorOp<LeftVal, RightVal>;
-    using S = std::invoke_result_t<F, LeftVal, RightVal>;
-    using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, signal_node_ptr_t<RightVal>>;
-
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
-
-    return temp_signal<S, Op>{ context, F(), lhs.get_node(), rhs.get_node() };
+    return lift( with( lhs, rhs ), std::forward<InF>( func ) );
 }
 
-template <template <typename, typename> class FunctorOp,
-    typename LeftSignal,
-    typename RightValIn,
-    typename LeftVal = typename LeftSignal::value_t,
-    typename RightVal = std::decay_t<RightValIn>,
-    class = std::enable_if_t<is_signal_v<LeftSignal>>,
-    class = std::enable_if_t<!is_signal_v<RightVal>>>
-auto binary_operator_impl( const LeftSignal& lhs, RightValIn&& rhs )
-{
-    using F = binder2nd<FunctorOp, LeftVal, RightVal>;
-    using S = std::invoke_result_t<F, LeftVal>;
-    using Op = function_op<S, F, signal_node_ptr_t<LeftVal>>;
-
-    context& context = lhs.get_context();
-
-    return temp_signal<S, Op>{ context, F( std::forward<RightValIn>( rhs ) ), lhs.get_node() };
-}
-
-template <template <typename, typename> class FunctorOp,
-    typename LeftValIn,
-    typename RightSignal,
-    typename LeftVal = std::decay_t<LeftValIn>,
-    typename RightVal = typename RightSignal::value_t,
-    class = std::enable_if_t<!is_signal_v<LeftVal>>,
-    class = std::enable_if_t<is_signal_v<RightSignal>>>
-auto binary_operator_impl( LeftValIn&& lhs, const RightSignal& rhs )
-{
-    using F = binder1st<FunctorOp, LeftVal, RightVal>;
-    using S = std::invoke_result_t<F, RightVal>;
-    using Op = function_op<S, F, signal_node_ptr_t<RightVal>>;
-
-    context& context = rhs.get_context();
-
-    return temp_signal<S, Op>{ context, F( std::forward<LeftValIn>( lhs ) ), rhs.get_node() };
-}
-
-template <template <typename, typename> class FunctorOp,
-    typename LeftVal,
-    typename LeftOp,
+template <typename LeftSignal,
+    typename InF,
     typename RightVal,
-    typename RightOp>
-auto binary_operator_impl(
-    temp_signal<LeftVal, LeftOp>&& lhs, temp_signal<RightVal, RightOp>&& rhs )
+    class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
+    class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
+auto binary_operator_impl( LeftSignal&& lhs, InF&& func, RightVal&& rhs )
 {
-    using F = FunctorOp<LeftVal, RightVal>;
+    return lift( std::forward<LeftSignal>( lhs ),
+        std::bind(
+            std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
+}
+
+template <typename LeftVal,
+    typename InF,
+    typename RightSignal,
+    class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
+    class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
+    typename Wtf = void>
+auto binary_operator_impl( LeftVal&& lhs, InF&& func, RightSignal&& rhs )
+{
+    return lift( std::forward<RightSignal>( rhs ),
+        std::bind(
+            std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
+}
+
+template <typename LeftVal, typename LeftOp, typename InF, typename RightVal, typename RightOp>
+auto binary_operator_impl(
+    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
+{
+    using F = std::decay_t<InF>;
     using S = std::invoke_result_t<F, LeftVal, RightVal>;
     using Op = function_op<S, F, LeftOp, RightOp>;
 
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, F(), lhs.steal_op(), rhs.steal_op() };
+    return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.steal_op(), rhs.steal_op() };
 }
 
-template <template <typename, typename> class FunctorOp,
-    typename LeftVal,
+template <typename LeftVal,
     typename LeftOp,
+    typename InF,
     typename RightSignal,
     class = std::enable_if_t<is_signal_v<RightSignal>>>
-auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, const RightSignal& rhs )
+auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs )
 {
     using RightVal = typename RightSignal::value_t;
-    using F = FunctorOp<LeftVal, RightVal>;
+    using F = std::decay_t<InF>;
     using S = std::invoke_result_t<F, LeftVal, RightVal>;
     using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
-    context& context = rhs.get_context();
+    context& context = lhs.get_context();
+    assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, F(), lhs.steal_op(), rhs.get_node() };
+    return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.steal_op(), rhs.get_node() };
 }
 
-template <template <typename, typename> class FunctorOp,
-    typename LeftSignal,
+template <typename LeftSignal,
+    typename InF,
     typename RightVal,
     typename RightOp,
     class = std::enable_if_t<is_signal_v<LeftSignal>>>
-auto binary_operator_impl( const LeftSignal& lhs, temp_signal<RightVal, RightOp>&& rhs )
+auto binary_operator_impl( const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
 {
     using LeftVal = typename LeftSignal::value_t;
-    using F = FunctorOp<LeftVal, RightVal>;
+    using F = std::decay_t<InF>;
     using S = std::invoke_result_t<F, LeftVal, RightVal>;
     using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
     context& context = lhs.get_context();
+    assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, F(), lhs.get_node(), rhs.steal_op() };
-}
-
-template <template <typename, typename> class FunctorOp,
-    typename LeftVal,
-    typename LeftOp,
-    typename RightValIn,
-    typename RightVal = std::decay_t<RightValIn>,
-    class = std::enable_if_t<!is_signal_v<RightVal>>>
-auto binary_operator_impl( temp_signal<LeftVal, LeftOp>&& lhs, RightValIn&& rhs )
-{
-    using F = binder2nd<FunctorOp, LeftVal, RightVal>;
-    using S = std::invoke_result_t<F, LeftVal>;
-    using Op = function_op<S, F, LeftOp>;
-
-    context& context = lhs.get_context();
-
-    return temp_signal<S, Op>{ context, F( std::forward<RightValIn>( rhs ) ), lhs.steal_op() };
-}
-
-template <template <typename, typename> class FunctorOp,
-    typename LeftValIn,
-    typename RightVal,
-    typename RightOp,
-    typename LeftVal = std::decay_t<LeftValIn>,
-    class = std::enable_if_t<!is_signal_v<LeftVal>>>
-auto binary_operator_impl( LeftValIn&& lhs, temp_signal<RightVal, RightOp>&& rhs )
-{
-    using F = binder1st<FunctorOp, LeftVal, RightVal>;
-    using S = std::invoke_result_t<F, RightVal>;
-    using Op = function_op<S, F, RightOp>;
-
-    context& context = rhs.get_context();
-
-    return temp_signal<S, Op>{ context, F( std::forward<LeftValIn>( lhs ) ), rhs.steal_op() };
+    return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.get_node(), rhs.steal_op() };
 }
 
 } // namespace detail
-
-// Define function body using "Please repeat yourself twice" idiom
-#define UREACT_FUNCTION_BODY( EXPR )                                                               \
-    noexcept( noexcept( EXPR ) )->decltype( EXPR )                                                 \
-    {                                                                                              \
-        return ( EXPR );                                                                           \
-    }
-
-// Forward arg
-#define UREACT_FWD( X ) std::forward<decltype( X )>( X )
 
 #define UREACT_DECLARE_UNARY_OPERATOR( op, fn )                                                    \
     template <typename Signal, class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>        \
@@ -369,30 +253,16 @@ auto binary_operator_impl( LeftValIn&& lhs, temp_signal<RightVal, RightOp>&& rhs
         return lift( std::forward<Signal>( arg ), fn{} );                                          \
     }
 
-#define UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                               \
-    namespace detail                                                                               \
-    {                                                                                              \
-    template <typename L, typename R>                                                              \
-    struct op_functor_##name                                                                       \
-    {                                                                                              \
-        UREACT_WARN_UNUSED_RESULT auto operator()( const L& lhs, const R& rhs ) const              \
-            UREACT_FUNCTION_BODY( lhs op rhs )                                                     \
-    };                                                                                             \
-    } /* namespace detail */
-
-#define UREACT_DECLARE_BINARY_OP( op, name )                                                       \
+#define UREACT_DECLARE_BINARY_OPERATOR( op, fn )                                                   \
     template <typename Lhs,                                                                        \
         typename Rhs,                                                                              \
-        template <typename, typename> class FunctorOp = detail::op_functor_##name,                 \
         class = std::enable_if_t<                                                                  \
             std::disjunction_v<is_signal<std::decay_t<Lhs>>, is_signal<std::decay_t<Rhs>>>>>       \
     UREACT_WARN_UNUSED_RESULT auto operator op( Lhs&& lhs, Rhs&& rhs ) /*                */        \
-        UREACT_FUNCTION_BODY(                                                                      \
-            detail::binary_operator_impl<FunctorOp>( UREACT_FWD( lhs ), UREACT_FWD( rhs ) ) )
-
-#define UREACT_DECLARE_BINARY_OPERATOR( op, name )                                                 \
-    UREACT_DECLARE_BINARY_OP_FUNCTOR( op, name )                                                   \
-    UREACT_DECLARE_BINARY_OP( op, name )
+    {                                                                                              \
+        return detail::binary_operator_impl(                                                       \
+            std::forward<Lhs>( lhs ), fn{}, std::forward<Rhs>( rhs ) );                            \
+    }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
@@ -402,27 +272,27 @@ auto binary_operator_impl( LeftValIn&& lhs, temp_signal<RightVal, RightOp>&& rhs
 
 // arithmetic operators
 
-UREACT_DECLARE_BINARY_OPERATOR( +, addition )
-UREACT_DECLARE_BINARY_OPERATOR( -, subtraction )
-UREACT_DECLARE_BINARY_OPERATOR( *, multiplication )
-UREACT_DECLARE_BINARY_OPERATOR( /, division )
-UREACT_DECLARE_BINARY_OPERATOR( %, modulo )
+UREACT_DECLARE_BINARY_OPERATOR( +, std::plus<> )
+UREACT_DECLARE_BINARY_OPERATOR( -, std::minus<> )
+UREACT_DECLARE_BINARY_OPERATOR( *, std::multiplies<> )
+UREACT_DECLARE_BINARY_OPERATOR( /, std::divides<> )
+UREACT_DECLARE_BINARY_OPERATOR( %, std::modulus<> )
 UREACT_DECLARE_UNARY_OPERATOR( +, detail::unary_plus )
 UREACT_DECLARE_UNARY_OPERATOR( -, std::negate<> )
 
 // relational operators
 
-UREACT_DECLARE_BINARY_OPERATOR( ==, equal )
-UREACT_DECLARE_BINARY_OPERATOR( !=, not_equal )
-UREACT_DECLARE_BINARY_OPERATOR( <, less )
-UREACT_DECLARE_BINARY_OPERATOR( <=, less_equal )
-UREACT_DECLARE_BINARY_OPERATOR( >, greater )
-UREACT_DECLARE_BINARY_OPERATOR( >=, greater_equal )
+UREACT_DECLARE_BINARY_OPERATOR( ==, std::equal_to<> )
+UREACT_DECLARE_BINARY_OPERATOR( !=, std::not_equal_to<> )
+UREACT_DECLARE_BINARY_OPERATOR( <, std::less<> )
+UREACT_DECLARE_BINARY_OPERATOR( <=, std::less_equal<> )
+UREACT_DECLARE_BINARY_OPERATOR( >, std::greater<> )
+UREACT_DECLARE_BINARY_OPERATOR( >=, std::greater_equal<> )
 
 // logical operators
 
-UREACT_DECLARE_BINARY_OPERATOR( &&, logical_and )
-UREACT_DECLARE_BINARY_OPERATOR( ||, logical_or )
+UREACT_DECLARE_BINARY_OPERATOR( &&, std::logical_and<> )
+UREACT_DECLARE_BINARY_OPERATOR( ||, std::logical_or<> )
 UREACT_DECLARE_UNARY_OPERATOR( !, std::logical_not<> )
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
@@ -430,11 +300,7 @@ UREACT_DECLARE_UNARY_OPERATOR( !, std::logical_not<> )
 #endif
 
 #undef UREACT_DECLARE_UNARY_OPERATOR
-#undef UREACT_DECLARE_UNARY_OP_FUNCTOR
-#undef UREACT_DECLARE_UNARY_OP
 #undef UREACT_DECLARE_BINARY_OPERATOR
-#undef UREACT_DECLARE_BINARY_OP_FUNCTOR
-#undef UREACT_DECLARE_BINARY_OP
 
 UREACT_END_NAMESPACE
 

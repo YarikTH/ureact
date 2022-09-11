@@ -7,7 +7,7 @@ from enum import Enum
 from typing import List
 from dataclasses import dataclass
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 @dataclass
@@ -20,9 +20,9 @@ class Tools:
 def is_tool(name):
     """Check whether `name` is on PATH."""
 
-    from distutils.spawn import find_executable
+    from shutil import which
 
-    return find_executable(name) is not None
+    return which(name) is not None
 
 
 def check_tools(tools: Tools) -> bool:

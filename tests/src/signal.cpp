@@ -17,6 +17,7 @@
 // * temp_signal<S, ...>
 // * signal_pack
 
+// TODO: leave here only signal related tests, move lift related stuff in lift.cpp
 // TODO: remake MakeVars
 // TODO: remake SignalsN
 // TODO: remake ModifyN

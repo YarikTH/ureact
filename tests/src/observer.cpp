@@ -36,8 +36,12 @@ static_assert( std::is_move_assignable_v<ureact::scoped_observer> );
 static_assert( std::is_nothrow_move_constructible_v<ureact::scoped_observer> );
 static_assert( std::is_nothrow_move_assignable_v<ureact::scoped_observer> );
 
-// TODO: test .detach()
-
+// TODO: consider separation of observer.cpp into observer.cpp and observe.cpp
+// TODO: check construction and moving
+// TODO: test .detach() .is_valid()
+// TODO: test observe with temporary events. Synced and not
+// TODO: order tests (less specific to more specific)
+// TODO: refactor NoObserveOnNoChanged
 
 // Functor used for observer can optionally return value
 // Using this value observer can be optionally self detached
@@ -188,34 +192,59 @@ TEST_CASE( "SyncedObserveTest" )
 {
     ureact::context ctx;
 
-    auto in1 = make_var( ctx, 1 );
-    auto in2 = make_var( ctx, 1 );
+    auto a = make_var( ctx, 1 );
+    auto b = make_var( ctx, 1 );
 
-    auto sum = lift( with( in1, in2 ), []( int a, int b ) { return a + b; } );
-    auto prod = lift( with( in1, in2 ), []( int a, int b ) { return a * b; } );
-    auto diff = lift( with( in1, in2 ), []( int a, int b ) { return a - b; } );
+    const auto sum = a + b;
+    const auto prod = a * b;
+    const auto diff = a - b;
 
-    auto src1 = ureact::make_source( ctx );
-    auto src2 = ureact::make_source<int>( ctx );
+    SUBCASE( "unit source" )
+    {
+        const auto src = ureact::make_source( ctx );
+        using result_t = std::vector<std::tuple<int, int, int>>;
 
-    observe( src1, with( sum, prod, diff ), []( ureact::unit, int sum, int prod, int diff ) {
-        CHECK_EQ( sum, 33 );
-        CHECK_EQ( prod, 242 );
-        CHECK_EQ( diff, 11 );
-    } );
+        result_t result;
 
-    observe( src2, with( sum, prod, diff ), []( int e, int sum, int prod, int diff ) {
-        CHECK_EQ( e, 42 );
-        CHECK_EQ( sum, 33 );
-        CHECK_EQ( prod, 242 );
-        CHECK_EQ( diff, 11 );
-    } );
+        observe( src, with( sum, prod, diff ), [&]( ureact::unit, int sum, int prod, int diff ) {
+            result.emplace_back( sum, prod, diff );
+        } );
 
-    in1 <<= 22;
-    in2 <<= 11;
+        a <<= 22;
+        b <<= 11;
 
-    src1.emit();
-    src2.emit( 42 );
+        CHECK( result.empty() );
+
+        src.emit();
+
+        const result_t expected = { { 33, 242, 11 } };
+
+        CHECK( result == expected );
+    }
+
+    SUBCASE( "string source" )
+    {
+        const auto src = ureact::make_source<std::string>( ctx );
+        using result_t = std::vector<std::tuple<std::string, int, int, int>>;
+
+        result_t result;
+
+        observe(
+            src, with( sum, prod, diff ), [&]( const std::string& e, int sum, int prod, int diff ) {
+                result.emplace_back( e, sum, prod, diff );
+            } );
+
+        a <<= 22;
+        b <<= 11;
+
+        CHECK( result.empty() );
+
+        src.emit( "Wtf?" );
+
+        const result_t expected = { { "Wtf?", 33, 242, 11 } };
+
+        CHECK( result == expected );
+    }
 }
 
 TEST_CASE( "Observers" )
@@ -241,7 +270,7 @@ TEST_CASE( "Observers" )
             // After scope my_signal is destroyed, and so is the observer
             observe( my_signal, on_x_value_change );
 
-            x <<= 1; // output: 2
+            x <<= 1;
 
             CHECK( x_values == std::vector<int>{ 1 } );
         }
@@ -268,7 +297,7 @@ TEST_CASE( "Observers" )
 
                 // The node linked to my_signal is now also owned by obs
 
-                x <<= 1; // output: 2
+                x <<= 1;
 
                 CHECK( x_values == std::vector<int>{ 1 } );
             }
@@ -277,7 +306,7 @@ TEST_CASE( "Observers" )
             // my_signal was destroyed, but as long as obs exists and is still
             // attached to the signal node, this signal node won't be destroyed
 
-            x <<= 2; // output: 3
+            x <<= 2;
 
             CHECK( x_values == std::vector<int>{ 1, 2 } );
         }

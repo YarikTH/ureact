@@ -12,6 +12,7 @@ target_sources(
     PRIVATE
         cast.cpp
         changed.cpp
+        closure.cpp
         collect.cpp
         context.cpp
         count.cpp

@@ -83,13 +83,13 @@ private:
  *  The signature of func should be equivalent to:
  *  * S func(const Values& ...)
  */
-template <typename... Values,
-    typename InF,
-    typename F = std::decay_t<InF>,
-    typename S = std::invoke_result_t<F, Values...>,
-    typename Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>>
+template <typename... Values, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF&& func )
 {
+    using F = std::decay_t<InF>;
+    using S = std::invoke_result_t<F, Values...>; // TODO: remove r-value reference only, leave simple references
+    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
+
     context& context = std::get<0>( arg_pack.data ).get_context();
 
     auto node_builder = [&context, &func]( const signal<Values>&... args ) {
@@ -109,6 +109,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF
 template <typename Value, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
 {
+    // TODO: replace with optimized version based on unary_operator_impl
     return lift( with( arg ), std::forward<InF>( func ) );
 }
 

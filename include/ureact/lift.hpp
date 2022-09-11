@@ -10,6 +10,8 @@
 #ifndef UREACT_LIFT_HPP
 #define UREACT_LIFT_HPP
 
+#include <functional>
+
 #include "ureact.hpp"
 
 UREACT_BEGIN_NAMESPACE
@@ -48,7 +50,7 @@ private:
         template <typename... T>
         UREACT_WARN_UNUSED_RESULT S operator()( T&&... args )
         {
-            return m_func( eval( std::forward<T>( args ) )... );
+            return std::invoke( m_func, eval( std::forward<T>( args ) )... );
         }
 
         template <typename T>

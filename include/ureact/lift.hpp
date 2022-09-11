@@ -300,12 +300,6 @@ UREACT_WARN_UNUSED_RESULT auto lift(
         return lift( std::forward<Lhs>( lhs ), fn{}, std::forward<Rhs>( rhs ) );                   \
     }
 
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wunknown-warning-option"
-#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
-#endif
-
 // arithmetic operators
 
 UREACT_DECLARE_BINARY_OPERATOR( +, std::plus<> )
@@ -330,10 +324,6 @@ UREACT_DECLARE_BINARY_OPERATOR( >=, std::greater_equal<> )
 UREACT_DECLARE_BINARY_OPERATOR( &&, std::logical_and<> )
 UREACT_DECLARE_BINARY_OPERATOR( ||, std::logical_or<> )
 UREACT_DECLARE_UNARY_OPERATOR( !, std::logical_not<> )
-
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic pop
-#endif
 
 #undef UREACT_DECLARE_UNARY_OPERATOR
 #undef UREACT_DECLARE_BINARY_OPERATOR

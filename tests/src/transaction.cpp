@@ -41,13 +41,33 @@ TEST_CASE( "ComplexTransaction" )
     ureact::context ctx;
 
     ureact::var_signal src{ ctx, 2 };
+    ureact::signal<int> result;
 
-    auto result = do_transaction(
-        ctx,
-        [&]( int i ) {      //
-            return src + i; // return value from the transaction functor
-        },                  //
-        3 );                // pass value to the transaction functor
+    SUBCASE( "lambda" )
+    {
+        result = do_transaction(
+            ctx,
+            [&]( int i ) {      //
+                return src + i; // return value from the transaction functor
+            },                  //
+            3 );                // pass value to the transaction functor
+    }
+    SUBCASE( "member" )
+    {
+        struct Foo
+        {
+            int i;
+            const ureact::signal<int>& src;
+
+            [[nodiscard]] ureact::signal<int> add_to_signal() const
+            {
+                return src + i;
+            }
+        };
+
+        Foo foo{ 3, src };
+        result = do_transaction( ctx, &Foo::add_to_signal, foo );
+    }
 
     CHECK( result.is_valid() );
     CHECK( result.get() == 5 );

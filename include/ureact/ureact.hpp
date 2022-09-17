@@ -1565,6 +1565,8 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT Op steal_op() &&
     {
+        assert( this->m_node.use_count() == 1
+                && "temp_signal's node should be uniquely owned, otherwise it is misused" );
         auto* node_ptr = static_cast<Node*>( this->m_node.get() );
         return node_ptr->steal_op();
     }

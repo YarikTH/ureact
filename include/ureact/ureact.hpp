@@ -1563,7 +1563,7 @@ public:
     /*!
      * @brief Return internal operator, leaving node invalid
      */
-    UREACT_WARN_UNUSED_RESULT Op steal_op()
+    UREACT_WARN_UNUSED_RESULT Op steal_op() &&
     {
         auto* node_ptr = static_cast<Node*>( this->m_node.get() );
         return node_ptr->steal_op();

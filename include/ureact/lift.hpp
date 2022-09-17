@@ -137,7 +137,8 @@ UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func 
     using F = std::decay_t<InF>;
     using S = detail::deduce_s<SIn, F, Value>;
     using Op = detail::function_op<S, F, OpIn>;
-    return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.steal_op() };
+    return temp_signal<S, Op>{
+        arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
 }
 
 /*!
@@ -229,7 +230,10 @@ UREACT_WARN_UNUSED_RESULT auto lift(
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.steal_op(), rhs.steal_op() };
+    return temp_signal<S, Op>{ context,
+        std::forward<InF>( func ),
+        std::move( lhs ).steal_op(),
+        std::move( rhs ).steal_op() };
 }
 
 /*!
@@ -254,7 +258,8 @@ UREACT_WARN_UNUSED_RESULT auto lift(
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.steal_op(), rhs.get_node() };
+    return temp_signal<S, Op>{
+        context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
 }
 
 /*!
@@ -279,7 +284,8 @@ UREACT_WARN_UNUSED_RESULT auto lift(
     context& context = lhs.get_context();
     assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.get_node(), rhs.steal_op() };
+    return temp_signal<S, Op>{
+        context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
 }
 
 #define UREACT_DECLARE_UNARY_LIFT_OPERATOR( op, fn )                                               \

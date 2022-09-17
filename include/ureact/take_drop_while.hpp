@@ -30,7 +30,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
 {
     auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
                            const auto& e, const auto... deps ) mutable {
-        passed = passed && pred( e, deps... );
+        passed = passed && std::invoke( pred, e, deps... );
         return passed;
     };
 
@@ -92,7 +92,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
 {
     auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
                              const auto& e, const auto... deps ) mutable {
-        passed = passed || !pred( e, deps... );
+        passed = passed || !std::invoke( pred, e, deps... );
         return passed;
     };
 

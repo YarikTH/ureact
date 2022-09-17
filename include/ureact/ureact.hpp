@@ -30,6 +30,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <tuple>
@@ -1230,7 +1231,7 @@ public:
         // There hasn't been any set(...) input yet, modify.
         if( !m_is_input_added )
         {
-            func( this->m_value );
+            std::invoke( func, this->m_value );
 
             m_is_input_modified = true;
         }
@@ -1239,7 +1240,7 @@ public:
         // in apply_input
         else
         {
-            func( m_new_value );
+            std::invoke( func, m_new_value );
         }
     }
 

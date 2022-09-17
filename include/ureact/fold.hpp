@@ -32,7 +32,7 @@ public:
     {
         for( const auto& e : range )
         {
-            accum = m_func( e, accum, args... );
+            accum = std::invoke( m_func, e, accum, args... );
         }
 
         return accum;
@@ -56,7 +56,7 @@ public:
     {
         for( const auto& e : range )
         {
-            m_func( e, accum, args... );
+            std::invoke( m_func, e, accum, args... );
         }
     }
 
@@ -102,8 +102,10 @@ public:
         {
             this->pulse_if_value_changed( std::apply(
                 [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                    return m_func(
-                        event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                    return std::invoke( m_func,
+                        event_range<E>( m_events->events() ),
+                        this->m_value,
+                        args->value_ref()... );
                 },
                 m_deps ) );
         }
@@ -111,8 +113,10 @@ public:
         {
             std::apply(
                 [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                    m_func(
-                        event_range<E>( m_events->events() ), this->m_value, args->value_ref()... );
+                    std::invoke( m_func,
+                        event_range<E>( m_events->events() ),
+                        this->m_value,
+                        args->value_ref()... );
                 },
                 m_deps );
 

@@ -56,7 +56,8 @@ public:
         {
             std::apply(
                 [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                    m_func( event_range<InE>( m_source->events() ),
+                    std::invoke( m_func,
+                        event_range<InE>( m_source->events() ),
                         event_emitter( this->m_events ),
                         args->value_ref()... );
                 },

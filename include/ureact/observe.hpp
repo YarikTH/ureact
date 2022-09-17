@@ -30,7 +30,7 @@ public:
     template <typename... Args>
     UREACT_WARN_UNUSED_RESULT Ret operator()( Args&&... args )
     {
-        m_func( std::forward<Args>( args )... );
+        std::invoke( m_func, std::forward<Args>( args )... );
         return return_value;
     }
 
@@ -57,7 +57,7 @@ public:
     {
         for( const auto& e : range )
         {
-            if( m_func( e, args... ) == observer_action::stop_and_detach )
+            if( std::invoke( m_func, e, args... ) == observer_action::stop_and_detach )
             {
                 return observer_action::stop_and_detach;
             }
@@ -90,7 +90,7 @@ public:
 
         if( auto p = m_subject.lock() )
         {
-            if( m_func( p->value_ref() ) == observer_action::stop_and_detach )
+            if( std::invoke( m_func, p->value_ref() ) == observer_action::stop_and_detach )
             {
                 should_detach = true;
             }
@@ -156,7 +156,8 @@ public:
                 should_detach
                     = std::apply(
                           [this, &p]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                              return m_func( event_range<E>( p->events() ), args->value_ref()... );
+                              return std::invoke(
+                                  m_func, event_range<E>( p->events() ), args->value_ref()... );
                           },
                           m_deps )
                    == observer_action::stop_and_detach;

@@ -41,7 +41,7 @@ UREACT_WARN_UNUSED_RESULT auto filter(
         [pred = std::forward<Pred>( pred )](
             event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
             for( const auto& e : range )
-                if( pred( e, deps... ) )
+                if( std::invoke( pred, e, deps... ) )
                     out << e;
         } );
 }

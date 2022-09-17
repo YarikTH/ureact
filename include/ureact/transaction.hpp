@@ -32,11 +32,11 @@ UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&...
 
     if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
     {
-        std::forward<F>( func )( std::forward<Args>( args )... );
+        std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
     }
     else
     {
-        return std::forward<F>( func )( std::forward<Args>( args )... );
+        return std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
     }
 }
 

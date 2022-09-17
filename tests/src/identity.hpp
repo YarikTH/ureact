@@ -11,12 +11,10 @@
 
 // Based on std::identity from c++20
 // https://en.cppreference.com/w/cpp/utility/functional/identity
-// The only difference is return type that is auto instead of auto&&
-// because lift function is broken otherwise
 struct identity
 {
     template <class T>
-    constexpr auto operator()( T&& t ) const noexcept
+    constexpr auto&& operator()( T&& t ) const noexcept
     {
         return std::forward<T>( t );
     }

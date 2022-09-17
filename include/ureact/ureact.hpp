@@ -986,12 +986,6 @@ public:
         return _get_internals( m_context ).get_graph();
     }
 
-    UREACT_WARN_UNUSED_RESULT const react_graph&
-    get_graph() const // TODO: check in tests or remove it completely
-    {
-        return _get_internals( m_context ).get_graph();
-    }
-
 private:
     UREACT_MAKE_NONCOPYABLE( node_base );
 

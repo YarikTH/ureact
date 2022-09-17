@@ -21,9 +21,9 @@ template <typename E, typename S, typename F, typename... Args>
 class add_fold_range_wrapper
 {
 public:
-    template <typename FIn, class = disable_if_same_t<FIn, add_fold_range_wrapper>>
-    explicit add_fold_range_wrapper( FIn&& func )
-        : m_func( std::forward<FIn>( func ) )
+    template <typename InF, class = disable_if_same_t<InF, add_fold_range_wrapper>>
+    explicit add_fold_range_wrapper( InF&& func )
+        : m_func( std::forward<InF>( func ) )
     {}
 
     // TODO: possible optimization - move accum as much as possible. See std::accumulate
@@ -46,9 +46,9 @@ template <typename E, typename S, typename F, typename... Args>
 class add_fold_by_ref_range_wrapper
 {
 public:
-    template <typename FIn, class = disable_if_same_t<FIn, add_fold_by_ref_range_wrapper>>
-    explicit add_fold_by_ref_range_wrapper( FIn&& func )
-        : m_func( std::forward<FIn>( func ) )
+    template <typename InF, class = disable_if_same_t<InF, add_fold_by_ref_range_wrapper>>
+    explicit add_fold_by_ref_range_wrapper( InF&& func )
+        : m_func( std::forward<InF>( func ) )
     {}
 
     // TODO: move 'typename... Args' here
@@ -134,12 +134,12 @@ private:
     DepHolder m_deps;
 };
 
-template <typename E, typename V, typename FIn, typename... Deps, typename S = std::decay_t<V>>
+template <typename E, typename V, typename InF, typename... Deps, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold_impl(
-    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
+    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
     -> signal<S>
 {
-    using F = std::decay_t<FIn>;
+    using F = std::decay_t<InF>;
 
     // clang-format off
     using Node =
@@ -168,7 +168,7 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
         return signal<S>( std::make_shared<Node>( context,
             std::forward<V>( init ),
             events.get_node(),
-            std::forward<FIn>( func ),
+            std::forward<InF>( func ),
             deps.get_node()... ) );
     };
 
@@ -205,23 +205,23 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
  *  @note The event_range<E> option allows to explicitly batch process single turn events
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename E, typename V, typename FIn, typename... Deps, typename S = std::decay_t<V>>
+template <typename E, typename V, typename InF, typename... Deps, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto fold(
-    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
+    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
     -> signal<S>
 {
-    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<FIn>( func ) );
+    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
 }
 
 /*!
- * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func)
+ * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
  */
-template <typename V, typename FIn, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func )
+template <typename V, typename InF, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
 {
     return closure{ [init = std::forward<V>( init ),
                         deps = dep_pack.store(),
-                        func = std::forward<FIn>( func )]( auto&& source ) {
+                        func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return fold(
@@ -234,22 +234,22 @@ UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_p
  *
  *  Version without synchronization with additional signals
  *
- *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, FIn&& func)
+ *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
  */
-template <typename E, typename V, typename FIn, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, FIn&& func ) -> signal<S>
+template <typename E, typename V, typename InF, typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, InF&& func ) -> signal<S>
 {
-    return fold_impl( events, std::forward<V>( init ), signal_pack<>(), std::forward<FIn>( func ) );
+    return fold_impl( events, std::forward<V>( init ), signal_pack<>(), std::forward<InF>( func ) );
 }
 
 /*!
- * @brief Curried version of fold(const events<E>& events, V&& init, FIn&& func)
+ * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
  */
-template <typename V, typename FIn>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, FIn&& func )
+template <typename V, typename InF>
+UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
 {
     return closure{
-        [init = std::forward<V>( init ), func = std::forward<FIn>( func )]( auto&& source ) {
+        [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
             return fold( std::forward<arg_t>( source ), std::move( init ), func );

@@ -46,9 +46,9 @@ template <typename E, typename F, typename... Args>
 class add_observer_range_wrapper
 {
 public:
-    template <typename FIn, class = disable_if_same_t<FIn, add_observer_range_wrapper>>
-    explicit add_observer_range_wrapper( FIn&& func )
-        : m_func( std::forward<FIn>( func ) )
+    template <typename InF, class = disable_if_same_t<InF, add_observer_range_wrapper>>
+    explicit add_observer_range_wrapper( InF&& func )
+        : m_func( std::forward<InF>( func ) )
     {}
 
     // NOTE: args can't be universal reference since its type is specified in class
@@ -227,11 +227,11 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
     return observer( raw_node_ptr, subject_ptr );
 }
 
-template <typename FIn, typename E, typename... Deps>
+template <typename InF, typename E, typename... Deps>
 auto observe_events_impl(
-    const events<E>& subject, const signal_pack<Deps...>& dep_pack, FIn&& func ) -> observer
+    const events<E>& subject, const signal_pack<Deps...>& dep_pack, InF&& func ) -> observer
 {
-    using F = std::decay_t<FIn>;
+    using F = std::decay_t<InF>;
 
     // clang-format off
     using wrapper_t =
@@ -260,7 +260,7 @@ auto observe_events_impl(
 
     auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
         return new Node(
-            context, subject.get_node(), std::forward<FIn>( func ), deps.get_node()... );
+            context, subject.get_node(), std::forward<InF>( func ), deps.get_node()... );
     };
 
     const auto& subject_node = subject.get_node();

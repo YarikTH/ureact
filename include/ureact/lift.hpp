@@ -26,10 +26,10 @@ template <typename S, typename F, typename... Deps>
 class function_op : public reactive_op_base<Deps...>
 {
 public:
-    template <typename FIn, typename... Args>
-    explicit function_op( FIn&& func, Args&&... args )
+    template <typename InF, typename... Args>
+    explicit function_op( InF&& func, Args&&... args )
         : function_op::reactive_op_base( dont_move(), std::forward<Args>( args )... )
-        , m_func( std::forward<FIn>( func ) )
+        , m_func( std::forward<InF>( func ) )
     {}
 
     function_op( function_op&& ) noexcept = default;

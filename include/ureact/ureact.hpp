@@ -2356,9 +2356,9 @@ namespace detail
 template <typename InF, typename S>
 auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer;
 
-template <typename FIn, typename E, typename... Deps>
+template <typename InF, typename E, typename... Deps>
 auto observe_events_impl(
-    const events<E>& subject, const signal_pack<Deps...>& dep_pack, FIn&& func ) -> observer;
+    const events<E>& subject, const signal_pack<Deps...>& dep_pack, InF&& func ) -> observer;
 
 } // namespace detail
 
@@ -2414,9 +2414,9 @@ private:
     template <typename InF, typename S>
     friend auto detail::observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer;
 
-    template <typename FIn, typename E, typename... Deps>
+    template <typename InF, typename E, typename... Deps>
     friend auto detail::observe_events_impl(
-        const events<E>& subject, const signal_pack<Deps...>& dep_pack, FIn&& func ) -> observer;
+        const events<E>& subject, const signal_pack<Deps...>& dep_pack, InF&& func ) -> observer;
 
     /// Owned by subject
     Node* m_node = nullptr;

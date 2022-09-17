@@ -81,7 +81,8 @@ using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
 struct unary_plus
 {
     template <typename T>
-    constexpr auto operator()( T&& t ) const noexcept( noexcept( +std::forward<T>( t ) ) )
+    constexpr auto operator()( T&& t ) const //
+        noexcept( noexcept( +std::forward<T>( t ) ) )
     {
         return +std::forward<T>( t );
     }
@@ -295,7 +296,7 @@ UREACT_WARN_UNUSED_RESULT auto lift(
         typename Rhs,                                                                              \
         class = std::enable_if_t<                                                                  \
             std::disjunction_v<is_signal<std::decay_t<Lhs>>, is_signal<std::decay_t<Rhs>>>>>       \
-    UREACT_WARN_UNUSED_RESULT auto operator op( Lhs&& lhs, Rhs&& rhs ) /*                */        \
+    UREACT_WARN_UNUSED_RESULT auto operator op( Lhs&& lhs, Rhs&& rhs )                             \
     {                                                                                              \
         return lift( std::forward<Lhs>( lhs ), fn{}, std::forward<Rhs>( rhs ) );                   \
     }

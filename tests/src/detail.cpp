@@ -8,6 +8,17 @@
 #include "doctest_extra.h"
 #include "ureact/ureact.hpp"
 
-// TODO: check type traits for detail
-// * detail::node_base
-// * detail::reactive_base
+// non-copyable and non-movable
+static_assert( !std::is_copy_constructible_v<ureact::detail::node_base> );
+static_assert( !std::is_copy_assignable_v<ureact::detail::node_base> );
+static_assert( !std::is_move_constructible_v<ureact::detail::node_base> );
+static_assert( !std::is_move_assignable_v<ureact::detail::node_base> );
+
+// copyable and nothrow movable
+static_assert( std::is_default_constructible_v<ureact::detail::reactive_base<int>> );
+static_assert( std::is_copy_constructible_v<ureact::detail::reactive_base<int>> );
+static_assert( std::is_copy_assignable_v<ureact::detail::reactive_base<int>> );
+static_assert( std::is_move_constructible_v<ureact::detail::reactive_base<int>> );
+static_assert( std::is_move_assignable_v<ureact::detail::reactive_base<int>> );
+static_assert( std::is_nothrow_move_constructible_v<ureact::detail::reactive_base<int>> );
+static_assert( std::is_nothrow_move_assignable_v<ureact::detail::reactive_base<int>> );

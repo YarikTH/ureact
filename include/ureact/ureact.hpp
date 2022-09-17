@@ -979,9 +979,6 @@ public:
         : m_context( context )
     {}
 
-    node_base( const node_base& ) = delete;
-    node_base& operator=( const node_base& ) = delete;
-
     UREACT_WARN_UNUSED_RESULT context& get_context() const
     {
         return m_context;
@@ -999,6 +996,8 @@ public:
     }
 
 private:
+    UREACT_MAKE_NONCOPYABLE( node_base );
+
     context& m_context;
 };
 

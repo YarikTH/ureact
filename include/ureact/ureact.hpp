@@ -849,14 +849,7 @@ inline void react_graph::recalculate_successor_levels( reactive_node& node )
 class context_internals
 {
 public:
-    context_internals()
-        : m_graph( new react_graph() )
-    {}
-
-    // context_internals and context should be non-movable because
-    // node_base contains reference to context, and it will break if context lose its graph
-    context_internals( context_internals&& ) noexcept = delete;
-    context_internals& operator=( context_internals&& ) noexcept = delete;
+    context_internals() = default;
 
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
@@ -864,7 +857,11 @@ public:
     }
 
 private:
-    std::unique_ptr<react_graph> m_graph;
+    // context_internals and context should be non-movable because
+    // node_base contains reference to context, and it will break if context lose its graph
+    UREACT_MAKE_NONMOVABLE( context_internals );
+
+    std::unique_ptr<react_graph> m_graph = std::make_unique<react_graph>();
 };
 
 // forward declaration

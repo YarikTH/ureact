@@ -75,7 +75,7 @@ private:
 // TODO: remove r-value reference only, leave simple references
 template <typename SIn, typename F, typename... Values>
 using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
-    std::invoke_result_t<F, Values...>,
+    std::decay_t<std::invoke_result_t<F, Values...>>,
     SIn>;
 
 struct unary_plus

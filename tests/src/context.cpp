@@ -8,4 +8,9 @@
 #include "doctest_extra.h"
 #include "ureact/ureact.hpp"
 
-// TODO: check type traits for context
+// non-copyable and non-movable
+static_assert( std::is_default_constructible_v<ureact::context> );
+static_assert( !std::is_copy_constructible_v<ureact::context> );
+static_assert( !std::is_copy_assignable_v<ureact::context> );
+static_assert( !std::is_move_constructible_v<ureact::context> );
+static_assert( !std::is_move_assignable_v<ureact::context> );

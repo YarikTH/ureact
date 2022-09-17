@@ -284,14 +284,14 @@ UREACT_WARN_UNUSED_RESULT auto lift(
     return temp_signal<S, Op>{ context, std::forward<InF>( func ), lhs.get_node(), rhs.steal_op() };
 }
 
-#define UREACT_DECLARE_UNARY_OPERATOR( op, fn )                                                    \
+#define UREACT_DECLARE_UNARY_LIFT_OPERATOR( op, fn )                                               \
     template <typename Signal, class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>        \
     UREACT_WARN_UNUSED_RESULT auto operator op( Signal&& arg )                                     \
     {                                                                                              \
         return lift( std::forward<Signal>( arg ), fn{} );                                          \
     }
 
-#define UREACT_DECLARE_BINARY_OPERATOR( op, fn )                                                   \
+#define UREACT_DECLARE_BINARY_LIFT_OPERATOR( op, fn )                                              \
     template <typename Lhs,                                                                        \
         typename Rhs,                                                                              \
         class = std::enable_if_t<                                                                  \
@@ -303,31 +303,31 @@ UREACT_WARN_UNUSED_RESULT auto lift(
 
 // arithmetic operators
 
-UREACT_DECLARE_BINARY_OPERATOR( +, std::plus<> )
-UREACT_DECLARE_BINARY_OPERATOR( -, std::minus<> )
-UREACT_DECLARE_BINARY_OPERATOR( *, std::multiplies<> )
-UREACT_DECLARE_BINARY_OPERATOR( /, std::divides<> )
-UREACT_DECLARE_BINARY_OPERATOR( %, std::modulus<> )
-UREACT_DECLARE_UNARY_OPERATOR( +, detail::unary_plus )
-UREACT_DECLARE_UNARY_OPERATOR( -, std::negate<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( +, std::plus<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( -, std::minus<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( *, std::multiplies<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( /, std::divides<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( %, std::modulus<> )
+UREACT_DECLARE_UNARY_LIFT_OPERATOR( +, detail::unary_plus )
+UREACT_DECLARE_UNARY_LIFT_OPERATOR( -, std::negate<> )
 
 // relational operators
 
-UREACT_DECLARE_BINARY_OPERATOR( ==, std::equal_to<> )
-UREACT_DECLARE_BINARY_OPERATOR( !=, std::not_equal_to<> )
-UREACT_DECLARE_BINARY_OPERATOR( <, std::less<> )
-UREACT_DECLARE_BINARY_OPERATOR( <=, std::less_equal<> )
-UREACT_DECLARE_BINARY_OPERATOR( >, std::greater<> )
-UREACT_DECLARE_BINARY_OPERATOR( >=, std::greater_equal<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( ==, std::equal_to<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( !=, std::not_equal_to<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( <, std::less<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( <=, std::less_equal<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( >, std::greater<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( >=, std::greater_equal<> )
 
 // logical operators
 
-UREACT_DECLARE_BINARY_OPERATOR( &&, std::logical_and<> )
-UREACT_DECLARE_BINARY_OPERATOR( ||, std::logical_or<> )
-UREACT_DECLARE_UNARY_OPERATOR( !, std::logical_not<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( &&, std::logical_and<> )
+UREACT_DECLARE_BINARY_LIFT_OPERATOR( ||, std::logical_or<> )
+UREACT_DECLARE_UNARY_LIFT_OPERATOR( !, std::logical_not<> )
 
-#undef UREACT_DECLARE_UNARY_OPERATOR
-#undef UREACT_DECLARE_BINARY_OPERATOR
+#undef UREACT_DECLARE_UNARY_LIFT_OPERATOR
+#undef UREACT_DECLARE_BINARY_LIFT_OPERATOR
 
 UREACT_END_NAMESPACE
 

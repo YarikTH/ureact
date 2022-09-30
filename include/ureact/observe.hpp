@@ -377,6 +377,40 @@ auto observe( events<E>&& subject, F&& func ) -> observer // TODO: check in test
     return observe_events_impl( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
 }
 
+/*!
+ * @brief Curried version of observe(T&& subject, F&& func)
+ */
+template <typename F>
+UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
+{
+    // TODO: propagate [[nodiscard]] to closure operator() and operator|
+    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
+    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
+    return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
+        using arg_t = decltype( subject );
+        static_assert(
+            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
+            "Signal type or Event type is required" );
+        return observe( std::forward<arg_t>( subject ), func );
+    } };
+}
+
+/*!
+ * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+ */
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto observe(
+    const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
+{
+    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+        using arg_t = decltype( subject );
+        static_assert(
+            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
+            "Signal type or Event type is required" );
+        return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+    } };
+}
+
 UREACT_END_NAMESPACE
 
 #endif // UREACT_OBSERVE_HPP

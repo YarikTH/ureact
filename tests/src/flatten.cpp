@@ -13,6 +13,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/observe.hpp"
+#include "ureact/reactive_ref.hpp"
 #include "ureact/transaction.hpp"
 
 // TODO: replace FlattenN tests with more meaningful ones

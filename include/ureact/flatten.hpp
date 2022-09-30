@@ -10,7 +10,7 @@
 #ifndef UREACT_FLATTEN_HPP
 #define UREACT_FLATTEN_HPP
 
-#include "lift.hpp"
+#include "ureact.hpp"
 
 UREACT_BEGIN_NAMESPACE
 
@@ -166,25 +166,6 @@ UREACT_WARN_UNUSED_RESULT inline auto flatten()
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return flatten( std::forward<arg_t>( source ) );
     } };
-}
-
-/*!
- * @brief Utility to flatten public signal attribute of class pointed be reference
- *
- *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
- *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
- *  This utility receives a signal pointer bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
- */
-template <typename Signal,
-    typename InF,
-    class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
-{
-    using S = typename std::decay_t<Signal>::value_t;
-    using F = std::decay_t<InF>;
-    using R = std::invoke_result_t<F, S>;
-    using DecayedR = detail::decay_input_t<std::decay_t<R>>;
-    return flatten( lift<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
 }
 
 UREACT_END_NAMESPACE

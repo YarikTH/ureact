@@ -10,6 +10,7 @@
 #ifndef UREACT_UNIQUE_HPP
 #define UREACT_UNIQUE_HPP
 
+#include "closure.hpp"
 #include "filter.hpp"
 
 UREACT_BEGIN_NAMESPACE

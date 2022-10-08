@@ -10,6 +10,7 @@
 #ifndef UREACT_CHANGED_H_
 #define UREACT_CHANGED_H_
 
+#include "closure.hpp"
 #include "filter.hpp"
 #include "monitor.hpp"
 #include "unify.hpp"

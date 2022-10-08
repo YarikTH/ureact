@@ -10,6 +10,7 @@
 #ifndef UREACT_FOLD_HPP
 #define UREACT_FOLD_HPP
 
+#include "closure.hpp"
 #include "ureact.hpp"
 
 UREACT_BEGIN_NAMESPACE

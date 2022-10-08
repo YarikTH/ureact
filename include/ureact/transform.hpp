@@ -10,6 +10,7 @@
 #ifndef UREACT_TRANSFORM_HPP
 #define UREACT_TRANSFORM_HPP
 
+#include "closure.hpp"
 #include "process.hpp"
 
 UREACT_BEGIN_NAMESPACE

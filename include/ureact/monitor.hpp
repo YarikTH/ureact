@@ -10,6 +10,7 @@
 #ifndef UREACT_MONITOR_HPP_
 #define UREACT_MONITOR_HPP_
 
+#include "closure.hpp"
 #include "ureact.hpp"
 
 UREACT_BEGIN_NAMESPACE

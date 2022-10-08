@@ -10,6 +10,7 @@
 #ifndef UREACT_TAKE_DROP_HPP
 #define UREACT_TAKE_DROP_HPP
 
+#include "closure.hpp"
 #include "filter.hpp"
 
 UREACT_BEGIN_NAMESPACE

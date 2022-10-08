@@ -11,7 +11,7 @@
 #define UREACT_CAST_HPP
 
 #include "closure.hpp"
-#include "process.hpp"
+#include "transform.hpp"
 
 UREACT_BEGIN_NAMESPACE
 
@@ -25,11 +25,9 @@ UREACT_BEGIN_NAMESPACE
 template <typename OutE, typename InE>
 UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
 {
-    return detail::process_impl<OutE>( source,
-        signal_pack<>(), //
-        []( event_range<InE> range, event_emitter<OutE> out ) mutable {
-            for( const auto& e : range )
-                out << static_cast<OutE>( e );
+    return transform( source, //
+        []( const InE& e ) {  //
+            return static_cast<OutE>( e );
         } );
 }
 

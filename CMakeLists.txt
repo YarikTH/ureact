@@ -157,8 +157,14 @@ if(UREACT_INSTALL)
         INCLUDES DESTINATION "${include_install_dir}"
     )
 
+    file(
+        GLOB_RECURSE UREACT_HEADER_FILES
+        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*/*.hpp"
+    )
+
     install(
-        FILES "include/ureact/ureact.hpp"
+        FILES ${UREACT_HEADER_FILES}
         DESTINATION "${include_install_dir}/ureact"
     )
 

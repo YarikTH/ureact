@@ -23,6 +23,7 @@ all:
 	@echo "Supported targets:"
 	@echo "* pretty_check - check if all cmake and c++ files are properly formatted"
 	@echo "* pretty - prettify all cmake and c++ files"
+	@echo "* amalgamated - generate ureact_amalgamated.hpp (does prettify first)"
 	@echo "* integration_check - check library integrations"
 	@echo "* integration_update - generate integration files"
 
@@ -46,6 +47,15 @@ pretty_check:
 # prettify all cmake and c++ files
 pretty:
 	@./support/venv.sh $(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) -
+
+
+##########################################################################
+# Amalgamated
+##########################################################################
+
+# generate ureact_amalgamated.hpp (does prettify first)
+amalgamated: pretty
+	@./support/venv.sh /usr/bin/env python3 ./support/generate_amalgamated_file.py
 
 
 ##########################################################################

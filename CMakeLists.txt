@@ -13,13 +13,16 @@ cmake_minimum_required(VERSION 3.8)
 
 # Get version from ureact.hpp
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/include/ureact/ureact.hpp ureact_hpp)
-if(NOT ureact_hpp MATCHES "UREACT_VERSION_STR \"([0-9]+).([0-9]+).([0-9]+)\"")
+# gersemi: off
+if(NOT ureact_hpp MATCHES "UREACT_VERSION_STR \"([0-9]+).([0-9]+).([0-9]+)([^\"]*)\"")
     message(FATAL_ERROR "Cannot get UREACT_VERSION from ureact.hpp.")
 endif()
+# gersemi: on
 # Use math to skip leading zeros if any.
 math(EXPR UREACT_VERSION_MAJOR ${CMAKE_MATCH_1})
 math(EXPR UREACT_VERSION_MINOR ${CMAKE_MATCH_2})
 math(EXPR UREACT_VERSION_PATCH ${CMAKE_MATCH_3})
+set(UREACT_VERSION_LABEL "${CMAKE_MATCH_4}")
 set(UREACT_VERSION
     ${UREACT_VERSION_MAJOR}.${UREACT_VERSION_MINOR}.${UREACT_VERSION_PATCH}
 )
@@ -48,7 +51,7 @@ option(UREACT_BENCHMARK "Generate the benchmark target." n)
 option(UREACT_INSTALL "Generate install target." ${UREACT_MASTER_PROJECT})
 option(UREACT_СTEST "Generate the CTest targets for CI." n)
 
-message(STATUS "ureact version: ${UREACT_VERSION}")
+message(STATUS "ureact version: ${UREACT_VERSION}${UREACT_VERSION_LABEL}")
 
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

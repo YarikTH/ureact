@@ -23,7 +23,6 @@ See code example used for integration tests [here](../../support/integration_gen
 
 There are plenty of ways to integrate **µReact** into the CMake project:
 
-* [Using copied header](cmake_copied_header/) - the easiest way is to copy ureact.hpp inside your own repository
 * [Using add_subdirectory](cmake_subdirectory/) - if you copy the whole repo of **µReact** or add it as a git submodule
 * [Using find_package](cmake_find_package/) - if you have installed version of **µReact** find_package is a proper way to do
 * [Using ExternalProject](cmake_external_project/) - good old way to acquire **µReact** from GitHub repo

@@ -20,11 +20,6 @@ function(generate_integration_cmake name cmake_min_ver)
     file(CREATE_LINK "${TEST_CPP}" "${TEST_CPP_LINKED_COPY}" SYMBOLIC)
 endfunction()
 
-set(MAIN_HEADER ../../../../include/ureact/ureact.hpp)
-set(MAIN_HEADER_LINKED_COPY ${DEST_DIR}/cmake_copied_header/ureact/ureact.hpp)
-file(CREATE_LINK "${MAIN_HEADER}" "${MAIN_HEADER_LINKED_COPY}" SYMBOLIC)
-
-generate_integration_cmake(cmake_copied_header 3.8)
 generate_integration_cmake(cmake_external_project 3.8)
 generate_integration_cmake(cmake_fetch_content 3.11)
 generate_integration_cmake(cmake_find_package 3.8)

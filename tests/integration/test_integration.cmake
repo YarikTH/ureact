@@ -155,7 +155,6 @@ function(install_ureact_locally WORK_DIR)
     )
 endfunction()
 
-check_cmake_integration(cmake_copied_header SOURCE_DIR cmake_copied_header)
 check_cmake_integration(cmake_find_package SOURCE_DIR cmake_find_package BEFORE install_ureact_locally PREFIX_PATH ureact/install)
 check_cmake_integration(cmake_subdirectory SOURCE_DIR cmake_subdirectory)
 check_cmake_integration(cmake_external_project SOURCE_DIR cmake_external_project)

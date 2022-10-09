@@ -10,14 +10,14 @@
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/YarikTH/ureact.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/YarikTH/ureact/context:cpp)
 
 [![Standard](https://img.shields.io/badge/c%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
-[![Type](https://img.shields.io/badge/type-single--header-blue.svg)](.)
+[![Type](https://img.shields.io/badge/type-header--only-blue.svg)](.)
 [![GitHub license](https://img.shields.io/github/license/YarikTH/ureact?color=blue)](https://raw.githubusercontent.com/YarikTH/ureact/main/LICENSE_1_0.txt)
 [![download](https://img.shields.io/badge/download%20%20-link-blue.svg)](https://raw.githubusercontent.com/YarikTH/ureact/master/include/ureact/ureact.hpp)
 [![Docs](https://img.shields.io/badge/docs-markdown-blue.svg)](https://github.com/YarikTH/ureact/tree/main/doc/readme.md)
 [![GitHub Releases](https://img.shields.io/github/release/YarikTH/ureact.svg)](https://github.com/YarikTH/ureact/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.)
 
-**µReact** is an open-source single-header [functional reactive programming](https://en.wikipedia.org/wiki/Functional_reactive_programming) library for C++17.
+**µReact** is an open-source header-only [functional reactive programming](https://en.wikipedia.org/wiki/Functional_reactive_programming) library for C++17.
 
 ❗️ **This library is a work-in-progress. It should not be considered release quality yet and its API might still change.** \
 **However, it works perfectly fine and can be already used with small future changes in mind.** \

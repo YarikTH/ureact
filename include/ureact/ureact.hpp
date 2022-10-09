@@ -1,4 +1,4 @@
-// ureact.hpp - C++ single-header FRP library
+// ureact - C++ header-only FRP library
 //
 //         Copyright (C) 2014-2017 Sebastian Jeckel.
 //         Copyright (C) 2020-2022 Krylov Yaroslav.

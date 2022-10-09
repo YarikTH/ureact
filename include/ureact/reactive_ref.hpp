@@ -10,8 +10,8 @@
 #ifndef UREACT_REACTIVE_REF_HPP
 #define UREACT_REACTIVE_REF_HPP
 
-#include "flatten.hpp"
-#include "lift.hpp"
+#include <ureact/flatten.hpp>
+#include <ureact/lift.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

@@ -10,8 +10,8 @@
 #ifndef UREACT_CAST_HPP
 #define UREACT_CAST_HPP
 
-#include "closure.hpp"
-#include "transform.hpp"
+#include <ureact/closure.hpp>
+#include <ureact/transform.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

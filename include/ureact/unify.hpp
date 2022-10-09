@@ -10,7 +10,7 @@
 #ifndef UREACT_UNIFY_HPP
 #define UREACT_UNIFY_HPP
 
-#include "cast.hpp"
+#include <ureact/cast.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

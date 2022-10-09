@@ -10,8 +10,8 @@
 #ifndef UREACT_TAKE_DROP_WHILE_HPP
 #define UREACT_TAKE_DROP_WHILE_HPP
 
-#include "closure.hpp"
-#include "filter.hpp"
+#include <ureact/closure.hpp>
+#include <ureact/filter.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

@@ -16,8 +16,8 @@
 // https://github.com/YarikTH/ureact/blob/main/README.md
 //
 
-#ifndef UREACT_UREACT_H_
-#define UREACT_UREACT_H_
+#ifndef UREACT_UREACT_HPP
+#define UREACT_UREACT_HPP
 
 #define UREACT_VERSION_MAJOR 0
 #define UREACT_VERSION_MINOR 6
@@ -2377,4 +2377,4 @@ private:
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_UREACT_H_
+#endif // UREACT_UREACT_HPP

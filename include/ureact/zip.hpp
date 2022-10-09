@@ -12,7 +12,7 @@
 
 #include <deque>
 
-#include "ureact.hpp"
+#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

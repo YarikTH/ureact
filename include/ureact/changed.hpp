@@ -7,13 +7,13 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_CHANGED_H_
-#define UREACT_CHANGED_H_
+#ifndef UREACT_CHANGED_HPP
+#define UREACT_CHANGED_HPP
 
-#include "closure.hpp"
-#include "filter.hpp"
-#include "monitor.hpp"
-#include "unify.hpp"
+#include <ureact/closure.hpp>
+#include <ureact/filter.hpp>
+#include <ureact/monitor.hpp>
+#include <ureact/unify.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -66,4 +66,4 @@ UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CHANGED_H_
+#endif // UREACT_CHANGED_HPP

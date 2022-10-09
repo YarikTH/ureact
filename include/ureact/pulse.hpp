@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_PULSE_HPP_
-#define UREACT_PULSE_HPP_
+#ifndef UREACT_PULSE_HPP
+#define UREACT_PULSE_HPP
 
-#include "closure.hpp"
-#include "process.hpp"
+#include <ureact/closure.hpp>
+#include <ureact/process.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -48,4 +48,4 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_PULSE_HPP_
+#endif // UREACT_PULSE_HPP

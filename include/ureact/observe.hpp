@@ -10,8 +10,8 @@
 #ifndef UREACT_OBSERVE_HPP
 #define UREACT_OBSERVE_HPP
 
-#include "closure.hpp"
-#include "ureact.hpp"
+#include <ureact/closure.hpp>
+#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

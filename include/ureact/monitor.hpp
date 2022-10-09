@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_MONITOR_HPP_
-#define UREACT_MONITOR_HPP_
+#ifndef UREACT_MONITOR_HPP
+#define UREACT_MONITOR_HPP
 
-#include "closure.hpp"
-#include "ureact.hpp"
+#include <ureact/closure.hpp>
+#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -75,4 +75,4 @@ UREACT_WARN_UNUSED_RESULT inline auto monitor()
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_MONITOR_HPP_
+#endif // UREACT_MONITOR_HPP

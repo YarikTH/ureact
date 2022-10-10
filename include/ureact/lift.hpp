@@ -77,11 +77,13 @@ using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
     std::decay_t<std::invoke_result_t<F, Values...>>,
     SIn>;
 
+// Based on the transparent functor std::negate<>
 struct unary_plus
 {
     template <typename T>
-    constexpr auto operator()( T&& t ) const //
-        noexcept( noexcept( +std::forward<T>( t ) ) )
+    constexpr auto operator()( T&& t ) const          //
+        noexcept( noexcept( +std::forward<T>( t ) ) ) //
+        -> decltype( +std::forward<T>( t ) )
     {
         return +std::forward<T>( t );
     }

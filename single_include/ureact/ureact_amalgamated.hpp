@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.6.0 wip
-// Generated: 2022-10-09 19:50:56.710475
+// Generated: 2022-11-06 19:38:57.957561
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -3636,11 +3636,13 @@ using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
     std::decay_t<std::invoke_result_t<F, Values...>>,
     SIn>;
 
+// Based on the transparent functor std::negate<>
 struct unary_plus
 {
     template <typename T>
-    constexpr auto operator()( T&& t ) const //
-        noexcept( noexcept( +std::forward<T>( t ) ) )
+    constexpr auto operator()( T&& t ) const          //
+        noexcept( noexcept( +std::forward<T>( t ) ) ) //
+        -> decltype( +std::forward<T>( t ) )
     {
         return +std::forward<T>( t );
     }
@@ -4760,6 +4762,115 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 UREACT_END_NAMESPACE
 
 #endif // UREACT_TAKE_DROP_WHILE_HPP
+
+#ifndef UREACT_TAP_HPP
+#define UREACT_TAP_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Create observer for signal and return observed signal
+ *
+ *  When the signal value S of subject changes, func is called
+ *
+ *  The signature of func should be equivalent to:
+ *  * void func(const S&)
+ *  * observer_action func(const S&)
+ *
+ *  By returning observer_action::stop_and_detach, the observer function can request
+ *  its own detachment. Returning observer_action::next keeps the observer attached.
+ *  Using a void return type is the same as always returning observer_action::next.
+ */
+template <typename F,
+    typename Signal, //
+    class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
+UREACT_WARN_UNUSED_RESULT auto tap( Signal&& subject, F&& func )
+{
+    std::ignore = observe_signal_impl( subject, std::forward<F>( func ) );
+    return std::forward<Signal>( subject );
+}
+
+/*!
+ * @brief Create observer for event stream and return observed event stream
+ *
+ *  For every event e in subject, func is called.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of func should be equivalent to:
+ *  * observer_action func(event_range<E> range, const Deps& ...)
+ *  * observer_action func(const E&, const Deps& ...)
+ *  * void func(event_range<E> range, const Deps& ...)
+ *  * void func(const E&, const Deps& ...)
+ *
+ *  By returning observer_action::stop_and_detach, the observer function can request
+ *  its own detachment. Returning observer_action::next keeps the observer attached.
+ *  Using a void return type is the same as always returning observer_action::next.
+ *
+ *  @note The event_range<E> option allows to explicitly batch process single turn events
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+ */
+template <typename F,
+    typename Events,
+    typename... Deps,
+    class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
+UREACT_WARN_UNUSED_RESULT auto tap(
+    Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func )
+{
+    std::ignore = observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+    return std::forward<Events>( subject );
+}
+
+/*!
+ * @brief Create observer for event stream and return observed event stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See tap(Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+ */
+template <typename F,
+    typename Events,
+    int wtf = 0, // hack to resolve ambiguity with signal version of tap
+    class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
+UREACT_WARN_UNUSED_RESULT auto tap( Events&& subject, F&& func )
+{
+    std::ignore = observe_events_impl( subject, signal_pack<>{}, std::forward<F>( func ) );
+    return std::forward<Events>( subject );
+}
+
+/*!
+ * @brief Curried version of tap(T&& subject, F&& func)
+ */
+template <typename F>
+UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
+{
+    return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
+        using arg_t = decltype( subject );
+        static_assert(
+            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
+            "Signal type or Event type is required" );
+        return tap( std::forward<arg_t>( subject ), func );
+    } };
+}
+
+/*!
+ * @brief Curried version of tap(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+ */
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& func )
+{
+    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+        using arg_t = decltype( subject );
+        static_assert(
+            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
+            "Signal type or Event type is required" );
+        return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_TAP_HPP
 
 #ifndef UREACT_TRANSACTION_HPP
 #define UREACT_TRANSACTION_HPP

@@ -33,6 +33,7 @@ target_sources(
         snapshot.cpp
         take_drop.cpp
         take_drop_while.cpp
+        tap.cpp
         transaction.cpp
         transform.cpp
         unify.cpp

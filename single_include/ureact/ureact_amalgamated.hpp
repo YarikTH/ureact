@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.6.0 wip
-// Generated: 2022-11-06 19:38:57.957561
+// Generated: 2022-11-13 10:03:35.943809
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -447,7 +447,7 @@ inline constexpr bool equality_comparable_v = equality_comparable<T>::value;
  *  Additionally:
  *  * it equally compares signal<S> and events<E> even if their operator== is overloaded
  *  * it equally compares reference wrappers because they can be used as S for signal<S> and their operator== does unexpected compare
- *  * it returns false if types are not equially comparable otherwise
+ *  * it returns false if types are not equally comparable otherwise
  */
 template <typename T>
 UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const T& lhs, const T& rhs )

@@ -41,7 +41,7 @@
 
 ## Examples
 
-**Basic usage** ([run](https://godbolt.org/z/zc6hMYbWY))
+**Basic usage** ([run](https://godbolt.org/z/45rqEnPr7))
 
 ```cpp
 ureact::context ctx;

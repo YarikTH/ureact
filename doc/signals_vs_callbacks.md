@@ -186,7 +186,7 @@ What it boils down to, is that the change propagation must be handled by hand.
 The next example shows how signals can be used for this scenario.
 
 
-## Final solution: Signals ([run](https://godbolt.org/z/x4Gzejs8j))
+## Final solution: Signals ([run](https://godbolt.org/z/qe3PnK8x7))
 
 ```cpp
 #include "ureact/ureact.hpp"

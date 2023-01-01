@@ -103,6 +103,7 @@ public:
         {
             this->pulse_if_value_changed( std::apply(
                 [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
                         event_range<E>( m_events->events() ),
                         this->m_value,
@@ -114,6 +115,7 @@ public:
         {
             std::apply(
                 [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<E>( m_events->events() ),
                         this->m_value,

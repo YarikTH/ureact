@@ -57,6 +57,7 @@ public:
         {
             std::apply(
                 [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<InE>( m_source->events() ),
                         event_emitter( this->m_events ),

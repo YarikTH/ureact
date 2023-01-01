@@ -706,6 +706,45 @@ private:
     std::vector<input_node_interface*> m_changed_inputs;
 
     std::vector<observer_interface*> m_detached_observers;
+
+#if !defined( NDEBUG )
+public:
+    struct callback_guard
+    {
+        react_graph& self;
+
+        explicit callback_guard( react_graph& self )
+            : self( self )
+        {
+            assert( !self.m_is_locked );
+            self.m_is_locked = true;
+        }
+
+        ~callback_guard()
+        {
+            assert( self.m_is_locked );
+            self.m_is_locked = false;
+        }
+
+        UREACT_MAKE_NONCOPYABLE( callback_guard );
+        UREACT_MAKE_NONMOVABLE( callback_guard );
+    };
+
+    [[nodiscard]] bool is_locked() const
+    {
+        return m_is_locked;
+    }
+
+private:
+    bool m_is_locked = false;
+
+#    define UREACT_CALLBACK_GUARD( _SELF_ ) react_graph::callback_guard _( _SELF_ )
+#else
+#    define UREACT_CALLBACK_GUARD( _SELF_ )                                                        \
+        do                                                                                         \
+        {                                                                                          \
+        } while( false )
+#endif
 };
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()
@@ -840,6 +879,11 @@ public:
         return *m_graph;
     }
 
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
+    {
+        return *m_graph;
+    }
+
 private:
     // context_internals and context should be non-movable because
     // node_base contains reference to context, and it will break if context lose its graph
@@ -890,7 +934,9 @@ class node_base : public reactive_node
 public:
     explicit node_base( context& context )
         : m_context( context )
-    {}
+    {
+        assert( !get_graph().is_locked() && "Can't create node from callback" );
+    }
 
     UREACT_WARN_UNUSED_RESULT context& get_context() const
     {
@@ -898,6 +944,11 @@ public:
     }
 
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
+    {
+        return _get_internals( m_context ).get_graph();
+    }
+
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
     {
         return _get_internals( m_context ).get_graph();
     }
@@ -1189,7 +1240,7 @@ public:
         : signal_op_node::signal_node( context )
         , m_op( std::forward<Args>( args )... )
     {
-        this->m_value = m_op.evaluate();
+        this->m_value = evaluate();
 
         m_op.attach( *this );
     }
@@ -1204,7 +1255,7 @@ public:
 
     void tick( turn_type& ) override
     {
-        this->pulse_if_value_changed( m_op.evaluate() );
+        this->pulse_if_value_changed( evaluate() );
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()
@@ -1221,6 +1272,12 @@ public:
     }
 
 private:
+    auto evaluate()
+    {
+        UREACT_CALLBACK_GUARD( this->get_graph() );
+        return m_op.evaluate();
+    }
+
     Op m_op;
     bool m_was_op_stolen = false;
 };
@@ -1239,6 +1296,7 @@ public:
 protected:
     UREACT_WARN_UNUSED_RESULT const S& get_value() const
     {
+        assert( !this->m_node->get_graph().is_locked() && "Can't read signal value from callback" );
         return this->m_node->value_ref();
     }
 
@@ -1247,6 +1305,7 @@ protected:
     {
         auto node_ptr = get_var_node();
         auto& graph_ref = node_ptr->get_graph();
+        assert( !graph_ref.is_locked() && "Can't set signal value from callback" );
 
         graph_ref.push_input( node_ptr,
             [node_ptr, &new_value] { node_ptr->set_value( std::forward<T>( new_value ) ); } );
@@ -1257,6 +1316,7 @@ protected:
     {
         auto node_ptr = get_var_node();
         auto& graph_ref = node_ptr->get_graph();
+        assert( !graph_ref.is_locked() && "Can't modify signal value from callback" );
 
         graph_ref.push_input( node_ptr, [node_ptr, &func] { node_ptr->modify_value( func ); } );
     }
@@ -1589,6 +1649,7 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
 {
+    assert( !_get_internals( context ).get_graph().is_locked() && "Can't make var from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
@@ -1602,6 +1663,8 @@ UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_const( context& context, V&& value ) -> signal<S>
 {
+    assert(
+        !_get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
@@ -1842,6 +1905,7 @@ protected:
     {
         auto node_ptr = get_event_source_node();
         auto& graph_ref = node_ptr->get_graph();
+        assert( !graph_ref.is_locked() && "Can't emit event from callback" );
 
         graph_ref.push_input(
             node_ptr, [node_ptr, &e] { node_ptr->emit_value( std::forward<T>( e ) ); } );
@@ -2229,6 +2293,8 @@ private:
 template <typename E = unit>
 UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
 {
+    assert(
+        !_get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
     return event_source<E>{ context };
 }
 
@@ -2244,6 +2310,8 @@ UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E
 template <typename E = unit>
 UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
 {
+    assert(
+        !_get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
     return event_source<E>{ context };
 }
 

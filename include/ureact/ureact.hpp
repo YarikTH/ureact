@@ -591,7 +591,69 @@ protected:
     std::vector<observer_interface*> m_detached_observers;
 };
 
-class react_graph : public deferred_observer_detacher
+#if !defined( NDEBUG )
+/// Utility class to check if callbacks passed in lift(), process() etc
+/// are used properly
+class callback_sanitizer
+{
+public:
+    /// Return if external callback is in progress
+    [[nodiscard]] bool is_locked() const
+    {
+        return m_is_locked;
+    }
+
+    /// Marks begin of an external callback
+    void begin_external_callback()
+    {
+        assert( !m_is_locked );
+        m_is_locked = true;
+    }
+
+    /// Marks end of an external callback
+    void end_external_callback()
+    {
+        assert( m_is_locked );
+        m_is_locked = false;
+    }
+
+    /// Marks a place where an external callback is called
+    struct guard
+    {
+        callback_sanitizer& self;
+
+        explicit guard( callback_sanitizer& self )
+            : self( self )
+        {
+            self.begin_external_callback();
+        }
+
+        ~guard()
+        {
+            self.end_external_callback();
+        }
+
+        UREACT_MAKE_NONCOPYABLE( guard );
+        UREACT_MAKE_NONMOVABLE( guard );
+    };
+
+private:
+    bool m_is_locked = false;
+};
+
+#    define UREACT_CALLBACK_GUARD( _SELF_ ) callback_sanitizer::guard _( _SELF_ )
+#else
+#    define UREACT_CALLBACK_GUARD( _SELF_ )                                                        \
+        do                                                                                         \
+        {                                                                                          \
+        } while( false )
+#endif
+
+class react_graph
+    : public deferred_observer_detacher
+#if !defined( NDEBUG )
+    , public callback_sanitizer
+#endif
 {
 public:
     struct transaction_guard
@@ -712,45 +774,6 @@ private:
     int m_transaction_level = 0;
 
     std::vector<input_node_interface*> m_changed_inputs;
-
-#if !defined( NDEBUG )
-public:
-    struct callback_guard
-    {
-        react_graph& self;
-
-        explicit callback_guard( react_graph& self )
-            : self( self )
-        {
-            assert( !self.m_is_locked );
-            self.m_is_locked = true;
-        }
-
-        ~callback_guard()
-        {
-            assert( self.m_is_locked );
-            self.m_is_locked = false;
-        }
-
-        UREACT_MAKE_NONCOPYABLE( callback_guard );
-        UREACT_MAKE_NONMOVABLE( callback_guard );
-    };
-
-    [[nodiscard]] bool is_locked() const
-    {
-        return m_is_locked;
-    }
-
-private:
-    bool m_is_locked = false;
-
-#    define UREACT_CALLBACK_GUARD( _SELF_ ) react_graph::callback_guard _( _SELF_ )
-#else
-#    define UREACT_CALLBACK_GUARD( _SELF_ )                                                        \
-        do                                                                                         \
-        {                                                                                          \
-        } while( false )
-#endif
 };
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()

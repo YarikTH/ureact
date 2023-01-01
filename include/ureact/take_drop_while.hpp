@@ -29,13 +29,13 @@ template <typename E, typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto take_while(
     const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
-                           const auto& e, const auto... deps ) mutable {
-        passed = passed && std::invoke( pred, e, deps... );
-        return passed;
-    };
-
-    return filter( source, dep_pack, taker_while );
+    return filter( source,
+        dep_pack,
+        [passed = true, pred = std::forward<Pred>( pred )] //
+        ( const auto& e, const auto... deps ) mutable {
+            passed = passed && std::invoke( pred, e, deps... );
+            return passed;
+        } );
 }
 
 /*!
@@ -45,11 +45,12 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
-    } };
+    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
+        ( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return take_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+        } };
 }
 
 /*!
@@ -91,13 +92,13 @@ template <typename E, typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto drop_while(
     const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
-                             const auto& e, const auto... deps ) mutable {
-        passed = passed || !std::invoke( pred, e, deps... );
-        return passed;
-    };
-
-    return filter( source, dep_pack, dropper_while );
+    return filter( source,
+        dep_pack,
+        [passed = false, pred = std::forward<Pred>( pred )] //
+        ( const auto& e, const auto... deps ) mutable {
+            passed = passed || !std::invoke( pred, e, deps... );
+            return passed;
+        } );
 }
 
 /*!

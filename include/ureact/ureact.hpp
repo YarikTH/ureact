@@ -604,7 +604,7 @@ public:
 
         // apply input node changes
         bool should_propagate = false;
-        for( auto* p : m_changed_inputs )
+        for( input_node_interface* p : m_changed_inputs )
         {
             if( p->apply_input( turn ) )
             {
@@ -681,7 +681,7 @@ private:
 
     void detach_queued_observers()
     {
-        for( auto* o : m_detached_observers )
+        for( observer_interface* o : m_detached_observers )
         {
             o->unregister_self();
         }
@@ -774,7 +774,7 @@ inline void react_graph::propagate( turn_type& turn )
 {
     while( m_scheduled_nodes.fetch_next() )
     {
-        for( auto* cur_node : m_scheduled_nodes.next_values() )
+        for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
         {
             if( cur_node->level < cur_node->new_level )
             {
@@ -809,7 +809,7 @@ inline void react_graph::on_dynamic_node_detach( reactive_node& node, reactive_n
 inline void react_graph::process_children( reactive_node& node )
 {
     // add children to queue
-    for( auto* successor : node.successors )
+    for( reactive_node* successor : node.successors )
     {
         if( !successor->queued )
         {
@@ -821,7 +821,7 @@ inline void react_graph::process_children( reactive_node& node )
 
 inline void react_graph::recalculate_successor_levels( reactive_node& node )
 {
-    for( auto* successor : node.successors )
+    for( reactive_node* successor : node.successors )
     {
         if( successor->new_level <= node.level )
         {

@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.7.0
-// Generated: 2022-11-27 16:00:10.184613
+// Ureact v0.8.0 wip
+// Generated: 2023-01-01 19:08:15.503019
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -40,9 +40,9 @@
 #define UREACT_UREACT_HPP
 
 #define UREACT_VERSION_MAJOR 0
-#define UREACT_VERSION_MINOR 7
+#define UREACT_VERSION_MINOR 8
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.7.0"
+#define UREACT_VERSION_STR "0.8.0 wip"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
@@ -624,7 +624,7 @@ public:
 
         // apply input node changes
         bool should_propagate = false;
-        for( auto* p : m_changed_inputs )
+        for( input_node_interface* p : m_changed_inputs )
         {
             if( p->apply_input( turn ) )
             {
@@ -701,7 +701,7 @@ private:
 
     void detach_queued_observers()
     {
-        for( auto* o : m_detached_observers )
+        for( observer_interface* o : m_detached_observers )
         {
             o->unregister_self();
         }
@@ -794,7 +794,7 @@ inline void react_graph::propagate( turn_type& turn )
 {
     while( m_scheduled_nodes.fetch_next() )
     {
-        for( auto* cur_node : m_scheduled_nodes.next_values() )
+        for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
         {
             if( cur_node->level < cur_node->new_level )
             {
@@ -829,7 +829,7 @@ inline void react_graph::on_dynamic_node_detach( reactive_node& node, reactive_n
 inline void react_graph::process_children( reactive_node& node )
 {
     // add children to queue
-    for( auto* successor : node.successors )
+    for( reactive_node* successor : node.successors )
     {
         if( !successor->queued )
         {
@@ -841,7 +841,7 @@ inline void react_graph::process_children( reactive_node& node )
 
 inline void react_graph::recalculate_successor_levels( reactive_node& node )
 {
-    for( auto* successor : node.successors )
+    for( reactive_node* successor : node.successors )
     {
         if( successor->new_level <= node.level )
         {
@@ -4649,13 +4649,13 @@ template <typename E, typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto take_while(
     const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    auto taker_while = [passed = true, pred = std::forward<Pred>( pred )](
-                           const auto& e, const auto... deps ) mutable {
-        passed = passed && std::invoke( pred, e, deps... );
-        return passed;
-    };
-
-    return filter( source, dep_pack, taker_while );
+    return filter( source,
+        dep_pack,
+        [passed = true, pred = std::forward<Pred>( pred )] //
+        ( const auto& e, const auto... deps ) mutable {
+            passed = passed && std::invoke( pred, e, deps... );
+            return passed;
+        } );
 }
 
 /*!
@@ -4665,11 +4665,12 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
-    } };
+    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
+        ( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return take_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+        } };
 }
 
 /*!
@@ -4711,13 +4712,13 @@ template <typename E, typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT auto drop_while(
     const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    auto dropper_while = [passed = false, pred = std::forward<Pred>( pred )](
-                             const auto& e, const auto... deps ) mutable {
-        passed = passed || !std::invoke( pred, e, deps... );
-        return passed;
-    };
-
-    return filter( source, dep_pack, dropper_while );
+    return filter( source,
+        dep_pack,
+        [passed = false, pred = std::forward<Pred>( pred )] //
+        ( const auto& e, const auto... deps ) mutable {
+            passed = passed || !std::invoke( pred, e, deps... );
+            return passed;
+        } );
 }
 
 /*!

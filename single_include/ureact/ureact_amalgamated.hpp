@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-01 22:18:27.276897
+// Generated: 2023-01-01 22:33:34.115455
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -589,7 +589,29 @@ private:
     std::vector<std::unique_ptr<observer_interface>> m_observers;
 };
 
-class react_graph
+/// Utility class to defer self detach of observers
+class deferred_observer_detacher
+{
+public:
+    void queue_observer_for_detach( observer_interface& obs )
+    {
+        m_detached_observers.push_back( &obs );
+    }
+
+protected:
+    void detach_queued_observers()
+    {
+        for( observer_interface* o : m_detached_observers )
+        {
+            o->unregister_self();
+        }
+        m_detached_observers.clear();
+    }
+
+    std::vector<observer_interface*> m_detached_observers;
+};
+
+class react_graph : public deferred_observer_detacher
 {
 public:
     struct transaction_guard
@@ -656,11 +678,6 @@ public:
         }
     }
 
-    void queue_observer_for_detach( observer_interface& obs )
-    {
-        m_detached_observers.push_back( &obs );
-    }
-
     void propagate( turn_type& turn );
 
     void on_node_attach( reactive_node& node, reactive_node& parent );
@@ -699,15 +716,6 @@ private:
         std::vector<entry> m_queue_data;
     };
 
-    void detach_queued_observers()
-    {
-        for( observer_interface* o : m_detached_observers )
-        {
-            o->unregister_self();
-        }
-        m_detached_observers.clear();
-    }
-
     static void recalculate_successor_levels( reactive_node& node );
 
     void process_children( reactive_node& node );
@@ -724,8 +732,6 @@ private:
     int m_transaction_level = 0;
 
     std::vector<input_node_interface*> m_changed_inputs;
-
-    std::vector<observer_interface*> m_detached_observers;
 
 #if !defined( NDEBUG )
 public:

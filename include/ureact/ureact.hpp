@@ -295,6 +295,19 @@ template <typename T>
 inline constexpr bool is_signal_v = is_signal<T>::value;
 
 /*!
+ * @brief Return if type is var_signal or its inheritor
+ */
+template <typename T>
+struct is_var_signal : detail::is_base_of_template<var_signal, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_var_signal
+ */
+template <typename T>
+inline constexpr bool is_var_signal_v = is_var_signal<T>::value;
+
+/*!
  * @brief Return if type is signal_pack
  */
 template <typename T>
@@ -319,6 +332,19 @@ struct is_event : detail::is_base_of_template<events, T>
  */
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
+
+/*!
+ * @brief Return if type is event_source or its inheritor
+ */
+template <typename T>
+struct is_event_source : detail::is_base_of_template<event_source, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_event_source
+ */
+template <typename T>
+inline constexpr bool is_event_source_v = is_event_source<T>::value;
 
 namespace detail
 {

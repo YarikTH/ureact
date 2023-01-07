@@ -1423,7 +1423,7 @@ public:
  *  As such, they don't have any predecessors.
  */
 template <typename S>
-class var_signal final : public signal<S>
+class var_signal : public signal<S>
 {
 private:
     using Node = detail::var_node<S>;
@@ -1611,6 +1611,88 @@ public:
         return node_ptr->was_op_stolen();
     }
 };
+
+/*!
+ * @brief Interface for signal<S> that allows construction and assigment only for Owner class
+ * 
+ * member_signal is intended to be used as type for public members, so everybody can freely
+ * access its public interface while being restricted from reassignment that should be allowed
+ * only for the Owner class
+ */
+template <typename Owner, typename S>
+class member_signal : public signal<S>
+{
+    friend Owner;
+
+    /*!
+     * @brief Default construct @ref member_signal
+     */
+    member_signal() = default;
+
+    /*!
+     * @brief Copy construct from the given signal
+     */
+    member_signal( const signal<S>& src ) // NOLINT(google-explicit-constructor)
+        : member_signal::signal( src )
+    {}
+
+    /*!
+     * @brief Move construct from the given signal
+     */
+    member_signal( signal<S>&& src ) noexcept // NOLINT(google-explicit-constructor)
+        : member_signal::signal( std::move( src ) )
+    {}
+};
+
+/*!
+ * @brief Interface for var_signal<S> that allows construction and assigment only for Owner class
+ * 
+ * member_var_signal is intended to be used as type for public members, so everybody can freely
+ * access its public interface while being restricted from reassignment that should be allowed
+ * only for the Owner class
+ */
+template <typename Owner, typename S>
+class member_var_signal : public var_signal<S>
+{
+    friend Owner;
+
+    /*!
+     * @brief Default construct @ref member_signal
+     */
+    member_var_signal() = default;
+
+    /*!
+     * @brief Copy construct from the given var_signal
+     */
+    member_var_signal( const var_signal<S>& src ) // NOLINT(google-explicit-constructor)
+        : member_var_signal::var_signal( src )
+    {}
+
+    /*!
+     * @brief Move construct from the given var_signal
+     */
+    member_var_signal( var_signal<S>&& src ) noexcept // NOLINT(google-explicit-constructor)
+        : member_var_signal::var_signal( std::move( src ) )
+    {}
+};
+
+/// Base class to setup aliases to member signal classes with specific owner class
+template <class Owner>
+struct member_signal_user
+{
+    template <class S>
+    using member_signal = member_signal<Owner, S>;
+
+    template <class S>
+    using member_var_signal = member_var_signal<Owner, S>;
+};
+
+/// Macro to setup aliases to member signal classes with specific owner class
+#define UREACT_USE_MEMBER_SIGNALS( Owner )                                                         \
+    template <class S>                                                                             \
+    using member_signal = ::ureact::member_signal<Owner, S>;                                       \
+    template <class S>                                                                             \
+    using member_var_signal = ::ureact::member_var_signal<Owner, S>
 
 /*!
  * @brief A wrapper type for a tuple of signal references
@@ -2009,7 +2091,7 @@ public:
  *  An event source extends the immutable @ref events interface with functions that support imperative input.
  */
 template <typename E = unit>
-class event_source final : public events<E>
+class event_source : public events<E>
 {
 private:
     using Node = detail::event_source_node<E>;
@@ -2190,6 +2272,88 @@ public:
 private:
     const event_source* m_parent;
 };
+
+/*!
+ * @brief Interface for events<S> that allows construction and assigment only for Owner class
+ * 
+ * member_events is intended to be used as type for public members, so everybody can freely
+ * access its public interface while being restricted from reassignment that should be allowed
+ * only for the Owner class
+ */
+template <typename Owner, typename E>
+class member_events : public events<E>
+{
+    friend Owner;
+
+    /*!
+     * @brief Default construct @ref member_events
+     */
+    member_events() = default;
+
+    /*!
+     * @brief Copy construct from the given events
+     */
+    member_events( const events<E>& src ) // NOLINT(google-explicit-constructor)
+        : member_events::events( src )
+    {}
+
+    /*!
+     * @brief Move construct from the given events
+     */
+    member_events( events<E>&& src ) noexcept // NOLINT(google-explicit-constructor)
+        : member_events::events( std::move( src ) )
+    {}
+};
+
+/*!
+ * @brief Interface for event_source<S> that allows construction and assigment only for Owner class
+ * 
+ * member_event_source is intended to be used as type for public members, so everybody can freely
+ * access its public interface while being restricted from reassignment that should be allowed
+ * only for the Owner class
+ */
+template <typename Owner, typename E>
+class member_event_source : public event_source<E>
+{
+    friend Owner;
+
+    /*!
+     * @brief Default construct @ref member_event_source
+     */
+    member_event_source() = default;
+
+    /*!
+     * @brief Copy construct from the given event_source
+     */
+    member_event_source( const event_source<E>& src ) // NOLINT(google-explicit-constructor)
+        : member_event_source::event_source( src )
+    {}
+
+    /*!
+     * @brief Move construct from the given event_source
+     */
+    member_event_source( event_source<E>&& src ) noexcept // NOLINT(google-explicit-constructor)
+        : member_event_source::event_source( std::move( src ) )
+    {}
+};
+
+/// Base class to setup aliases to member events classes with specific owner class
+template <class Owner>
+struct member_events_user
+{
+    template <class E>
+    using member_events = member_events<Owner, E>;
+
+    template <class E>
+    using member_event_source = member_event_source<Owner, E>;
+};
+
+/// Macro to setup aliases to member events classes with specific owner class
+#define UREACT_USE_MEMBER_EVENTS( Owner )                                                          \
+    template <class E>                                                                             \
+    using member_events = ::ureact::member_events<Owner, E>;                                       \
+    template <class E>                                                                             \
+    using member_event_source = ::ureact::member_event_source<Owner, E>
 
 /*!
  * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node

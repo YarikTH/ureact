@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-07 19:54:32.343414
+// Generated: 2023-01-08 00:02:52.728398
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -315,6 +315,19 @@ template <typename T>
 inline constexpr bool is_signal_v = is_signal<T>::value;
 
 /*!
+ * @brief Return if type is var_signal or its inheritor
+ */
+template <typename T>
+struct is_var_signal : detail::is_base_of_template<var_signal, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_var_signal
+ */
+template <typename T>
+inline constexpr bool is_var_signal_v = is_var_signal<T>::value;
+
+/*!
  * @brief Return if type is signal_pack
  */
 template <typename T>
@@ -339,6 +352,19 @@ struct is_event : detail::is_base_of_template<events, T>
  */
 template <typename T>
 inline constexpr bool is_event_v = is_event<T>::value;
+
+/*!
+ * @brief Return if type is event_source or its inheritor
+ */
+template <typename T>
+struct is_event_source : detail::is_base_of_template<event_source, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_event_source
+ */
+template <typename T>
+inline constexpr bool is_event_source_v = is_event_source<T>::value;
 
 namespace detail
 {
@@ -3764,43 +3790,41 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
-template <typename T>
-struct decay_input
+/*!
+ * @brief Create a new event stream by flattening a signal
+ */
+template <typename InnerS>
+UREACT_WARN_UNUSED_RESULT auto flatten_impl( const signal<InnerS>& outer )
 {
-    using type = T;
-};
+    context& context = outer.get_context();
 
-template <typename T>
-struct decay_input<var_signal<T>>
-{
-    using type = signal<T>;
-};
+    using value_t = typename InnerS::value_t;
 
-template <typename T>
-using decay_input_t = typename decay_input<T>::type;
+    // clang-format off
+    using Node =
+        select_t<
+            condition<is_var_signal_v<InnerS>,   signal_flatten_node<InnerS, value_t>>,
+            condition<is_signal_v<InnerS>,       signal_flatten_node<InnerS, value_t>>,
+            condition<is_event_source_v<InnerS>, event_flatten_node<InnerS, value_t>>,
+            condition<is_event_v<InnerS>,        event_flatten_node<InnerS, value_t>>,
+            signature_mismatches>;
+    // clang-format on
+
+    static_assert( !std::is_same_v<Node, signature_mismatches>,
+        "flatten: Passed signal does not match any of the supported signatures" );
+
+    return InnerS{ std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
+}
 
 } // namespace detail
 
 /*!
- * @brief Create a new signal by flattening a signal of a signal
+ * @brief Create a new event stream by flattening a signal
  */
 template <typename InnerS>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<InnerS>>& outer ) -> signal<InnerS>
+UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
 {
-    context& context = outer.get_context();
-    return signal<InnerS>{ std::make_shared<detail::signal_flatten_node<signal<InnerS>, InnerS>>(
-        context, outer.get_node(), outer.get().get_node() ) };
-}
-
-/*!
- * @brief Create a new event stream by flattening a signal of an event stream
- */
-template <typename InnerE>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) -> events<InnerE>
-{
-    context& context = outer.get_context();
-    return events<InnerE>{ std::make_shared<detail::event_flatten_node<events<InnerE>, InnerE>>(
-        context, outer.get_node(), outer.get().get_node() ) };
+    return detail::flatten_impl( outer );
 }
 
 /*!
@@ -4736,6 +4760,39 @@ UREACT_END_NAMESPACE
 
 
 UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename T>
+struct decay_input
+{
+    using type = T;
+};
+
+template <typename S>
+struct decay_input<var_signal<S>>
+{
+    using type = signal<S>;
+};
+
+template <typename Owner, typename S>
+struct decay_input<member_signal<Owner, S>>
+{
+    using type = signal<S>;
+};
+
+template <typename Owner, typename S>
+struct decay_input<member_var_signal<Owner, S>>
+{
+    using type = signal<S>;
+};
+
+// TODO: replace it with something more appropriate or at least name it
+template <typename T>
+using decay_input_t = typename decay_input<T>::type;
+
+} // namespace detail
 
 /*!
  * @brief Utility to flatten public signal attribute of class pointed be reference

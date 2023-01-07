@@ -118,28 +118,41 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
+/*!
+ * @brief Create a new event stream by flattening a signal
+ */
+template <typename InnerS>
+UREACT_WARN_UNUSED_RESULT auto flatten_impl( const signal<InnerS>& outer )
+{
+    context& context = outer.get_context();
+
+    using value_t = typename InnerS::value_t;
+
+    // clang-format off
+    using Node =
+        select_t<
+            condition<is_var_signal_v<InnerS>,   signal_flatten_node<InnerS, value_t>>,
+            condition<is_signal_v<InnerS>,       signal_flatten_node<InnerS, value_t>>,
+            condition<is_event_source_v<InnerS>, event_flatten_node<InnerS, value_t>>,
+            condition<is_event_v<InnerS>,        event_flatten_node<InnerS, value_t>>,
+            signature_mismatches>;
+    // clang-format on
+
+    static_assert( !std::is_same_v<Node, signature_mismatches>,
+        "flatten: Passed signal does not match any of the supported signatures" );
+
+    return InnerS{ std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
+}
+
 } // namespace detail
 
 /*!
- * @brief Create a new signal by flattening a signal of a signal
+ * @brief Create a new event stream by flattening a signal
  */
 template <typename InnerS>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<signal<InnerS>>& outer ) -> signal<InnerS>
+UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
 {
-    context& context = outer.get_context();
-    return signal<InnerS>{ std::make_shared<detail::signal_flatten_node<signal<InnerS>, InnerS>>(
-        context, outer.get_node(), outer.get().get_node() ) };
-}
-
-/*!
- * @brief Create a new event stream by flattening a signal of an event stream
- */
-template <typename InnerE>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<events<InnerE>>& outer ) -> events<InnerE>
-{
-    context& context = outer.get_context();
-    return events<InnerE>{ std::make_shared<detail::event_flatten_node<events<InnerE>, InnerE>>(
-        context, outer.get_node(), outer.get().get_node() ) };
+    return detail::flatten_impl( outer );
 }
 
 /*!

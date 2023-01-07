@@ -241,11 +241,11 @@ TEST_CASE( "Member1" )
 namespace
 {
 
-class Company
+class Company : ureact::member_signal_user<Company>
 {
 public:
     int index;
-    ureact::var_signal<std::string> name;
+    member_var_signal<std::string> name;
 
     Company( ureact::context& ctx, const int index, const char* name )
         : index( index )
@@ -268,10 +268,10 @@ private:
     }
 };
 
-class Employee
+class Employee : ureact::member_signal_user<Employee>
 {
 public:
-    ureact::var_signal<std::reference_wrapper<Company>> company;
+    member_var_signal<std::reference_wrapper<Company>> company;
 
     Employee( ureact::context& ctx, Company& company_ref )
         : company( make_var( ctx, std::ref( company_ref ) ) )
@@ -285,10 +285,10 @@ private:
     }
 };
 
-class Employee2
+class Employee2 : ureact::member_signal_user<Employee2>
 {
 public:
-    ureact::var_signal<Company*> company;
+    member_var_signal<Company*> company;
 
     Employee2( ureact::context& ctx, Company* company_ptr )
         : company( make_var( ctx, company_ptr ) )

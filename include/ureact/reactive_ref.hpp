@@ -24,12 +24,25 @@ struct decay_input
     using type = T;
 };
 
-template <typename T>
-struct decay_input<var_signal<T>>
+template <typename S>
+struct decay_input<var_signal<S>>
 {
-    using type = signal<T>;
+    using type = signal<S>;
 };
 
+template <typename Owner, typename S>
+struct decay_input<member_signal<Owner, S>>
+{
+    using type = signal<S>;
+};
+
+template <typename Owner, typename S>
+struct decay_input<member_var_signal<Owner, S>>
+{
+    using type = signal<S>;
+};
+
+// TODO: replace it with something more appropriate or at least name it
 template <typename T>
 using decay_input_t = typename decay_input<T>::type;
 

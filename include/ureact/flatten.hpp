@@ -118,21 +118,6 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
-template <typename T>
-struct decay_input
-{
-    using type = T;
-};
-
-template <typename T>
-struct decay_input<var_signal<T>>
-{
-    using type = signal<T>;
-};
-
-template <typename T>
-using decay_input_t = typename decay_input<T>::type;
-
 } // namespace detail
 
 /*!

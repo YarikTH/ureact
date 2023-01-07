@@ -15,6 +15,26 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+template <typename T>
+struct decay_input
+{
+    using type = T;
+};
+
+template <typename T>
+struct decay_input<var_signal<T>>
+{
+    using type = signal<T>;
+};
+
+template <typename T>
+using decay_input_t = typename decay_input<T>::type;
+
+} // namespace detail
+
 /*!
  * @brief Utility to flatten public signal attribute of class pointed be reference
  *

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-01 22:52:00.484438
+// Generated: 2023-01-07 17:47:49.742684
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -1557,6 +1557,32 @@ public:
             std::is_invocable_r_v<void, F, S&>, "Modifier functions should be void(S&)" );
         assert( this->is_valid() && "Can't modify value of var_signal not attached to a node" );
         this->modify_value( func );
+    }
+
+    using signal<S>::operator();
+
+    /*!
+     * @brief Set new signal value
+     *
+     *  Function object version of set(const S& new_value)
+     */
+    void operator()( const S& new_value )
+    {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
+        this->set_value( new_value );
+    }
+
+    /*!
+     * @brief Set new signal value
+     *
+     *  Function object version of set(S&& new_value)
+     *
+     *  Specialization of operator()(const S& new_value) for rvalue
+     */
+    void operator()( S&& new_value )
+    {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
+        this->set_value( std::move( new_value ) );
     }
 };
 

@@ -1538,6 +1538,32 @@ public:
         assert( this->is_valid() && "Can't modify value of var_signal not attached to a node" );
         this->modify_value( func );
     }
+
+    using signal<S>::operator();
+
+    /*!
+     * @brief Set new signal value
+     *
+     *  Function object version of set(const S& new_value)
+     */
+    void operator()( const S& new_value )
+    {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
+        this->set_value( new_value );
+    }
+
+    /*!
+     * @brief Set new signal value
+     *
+     *  Function object version of set(S&& new_value)
+     *
+     *  Specialization of operator()(const S& new_value) for rvalue
+     */
+    void operator()( S&& new_value )
+    {
+        assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
+        this->set_value( std::move( new_value ) );
+    }
 };
 
 /*!

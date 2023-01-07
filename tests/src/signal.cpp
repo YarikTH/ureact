@@ -277,6 +277,14 @@ TEST_CASE( "VarSignalSetValue" )
     {
         src <<= 5;
     }
+    SUBCASE( "set function object L-value" )
+    {
+        src( new_value );
+    }
+    SUBCASE( "set function object R-value" )
+    {
+        src( 5 );
+    }
 
     CHECK( src.get() == 5 );
 }

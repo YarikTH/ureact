@@ -50,6 +50,7 @@ option(
     n
 )
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
+option(UREACT_EXAMPLE "Generate the examples target." ${UREACT_MASTER_PROJECT})
 option(UREACT_INSTALL "Generate install target." ${UREACT_MASTER_PROJECT})
 option(UREACT_СTEST "Generate the CTest targets for CI." n)
 
@@ -108,6 +109,10 @@ if(UREACT_TEST)
         enable_testing()
     endif()
     add_subdirectory(tests)
+endif()
+
+if(UREACT_EXAMPLE)
+    add_subdirectory(example)
 endif()
 
 ################################################################################

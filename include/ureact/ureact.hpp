@@ -185,6 +185,8 @@ class signal_pack;
 template <typename E>
 class event_range;
 
+class observer;
+
 namespace detail
 {
 
@@ -321,6 +323,19 @@ template <typename T>
 inline constexpr bool is_signal_pack_v = is_signal_pack<T>::value;
 
 /*!
+ * @brief Return if type is signal's inheritor or signal_pack
+ */
+template <typename T>
+struct is_signal_or_pack : std::disjunction<is_signal<T>, is_signal_pack<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_signal_or_pack
+ */
+template <typename T>
+inline constexpr bool is_signal_or_pack_v = is_signal_or_pack<T>::value;
+
+/*!
  * @brief Return if type is events or its inheritor
  */
 template <typename T>
@@ -345,6 +360,45 @@ struct is_event_source : detail::is_base_of_template<event_source, T>
  */
 template <typename T>
 inline constexpr bool is_event_source_v = is_event_source<T>::value;
+
+/*!
+ * @brief Return if type is observer
+ */
+template <typename T>
+struct is_observer : std::is_same<T, observer>
+{};
+
+/*!
+ * @brief Helper variable template for is_observer
+ */
+template <typename T>
+inline constexpr bool is_observer_v = is_observer<T>::value;
+
+/*!
+ * @brief Return if type is signal or event inheritor
+ */
+template <typename T>
+struct is_observable : std::disjunction<is_signal<T>, is_event<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_observable
+ */
+template <typename T>
+inline constexpr bool is_observable_v = is_observable<T>::value;
+
+/*!
+ * @brief Return if type is signal or event or observer
+ */
+template <typename T>
+struct is_reactive : std::disjunction<is_observable<T>, is_observer<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_reactive
+ */
+template <typename T>
+inline constexpr bool is_reactive_v = is_reactive<T>::value;
 
 namespace detail
 {

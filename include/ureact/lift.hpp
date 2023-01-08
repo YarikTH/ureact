@@ -153,8 +153,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
     return closure{ [func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_signal_pack<std::decay_t<arg_t>>>,
-            "Signal type or signal_pack is required" );
+            is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
         return lift<SIn>( std::forward<arg_t>( source ), func );
     } };
 }

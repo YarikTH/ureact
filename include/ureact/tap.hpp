@@ -92,8 +92,7 @@ UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
     return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
-            "Signal type or Event type is required" );
+            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
         return tap( std::forward<arg_t>( subject ), func );
     } };
 }
@@ -107,8 +106,7 @@ UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& fu
     return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
-            "Signal type or Event type is required" );
+            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
         return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
     } };
 }

@@ -3,14 +3,14 @@
 // =============================================================
 //
 //         Copyright (C) 2014-2017 Sebastian Jeckel.
-//         Copyright (C) 2020-2022 Krylov Yaroslav.
+//         Copyright (C) 2020-2023 Krylov Yaroslav.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-08 00:02:52.728398
+// Generated: 2023-01-08 18:19:55.229955
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react

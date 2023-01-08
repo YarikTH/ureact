@@ -59,10 +59,17 @@ public:
         : m_func( std::move( func ) )
     {}
 
-    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& args ) const
+    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg&&>>>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg ) const -> decltype( auto )
     {
-        return m_func( std::forward<Arg>( args ) );
+        if constexpr( std::is_same_v<std::invoke_result_t<F, Arg&&>, void> )
+        {
+            m_func( std::forward<Arg>( arg ) );
+        }
+        else
+        {
+            return m_func( std::forward<Arg>( arg ) );
+        }
     }
 
 private:
@@ -77,7 +84,7 @@ private:
 template <typename Arg,
     typename Closure,
     class = std::enable_if_t<is_closure_v<std::decay_t<Closure>>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj )
+UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> decltype( auto )
 {
     if constexpr( is_closure_v<std::decay_t<Arg>> )
     {

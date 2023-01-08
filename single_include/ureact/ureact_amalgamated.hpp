@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-08 18:19:55.229955
+// Generated: 2023-01-09 01:22:58.695041
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -205,6 +205,8 @@ class signal_pack;
 template <typename E>
 class event_range;
 
+class observer;
+
 namespace detail
 {
 
@@ -341,6 +343,19 @@ template <typename T>
 inline constexpr bool is_signal_pack_v = is_signal_pack<T>::value;
 
 /*!
+ * @brief Return if type is signal's inheritor or signal_pack
+ */
+template <typename T>
+struct is_signal_or_pack : std::disjunction<is_signal<T>, is_signal_pack<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_signal_or_pack
+ */
+template <typename T>
+inline constexpr bool is_signal_or_pack_v = is_signal_or_pack<T>::value;
+
+/*!
  * @brief Return if type is events or its inheritor
  */
 template <typename T>
@@ -365,6 +380,45 @@ struct is_event_source : detail::is_base_of_template<event_source, T>
  */
 template <typename T>
 inline constexpr bool is_event_source_v = is_event_source<T>::value;
+
+/*!
+ * @brief Return if type is observer
+ */
+template <typename T>
+struct is_observer : std::is_same<T, observer>
+{};
+
+/*!
+ * @brief Helper variable template for is_observer
+ */
+template <typename T>
+inline constexpr bool is_observer_v = is_observer<T>::value;
+
+/*!
+ * @brief Return if type is signal or event inheritor
+ */
+template <typename T>
+struct is_observable : std::disjunction<is_signal<T>, is_event<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_observable
+ */
+template <typename T>
+inline constexpr bool is_observable_v = is_observable<T>::value;
+
+/*!
+ * @brief Return if type is signal or event or observer
+ */
+template <typename T>
+struct is_reactive : std::disjunction<is_observable<T>, is_observer<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_reactive
+ */
+template <typename T>
+inline constexpr bool is_reactive_v = is_reactive<T>::value;
 
 namespace detail
 {
@@ -2759,10 +2813,17 @@ public:
         : m_func( std::move( func ) )
     {}
 
-    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& args ) const
+    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg&&>>>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg ) const -> decltype( auto )
     {
-        return m_func( std::forward<Arg>( args ) );
+        if constexpr( std::is_same_v<std::invoke_result_t<F, Arg&&>, void> )
+        {
+            m_func( std::forward<Arg>( arg ) );
+        }
+        else
+        {
+            return m_func( std::forward<Arg>( arg ) );
+        }
     }
 
 private:
@@ -2777,7 +2838,7 @@ private:
 template <typename Arg,
     typename Closure,
     class = std::enable_if_t<is_closure_v<std::decay_t<Closure>>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj )
+UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> decltype( auto )
 {
     if constexpr( is_closure_v<std::decay_t<Arg>> )
     {
@@ -4026,8 +4087,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
     return closure{ [func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_signal_pack<std::decay_t<arg_t>>>,
-            "Signal type or signal_pack is required" );
+            is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
         return lift<SIn>( std::forward<arg_t>( source ), func );
     } };
 }
@@ -4688,8 +4748,7 @@ UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
     return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
-            "Signal type or Event type is required" );
+            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
         return observe( std::forward<arg_t>( subject ), func );
     } };
 }
@@ -4704,8 +4763,7 @@ UREACT_WARN_UNUSED_RESULT auto observe(
     return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
-            "Signal type or Event type is required" );
+            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
         return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
     } };
 }
@@ -4816,6 +4874,51 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
 UREACT_END_NAMESPACE
 
 #endif // UREACT_REACTIVE_REF_HPP
+
+#ifndef UREACT_SINK_HPP
+#define UREACT_SINK_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Gets the reference to the destination and assign value from the left to it
+ *
+ *  Forward source so it can be chained further. Works similar to "tap"
+ */
+template <class Dst, class = std::enable_if_t<is_reactive_v<std::decay_t<Dst>>>>
+UREACT_WARN_UNUSED_RESULT auto sink( Dst& dst )
+{
+    // TODO: propagate [[nodiscard(false)]] somehow
+    return closure{ [&dst]( auto&& source ) -> decltype( auto ) {
+        using arg_t = decltype( source );
+
+        if constexpr( is_signal_v<std::decay_t<Dst>> )
+        {
+            static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+        }
+        else if constexpr( is_event_v<std::decay_t<Dst>> )
+        {
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Events type is required" );
+        }
+        else if constexpr( is_observer_v<std::decay_t<Dst>> )
+        {
+            static_assert( is_observer_v<std::decay_t<arg_t>>, "Observer type is required" );
+        }
+        else
+        {
+            static_assert( detail::always_false<Dst>, "Unsupported Dst type" );
+        }
+
+        dst = std::forward<arg_t>( source );
+
+        return dst;
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_SINK_HPP
 
 #ifndef UREACT_SNAPSHOT_HPP
 #define UREACT_SNAPSHOT_HPP
@@ -5195,8 +5298,7 @@ UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
     return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
-            "Signal type or Event type is required" );
+            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
         return tap( std::forward<arg_t>( subject ), func );
     } };
 }
@@ -5210,8 +5312,7 @@ UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& fu
     return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
-            std::disjunction_v<is_signal<std::decay_t<arg_t>>, is_event<std::decay_t<arg_t>>>,
-            "Signal type or Event type is required" );
+            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
         return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
     } };
 }

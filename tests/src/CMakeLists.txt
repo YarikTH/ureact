@@ -30,6 +30,7 @@ target_sources(
         propagation.cpp
         pulse.cpp
         signal.cpp
+        sink.cpp
         snapshot.cpp
         take_drop.cpp
         take_drop_while.cpp

@@ -21,6 +21,7 @@ target_sources(
         filter.cpp
         flatten.cpp
         fold.cpp
+        fork.cpp
         hold.cpp
         lift.cpp
         merge.cpp

@@ -25,8 +25,8 @@ static_assert( std::is_nothrow_move_assignable_v<ureact::events<>> );
 // default constructive
 static_assert( std::is_default_constructible_v<ureact::event_source<>> );
 
-// constructive from context
-static_assert( std::is_constructible_v<ureact::event_source<>, ureact::context&> );
+// not constructive from context
+static_assert( !std::is_constructible_v<ureact::event_source<>, ureact::context&> );
 
 // copyable and nothrow movable
 static_assert( std::is_copy_constructible_v<ureact::event_source<>> );
@@ -138,25 +138,10 @@ TEST_CASE( "EventSourceConstruction" )
         CHECK( src.is_valid() );
     }
 
-    // event_source can be created using constructor receiving context reference
-    SUBCASE( "fully constructed" )
-    {
-        ureact::event_source<int> src{ ctx };
-        CHECK( src.is_valid() );
-    }
-
-    // event_source can be created using constructor receiving context reference
-    // in the form of AAA
-    SUBCASE( "fully constructed AAA" )
-    {
-        auto src = ureact::event_source<int>{ ctx };
-        CHECK( src.is_valid() );
-    }
-
     // copy and move construction of event_source
     SUBCASE( "copy and move constructed" )
     {
-        ureact::event_source<int> src{ ctx };
+        ureact::event_source src = ureact::make_source<int>( ctx );
         CHECK( src.is_valid() );
 
         SUBCASE( "copy constructed" )
@@ -203,7 +188,7 @@ TEST_CASE( "EventsSmartPointerSemantics" )
 {
     ureact::context ctx;
 
-    ureact::event_source<int> src{ ctx };
+    ureact::event_source<int> src = ureact::make_source<int>( ctx );
 
     const auto is_even = []( auto i ) { return i % 2 == 0; };
     const auto is_odd = []( auto i ) { return i % 2 == 1; };

@@ -1517,21 +1517,10 @@ public:
     var_signal() = default;
 
     /*!
-     * @brief Construct a fully functional var signal
-     *
-     * @note replacing type of value with universal reference version prevents class template argument deduction
+     * @brief Construct from the given node
      */
-    var_signal( context& context, const S& value )
-        : var_signal::signal( std::make_shared<Node>( context, value ) )
-    {}
-
-    /*!
-     * @brief Construct a fully functional var signal
-     *
-     * @note replacing type of value with universal reference version prevents class template argument deduction
-     */
-    var_signal( context& context, S&& value )
-        : var_signal::signal( std::make_shared<Node>( context, std::move( value ) ) )
+    explicit var_signal( std::shared_ptr<Node>&& node )
+        : var_signal::signal( std::move( node ) )
     {}
 
     /*!
@@ -1836,25 +1825,35 @@ public:
 namespace detail
 {
 
+template <typename S, typename V>
+UREACT_WARN_UNUSED_RESULT auto make_var_signal( context& context, V&& v )
+{
+    return var_signal<S>{ std::make_shared<var_node<S>>( context, std::forward<V>( v ) ) };
+}
+
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
-    // TODO: use select_t to detect var_signal type and then construct it once
-    if constexpr( is_signal_v<S> || is_event_v<S> )
+    // TODO: detect var_signal type and then construct it once
+    //       unfortunately it is not directly possible with select_t and std::condition
+    //       because all branches should be well-formed, that is not the case with
+    //       attempt to access "typename S::value_t" from types without value_t member
+    //       https://stackoverflow.com/questions/24098278/stdconditional-compile-time-branch-evaluation
+    if constexpr( is_observable_v<S> )
     {
-        using inner_t = typename S::value_t;
-        if constexpr( is_signal_v<S> )
-        {
-            return var_signal<signal<inner_t>>{ context, std::forward<V>( v ) };
-        }
-        else if constexpr( is_event_v<S> )
-        {
-            return var_signal<events<inner_t>>{ context, std::forward<V>( v ) };
-        }
+        // clang-format off
+        using S2 =
+            select_t<
+                condition<is_signal_v<S>,   signal<typename S::value_t>>,
+                condition<is_event_v<S>,    events<typename S::value_t>>,
+                S>;
+        // clang-format on
+
+        return make_var_signal<S2>( context, std::forward<V>( v ) );
     }
     else
     {
-        return var_signal<S>{ context, std::forward<V>( v ) };
+        return make_var_signal<S>( context, std::forward<V>( v ) );
     }
 }
 
@@ -2187,10 +2186,10 @@ public:
     event_source() = default;
 
     /*!
-     * @brief Construct a fully functional event source
+     * @brief Construct from the given node
      */
-    explicit event_source( context& context )
-        : event_source::events( std::make_shared<Node>( context ) )
+    explicit event_source( std::shared_ptr<Node>&& node )
+        : event_source::events( std::move( node ) )
     {}
 
     /*!
@@ -2584,6 +2583,17 @@ private:
     container_type* m_container;
 };
 
+namespace detail
+{
+
+template <typename E>
+UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context )
+{
+    return event_source<E>{ std::make_shared<event_source_node<E>>( context ) };
+}
+
+} // namespace detail
+
 /*!
  * @brief Create a new event source node and links it to the returned event_source instance
  *
@@ -2594,7 +2604,7 @@ UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E
 {
     assert(
         !_get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
-    return event_source<E>{ context };
+    return detail::make_event_source<E>( context );
 }
 
 /*!
@@ -2611,7 +2621,7 @@ UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
 {
     assert(
         !_get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
-    return event_source<E>{ context };
+    return detail::make_event_source<E>( context );
 }
 
 /*!

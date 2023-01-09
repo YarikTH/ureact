@@ -129,25 +129,10 @@ TEST_CASE( "VarSignalConstruction" )
         CHECK( var.is_valid() );
     }
 
-    // var_signal can be created using constructor receiving context reference and value
-    SUBCASE( "fully constructed" )
-    {
-        ureact::var_signal src{ ctx, 3 };
-        CHECK( src.is_valid() );
-    }
-
-    // var_signal can be created using constructor receiving context reference
-    // in the form of AAA
-    SUBCASE( "fully constructed AAA" )
-    {
-        auto src = ureact::var_signal{ ctx, 1 };
-        CHECK( src.is_valid() );
-    }
-
     // copy and move construction of var_signal
     SUBCASE( "copy and move constructed" )
     {
-        ureact::var_signal<int> src{ ctx, 0 };
+        ureact::var_signal src = ureact::make_var( ctx, 0 );
         CHECK( src.is_valid() );
 
         SUBCASE( "copy constructed" )
@@ -171,7 +156,7 @@ TEST_CASE( "VarSignalAssignmentConstruction" )
 {
     ureact::context ctx;
 
-    ureact::var_signal<int> src{ ctx, -1 };
+    ureact::var_signal src = ureact::make_var( ctx, -1 );
     CHECK( src.is_valid() );
 
     SUBCASE( "copy assignment" )
@@ -202,7 +187,7 @@ TEST_CASE( "SignalSmartPointerSemantics" )
 {
     ureact::context ctx;
 
-    ureact::var_signal<int> x{ ctx, 1 };
+    ureact::var_signal x = ureact::make_var( ctx, 1 );
 
     auto a = x * 2;
 
@@ -239,7 +224,7 @@ TEST_CASE( "SignalGetValue" )
 {
     ureact::context ctx;
 
-    ureact::var_signal<int> src{ ctx, 1 };
+    ureact::var_signal src = ureact::make_var( ctx, 1 );
     const ureact::signal<int> sig = +src;
 
     CHECK( sig.get() == 1 ); // get method
@@ -255,7 +240,7 @@ TEST_CASE( "VarSignalSetValue" )
 {
     ureact::context ctx;
 
-    ureact::var_signal<int> src{ ctx, 1 };
+    ureact::var_signal src = ureact::make_var( ctx, 1 );
 
     CHECK( src.get() == 1 );
 
@@ -293,7 +278,7 @@ TEST_CASE( "VarSignalModifyValue" )
 {
     ureact::context ctx;
 
-    ureact::var_signal<int> src{ ctx, 9 };
+    ureact::var_signal src = ureact::make_var( ctx, 9 );
 
     CHECK( src.get() == 9 );
 

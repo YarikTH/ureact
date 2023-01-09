@@ -19,7 +19,7 @@ TEST_CASE( "RecursiveTransactions" )
 {
     ureact::context ctx;
 
-    ureact::var_signal src{ ctx, 1 };
+    ureact::var_signal src = ureact::make_var( ctx, 1 );
     auto change_count = src | ureact::monitor() | ureact::count();
 
     do_transaction( ctx, [&] {
@@ -40,7 +40,7 @@ TEST_CASE( "ComplexTransaction" )
 {
     ureact::context ctx;
 
-    ureact::var_signal src{ ctx, 2 };
+    ureact::var_signal src = ureact::make_var( ctx, 2 );
     ureact::signal<int> result;
 
     SUBCASE( "lambda" )

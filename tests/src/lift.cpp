@@ -56,7 +56,7 @@ TEST_CASE( "LiftAsInvoke" )
 
     SUBCASE( "invoke a free function" )
     {
-        ureact::var_signal<int> src{ ctx, 4 };
+        ureact::var_signal<int> src = ureact::make_var( ctx, 4 );
 
         CHECK( std::invoke( double_int, src.get() ) == 8 );
 
@@ -67,7 +67,7 @@ TEST_CASE( "LiftAsInvoke" )
 
     SUBCASE( "invoke a lambda" )
     {
-        ureact::var_signal<int> src{ ctx, 3 };
+        ureact::var_signal<int> src = ureact::make_var( ctx, 3 );
 
         auto squared = []( auto x ) { return x * x; };
 
@@ -80,7 +80,7 @@ TEST_CASE( "LiftAsInvoke" )
 
     SUBCASE( "invoke a function object" )
     {
-        ureact::var_signal<int> src{ ctx, 1 };
+        ureact::var_signal<int> src = ureact::make_var( ctx, 1 );
 
         CHECK( std::invoke( std::negate<>{}, src.get() ) == -1 );
 
@@ -91,7 +91,7 @@ TEST_CASE( "LiftAsInvoke" )
 
     SUBCASE( "invoke a member function (value)" )
     {
-        ureact::var_signal<User> src{ ctx, 18 };
+        ureact::var_signal src = ureact::make_var<User>( ctx, 18 );
         auto _3 = ureact::make_const( ctx, 3 );
 
         CHECK( std::invoke( &User::get_age, src.get() ) == 18 );
@@ -106,7 +106,7 @@ TEST_CASE( "LiftAsInvoke" )
 
     SUBCASE( "access a data member (value)" )
     {
-        ureact::var_signal<User> src{ ctx, 32 };
+        ureact::var_signal src = ureact::make_var<User>( ctx, 32 );
 
         CHECK( std::invoke( &User::age, src.get() ) == 32 );
 
@@ -120,7 +120,7 @@ TEST_CASE( "LiftAsInvoke" )
     {
         User user{ 18 };
 
-        ureact::var_signal<User*> src{ ctx, &user };
+        ureact::var_signal<User*> src = ureact::make_var( ctx, &user );
         auto _3 = ureact::make_const( ctx, 3 );
 
         CHECK( std::invoke( &User::get_age, src.get() ) == 18 );
@@ -137,7 +137,7 @@ TEST_CASE( "LiftAsInvoke" )
     {
         User user{ 32 };
 
-        ureact::var_signal<User*> src{ ctx, &user };
+        ureact::var_signal<User*> src = ureact::make_var( ctx, &user );
 
         CHECK( std::invoke( &User::age, src.get() ) == 32 );
 
@@ -157,7 +157,7 @@ TEST_CASE( "NonConstPointerBug" )
 
     int i = 42;
 
-    ureact::var_signal<int*> src{ ctx, &i };
+    ureact::var_signal<int*> src = ureact::make_var( ctx, &i );
 
     auto wtf = ureact::lift( src, []( int* p ) { return *p = -1; } );
     CHECK( i == -1 );

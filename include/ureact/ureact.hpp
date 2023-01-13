@@ -1747,8 +1747,15 @@ class member_var_signal : public var_signal<S>
 
 /// Base class to setup aliases to member signal classes with specific owner class
 template <class Owner>
-struct member_signal_user
+class member_signal_user
 {
+    friend Owner;
+
+    /*!
+     * @brief Default construct @ref member_signal_user
+     */
+    member_signal_user() = default;
+
     template <class S>
     using member_signal = member_signal<Owner, S>;
 
@@ -2418,8 +2425,15 @@ class member_event_source : public event_source<E>
 
 /// Base class to setup aliases to member events classes with specific owner class
 template <class Owner>
-struct member_events_user
+class member_events_user
 {
+    friend Owner;
+
+    /*!
+     * @brief Default construct @ref member_events_user
+     */
+    member_events_user() = default;
+
     template <class E>
     using member_events = member_events<Owner, E>;
 

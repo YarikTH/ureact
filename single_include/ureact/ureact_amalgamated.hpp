@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-13 22:02:02.387269
+// Generated: 2023-01-14 17:46:29.308290
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2745,47 +2745,6 @@ private:
     subject_ptr_t m_subject = nullptr;
 };
 
-/*!
- * @brief Takes ownership of an observer and automatically detaches it on scope exit
- */
-class scoped_observer final
-{
-public:
-    UREACT_MAKE_NONCOPYABLE( scoped_observer );
-    UREACT_MAKE_MOVABLE( scoped_observer );
-
-    /*!
-     * @brief is not intended to be default constructive
-     */
-    scoped_observer() = delete;
-
-    /*!
-     * @brief Constructs instance from observer
-     */
-    scoped_observer( observer&& observer ) // NOLINT no explicit by design
-        : m_observer( std::move( observer ) )
-    {}
-
-    /*!
-     * @brief Destructor
-     */
-    ~scoped_observer()
-    {
-        m_observer.detach();
-    }
-
-    /*!
-     * @brief Tests if this instance is linked to a node
-     */
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const // TODO: check in tests
-    {
-        return m_observer.is_valid();
-    }
-
-private:
-    observer m_observer;
-};
-
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UREACT_HPP
@@ -4948,6 +4907,57 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
 UREACT_END_NAMESPACE
 
 #endif // UREACT_REACTIVE_REF_HPP
+
+#ifndef UREACT_SCOPED_OBSERVER_HPP
+#define UREACT_SCOPED_OBSERVER_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Takes ownership of an observer and automatically detaches it on scope exit
+ */
+class scoped_observer final
+{
+public:
+    UREACT_MAKE_NONCOPYABLE( scoped_observer );
+    UREACT_MAKE_MOVABLE( scoped_observer );
+
+    /*!
+     * @brief is not intended to be default constructive
+     */
+    scoped_observer() = delete;
+
+    /*!
+     * @brief Constructs instance from observer
+     */
+    scoped_observer( observer&& observer ) // NOLINT no explicit by design
+        : m_observer( std::move( observer ) )
+    {}
+
+    /*!
+     * @brief Destructor
+     */
+    ~scoped_observer()
+    {
+        m_observer.detach();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const // TODO: check in tests
+    {
+        return m_observer.is_valid();
+    }
+
+private:
+    observer m_observer;
+};
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_SCOPED_OBSERVER_HPP
 
 #ifndef UREACT_SINK_HPP
 #define UREACT_SINK_HPP

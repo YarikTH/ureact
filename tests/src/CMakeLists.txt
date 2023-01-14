@@ -30,6 +30,7 @@ target_sources(
         process.cpp
         propagation.cpp
         pulse.cpp
+        scoped_observer.cpp
         signal.cpp
         sink.cpp
         snapshot.cpp

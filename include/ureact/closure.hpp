@@ -10,25 +10,10 @@
 #ifndef UREACT_CLOSURE_HPP
 #define UREACT_CLOSURE_HPP
 
+#include <ureact/type_traits.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
-
-template <class F>
-class closure;
-
-/*!
- * @brief Return if type is closure
- */
-template <typename T>
-struct is_closure : detail::is_base_of_template<closure, T>
-{};
-
-/*!
- * @brief Helper variable template for closure
- */
-template <typename T>
-inline constexpr bool is_closure_v = is_closure<T>::value;
 
 /*!
  * @brief Closure objects used for partial application of reactive functions and chaining of algorithms

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-14 20:47:16.552568
+// Generated: 2023-01-14 21:16:34.322196
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -36,27 +36,10 @@
 #define UREACT_CLOSURE_HPP
 
 
-#ifndef UREACT_UREACT_HPP
-#define UREACT_UREACT_HPP
+#ifndef UREACT_TYPE_TRAITS_HPP
+#define UREACT_TYPE_TRAITS_HPP
 
-#define UREACT_VERSION_MAJOR 0
-#define UREACT_VERSION_MINOR 8
-#define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.8.0 wip"
-
-#define UREACT_VERSION                                                                             \
-    ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
-
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <limits>
-#include <memory>
-#include <tuple>
 #include <type_traits>
-#include <utility>
-#include <vector>
 
 
 #ifndef UREACT_DEFINES_HPP
@@ -182,6 +165,237 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 
 #endif //UREACT_DEFINES_HPP
 
+UREACT_BEGIN_NAMESPACE
+
+// Got from https://stackoverflow.com/a/34672753
+// std::is_base_of for template classes
+namespace detail
+{
+
+template <template <typename...> class Base, typename Derived>
+struct is_base_of_template_impl
+{
+    template <typename... Ts>
+    static constexpr std::true_type test( const Base<Ts...>* )
+    {
+        return {};
+    }
+    static constexpr std::false_type test( ... )
+    {
+        return {};
+    }
+    using type = decltype( test( std::declval<Derived*>() ) );
+};
+
+template <template <typename...> class Base, typename Derived>
+using is_base_of_template = typename is_base_of_template_impl<Base, Derived>::type;
+
+} // namespace detail
+
+
+// Forward
+template <typename S>
+class signal;
+
+/*!
+ * @brief Return if type is signal or its inheritor
+ */
+template <typename T>
+struct is_signal : detail::is_base_of_template<signal, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_signal
+ */
+template <typename T>
+inline constexpr bool is_signal_v = is_signal<T>::value;
+
+
+
+// Forward
+template <typename S>
+class var_signal;
+
+/*!
+ * @brief Return if type is var_signal or its inheritor
+ */
+template <typename T>
+struct is_var_signal : detail::is_base_of_template<var_signal, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_var_signal
+ */
+template <typename T>
+inline constexpr bool is_var_signal_v = is_var_signal<T>::value;
+
+
+
+// Forward
+template <typename... Values>
+class signal_pack;
+
+/*!
+ * @brief Return if type is signal_pack
+ */
+template <typename T>
+struct is_signal_pack : detail::is_base_of_template<signal_pack, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_signal_pack
+ */
+template <typename T>
+inline constexpr bool is_signal_pack_v = is_signal_pack<T>::value;
+
+
+
+/*!
+ * @brief Return if type is signal's inheritor or signal_pack
+ */
+template <typename T>
+struct is_signal_or_pack : std::disjunction<is_signal<T>, is_signal_pack<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_signal_or_pack
+ */
+template <typename T>
+inline constexpr bool is_signal_or_pack_v = is_signal_or_pack<T>::value;
+
+
+
+// Forward
+template <typename E>
+class events;
+
+/*!
+ * @brief Return if type is events or its inheritor
+ */
+template <typename T>
+struct is_event : detail::is_base_of_template<events, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_event
+ */
+template <typename T>
+inline constexpr bool is_event_v = is_event<T>::value;
+
+
+
+// Forward
+template <typename E>
+class event_source;
+
+/*!
+ * @brief Return if type is event_source or its inheritor
+ */
+template <typename T>
+struct is_event_source : detail::is_base_of_template<event_source, T>
+{};
+
+/*!
+ * @brief Helper variable template for is_event_source
+ */
+template <typename T>
+inline constexpr bool is_event_source_v = is_event_source<T>::value;
+
+
+
+// Forward
+class observer;
+
+/*!
+ * @brief Return if type is observer
+ */
+template <typename T>
+struct is_observer : std::is_same<T, observer>
+{};
+
+/*!
+ * @brief Helper variable template for is_observer
+ */
+template <typename T>
+inline constexpr bool is_observer_v = is_observer<T>::value;
+
+
+
+/*!
+ * @brief Return if type is signal or event inheritor
+ */
+template <typename T>
+struct is_observable : std::disjunction<is_signal<T>, is_event<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_observable
+ */
+template <typename T>
+inline constexpr bool is_observable_v = is_observable<T>::value;
+
+
+
+/*!
+ * @brief Return if type is signal or event or observer
+ */
+template <typename T>
+struct is_reactive : std::disjunction<is_observable<T>, is_observer<T>>
+{};
+
+/*!
+ * @brief Helper variable template for is_reactive
+ */
+template <typename T>
+inline constexpr bool is_reactive_v = is_reactive<T>::value;
+
+
+
+// Forward
+template <class F>
+class closure;
+
+/*!
+ * @brief Return if type is closure
+ */
+template <typename T>
+struct is_closure : detail::is_base_of_template<closure, T>
+{};
+
+/*!
+ * @brief Helper variable template for closure
+ */
+template <typename T>
+inline constexpr bool is_closure_v = is_closure<T>::value;
+
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_TYPE_TRAITS_HPP
+
+#ifndef UREACT_UREACT_HPP
+#define UREACT_UREACT_HPP
+
+#define UREACT_VERSION_MAJOR 0
+#define UREACT_VERSION_MINOR 8
+#define UREACT_VERSION_PATCH 0
+#define UREACT_VERSION_STR "0.8.0 wip"
+
+#define UREACT_VERSION                                                                             \
+    ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+
 #ifdef UREACT_USE_STD_ALGORITHM
 #    include <algorithm>
 #endif
@@ -224,26 +438,6 @@ class event_stream_node;
 
 template <typename E, typename Op>
 class event_op_node;
-
-// Got from https://stackoverflow.com/a/34672753
-// std::is_base_of for template classes
-template <template <typename...> class Base, typename Derived>
-struct is_base_of_template_impl
-{
-    template <typename... Ts>
-    static constexpr std::true_type test( const Base<Ts...>* )
-    {
-        return {};
-    }
-    static constexpr std::false_type test( ... )
-    {
-        return {};
-    }
-    using type = decltype( test( std::declval<Derived*>() ) );
-};
-
-template <template <typename...> class Base, typename Derived>
-using is_base_of_template = typename is_base_of_template_impl<Base, Derived>::type;
 
 // chaining of std::conditional_t  based on
 // https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263
@@ -311,123 +505,6 @@ constexpr inline bool always_false = false;
 struct signature_mismatches;
 
 } // namespace detail
-
-/*!
- * @brief Return if type is signal or its inheritor
- */
-template <typename T>
-struct is_signal : detail::is_base_of_template<signal, T>
-{};
-
-/*!
- * @brief Helper variable template for is_signal
- */
-template <typename T>
-inline constexpr bool is_signal_v = is_signal<T>::value;
-
-/*!
- * @brief Return if type is var_signal or its inheritor
- */
-template <typename T>
-struct is_var_signal : detail::is_base_of_template<var_signal, T>
-{};
-
-/*!
- * @brief Helper variable template for is_var_signal
- */
-template <typename T>
-inline constexpr bool is_var_signal_v = is_var_signal<T>::value;
-
-/*!
- * @brief Return if type is signal_pack
- */
-template <typename T>
-struct is_signal_pack : detail::is_base_of_template<signal_pack, T>
-{};
-
-/*!
- * @brief Helper variable template for is_signal_pack
- */
-template <typename T>
-inline constexpr bool is_signal_pack_v = is_signal_pack<T>::value;
-
-/*!
- * @brief Return if type is signal's inheritor or signal_pack
- */
-template <typename T>
-struct is_signal_or_pack : std::disjunction<is_signal<T>, is_signal_pack<T>>
-{};
-
-/*!
- * @brief Helper variable template for is_signal_or_pack
- */
-template <typename T>
-inline constexpr bool is_signal_or_pack_v = is_signal_or_pack<T>::value;
-
-/*!
- * @brief Return if type is events or its inheritor
- */
-template <typename T>
-struct is_event : detail::is_base_of_template<events, T>
-{};
-
-/*!
- * @brief Helper variable template for is_event
- */
-template <typename T>
-inline constexpr bool is_event_v = is_event<T>::value;
-
-/*!
- * @brief Return if type is event_source or its inheritor
- */
-template <typename T>
-struct is_event_source : detail::is_base_of_template<event_source, T>
-{};
-
-/*!
- * @brief Helper variable template for is_event_source
- */
-template <typename T>
-inline constexpr bool is_event_source_v = is_event_source<T>::value;
-
-/*!
- * @brief Return if type is observer
- */
-template <typename T>
-struct is_observer : std::is_same<T, observer>
-{};
-
-/*!
- * @brief Helper variable template for is_observer
- */
-template <typename T>
-inline constexpr bool is_observer_v = is_observer<T>::value;
-
-/*!
- * @brief Return if type is signal or event inheritor
- */
-template <typename T>
-struct is_observable : std::disjunction<is_signal<T>, is_event<T>>
-{};
-
-/*!
- * @brief Helper variable template for is_observable
- */
-template <typename T>
-inline constexpr bool is_observable_v = is_observable<T>::value;
-
-/*!
- * @brief Return if type is signal or event or observer
- */
-template <typename T>
-struct is_reactive : std::disjunction<is_observable<T>, is_observer<T>>
-{};
-
-/*!
- * @brief Helper variable template for is_reactive
- */
-template <typename T>
-inline constexpr bool is_reactive_v = is_reactive<T>::value;
 
 namespace detail
 {
@@ -1270,22 +1347,6 @@ UREACT_END_NAMESPACE
 #endif // UREACT_UREACT_HPP
 
 UREACT_BEGIN_NAMESPACE
-
-template <class F>
-class closure;
-
-/*!
- * @brief Return if type is closure
- */
-template <typename T>
-struct is_closure : detail::is_base_of_template<closure, T>
-{};
-
-/*!
- * @brief Helper variable template for closure
- */
-template <typename T>
-inline constexpr bool is_closure_v = is_closure<T>::value;
 
 /*!
  * @brief Closure objects used for partial application of reactive functions and chaining of algorithms

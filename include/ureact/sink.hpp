@@ -11,6 +11,7 @@
 #define UREACT_SINK_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/type_traits.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE

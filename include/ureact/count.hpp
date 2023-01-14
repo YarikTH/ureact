@@ -12,6 +12,7 @@
 
 #include <ureact/closure.hpp>
 #include <ureact/fold.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

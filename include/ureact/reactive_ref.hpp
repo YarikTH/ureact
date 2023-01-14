@@ -12,6 +12,7 @@
 
 #include <ureact/flatten.hpp>
 #include <ureact/lift.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

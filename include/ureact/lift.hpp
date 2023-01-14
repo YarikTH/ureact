@@ -12,6 +12,7 @@
 
 #include <ureact/closure.hpp>
 #include <ureact/temp_signal.hpp>
+#include <ureact/type_traits.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE

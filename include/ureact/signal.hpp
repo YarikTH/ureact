@@ -10,6 +10,7 @@
 #ifndef UREACT_SIGNAL_HPP
 #define UREACT_SIGNAL_HPP
 
+#include <ureact/type_traits.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE

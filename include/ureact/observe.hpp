@@ -14,6 +14,7 @@
 #include <ureact/event_range.hpp>
 #include <ureact/observer.hpp>
 #include <ureact/signal.hpp>
+#include <ureact/type_traits.hpp>
 
 // TODO: make signal include unneded here
 

@@ -13,6 +13,7 @@
 #include <ureact/closure.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/monitor.hpp>
+#include <ureact/type_traits.hpp>
 #include <ureact/unify.hpp>
 
 UREACT_BEGIN_NAMESPACE

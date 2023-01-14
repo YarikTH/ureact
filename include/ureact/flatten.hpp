@@ -11,6 +11,7 @@
 #define UREACT_FLATTEN_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
 #include <ureact/ureact.hpp>
 

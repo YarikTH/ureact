@@ -16,11 +16,11 @@
 
 UREACT_BEGIN_NAMESPACE
 
-// Got from https://stackoverflow.com/a/34672753
-// std::is_base_of for template classes
 namespace detail
 {
 
+// Got from https://stackoverflow.com/a/34672753
+// std::is_base_of for template classes
 template <template <typename...> class Base, typename Derived>
 struct is_base_of_template_impl
 {
@@ -38,6 +38,83 @@ struct is_base_of_template_impl
 
 template <template <typename...> class Base, typename Derived>
 using is_base_of_template = typename is_base_of_template_impl<Base, Derived>::type;
+
+// chaining of std::conditional_t  based on
+// https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263
+
+/*!
+ * @brief Utility for using with select_t
+ */
+template <bool B, typename T>
+struct condition
+{
+    static constexpr bool value = B;
+    using type = T;
+};
+
+template <typename Head, typename... Tail>
+struct select_impl : std::conditional_t<Head::value, Head, select_impl<Tail...>>
+{};
+
+template <typename T>
+struct select_impl<T>
+{
+    using type = T;
+};
+
+template <bool B, typename T>
+struct select_impl<condition<B, T>>
+{
+    // last one had better be true!
+    static_assert( B, "!" );
+    using type = T;
+};
+
+/*!
+ * @brief Utility for selecting type based on several conditions
+ *
+ * Usage:
+ *   template<class T>
+ *   using foo =
+ *      select_t<condition<std::is_convertible_v<T, A>, A>,
+ *               condition<std::is_convertible_v<T, B>, B>,
+ *               void>;
+ * the same as
+ *   template<class T>
+ *   using foo =
+ *      std::conditional_t<
+ *          std::is_convertible_v<T, A>,
+ *          A,
+ *          std::conditional_t<
+ *              std::is_convertible_v<T, B>,
+ *              B,
+ *              void>>;
+ */
+template <typename Head, typename... Tail>
+using select_t = typename select_impl<Head, Tail...>::type;
+
+/*!
+ * @brief Helper class to mark failing of class match
+ */
+struct signature_mismatches;
+
+/*!
+ * @brief Helper for static assert
+ */
+template <typename...>
+constexpr inline bool always_false = false;
+
+/*!
+ * @brief Helper to define emplace constructor that forwards args into child
+ */
+struct dont_move
+{};
+
+/*!
+ * @brief Utility to help with variadic R-value emplace constructors
+ */
+template <typename L, typename R>
+using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
 } // namespace detail
 

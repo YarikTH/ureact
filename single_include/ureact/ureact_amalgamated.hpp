@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-14 18:13:26.027214
+// Generated: 2023-01-14 18:25:15.624925
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2468,81 +2468,6 @@ class member_events_user
     template <class E>                                                                             \
     using member_event_source = ::ureact::member_event_source<Owner, E>
 
-/*!
- * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node
- *
- *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
- *  that allows to iterate over its events without modifying it.
- *
- *  TODO: think about making values movable, so values would be processed more efficiently
- */
-template <typename E = unit>
-class event_range final
-{
-public:
-    using const_iterator = typename std::vector<E>::const_iterator;
-    using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
-    using size_type = typename std::vector<E>::size_type;
-
-    /*!
-     * @brief Constructor
-     */
-    explicit event_range( const std::vector<E>& data )
-        : m_data( data )
-    {}
-
-    /*!
-     * @brief Returns a random access const iterator to the beginning
-     */
-    UREACT_WARN_UNUSED_RESULT const_iterator begin() const
-    {
-        return m_data.begin();
-    }
-
-    /*!
-     * @brief Returns a random access const iterator to the end
-     */
-    UREACT_WARN_UNUSED_RESULT const_iterator end() const
-    {
-        return m_data.end();
-    }
-
-    /*!
-     * @brief Returns a reverse random access const iterator to the beginning
-     */
-    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rbegin() const
-    {
-        return m_data.rbegin();
-    }
-
-    /*!
-     * @brief Returns a reverse random access const iterator to the end
-     */
-    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
-    {
-        return m_data.rend();
-    }
-
-    /*!
-     * @brief Returns the number of events
-     */
-    UREACT_WARN_UNUSED_RESULT size_type size() const
-    {
-        return m_data.size();
-    }
-
-    /*!
-     * @brief Checks whether the container is empty
-     */
-    UREACT_WARN_UNUSED_RESULT bool empty() const
-    {
-        return m_data.empty();
-    }
-
-private:
-    const std::vector<E>& m_data;
-};
-
 namespace detail
 {
 
@@ -2776,6 +2701,91 @@ private:
 UREACT_END_NAMESPACE
 
 #endif //UREACT_EVENT_EMITTER_HPP
+
+#ifndef UREACT_EVENT_RANGE_HPP
+#define UREACT_EVENT_RANGE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node
+ *
+ *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
+ *  that allows to iterate over its events without modifying it.
+ *
+ *  TODO: think about making values movable, so values would be processed more efficiently
+ */
+template <typename E = unit>
+class event_range final
+{
+public:
+    using const_iterator = typename std::vector<E>::const_iterator;
+    using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
+    using size_type = typename std::vector<E>::size_type;
+
+    /*!
+     * @brief Constructor
+     */
+    explicit event_range( const std::vector<E>& data )
+        : m_data( data )
+    {}
+
+    /*!
+     * @brief Returns a random access const iterator to the beginning
+     */
+    UREACT_WARN_UNUSED_RESULT const_iterator begin() const
+    {
+        return m_data.begin();
+    }
+
+    /*!
+     * @brief Returns a random access const iterator to the end
+     */
+    UREACT_WARN_UNUSED_RESULT const_iterator end() const
+    {
+        return m_data.end();
+    }
+
+    /*!
+     * @brief Returns a reverse random access const iterator to the beginning
+     */
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rbegin() const
+    {
+        return m_data.rbegin();
+    }
+
+    /*!
+     * @brief Returns a reverse random access const iterator to the end
+     */
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
+    {
+        return m_data.rend();
+    }
+
+    /*!
+     * @brief Returns the number of events
+     */
+    UREACT_WARN_UNUSED_RESULT size_type size() const
+    {
+        return m_data.size();
+    }
+
+    /*!
+     * @brief Checks whether the container is empty
+     */
+    UREACT_WARN_UNUSED_RESULT bool empty() const
+    {
+        return m_data.empty();
+    }
+
+private:
+    const std::vector<E>& m_data;
+};
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_EVENT_RANGE_HPP
 
 UREACT_BEGIN_NAMESPACE
 

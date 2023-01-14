@@ -10,7 +10,7 @@
 #ifndef UREACT_TEMP_SIGNAL_HPP
 #define UREACT_TEMP_SIGNAL_HPP
 
-#include <ureact/ureact.hpp>
+#include <ureact/signal.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

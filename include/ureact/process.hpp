@@ -14,6 +14,9 @@
 #include <ureact/event_emitter.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/events.hpp>
+#include <ureact/signal.hpp>
+
+// TODO: make signal include unneded here
 
 UREACT_BEGIN_NAMESPACE
 

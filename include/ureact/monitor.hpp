@@ -11,6 +11,7 @@
 #define UREACT_MONITOR_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/events.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE

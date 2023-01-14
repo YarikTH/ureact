@@ -7,6 +7,7 @@
 //
 #include "doctest_extra.h"
 #include "identity.hpp"
+#include "ureact/events.hpp"
 #include "ureact/lift.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/transaction.hpp"

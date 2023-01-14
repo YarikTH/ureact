@@ -8,7 +8,7 @@
 #include "ureact/count.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/ureact.hpp"
+#include "ureact/events.hpp"
 
 // Counts amount of received events into signal<S>
 TEST_CASE( "Count" )

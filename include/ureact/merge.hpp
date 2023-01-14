@@ -76,6 +76,9 @@ private:
     };
 };
 
+template <typename E>
+using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
+
 } // namespace detail
 
 /*!

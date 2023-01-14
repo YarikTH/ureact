@@ -8,6 +8,7 @@
 #include "ureact/tap.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/events.hpp"
 
 TEST_CASE( "TapSignal" )
 {

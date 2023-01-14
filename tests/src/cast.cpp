@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/events.hpp"
 
 // Static cast values of event stream
 TEST_CASE( "Cast" )

@@ -8,6 +8,7 @@
 #include "ureact/collect.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/events.hpp"
 
 // Collects received events into signal<ContT<E>>
 TEST_CASE( "Collect" )

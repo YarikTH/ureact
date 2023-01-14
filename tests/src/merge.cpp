@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/events.hpp"
 
 // merge 3 event sources into 1
 TEST_CASE( "Merge" )

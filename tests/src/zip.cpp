@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/events.hpp"
 
 // zip 3 event sources into 1
 // based on example https://en.cppreference.com/w/cpp/ranges/zip_view

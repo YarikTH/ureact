@@ -8,6 +8,7 @@
 #include "ureact/scoped_observer.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/events.hpp"
 #include "ureact/observe.hpp"
 
 // scoped_observer is not intended to be default constructive, but move constructive from observer

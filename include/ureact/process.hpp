@@ -13,7 +13,7 @@
 #include <ureact/closure.hpp>
 #include <ureact/event_emitter.hpp>
 #include <ureact/event_range.hpp>
-#include <ureact/ureact.hpp>
+#include <ureact/events.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

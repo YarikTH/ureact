@@ -8,6 +8,7 @@
 #include "ureact/hold.hpp"
 
 #include "doctest_extra.h"
+#include "ureact/events.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/ureact.hpp"
 

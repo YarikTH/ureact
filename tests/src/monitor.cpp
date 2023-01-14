@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
+#include "ureact/events.hpp"
 
 // Emits value changes of signal as events
 TEST_CASE( "Monitor" )

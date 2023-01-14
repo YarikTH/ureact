@@ -12,6 +12,7 @@
 #include <variant>
 
 #include "doctest_extra.h"
+#include "ureact/events.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/reactive_ref.hpp"
 #include "ureact/transaction.hpp"

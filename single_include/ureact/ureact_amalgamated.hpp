@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-14 18:02:20.498010
+// Generated: 2023-01-14 18:13:26.027214
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2543,80 +2543,6 @@ private:
     const std::vector<E>& m_data;
 };
 
-/*!
- * @brief Represents output stream of events.
- *
- *  It is std::back_insert_iterator analog, but not depending on heavy <iterator> header.
- *  Additionally to std::back_insert_iterator interface it provides operator<< overload
- */
-template <typename E = unit>
-class event_emitter final
-{
-public:
-    using container_type = std::vector<E>;
-    using iterator_category = std::output_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = E;
-    using pointer = value_type*;
-    using reference = value_type&;
-
-    /*!
-     * @brief Constructor
-     */
-    explicit event_emitter( container_type& container )
-        : m_container( &container )
-    {}
-
-    // clang-format off
-    event_emitter& operator*()       { return *this; }
-    event_emitter& operator++()      { return *this; }
-    event_emitter  operator++( int ) { return *this; } // NOLINT
-    // clang-format on
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     */
-    event_emitter& operator=( const E& e )
-    {
-        m_container->push_back( e );
-        return *this;
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Specialization of operator=(const E& e) for rvalue
-     */
-    event_emitter& operator=( E&& e )
-    {
-        m_container->push_back( std::move( e ) );
-        return *this;
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     */
-    event_emitter& operator<<( const E& e )
-    {
-        m_container->push_back( e );
-        return *this;
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Specialization of operator<<(const E& e) for rvalue
-     */
-    event_emitter& operator<<( E&& e )
-    {
-        m_container->push_back( std::move( e ) );
-        return *this;
-    }
-
-private:
-    container_type* m_container;
-};
-
 namespace detail
 {
 
@@ -2766,6 +2692,90 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_PROCESS_HPP
 #define UREACT_PROCESS_HPP
 
+
+#ifndef UREACT_EVENT_EMITTER_HPP
+#define UREACT_EVENT_EMITTER_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Represents output stream of events.
+ *
+ *  It is std::back_insert_iterator analog.
+ *  Additionally to std::back_insert_iterator interface it provides operator<< overload
+ */
+template <typename E = unit>
+class event_emitter final
+{
+public:
+    using container_type = std::vector<E>;
+    using iterator_category = std::output_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = E;
+    using pointer = value_type*;
+    using reference = value_type&;
+
+    /*!
+     * @brief Constructor
+     */
+    explicit event_emitter( container_type& container )
+        : m_container( &container )
+    {}
+
+    // clang-format off
+    event_emitter& operator*()       { return *this; }
+    event_emitter& operator++()      { return *this; }
+    event_emitter  operator++( int ) { return *this; } // NOLINT
+    // clang-format on
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    event_emitter& operator=( const E& e )
+    {
+        m_container->push_back( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Specialization of operator=(const E& e) for rvalue
+     */
+    event_emitter& operator=( E&& e )
+    {
+        m_container->push_back( std::move( e ) );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    event_emitter& operator<<( const E& e )
+    {
+        m_container->push_back( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Specialization of operator<<(const E& e) for rvalue
+     */
+    event_emitter& operator<<( E&& e )
+    {
+        m_container->push_back( std::move( e ) );
+        return *this;
+    }
+
+private:
+    container_type* m_container;
+};
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_EVENT_EMITTER_HPP
 
 UREACT_BEGIN_NAMESPACE
 

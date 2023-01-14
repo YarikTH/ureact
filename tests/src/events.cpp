@@ -326,28 +326,3 @@ TEST_CASE( "EventRange" )
         CHECK( reverse_range_copy == std::vector<int>{ 4, 3, 2, 1, 0 } );
     }
 }
-
-TEST_CASE( "EventEmitter" )
-{
-    std::vector<int> data;
-    ureact::event_emitter<int> emitter{ data };
-    auto _2 = 2;
-
-    SUBCASE( "operator =" )
-    {
-        emitter = 1;  // R-value
-        emitter = _2; // L-value
-    }
-    SUBCASE( "stream" )
-    {
-        emitter << 1   // R-value
-                << _2; // L-value
-    }
-    SUBCASE( "stl iterator" )
-    {
-        std::generate_n( emitter, 1, [] { return 1; } );                   // R-value
-        std::generate_n( emitter, 1, [&]() -> const int& { return _2; } ); // L-value
-    }
-
-    CHECK( data == std::vector<int>{ 1, 2 } );
-}

@@ -17,6 +17,7 @@ target_sources(
         context.cpp
         count.cpp
         detail.cpp
+        event_emitter.cpp
         events.cpp
         filter.cpp
         flatten.cpp

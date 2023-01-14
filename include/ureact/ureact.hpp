@@ -640,6 +640,27 @@ public:
         return _get_internals( m_context ).get_graph();
     }
 
+protected:
+    void attach_to( reactive_node& parent )
+    {
+        get_graph().on_node_attach( *this, parent );
+    }
+
+    void detach_from( reactive_node& parent )
+    {
+        get_graph().on_node_detach( *this, parent );
+    }
+
+    void dynamic_attach_to( reactive_node& parent )
+    {
+        get_graph().on_dynamic_node_attach( *this, parent );
+    }
+
+    void dynamic_detach_from( reactive_node& parent )
+    {
+        get_graph().on_dynamic_node_detach( *this, parent );
+    }
+
 private:
     UREACT_MAKE_NONCOPYABLE( node_base );
 

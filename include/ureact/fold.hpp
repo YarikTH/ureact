@@ -85,13 +85,13 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->get_graph().on_node_attach( *this, *events );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+        this->attach_to( *events );
+        ( this->attach_to( *deps ), ... );
     }
 
     ~fold_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_events );
+        this->detach_from( *m_events );
 
         std::apply( detach_functor<fold_node>( *this ), m_deps );
     }

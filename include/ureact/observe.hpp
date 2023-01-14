@@ -90,7 +90,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
     {
-        this->get_graph().on_node_attach( *this, *subject );
+        this->attach_to( *subject );
     }
 
     void tick( turn_type& ) override
@@ -124,7 +124,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            get_graph().on_node_detach( *this, *p );
+            detach_from( *p );
             m_subject.reset();
         }
     }
@@ -147,8 +147,8 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->get_graph().on_node_attach( *this, *subject );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+        this->attach_to( *subject );
+        ( this->attach_to( *deps ), ... );
     }
 
     void tick( turn_type& turn ) override
@@ -199,7 +199,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            get_graph().on_node_detach( *this, *p );
+            detach_from( *p );
 
             std::apply( detach_functor<events_observer_node>( *this ), m_deps );
 

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-14 22:33:47.599362
+// Generated: 2023-01-14 23:34:48.083570
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -1070,6 +1070,27 @@ public:
     UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
     {
         return _get_internals( m_context ).get_graph();
+    }
+
+protected:
+    void attach_to( reactive_node& parent )
+    {
+        get_graph().on_node_attach( *this, parent );
+    }
+
+    void detach_from( reactive_node& parent )
+    {
+        get_graph().on_node_detach( *this, parent );
+    }
+
+    void dynamic_attach_to( reactive_node& parent )
+    {
+        get_graph().on_dynamic_node_attach( *this, parent );
+    }
+
+    void dynamic_detach_from( reactive_node& parent )
+    {
+        get_graph().on_dynamic_node_detach( *this, parent );
     }
 
 private:
@@ -2826,13 +2847,13 @@ public:
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
     {
-        this->get_graph().on_node_attach( *this, *source );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+        this->attach_to( *source );
+        ( this->attach_to( *deps ), ... );
     }
 
     ~event_processing_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_source );
+        this->detach_from( *m_source );
 
         std::apply( detach_functor<event_processing_node>( *this ), m_deps );
     }
@@ -3164,12 +3185,12 @@ public:
         : monitor_node::event_stream_node( context )
         , m_target( target )
     {
-        this->get_graph().on_node_attach( *this, *m_target );
+        this->attach_to( *m_target );
     }
 
     ~monitor_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_target );
+        this->detach_from( *m_target );
     }
 
     void tick( turn_type& turn ) override
@@ -3375,13 +3396,13 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->get_graph().on_node_attach( *this, *events );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+        this->attach_to( *events );
+        ( this->attach_to( *deps ), ... );
     }
 
     ~fold_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_events );
+        this->detach_from( *m_events );
 
         std::apply( detach_functor<fold_node>( *this ), m_deps );
     }
@@ -3706,14 +3727,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->get_graph().on_node_attach( *this, *m_outer );
-        this->get_graph().on_node_attach( *this, *m_inner );
+        this->attach_to( *m_outer );
+        this->attach_to( *m_inner );
     }
 
     ~signal_flatten_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_inner );
-        this->get_graph().on_node_detach( *this, *m_outer );
+        this->detach_from( *m_inner );
+        this->detach_from( *m_outer );
     }
 
     void tick( turn_type& ) override
@@ -3726,8 +3747,8 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->get_graph().on_dynamic_node_detach( *this, *old_inner );
-                this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+                this->dynamic_detach_from( *old_inner );
+                this->dynamic_attach_to( *new_inner );
 
                 return;
             }
@@ -3752,14 +3773,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->get_graph().on_node_attach( *this, *m_outer );
-        this->get_graph().on_node_attach( *this, *m_inner );
+        this->attach_to( *m_outer );
+        this->attach_to( *m_inner );
     }
 
     ~event_flatten_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_inner );
-        this->get_graph().on_node_detach( *this, *m_outer );
+        this->detach_from( *m_inner );
+        this->detach_from( *m_outer );
     }
 
     void tick( turn_type& turn ) override
@@ -3777,8 +3798,8 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->get_graph().on_dynamic_node_detach( *this, *old_inner );
-                this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+                this->dynamic_detach_from( *old_inner );
+                this->dynamic_attach_to( *new_inner );
 
                 return;
             }
@@ -4640,7 +4661,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
     {
-        this->get_graph().on_node_attach( *this, *subject );
+        this->attach_to( *subject );
     }
 
     void tick( turn_type& ) override
@@ -4674,7 +4695,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            get_graph().on_node_detach( *this, *p );
+            detach_from( *p );
             m_subject.reset();
         }
     }
@@ -4697,8 +4718,8 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->get_graph().on_node_attach( *this, *subject );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+        this->attach_to( *subject );
+        ( this->attach_to( *deps ), ... );
     }
 
     void tick( turn_type& turn ) override
@@ -4749,7 +4770,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            get_graph().on_node_detach( *this, *p );
+            detach_from( *p );
 
             std::apply( detach_functor<events_observer_node>( *this ), m_deps );
 
@@ -5668,15 +5689,13 @@ public:
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
-        ( this->get_graph().on_node_attach( *this, *sources ), ... );
+        ( this->attach_to( *sources ), ... );
     }
 
     ~event_zip_node() override
     {
         std::apply(
-            [this]( slot<Values>&... slots ) {
-                ( this->get_graph().on_node_detach( *this, *slots.source ), ... );
-            },
+            [this]( slot<Values>&... slots ) { ( this->detach_from( *slots.source ), ... ); },
             m_slots );
     }
 

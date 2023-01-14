@@ -37,14 +37,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->get_graph().on_node_attach( *this, *m_outer );
-        this->get_graph().on_node_attach( *this, *m_inner );
+        this->attach_to( *m_outer );
+        this->attach_to( *m_inner );
     }
 
     ~signal_flatten_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_inner );
-        this->get_graph().on_node_detach( *this, *m_outer );
+        this->detach_from( *m_inner );
+        this->detach_from( *m_outer );
     }
 
     void tick( turn_type& ) override
@@ -57,8 +57,8 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->get_graph().on_dynamic_node_detach( *this, *old_inner );
-                this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+                this->dynamic_detach_from( *old_inner );
+                this->dynamic_attach_to( *new_inner );
 
                 return;
             }
@@ -83,14 +83,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->get_graph().on_node_attach( *this, *m_outer );
-        this->get_graph().on_node_attach( *this, *m_inner );
+        this->attach_to( *m_outer );
+        this->attach_to( *m_inner );
     }
 
     ~event_flatten_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_inner );
-        this->get_graph().on_node_detach( *this, *m_outer );
+        this->detach_from( *m_inner );
+        this->detach_from( *m_outer );
     }
 
     void tick( turn_type& turn ) override
@@ -108,8 +108,8 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->get_graph().on_dynamic_node_detach( *this, *old_inner );
-                this->get_graph().on_dynamic_node_attach( *this, *new_inner );
+                this->dynamic_detach_from( *old_inner );
+                this->dynamic_attach_to( *new_inner );
 
                 return;
             }

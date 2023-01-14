@@ -31,12 +31,12 @@ public:
         : monitor_node::event_stream_node( context )
         , m_target( target )
     {
-        this->get_graph().on_node_attach( *this, *m_target );
+        this->attach_to( *m_target );
     }
 
     ~monitor_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_target );
+        this->detach_from( *m_target );
     }
 
     void tick( turn_type& turn ) override

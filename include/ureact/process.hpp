@@ -38,13 +38,13 @@ public:
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
     {
-        this->get_graph().on_node_attach( *this, *source );
-        ( this->get_graph().on_node_attach( *this, *deps ), ... );
+        this->attach_to( *source );
+        ( this->attach_to( *deps ), ... );
     }
 
     ~event_processing_node() override
     {
-        this->get_graph().on_node_detach( *this, *m_source );
+        this->detach_from( *m_source );
 
         std::apply( detach_functor<event_processing_node>( *this ), m_deps );
     }

@@ -10,7 +10,7 @@
 #ifndef UREACT_SCOPED_OBSERVER_HPP
 #define UREACT_SCOPED_OBSERVER_HPP
 
-#include <ureact/ureact.hpp>
+#include <ureact/observer.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

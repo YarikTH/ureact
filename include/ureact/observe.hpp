@@ -11,7 +11,7 @@
 #define UREACT_OBSERVE_HPP
 
 #include <ureact/closure.hpp>
-#include <ureact/ureact.hpp>
+#include <ureact/observer.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

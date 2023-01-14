@@ -17,7 +17,7 @@
 #include <ureact/signal.hpp>
 #include <ureact/type_traits.hpp>
 
-// TODO: make signal include unneded here
+// TODO: make signal include unneeded here
 
 UREACT_BEGIN_NAMESPACE
 

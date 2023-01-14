@@ -2780,7 +2780,7 @@ UREACT_END_NAMESPACE
 
 #endif //UREACT_SIGNAL_HPP
 
-// TODO: make signal include unneded here
+// TODO: make signal include unneeded here
 
 UREACT_BEGIN_NAMESPACE
 

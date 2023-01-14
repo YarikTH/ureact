@@ -89,8 +89,7 @@ public:
     {
         this->get_graph().on_node_detach( *this, *m_events );
 
-        std::apply( detach_functor<fold_node, std::shared_ptr<signal_node<DepValues>>...>( *this ),
-            m_deps );
+        std::apply( detach_functor<fold_node>( *this ), m_deps );
     }
 
     void tick( turn_type& turn ) override

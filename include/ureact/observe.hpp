@@ -197,10 +197,7 @@ private:
         {
             get_graph().on_node_detach( *this, *p );
 
-            std::apply(
-                detach_functor<events_observer_node, std::shared_ptr<signal_node<DepValues>>...>(
-                    *this ),
-                m_deps );
+            std::apply( detach_functor<events_observer_node>( *this ), m_deps );
 
             m_subject.reset();
         }

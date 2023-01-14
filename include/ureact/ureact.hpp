@@ -1091,18 +1091,34 @@ public:
     {}
 };
 
-template <typename Node, typename... Deps>
-struct attach_functor
+template <typename Node>
+class linker_functor_base
 {
-    explicit attach_functor( Node& node )
+protected:
+    explicit linker_functor_base( Node& node )
         : m_node( node )
+        , m_graph( m_node.get_graph() )
     {}
 
+    Node& m_node;
+    react_graph& m_graph;
+};
+
+template <typename Node>
+class attach_functor : linker_functor_base<Node>
+{
+public:
+    explicit attach_functor( Node& node )
+        : linker_functor_base<Node>( node )
+    {}
+
+    template <typename... Deps>
     void operator()( const Deps&... deps ) const
     {
         ( attach( deps ), ... );
     }
 
+private:
     template <typename T>
     void attach( const T& op ) const
     {
@@ -1112,24 +1128,25 @@ struct attach_functor
     template <typename T>
     void attach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        m_node.get_graph().on_node_attach( m_node, *dep_ptr );
+        this->m_graph.on_node_attach( this->m_node, *dep_ptr );
     }
-
-    Node& m_node;
 };
 
-template <typename Node, typename... Deps>
-struct detach_functor
+template <typename Node>
+class detach_functor : linker_functor_base<Node>
 {
+public:
     explicit detach_functor( Node& node )
-        : m_node( node )
+        : linker_functor_base<Node>( node )
     {}
 
+    template <typename... Deps>
     void operator()( const Deps&... deps ) const
     {
         ( detach( deps ), ... );
     }
 
+private:
     template <typename T>
     void detach( const T& op ) const
     {
@@ -1139,10 +1156,8 @@ struct detach_functor
     template <typename T>
     void detach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        m_node.get_graph().on_node_detach( m_node, *dep_ptr );
+        this->m_graph.on_node_detach( this->m_node, *dep_ptr );
     }
-
-    Node& m_node;
 };
 
 template <typename... Deps>
@@ -1162,26 +1177,26 @@ public:
     template <typename Node>
     void attach( Node& node ) const
     {
-        std::apply( attach_functor<Node, Deps...>{ node }, m_deps );
+        std::apply( attach_functor<Node>{ node }, m_deps );
     }
 
     template <typename Node>
     void detach( Node& node ) const
     {
-        std::apply( detach_functor<Node, Deps...>{ node }, m_deps );
+        std::apply( detach_functor<Node>{ node }, m_deps );
     }
 
     template <typename Node, typename Functor>
     void attach_rec( const Functor& functor ) const
     {
         // Same memory layout, different func
-        std::apply( reinterpret_cast<const attach_functor<Node, Deps...>&>( functor ), m_deps );
+        std::apply( reinterpret_cast<const attach_functor<Node>&>( functor ), m_deps );
     }
 
     template <typename Node, typename Functor>
     void detach_rec( const Functor& functor ) const
     {
-        std::apply( reinterpret_cast<const detach_functor<Node, Deps...>&>( functor ), m_deps );
+        std::apply( reinterpret_cast<const detach_functor<Node>&>( functor ), m_deps );
     }
 
 protected:

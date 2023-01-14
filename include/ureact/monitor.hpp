@@ -20,6 +20,9 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename S>
+class signal_node;
+
 template <typename E>
 class monitor_node final : public event_stream_node<E>
 {

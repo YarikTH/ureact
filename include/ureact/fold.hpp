@@ -20,6 +20,9 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename E>
+class event_stream_node;
+
 template <typename E, typename S, typename F, typename... Args>
 class add_fold_range_wrapper
 {

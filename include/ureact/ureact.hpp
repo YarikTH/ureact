@@ -46,42 +46,14 @@
 
 UREACT_BEGIN_NAMESPACE
 
-class context;
-
 template <typename S>
 class signal;
-
-template <typename S>
-class var_signal;
-
-template <typename S, typename Op>
-class temp_signal;
 
 template <typename E>
 class events;
 
-template <typename E>
-class event_source;
-
-template <typename... Values>
-class signal_pack;
-
-template <typename E>
-class event_range;
-
-class observer;
-
 namespace detail
 {
-
-template <typename S>
-class signal_node;
-
-template <typename E>
-class event_stream_node;
-
-template <typename E, typename Op>
-class event_op_node;
 
 // chaining of std::conditional_t  based on
 // https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-14 21:16:34.322196
+// Generated: 2023-01-14 21:26:31.710641
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -402,42 +402,14 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-class context;
-
 template <typename S>
 class signal;
-
-template <typename S>
-class var_signal;
-
-template <typename S, typename Op>
-class temp_signal;
 
 template <typename E>
 class events;
 
-template <typename E>
-class event_source;
-
-template <typename... Values>
-class signal_pack;
-
-template <typename E>
-class event_range;
-
-class observer;
-
 namespace detail
 {
-
-template <typename S>
-class signal_node;
-
-template <typename E>
-class event_stream_node;
-
-template <typename E, typename Op>
-class event_op_node;
 
 // chaining of std::conditional_t  based on
 // https://stackoverflow.com/questions/32785105/implementing-a-switch-type-trait-with-stdconditional-t-chain-calls/32785263#32785263
@@ -3156,6 +3128,9 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename S>
+class signal_node;
+
 template <typename E>
 class monitor_node final : public event_stream_node<E>
 {
@@ -3309,6 +3284,9 @@ UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
+
+template <typename E>
+class event_stream_node;
 
 template <typename E, typename S, typename F, typename... Args>
 class add_fold_range_wrapper
@@ -3685,6 +3663,12 @@ UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
+
+template <typename S>
+class signal_node;
+
+template <typename E>
+class event_stream_node;
 
 template <typename OuterS, typename InnerS>
 class signal_flatten_node final : public signal_node<InnerS>
@@ -4439,6 +4423,12 @@ private:
 };
 
 template <typename E>
+class event_stream_node;
+
+template <typename E, typename Op>
+class event_op_node;
+
+template <typename E>
 using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
 } // namespace detail
@@ -4557,6 +4547,9 @@ UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
+
+template <typename E>
+class event_stream_node;
 
 /// Special wrapper to add specific return type to the void function
 template <typename F, typename Ret, Ret return_value>
@@ -5637,6 +5630,9 @@ UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
+
+template <typename E>
+class event_stream_node;
 
 template <typename... Values>
 class event_zip_node final : public event_stream_node<std::tuple<Values...>>

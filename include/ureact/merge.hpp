@@ -77,6 +77,12 @@ private:
 };
 
 template <typename E>
+class event_stream_node;
+
+template <typename E, typename Op>
+class event_op_node;
+
+template <typename E>
 using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
 } // namespace detail

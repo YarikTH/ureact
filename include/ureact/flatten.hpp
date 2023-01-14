@@ -19,6 +19,12 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename S>
+class signal_node;
+
+template <typename E>
+class event_stream_node;
+
 template <typename OuterS, typename InnerS>
 class signal_flatten_node final : public signal_node<InnerS>
 {

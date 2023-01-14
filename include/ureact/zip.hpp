@@ -19,6 +19,9 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename E>
+class event_stream_node;
+
 template <typename... Values>
 class event_zip_node final : public event_stream_node<std::tuple<Values...>>
 {

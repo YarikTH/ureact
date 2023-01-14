@@ -23,6 +23,9 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename E>
+class event_stream_node;
+
 /// Special wrapper to add specific return type to the void function
 template <typename F, typename Ret, Ret return_value>
 class add_default_return_value_wrapper

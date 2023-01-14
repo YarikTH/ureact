@@ -10,6 +10,7 @@
 #ifndef UREACT_EVENT_RANGE_HPP
 #define UREACT_EVENT_RANGE_HPP
 
+#include <ureact/unit.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE

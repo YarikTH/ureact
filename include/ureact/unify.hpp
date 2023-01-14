@@ -11,6 +11,7 @@
 #define UREACT_UNIFY_HPP
 
 #include <ureact/cast.hpp>
+#include <ureact/unit.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

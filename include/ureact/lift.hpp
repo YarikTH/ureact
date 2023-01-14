@@ -11,6 +11,7 @@
 #define UREACT_LIFT_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/temp_signal.hpp>
 #include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-14 23:34:48.083570
+// Generated: 2023-01-16 23:24:25.846656
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2131,6 +2131,589 @@ UREACT_END_NAMESPACE
 
 #endif //UREACT_EVENTS_HPP
 
+#ifndef UREACT_SIGNAL_PACK_HPP
+#define UREACT_SIGNAL_PACK_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief A wrapper type for a tuple of signal references
+ * @tparam Values types of signal values
+ *
+ *  Created with @ref with()
+ */
+template <typename... Values>
+class signal_pack final
+{
+public:
+    /*!
+     * @brief Class to store signals instead of signal references
+     */
+    class stored
+    {
+    public:
+        /*!
+         * @brief Construct from signals
+         */
+        explicit stored( const signal<Values>&... deps )
+            : data( std::tie( deps... ) )
+        {}
+
+        /*!
+         * @brief The wrapped tuple
+         */
+        std::tuple<signal<Values>...> data;
+    };
+
+    /*!
+     * @brief Construct from signals
+     */
+    explicit signal_pack( const signal<Values>&... deps )
+        : data( std::tie( deps... ) )
+    {}
+
+    /*!
+     * @brief Construct from stored signals
+     */
+    explicit signal_pack( const stored& value )
+        : data( std::apply(
+            []( const signal<Values>&... deps ) { return std::tie( deps... ); }, value.data ) )
+    {}
+
+    /*!
+     * @brief Convert signal references to signals so they can be stored
+     */
+    UREACT_WARN_UNUSED_RESULT stored store() const
+    {
+        return std::apply(
+            []( const signal<Values>&... deps ) { return stored{ deps... }; }, data );
+    }
+
+    /*!
+     * @brief The wrapped tuple
+     */
+    std::tuple<const signal<Values>&...> data;
+};
+
+/*!
+ * @brief Utility function to create a signal_pack from given signals
+ * @tparam Values types of signal values
+ *
+ *  Creates a signal_pack from the signals passed as deps.
+ *  Semantically, this is equivalent to std::tie.
+ */
+template <typename... Values>
+UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )
+{
+    return signal_pack<Values...>( deps... );
+}
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_SIGNAL_PACK_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename S>
+class signal_node;
+
+template <typename InE, typename OutE, typename Func, typename... DepValues>
+class event_processing_node final : public event_stream_node<OutE>
+{
+public:
+    template <typename F>
+    event_processing_node( context& context,
+        const std::shared_ptr<event_stream_node<InE>>& source,
+        F&& func,
+        const std::shared_ptr<signal_node<DepValues>>&... deps )
+        : event_processing_node::event_stream_node( context )
+        , m_source( source )
+        , m_func( std::forward<F>( func ) )
+        , m_deps( deps... )
+    {
+        this->attach_to( *source );
+        ( this->attach_to( *deps ), ... );
+    }
+
+    ~event_processing_node() override
+    {
+        this->detach_from( *m_source );
+
+        std::apply( detach_functor<event_processing_node>( *this ), m_deps );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        this->set_current_turn_force_update( turn );
+        // Update of this node could be triggered from deps,
+        // so make sure source doesn't contain events from last turn
+        m_source->set_current_turn( turn );
+
+        if( !m_source->events().empty() )
+        {
+            std::apply(
+                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                    UREACT_CALLBACK_GUARD( this->get_graph() );
+                    std::invoke( m_func,
+                        event_range<InE>( m_source->events() ),
+                        event_emitter( this->m_events ),
+                        args->value_ref()... );
+                },
+                m_deps );
+        }
+
+        this->pulse_if_has_events();
+    }
+
+private:
+    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
+
+    std::shared_ptr<event_stream_node<InE>> m_source;
+
+    Func m_func;
+    dep_holder_t m_deps;
+};
+
+template <typename OutE, typename InE, typename Op, typename... DepValues>
+UREACT_WARN_UNUSED_RESULT auto process_impl(
+    const events<InE>& source, const signal_pack<DepValues...>& dep_pack, Op&& op ) -> events<OutE>
+{
+    using F = std::decay_t<Op>;
+
+    context& context = source.get_context();
+
+    auto node_builder = [&context, &source, &op]( const signal<DepValues>&... deps ) {
+        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, DepValues...>>(
+            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
+    };
+
+    return std::apply( node_builder, dep_pack.data );
+}
+
+} // namespace detail
+
+/*!
+ * @brief Create a new event stream by batch processing events from other stream
+ *
+ *  op is called with all events range from source in current turn.
+ *  New events are emitted through "out".
+ *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+ *
+ *  The signature of op should be equivalent to:
+ *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+ *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
+ */
+template <typename OutE, typename InE, typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto process(
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
+{
+    return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+}
+
+/*!
+ * @brief Curried version of process(const events<in_t>& source, Op&& op)
+ */
+template <typename OutE, typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
+{
+    return closure{ [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
+    } };
+}
+
+/*!
+ * @brief Create a new event stream by batch processing events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
+ */
+template <typename OutE, typename InE, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> events<OutE>
+{
+    return detail::process_impl<OutE>( source, signal_pack<>(), std::forward<Op>( op ) );
+}
+
+/*!
+ * @brief Curried version of process(const events<in_t>& source, Op&& op)
+ */
+template <typename OutE, typename Op>
+UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
+{
+    return closure{ [op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), op );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_PROCESS_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Create a new event stream that transforms events from other stream
+ *
+ *  For every event e in source, emit t = func(e, deps...).
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of func should be equivalent to:
+ *  * T func(const E&, const Deps& ...)
+ *
+ *  Semantically equivalent of ranges::transform
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+ */
+template <typename InE,
+    typename F,
+    typename... Deps,
+    typename OutE = std::invoke_result_t<F, InE, Deps...>>
+UREACT_WARN_UNUSED_RESULT auto transform(
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) -> events<OutE>
+{
+    return detail::process_impl<OutE>( source,
+        dep_pack, //
+        [func = std::forward<F>( func )](
+            event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
+            for( const auto& e : range )
+                out << std::invoke( func, e, deps... );
+        } );
+}
+
+/*!
+ * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
+ */
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
+{
+    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
+    } };
+}
+
+/*!
+ * @brief Create a new event stream that transforms events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
+ */
+template <typename InE, typename F, typename OutE = std::invoke_result_t<F, InE>>
+UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) -> events<OutE>
+{
+    return transform( source, signal_pack<>(), std::forward<F>( func ) );
+}
+
+/*!
+ * @brief Curried version of transform(const events<InE>& source, F&& func)
+ */
+template <typename F>
+UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
+{
+    return closure{ [func = std::forward<F>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), func );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_TRANSFORM_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Create a new event stream that casts events from other stream using static_cast
+ *
+ *  For every event e in source, emit t = static_cast<OutE>(e).
+ *
+ *  Type of resulting signal have to be explicitly specified.
+ */
+template <typename OutE, typename InE>
+UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
+{
+    return transform( source, //
+        []( const InE& e ) {  //
+            return static_cast<OutE>( e );
+        } );
+}
+
+/*!
+ * @brief Curried version of cast(const events<InE>& source)
+ */
+template <typename OutE>
+UREACT_WARN_UNUSED_RESULT auto cast()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return cast<OutE>( std::forward<arg_t>( source ) );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_CAST_HPP
+
+#ifndef UREACT_CHANGED_HPP
+#define UREACT_CHANGED_HPP
+
+
+#ifndef UREACT_FILTER_HPP
+#define UREACT_FILTER_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Create a new event stream that filters events from other stream
+ *
+ *  For every event e in source, emit e if pred(e, deps...) == true.
+ *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool pred(const E&, const Deps& ...)
+ *
+ *  Semantically equivalent of ranges::filter
+ *
+ *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+ */
+template <typename E, typename Pred, typename... DepValues>
+UREACT_WARN_UNUSED_RESULT auto filter(
+    const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred ) -> events<E>
+{
+    using F = std::decay_t<Pred>;
+    using result_t = std::invoke_result_t<F, E, DepValues...>;
+    static_assert(
+        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
+
+    return detail::process_impl<E>( source,
+        dep_pack, //
+        [pred = std::forward<Pred>( pred )](
+            event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
+            for( const auto& e : range )
+                if( std::invoke( pred, e, deps... ) )
+                    out << e;
+        } );
+}
+
+/*!
+ * @brief Curried version of filter(const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred)
+ */
+template <typename Pred, typename... DepValues>
+UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
+{
+    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
+    } };
+}
+
+/*!
+ * @brief Create a new event stream that filters events from other stream
+ *
+ *  Version without synchronization with additional signals
+ *
+ *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
+ */
+template <typename E, typename Pred>
+UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
+{
+    return filter( source, signal_pack<>(), std::forward<Pred>( pred ) );
+}
+
+/*!
+ * @brief Curried version of filter(const events<E>& source, Pred&& pred)
+ */
+template <typename Pred>
+UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
+{
+    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return filter( std::forward<arg_t>( source ), pred );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_FILTER_HPP
+
+#ifndef UREACT_MONITOR_HPP
+#define UREACT_MONITOR_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename S>
+class signal_node;
+
+template <typename E>
+class monitor_node final : public event_stream_node<E>
+{
+public:
+    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
+        : monitor_node::event_stream_node( context )
+        , m_target( target )
+    {
+        this->attach_to( *m_target );
+    }
+
+    ~monitor_node() override
+    {
+        this->detach_from( *m_target );
+    }
+
+    void tick( turn_type& turn ) override
+    {
+        this->set_current_turn_force_update( turn );
+
+        this->m_events.push_back( m_target->value_ref() );
+
+        this->pulse_if_has_events();
+    }
+
+private:
+    const std::shared_ptr<signal_node<E>> m_target;
+};
+
+} // namespace detail
+
+/*!
+ * @brief Emits value changes of signal as events
+ *
+ *  When target changes, emit the new value 'e = target.get()'.
+ */
+template <typename S>
+UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
+{
+    context& context = target.get_context();
+    return events<S>( std::make_shared<detail::monitor_node<S>>( context, target.get_node() ) );
+}
+
+/*!
+ * @brief Curried version of monitor(const signal<S>& target)
+ */
+UREACT_WARN_UNUSED_RESULT inline auto monitor()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+        return monitor( std::forward<arg_t>( source ) );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_MONITOR_HPP
+
+#ifndef UREACT_UNIFY_HPP
+#define UREACT_UNIFY_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Utility function to transform any event stream into a unit stream
+ *
+ *  Emits a unit for any event that passes source
+ */
+template <typename E>
+UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
+{
+    return cast<unit>( source );
+}
+
+/*!
+ * @brief Curried version of unify(events_t&& source)
+ */
+UREACT_WARN_UNUSED_RESULT inline auto unify()
+{
+    return cast<unit>();
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_UNIFY_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Emits unit when target signal was changed
+ *
+ *  Creates a unit stream that emits when target is changed.
+ */
+template <typename S>
+UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit>
+{
+    return monitor( target ) | unify();
+}
+
+/*!
+ * @brief Curried version of changed(const signal<S>& target)
+ */
+UREACT_WARN_UNUSED_RESULT inline auto changed()
+{
+    return closure{ []( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+        return changed( std::forward<arg_t>( source ) );
+    } };
+}
+
+/*!
+ * @brief Emits unit when target signal was changed to value
+ *  Creates a unit stream that emits when target is changed and 'target.get() == value'.
+ *  V and S should be comparable with ==.
+ */
+template <typename V, typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<unit>
+{
+    return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | unify();
+}
+
+/*!
+ * @brief Curried version of changed_to(const signal<S>& target, V&& value)
+ */
+template <typename V, typename S = std::decay_t<V>>
+UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )
+{
+    return closure{ [value = std::forward<V>( value )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+        return changed_to( std::forward<arg_t>( source ), std::move( value ) );
+    } };
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_CHANGED_HPP
+
+#ifndef UREACT_COLLECT_HPP
+#define UREACT_COLLECT_HPP
+
+
+#ifndef UREACT_FOLD_HPP
+#define UREACT_FOLD_HPP
+
+
 #ifndef UREACT_SIGNAL_HPP
 #define UREACT_SIGNAL_HPP
 
@@ -2750,581 +3333,9 @@ UREACT_WARN_UNUSED_RESULT auto make_const( context& context, V&& value ) -> sign
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
-/*!
- * @brief A wrapper type for a tuple of signal references
- * @tparam Values types of signal values
- *
- *  Created with @ref with()
- */
-template <typename... Values>
-class signal_pack final
-{
-public:
-    /*!
-     * @brief Class to store signals instead of signal references
-     */
-    class stored
-    {
-    public:
-        /*!
-         * @brief Construct from signals
-         */
-        explicit stored( const signal<Values>&... deps )
-            : data( std::tie( deps... ) )
-        {}
-
-        /*!
-         * @brief The wrapped tuple
-         */
-        std::tuple<signal<Values>...> data;
-    };
-
-    /*!
-     * @brief Construct from signals
-     */
-    explicit signal_pack( const signal<Values>&... deps )
-        : data( std::tie( deps... ) )
-    {}
-
-    /*!
-     * @brief Construct from stored signals
-     */
-    explicit signal_pack( const stored& value )
-        : data( std::apply(
-            []( const signal<Values>&... deps ) { return std::tie( deps... ); }, value.data ) )
-    {}
-
-    /*!
-     * @brief Convert signal references to signals so they can be stored
-     */
-    UREACT_WARN_UNUSED_RESULT stored store() const
-    {
-        return std::apply(
-            []( const signal<Values>&... deps ) { return stored{ deps... }; }, data );
-    }
-
-    /*!
-     * @brief The wrapped tuple
-     */
-    std::tuple<const signal<Values>&...> data;
-};
-
-/*!
- * @brief Utility function to create a signal_pack from given signals
- * @tparam Values types of signal values
- *
- *  Creates a signal_pack from the signals passed as deps.
- *  Semantically, this is equivalent to std::tie.
- */
-template <typename... Values>
-UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )
-{
-    return signal_pack<Values...>( deps... );
-}
-
 UREACT_END_NAMESPACE
 
 #endif //UREACT_SIGNAL_HPP
-
-// TODO: make signal include unneeded here
-
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-template <typename InE, typename OutE, typename Func, typename... DepValues>
-class event_processing_node final : public event_stream_node<OutE>
-{
-public:
-    template <typename F>
-    event_processing_node( context& context,
-        const std::shared_ptr<event_stream_node<InE>>& source,
-        F&& func,
-        const std::shared_ptr<signal_node<DepValues>>&... deps )
-        : event_processing_node::event_stream_node( context )
-        , m_source( source )
-        , m_func( std::forward<F>( func ) )
-        , m_deps( deps... )
-    {
-        this->attach_to( *source );
-        ( this->attach_to( *deps ), ... );
-    }
-
-    ~event_processing_node() override
-    {
-        this->detach_from( *m_source );
-
-        std::apply( detach_functor<event_processing_node>( *this ), m_deps );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-        // Update of this node could be triggered from deps,
-        // so make sure source doesn't contain events from last turn
-        m_source->set_current_turn( turn );
-
-        if( !m_source->events().empty() )
-        {
-            std::apply(
-                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
-                    UREACT_CALLBACK_GUARD( this->get_graph() );
-                    std::invoke( m_func,
-                        event_range<InE>( m_source->events() ),
-                        event_emitter( this->m_events ),
-                        args->value_ref()... );
-                },
-                m_deps );
-        }
-
-        this->pulse_if_has_events();
-    }
-
-private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
-
-    std::shared_ptr<event_stream_node<InE>> m_source;
-
-    Func m_func;
-    dep_holder_t m_deps;
-};
-
-template <typename OutE, typename InE, typename Op, typename... DepValues>
-UREACT_WARN_UNUSED_RESULT auto process_impl(
-    const events<InE>& source, const signal_pack<DepValues...>& dep_pack, Op&& op ) -> events<OutE>
-{
-    using F = std::decay_t<Op>;
-
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &op]( const signal<DepValues>&... deps ) {
-        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, DepValues...>>(
-            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
-    };
-
-    return std::apply( node_builder, dep_pack.data );
-}
-
-} // namespace detail
-
-/*!
- * @brief Create a new event stream by batch processing events from other stream
- *
- *  op is called with all events range from source in current turn.
- *  New events are emitted through "out".
- *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
- *
- *  The signature of op should be equivalent to:
- *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
- */
-template <typename OutE, typename InE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
-{
-    return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
-}
-
-/*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op)
- */
-template <typename OutE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
-{
-    return closure{ [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
-    } };
-}
-
-/*!
- * @brief Create a new event stream by batch processing events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
- */
-template <typename OutE, typename InE, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> events<OutE>
-{
-    return detail::process_impl<OutE>( source, signal_pack<>(), std::forward<Op>( op ) );
-}
-
-/*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op)
- */
-template <typename OutE, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
-{
-    return closure{ [op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), op );
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_PROCESS_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Create a new event stream that transforms events from other stream
- *
- *  For every event e in source, emit t = func(e, deps...).
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * T func(const E&, const Deps& ...)
- *
- *  Semantically equivalent of ranges::transform
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename InE,
-    typename F,
-    typename... Deps,
-    typename OutE = std::invoke_result_t<F, InE, Deps...>>
-UREACT_WARN_UNUSED_RESULT auto transform(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) -> events<OutE>
-{
-    return detail::process_impl<OutE>( source,
-        dep_pack, //
-        [func = std::forward<F>( func )](
-            event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
-            for( const auto& e : range )
-                out << std::invoke( func, e, deps... );
-        } );
-}
-
-/*!
- * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
-{
-    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
-    } };
-}
-
-/*!
- * @brief Create a new event stream that transforms events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename InE, typename F, typename OutE = std::invoke_result_t<F, InE>>
-UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) -> events<OutE>
-{
-    return transform( source, signal_pack<>(), std::forward<F>( func ) );
-}
-
-/*!
- * @brief Curried version of transform(const events<InE>& source, F&& func)
- */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
-{
-    return closure{ [func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), func );
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_TRANSFORM_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Create a new event stream that casts events from other stream using static_cast
- *
- *  For every event e in source, emit t = static_cast<OutE>(e).
- *
- *  Type of resulting signal have to be explicitly specified.
- */
-template <typename OutE, typename InE>
-UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
-{
-    return transform( source, //
-        []( const InE& e ) {  //
-            return static_cast<OutE>( e );
-        } );
-}
-
-/*!
- * @brief Curried version of cast(const events<InE>& source)
- */
-template <typename OutE>
-UREACT_WARN_UNUSED_RESULT auto cast()
-{
-    return closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return cast<OutE>( std::forward<arg_t>( source ) );
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_CAST_HPP
-
-#ifndef UREACT_CHANGED_HPP
-#define UREACT_CHANGED_HPP
-
-
-#ifndef UREACT_FILTER_HPP
-#define UREACT_FILTER_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Create a new event stream that filters events from other stream
- *
- *  For every event e in source, emit e if pred(e, deps...) == true.
- *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
- *
- *  The signature of pred should be equivalent to:
- *  * bool pred(const E&, const Deps& ...)
- *
- *  Semantically equivalent of ranges::filter
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename E, typename Pred, typename... DepValues>
-UREACT_WARN_UNUSED_RESULT auto filter(
-    const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred ) -> events<E>
-{
-    using F = std::decay_t<Pred>;
-    using result_t = std::invoke_result_t<F, E, DepValues...>;
-    static_assert(
-        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
-
-    return detail::process_impl<E>( source,
-        dep_pack, //
-        [pred = std::forward<Pred>( pred )](
-            event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
-            for( const auto& e : range )
-                if( std::invoke( pred, e, deps... ) )
-                    out << e;
-        } );
-}
-
-/*!
- * @brief Curried version of filter(const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred)
- */
-template <typename Pred, typename... DepValues>
-UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
-{
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
-    } };
-}
-
-/*!
- * @brief Create a new event stream that filters events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
-{
-    return filter( source, signal_pack<>(), std::forward<Pred>( pred ) );
-}
-
-/*!
- * @brief Curried version of filter(const events<E>& source, Pred&& pred)
- */
-template <typename Pred>
-UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
-{
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return filter( std::forward<arg_t>( source ), pred );
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_FILTER_HPP
-
-#ifndef UREACT_MONITOR_HPP
-#define UREACT_MONITOR_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-template <typename S>
-class signal_node;
-
-template <typename E>
-class monitor_node final : public event_stream_node<E>
-{
-public:
-    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
-        : monitor_node::event_stream_node( context )
-        , m_target( target )
-    {
-        this->attach_to( *m_target );
-    }
-
-    ~monitor_node() override
-    {
-        this->detach_from( *m_target );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-
-        this->m_events.push_back( m_target->value_ref() );
-
-        this->pulse_if_has_events();
-    }
-
-private:
-    const std::shared_ptr<signal_node<E>> m_target;
-};
-
-} // namespace detail
-
-/*!
- * @brief Emits value changes of signal as events
- *
- *  When target changes, emit the new value 'e = target.get()'.
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
-{
-    context& context = target.get_context();
-    return events<S>( std::make_shared<detail::monitor_node<S>>( context, target.get_node() ) );
-}
-
-/*!
- * @brief Curried version of monitor(const signal<S>& target)
- */
-UREACT_WARN_UNUSED_RESULT inline auto monitor()
-{
-    return closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return monitor( std::forward<arg_t>( source ) );
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_MONITOR_HPP
-
-#ifndef UREACT_UNIFY_HPP
-#define UREACT_UNIFY_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Utility function to transform any event stream into a unit stream
- *
- *  Emits a unit for any event that passes source
- */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
-{
-    return cast<unit>( source );
-}
-
-/*!
- * @brief Curried version of unify(events_t&& source)
- */
-UREACT_WARN_UNUSED_RESULT inline auto unify()
-{
-    return cast<unit>();
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_UNIFY_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Emits unit when target signal was changed
- *
- *  Creates a unit stream that emits when target is changed.
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit>
-{
-    return monitor( target ) | unify();
-}
-
-/*!
- * @brief Curried version of changed(const signal<S>& target)
- */
-UREACT_WARN_UNUSED_RESULT inline auto changed()
-{
-    return closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return changed( std::forward<arg_t>( source ) );
-    } };
-}
-
-/*!
- * @brief Emits unit when target signal was changed to value
- *  Creates a unit stream that emits when target is changed and 'target.get() == value'.
- *  V and S should be comparable with ==.
- */
-template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<unit>
-{
-    return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | unify();
-}
-
-/*!
- * @brief Curried version of changed_to(const signal<S>& target, V&& value)
- */
-template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )
-{
-    return closure{ [value = std::forward<V>( value )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return changed_to( std::forward<arg_t>( source ), std::move( value ) );
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_CHANGED_HPP
-
-#ifndef UREACT_COLLECT_HPP
-#define UREACT_COLLECT_HPP
-
-
-#ifndef UREACT_FOLD_HPP
-#define UREACT_FOLD_HPP
-
 
 UREACT_BEGIN_NAMESPACE
 
@@ -4587,8 +4598,6 @@ UREACT_END_NAMESPACE
 
 #endif //UREACT_OBSERVER_HPP
 
-// TODO: make signal include unneeded here
-
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
@@ -4649,6 +4658,9 @@ public:
 private:
     F m_func;
 };
+
+template <typename S>
+class signal_node;
 
 template <typename S, typename F>
 class signal_observer_node final : public observer_node

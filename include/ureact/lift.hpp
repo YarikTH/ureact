@@ -11,6 +11,8 @@
 #define UREACT_LIFT_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/signal.hpp>
+#include <ureact/signal_pack.hpp>
 #include <ureact/temp_signal.hpp>
 #include <ureact/type_traits.hpp>
 #include <ureact/ureact.hpp>

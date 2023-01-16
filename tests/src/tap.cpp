@@ -9,6 +9,7 @@
 
 #include "doctest_extra.h"
 #include "ureact/events.hpp"
+#include "ureact/signal.hpp"
 
 TEST_CASE( "TapSignal" )
 {

@@ -14,15 +14,16 @@
 #include <ureact/event_emitter.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/events.hpp>
-#include <ureact/signal.hpp>
+#include <ureact/signal_pack.hpp>
 #include <ureact/type_traits.hpp>
-
-// TODO: make signal include unneeded here
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
+
+template <typename S>
+class signal_node;
 
 template <typename InE, typename OutE, typename Func, typename... DepValues>
 class event_processing_node final : public event_stream_node<OutE>

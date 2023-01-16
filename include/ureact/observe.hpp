@@ -13,10 +13,8 @@
 #include <ureact/closure.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/observer.hpp>
-#include <ureact/signal.hpp>
+#include <ureact/signal_pack.hpp>
 #include <ureact/type_traits.hpp>
-
-// TODO: make signal include unneeded here
 
 UREACT_BEGIN_NAMESPACE
 
@@ -78,6 +76,9 @@ public:
 private:
     F m_func;
 };
+
+template <typename S>
+class signal_node;
 
 template <typename S, typename F>
 class signal_observer_node final : public observer_node

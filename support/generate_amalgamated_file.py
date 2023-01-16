@@ -96,6 +96,11 @@ def discover_hpp(where: Path) -> List[Path]:
     for root, _, filenames in os.walk(where):
         for filename in [Path(f) for f in filenames]:
             if filename.suffix == '.hpp':
+            # if filename.name in ['events.hpp']: # events fwd
+            # if filename.name in ['signal.hpp']: # signal fwd
+            # if filename.name in ['observer.hpp']: # observer fwd
+            # if filename.name in ['take_drop.hpp', 'take_drop_while.hpp', 'unique.hpp', 'pulse.hpp', 'zip.hpp', 'merge.hpp', 'fork.hpp', 'sink.hpp', 'unify.hpp', 'flatten.hpp', 'tap.hpp']: # events all
+            # if filename.name in ['fork.hpp', 'sink.hpp', 'lift.hpp', 'flatten.hpp', 'tap.hpp']: # signal all
                 result.append(Path(root, filename).relative_to(where))
 
     result.sort()
@@ -104,6 +109,8 @@ def discover_hpp(where: Path) -> List[Path]:
 
 
 def amalgamate_source_file(out, filename: Path, /, processed_headers: Set[Path], expand_headers: bool) -> int:
+    # print(f'-- processing {filename.relative_to(ureact_include_path)}')
+
     # Gathers statistics on how many headers were expanded
     concatenated = 1
 

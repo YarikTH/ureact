@@ -10,9 +10,14 @@
 #ifndef UREACT_SIGNAL_PACK_HPP
 #define UREACT_SIGNAL_PACK_HPP
 
-#include <ureact/ureact.hpp>
+#include <tuple>
+
+#include <ureact/defines.hpp>
 
 UREACT_BEGIN_NAMESPACE
+
+template <typename S>
+class signal;
 
 /*!
  * @brief A wrapper type for a tuple of signal references

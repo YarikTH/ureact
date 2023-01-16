@@ -11,12 +11,14 @@
 #define UREACT_OBSERVE_HPP
 
 #include <ureact/closure.hpp>
-#include <ureact/event_range.hpp>
 #include <ureact/observer.hpp>
 #include <ureact/signal_pack.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
+
+template <typename E>
+class event_range;
 
 namespace detail
 {

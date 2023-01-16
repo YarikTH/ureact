@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-16 23:24:25.846656
+// Generated: 2023-01-17 00:42:06.638686
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2134,8 +2134,13 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_SIGNAL_PACK_HPP
 #define UREACT_SIGNAL_PACK_HPP
 
+#include <tuple>
+
 
 UREACT_BEGIN_NAMESPACE
+
+template <typename S>
+class signal;
 
 /*!
  * @brief A wrapper type for a tuple of signal references
@@ -4599,6 +4604,9 @@ UREACT_END_NAMESPACE
 #endif //UREACT_OBSERVER_HPP
 
 UREACT_BEGIN_NAMESPACE
+
+template <typename E>
+class event_range;
 
 namespace detail
 {

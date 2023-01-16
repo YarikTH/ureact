@@ -6,4 +6,5 @@
 #          http://www.boost.org/LICENSE_1_0.txt)
 #
 add_subdirectory(thirdparty/doctest)
+add_subdirectory(self_contained)
 add_subdirectory(src)

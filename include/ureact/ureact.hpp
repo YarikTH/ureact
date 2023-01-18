@@ -19,14 +19,6 @@
 #ifndef UREACT_UREACT_HPP
 #define UREACT_UREACT_HPP
 
-#define UREACT_VERSION_MAJOR 0
-#define UREACT_VERSION_MINOR 8
-#define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.8.0 wip"
-
-#define UREACT_VERSION                                                                             \
-    ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
-
 #include <cassert>
 #include <cstddef>
 #include <cstdint>

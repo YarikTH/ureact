@@ -12,9 +12,9 @@ cmake_minimum_required(VERSION 3.8)
 ################################################################################
 
 # Get version from ureact.hpp
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/include/ureact/ureact.hpp ureact_hpp)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/include/ureact/version.hpp version_hpp)
 # gersemi: off
-if(NOT ureact_hpp MATCHES "UREACT_VERSION_STR \"([0-9]+).([0-9]+).([0-9]+)([^\"]*)\"")
+if(NOT version_hpp MATCHES "UREACT_VERSION_STR \"([0-9]+).([0-9]+).([0-9]+)([^\"]*)\"")
     message(FATAL_ERROR "Cannot get UREACT_VERSION from ureact.hpp.")
 endif()
 # gersemi: on

@@ -73,7 +73,7 @@ file_header = '''\
 def detect_version_string() -> str:
     version_parser = re.compile(r'#define UREACT_VERSION_STR "([^"]+)".*')
 
-    with open(Path(ureact_include_path, 'ureact', 'ureact.hpp'), mode='r', encoding='utf-8') as header:
+    with open(Path(ureact_include_path, 'ureact', 'version.hpp'), mode='r', encoding='utf-8') as header:
         for line in header:
             m = version_parser.match(line)
             if m:

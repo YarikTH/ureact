@@ -13,6 +13,24 @@
 #include "ureact/monitor.hpp"
 #include "ureact/ureact.hpp"
 
+TEST_CASE( "TransactionGuard" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal src = ureact::make_var( ctx, 1 );
+    auto change_count = src | ureact::monitor() | ureact::count();
+
+    {
+        ureact::transaction _{ ctx };
+
+        src <<= 6;
+        src <<= 7;
+        src <<= -1;
+    }
+
+    CHECK( change_count.get() == 1 );
+}
+
 // A transaction can be started inside an active transaction
 // Only the first transaction takes effect
 TEST_CASE( "RecursiveTransactions" )

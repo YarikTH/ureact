@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-17 00:42:06.638686
+// Generated: 2023-01-18 18:01:01.630754
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -479,6 +479,8 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
+class transaction;
+
 namespace detail
 {
 
@@ -746,55 +748,7 @@ class react_graph
 #endif
 {
 public:
-    struct transaction_guard
-    {
-        react_graph& self;
-
-        explicit transaction_guard( react_graph& self )
-            : self( self )
-        {
-            ++self.m_transaction_level;
-        }
-
-        ~transaction_guard()
-        {
-            --self.m_transaction_level;
-
-            if( self.m_transaction_level == 0 )
-            {
-                self.finalize_transaction();
-            }
-        }
-
-        UREACT_MAKE_NONCOPYABLE( transaction_guard );
-        UREACT_MAKE_NONMOVABLE( transaction_guard );
-    };
-
     react_graph() = default;
-
-    void finalize_transaction()
-    {
-        turn_type turn( next_turn_id() );
-
-        // apply input node changes
-        bool should_propagate = false;
-        for( input_node_interface* p : m_changed_inputs )
-        {
-            if( p->apply_input( turn ) )
-            {
-                should_propagate = true;
-            }
-        }
-        m_changed_inputs.clear();
-
-        // propagate changes
-        if( should_propagate )
-        {
-            propagate( turn );
-        }
-
-        detach_queued_observers();
-    }
 
     template <typename F>
     void push_input( input_node_interface* node, F&& inputCallback )
@@ -822,6 +776,32 @@ public:
     void on_dynamic_node_detach( reactive_node& node, reactive_node& parent );
 
 private:
+    friend class ureact::transaction;
+
+    void finalize_transaction()
+    {
+        turn_type turn( next_turn_id() );
+
+        // apply input node changes
+        bool should_propagate = false;
+        for( input_node_interface* p : m_changed_inputs )
+        {
+            if( p->apply_input( turn ) )
+            {
+                should_propagate = true;
+            }
+        }
+        m_changed_inputs.clear();
+
+        // propagate changes
+        if( should_propagate )
+        {
+            propagate( turn );
+        }
+
+        detach_queued_observers();
+    }
+
     class topological_queue
     {
     public:
@@ -5617,6 +5597,36 @@ UREACT_END_NAMESPACE
 UREACT_BEGIN_NAMESPACE
 
 /*!
+ * @brief Guard class to perform several changes atomically
+ *
+ */
+class UREACT_WARN_UNUSED_RESULT transaction
+{
+public:
+    explicit transaction( context& ctx )
+        : self( _get_internals( ctx ).get_graph() )
+    {
+        ++self.m_transaction_level;
+    }
+
+    ~transaction()
+    {
+        --self.m_transaction_level;
+
+        if( self.m_transaction_level == 0 )
+        {
+            self.finalize_transaction();
+        }
+    }
+
+private:
+    UREACT_MAKE_NONCOPYABLE( transaction );
+    UREACT_MAKE_NONMOVABLE( transaction );
+
+    detail::react_graph& self;
+};
+
+/*!
  * @brief Perform several changes atomically
  * @tparam F type of passed functor
  * @tparam Args types of additional arguments passed to functor F
@@ -5628,9 +5638,7 @@ template <typename F,
     class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
 UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&... args )
 {
-    auto& graph = _get_internals( ctx ).get_graph();
-
-    detail::react_graph::transaction_guard _{ graph };
+    transaction _{ ctx };
 
     if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
     {

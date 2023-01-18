@@ -47,6 +47,8 @@
 
 UREACT_BEGIN_NAMESPACE
 
+class transaction;
+
 namespace detail
 {
 
@@ -314,55 +316,7 @@ class react_graph
 #endif
 {
 public:
-    struct transaction_guard
-    {
-        react_graph& self;
-
-        explicit transaction_guard( react_graph& self )
-            : self( self )
-        {
-            ++self.m_transaction_level;
-        }
-
-        ~transaction_guard()
-        {
-            --self.m_transaction_level;
-
-            if( self.m_transaction_level == 0 )
-            {
-                self.finalize_transaction();
-            }
-        }
-
-        UREACT_MAKE_NONCOPYABLE( transaction_guard );
-        UREACT_MAKE_NONMOVABLE( transaction_guard );
-    };
-
     react_graph() = default;
-
-    void finalize_transaction()
-    {
-        turn_type turn( next_turn_id() );
-
-        // apply input node changes
-        bool should_propagate = false;
-        for( input_node_interface* p : m_changed_inputs )
-        {
-            if( p->apply_input( turn ) )
-            {
-                should_propagate = true;
-            }
-        }
-        m_changed_inputs.clear();
-
-        // propagate changes
-        if( should_propagate )
-        {
-            propagate( turn );
-        }
-
-        detach_queued_observers();
-    }
 
     template <typename F>
     void push_input( input_node_interface* node, F&& inputCallback )
@@ -390,6 +344,32 @@ public:
     void on_dynamic_node_detach( reactive_node& node, reactive_node& parent );
 
 private:
+    friend class ureact::transaction;
+
+    void finalize_transaction()
+    {
+        turn_type turn( next_turn_id() );
+
+        // apply input node changes
+        bool should_propagate = false;
+        for( input_node_interface* p : m_changed_inputs )
+        {
+            if( p->apply_input( turn ) )
+            {
+                should_propagate = true;
+            }
+        }
+        m_changed_inputs.clear();
+
+        // propagate changes
+        if( should_propagate )
+        {
+            propagate( turn );
+        }
+
+        detach_queued_observers();
+    }
+
     class topological_queue
     {
     public:

@@ -15,6 +15,36 @@
 UREACT_BEGIN_NAMESPACE
 
 /*!
+ * @brief Guard class to perform several changes atomically
+ *
+ */
+class UREACT_WARN_UNUSED_RESULT transaction
+{
+public:
+    explicit transaction( context& ctx )
+        : self( _get_internals( ctx ).get_graph() )
+    {
+        ++self.m_transaction_level;
+    }
+
+    ~transaction()
+    {
+        --self.m_transaction_level;
+
+        if( self.m_transaction_level == 0 )
+        {
+            self.finalize_transaction();
+        }
+    }
+
+private:
+    UREACT_MAKE_NONCOPYABLE( transaction );
+    UREACT_MAKE_NONMOVABLE( transaction );
+
+    detail::react_graph& self;
+};
+
+/*!
  * @brief Perform several changes atomically
  * @tparam F type of passed functor
  * @tparam Args types of additional arguments passed to functor F
@@ -26,9 +56,7 @@ template <typename F,
     class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
 UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&... args )
 {
-    auto& graph = _get_internals( ctx ).get_graph();
-
-    detail::react_graph::transaction_guard _{ graph };
+    transaction _{ ctx };
 
     if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
     {

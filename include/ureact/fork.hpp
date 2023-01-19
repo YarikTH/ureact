@@ -10,8 +10,9 @@
 #ifndef UREACT_FORK_HPP
 #define UREACT_FORK_HPP
 
+#include <tuple>
+
 #include <ureact/closure.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

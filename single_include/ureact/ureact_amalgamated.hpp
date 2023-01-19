@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-19 00:20:39.758465
+// Generated: 2023-01-19 22:53:07.158941
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -35,11 +35,7 @@
 #ifndef UREACT_CLOSURE_HPP
 #define UREACT_CLOSURE_HPP
 
-
-#ifndef UREACT_TYPE_TRAITS_HPP
-#define UREACT_TYPE_TRAITS_HPP
-
-#include <type_traits>
+#include <utility>
 
 
 #ifndef UREACT_DEFINES_HPP
@@ -164,6 +160,12 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 #define UREACT_MAKE_MOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, default )
 
 #endif //UREACT_DEFINES_HPP
+
+#ifndef UREACT_TYPE_TRAITS_HPP
+#define UREACT_TYPE_TRAITS_HPP
+
+#include <type_traits>
+
 
 UREACT_BEGIN_NAMESPACE
 
@@ -449,6 +451,310 @@ inline constexpr bool is_closure_v = is_closure<T>::value;
 UREACT_END_NAMESPACE
 
 #endif //UREACT_TYPE_TRAITS_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Closure objects used for partial application of reactive functions and chaining of algorithms
+ *
+ *  Closure objects take one reactive object as its only argument and may return a value.
+ *  They are callable via the pipe operator: if C is a closure object and
+ *  R is a reactive object, these two expressions are equivalent:
+ *  * C(R)
+ *  * R | C
+ *
+ *  Two closure objects can be chained by operator| to produce
+ *  another closure object: if C and D are closure objects,
+ *  then C | D is also a closure object if it is valid.
+ *  The effect and validity of the operator() of the result is determined as follows:
+ *  given a reactive object R, these two expressions are equivalent:
+ *  * R | C | D // (R | C) | D
+ *  * R | (C | D)
+ *
+ * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
+ */
+template <class F>
+class closure
+{
+public:
+    // TODO: add type specialization to closure (not concrete type, but signal/events), so we can write specialized operator overloads
+    //       need to tag both input and output value. Also closure is single in, single out function. Or no output function
+    explicit closure( F&& func )
+        : m_func( std::move( func ) )
+    {}
+
+    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg&&>>>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg ) const -> decltype( auto )
+    {
+        if constexpr( std::is_same_v<std::invoke_result_t<F, Arg&&>, void> )
+        {
+            m_func( std::forward<Arg>( arg ) );
+        }
+        else
+        {
+            return m_func( std::forward<Arg>( arg ) );
+        }
+    }
+
+private:
+    F m_func;
+};
+
+/*!
+ * @brief operator| overload for closure object
+ *
+ *  See @ref closure
+ */
+template <typename Arg,
+    typename Closure,
+    class = std::enable_if_t<is_closure_v<std::decay_t<Closure>>>>
+UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> decltype( auto )
+{
+    if constexpr( is_closure_v<std::decay_t<Arg>> )
+    {
+        // chain two closures to make another one
+        using FirstClosure = Arg;
+        using SecondClosure = Closure;
+        return closure{
+            [first_closure = std::forward<FirstClosure>( arg ),
+                second_closure = std::forward<SecondClosure>( closure_obj )]( auto&& source ) {
+                using arg_t = decltype( source );
+                return second_closure( first_closure( std::forward<arg_t>( source ) ) );
+            } };
+    }
+    else
+    {
+        // apply arg to given closure and return its result
+        return std::forward<Closure>( closure_obj )( std::forward<Arg>( arg ) );
+    }
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_CLOSURE_HPP
+
+#ifndef UREACT_TRANSFORM_HPP
+#define UREACT_TRANSFORM_HPP
+
+
+#ifndef UREACT_PROCESS_HPP
+#define UREACT_PROCESS_HPP
+
+
+#ifndef UREACT_EVENT_EMITTER_HPP
+#define UREACT_EVENT_EMITTER_HPP
+
+#include <vector>
+
+
+#ifndef UREACT_UNIT_HPP
+#define UREACT_UNIT_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief This class is used as value type of unit streams, which emit events without any value other than the fact that they occurred
+ *
+ *  See std::monostate https://en.cppreference.com/w/cpp/utility/variant/monostate
+ *  See Regular Void https://open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0146r1.html#ThinkingAboutVoid
+ */
+struct unit
+{
+    constexpr unit() = default;
+    constexpr unit( const unit& ) = default;
+    constexpr unit& operator=( const unit& ) = default;
+
+    // unit can be constructed from any value
+    template <class T>
+    explicit constexpr unit( T&& ) noexcept // NOLINT(bugprone-forwarding-reference-overload)
+    {}
+};
+
+// clang-format off
+constexpr bool operator==(unit, unit) noexcept { return true; }
+constexpr bool operator!=(unit, unit) noexcept { return false; }
+constexpr bool operator< (unit, unit) noexcept { return false; }
+constexpr bool operator> (unit, unit) noexcept { return false; }
+constexpr bool operator<=(unit, unit) noexcept { return true; }
+constexpr bool operator>=(unit, unit) noexcept { return true; }
+//constexpr std::strong_ordering operator<=>(unit, unit) noexcept { return std::strong_ordering::equal; }
+// clang-format on
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_UNIT_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Represents output stream of events.
+ *
+ *  It is std::back_insert_iterator analog.
+ *  Additionally to std::back_insert_iterator interface it provides operator<< overload
+ */
+template <typename E = unit>
+class event_emitter final
+{
+public:
+    using container_type = std::vector<E>;
+    using iterator_category = std::output_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = E;
+    using pointer = value_type*;
+    using reference = value_type&;
+
+    /*!
+     * @brief Constructor
+     */
+    explicit event_emitter( container_type& container )
+        : m_container( &container )
+    {}
+
+    // clang-format off
+    event_emitter& operator*()       { return *this; }
+    event_emitter& operator++()      { return *this; }
+    event_emitter  operator++( int ) { return *this; } // NOLINT
+    // clang-format on
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    event_emitter& operator=( const E& e )
+    {
+        m_container->push_back( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Specialization of operator=(const E& e) for rvalue
+     */
+    event_emitter& operator=( E&& e )
+    {
+        m_container->push_back( std::move( e ) );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     */
+    event_emitter& operator<<( const E& e )
+    {
+        m_container->push_back( e );
+        return *this;
+    }
+
+    /*!
+     * @brief Adds e to the queue of outgoing events
+     *
+     * Specialization of operator<<(const E& e) for rvalue
+     */
+    event_emitter& operator<<( E&& e )
+    {
+        m_container->push_back( std::move( e ) );
+        return *this;
+    }
+
+private:
+    container_type* m_container;
+};
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_EVENT_EMITTER_HPP
+
+#ifndef UREACT_EVENT_RANGE_HPP
+#define UREACT_EVENT_RANGE_HPP
+
+#include <vector>
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node
+ *
+ *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
+ *  that allows to iterate over its events without modifying it.
+ *
+ *  TODO: think about making values movable, so values would be processed more efficiently
+ */
+template <typename E = unit>
+class event_range final
+{
+public:
+    using const_iterator = typename std::vector<E>::const_iterator;
+    using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
+    using size_type = typename std::vector<E>::size_type;
+
+    /*!
+     * @brief Constructor
+     */
+    explicit event_range( const std::vector<E>& data )
+        : m_data( data )
+    {}
+
+    /*!
+     * @brief Returns a random access const iterator to the beginning
+     */
+    UREACT_WARN_UNUSED_RESULT const_iterator begin() const
+    {
+        return m_data.begin();
+    }
+
+    /*!
+     * @brief Returns a random access const iterator to the end
+     */
+    UREACT_WARN_UNUSED_RESULT const_iterator end() const
+    {
+        return m_data.end();
+    }
+
+    /*!
+     * @brief Returns a reverse random access const iterator to the beginning
+     */
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rbegin() const
+    {
+        return m_data.rbegin();
+    }
+
+    /*!
+     * @brief Returns a reverse random access const iterator to the end
+     */
+    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
+    {
+        return m_data.rend();
+    }
+
+    /*!
+     * @brief Returns the number of events
+     */
+    UREACT_WARN_UNUSED_RESULT size_type size() const
+    {
+        return m_data.size();
+    }
+
+    /*!
+     * @brief Checks whether the container is empty
+     */
+    UREACT_WARN_UNUSED_RESULT bool empty() const
+    {
+        return m_data.empty();
+    }
+
+private:
+    const std::vector<E>& m_data;
+};
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_EVENT_RANGE_HPP
+
+#ifndef UREACT_EVENTS_HPP
+#define UREACT_EVENTS_HPP
+
 
 #ifndef UREACT_UREACT_HPP
 #define UREACT_UREACT_HPP
@@ -1242,306 +1548,6 @@ protected:
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UREACT_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Closure objects used for partial application of reactive functions and chaining of algorithms
- *
- *  Closure objects take one reactive object as its only argument and may return a value.
- *  They are callable via the pipe operator: if C is a closure object and
- *  R is a reactive object, these two expressions are equivalent:
- *  * C(R)
- *  * R | C
- *
- *  Two closure objects can be chained by operator| to produce
- *  another closure object: if C and D are closure objects,
- *  then C | D is also a closure object if it is valid.
- *  The effect and validity of the operator() of the result is determined as follows:
- *  given a reactive object R, these two expressions are equivalent:
- *  * R | C | D // (R | C) | D
- *  * R | (C | D)
- *
- * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
- */
-template <class F>
-class closure
-{
-public:
-    // TODO: add type specialization to closure (not concrete type, but signal/events), so we can write specialized operator overloads
-    //       need to tag both input and output value. Also closure is single in, single out function. Or no output function
-    explicit closure( F&& func )
-        : m_func( std::move( func ) )
-    {}
-
-    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg&&>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg ) const -> decltype( auto )
-    {
-        if constexpr( std::is_same_v<std::invoke_result_t<F, Arg&&>, void> )
-        {
-            m_func( std::forward<Arg>( arg ) );
-        }
-        else
-        {
-            return m_func( std::forward<Arg>( arg ) );
-        }
-    }
-
-private:
-    F m_func;
-};
-
-/*!
- * @brief operator| overload for closure object
- *
- *  See @ref closure
- */
-template <typename Arg,
-    typename Closure,
-    class = std::enable_if_t<is_closure_v<std::decay_t<Closure>>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> decltype( auto )
-{
-    if constexpr( is_closure_v<std::decay_t<Arg>> )
-    {
-        // chain two closures to make another one
-        using FirstClosure = Arg;
-        using SecondClosure = Closure;
-        return closure{
-            [first_closure = std::forward<FirstClosure>( arg ),
-                second_closure = std::forward<SecondClosure>( closure_obj )]( auto&& source ) {
-                using arg_t = decltype( source );
-                return second_closure( first_closure( std::forward<arg_t>( source ) ) );
-            } };
-    }
-    else
-    {
-        // apply arg to given closure and return its result
-        return std::forward<Closure>( closure_obj )( std::forward<Arg>( arg ) );
-    }
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_CLOSURE_HPP
-
-#ifndef UREACT_TRANSFORM_HPP
-#define UREACT_TRANSFORM_HPP
-
-
-#ifndef UREACT_PROCESS_HPP
-#define UREACT_PROCESS_HPP
-
-
-#ifndef UREACT_EVENT_EMITTER_HPP
-#define UREACT_EVENT_EMITTER_HPP
-
-
-#ifndef UREACT_UNIT_HPP
-#define UREACT_UNIT_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief This class is used as value type of unit streams, which emit events without any value other than the fact that they occurred
- *
- *  See std::monostate https://en.cppreference.com/w/cpp/utility/variant/monostate
- *  See Regular Void https://open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0146r1.html#ThinkingAboutVoid
- */
-struct unit
-{
-    constexpr unit() = default;
-    constexpr unit( const unit& ) = default;
-    constexpr unit& operator=( const unit& ) = default;
-
-    // unit can be constructed from any value
-    template <class T>
-    explicit constexpr unit( T&& ) noexcept // NOLINT(bugprone-forwarding-reference-overload)
-    {}
-};
-
-// clang-format off
-constexpr bool operator==(unit, unit) noexcept { return true; }
-constexpr bool operator!=(unit, unit) noexcept { return false; }
-constexpr bool operator< (unit, unit) noexcept { return false; }
-constexpr bool operator> (unit, unit) noexcept { return false; }
-constexpr bool operator<=(unit, unit) noexcept { return true; }
-constexpr bool operator>=(unit, unit) noexcept { return true; }
-//constexpr std::strong_ordering operator<=>(unit, unit) noexcept { return std::strong_ordering::equal; }
-// clang-format on
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_UNIT_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Represents output stream of events.
- *
- *  It is std::back_insert_iterator analog.
- *  Additionally to std::back_insert_iterator interface it provides operator<< overload
- */
-template <typename E = unit>
-class event_emitter final
-{
-public:
-    using container_type = std::vector<E>;
-    using iterator_category = std::output_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = E;
-    using pointer = value_type*;
-    using reference = value_type&;
-
-    /*!
-     * @brief Constructor
-     */
-    explicit event_emitter( container_type& container )
-        : m_container( &container )
-    {}
-
-    // clang-format off
-    event_emitter& operator*()       { return *this; }
-    event_emitter& operator++()      { return *this; }
-    event_emitter  operator++( int ) { return *this; } // NOLINT
-    // clang-format on
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     */
-    event_emitter& operator=( const E& e )
-    {
-        m_container->push_back( e );
-        return *this;
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Specialization of operator=(const E& e) for rvalue
-     */
-    event_emitter& operator=( E&& e )
-    {
-        m_container->push_back( std::move( e ) );
-        return *this;
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     */
-    event_emitter& operator<<( const E& e )
-    {
-        m_container->push_back( e );
-        return *this;
-    }
-
-    /*!
-     * @brief Adds e to the queue of outgoing events
-     *
-     * Specialization of operator<<(const E& e) for rvalue
-     */
-    event_emitter& operator<<( E&& e )
-    {
-        m_container->push_back( std::move( e ) );
-        return *this;
-    }
-
-private:
-    container_type* m_container;
-};
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_EVENT_EMITTER_HPP
-
-#ifndef UREACT_EVENT_RANGE_HPP
-#define UREACT_EVENT_RANGE_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node
- *
- *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
- *  that allows to iterate over its events without modifying it.
- *
- *  TODO: think about making values movable, so values would be processed more efficiently
- */
-template <typename E = unit>
-class event_range final
-{
-public:
-    using const_iterator = typename std::vector<E>::const_iterator;
-    using const_reverse_iterator = typename std::vector<E>::const_reverse_iterator;
-    using size_type = typename std::vector<E>::size_type;
-
-    /*!
-     * @brief Constructor
-     */
-    explicit event_range( const std::vector<E>& data )
-        : m_data( data )
-    {}
-
-    /*!
-     * @brief Returns a random access const iterator to the beginning
-     */
-    UREACT_WARN_UNUSED_RESULT const_iterator begin() const
-    {
-        return m_data.begin();
-    }
-
-    /*!
-     * @brief Returns a random access const iterator to the end
-     */
-    UREACT_WARN_UNUSED_RESULT const_iterator end() const
-    {
-        return m_data.end();
-    }
-
-    /*!
-     * @brief Returns a reverse random access const iterator to the beginning
-     */
-    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rbegin() const
-    {
-        return m_data.rbegin();
-    }
-
-    /*!
-     * @brief Returns a reverse random access const iterator to the end
-     */
-    UREACT_WARN_UNUSED_RESULT const_reverse_iterator rend() const
-    {
-        return m_data.rend();
-    }
-
-    /*!
-     * @brief Returns the number of events
-     */
-    UREACT_WARN_UNUSED_RESULT size_type size() const
-    {
-        return m_data.size();
-    }
-
-    /*!
-     * @brief Checks whether the container is empty
-     */
-    UREACT_WARN_UNUSED_RESULT bool empty() const
-    {
-        return m_data.empty();
-    }
-
-private:
-    const std::vector<E>& m_data;
-};
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_EVENT_RANGE_HPP
-
-#ifndef UREACT_EVENTS_HPP
-#define UREACT_EVENTS_HPP
-
 
 UREACT_BEGIN_NAMESPACE
 
@@ -3859,6 +3865,8 @@ UREACT_END_NAMESPACE
 
 #ifndef UREACT_FORK_HPP
 #define UREACT_FORK_HPP
+
+#include <tuple>
 
 
 UREACT_BEGIN_NAMESPACE

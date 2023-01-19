@@ -10,8 +10,10 @@
 #ifndef UREACT_EVENT_EMITTER_HPP
 #define UREACT_EVENT_EMITTER_HPP
 
+#include <vector>
+
+#include <ureact/defines.hpp>
 #include <ureact/unit.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

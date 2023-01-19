@@ -10,8 +10,10 @@
 #ifndef UREACT_CLOSURE_HPP
 #define UREACT_CLOSURE_HPP
 
+#include <utility>
+
+#include <ureact/defines.hpp>
 #include <ureact/type_traits.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

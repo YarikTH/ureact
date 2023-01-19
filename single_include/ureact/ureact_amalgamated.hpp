@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-19 22:53:07.158941
+// Generated: 2023-01-20 00:24:24.686758
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -540,6 +540,8 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_PROCESS_HPP
 #define UREACT_PROCESS_HPP
 
+#include <functional>
+
 
 #ifndef UREACT_EVENT_EMITTER_HPP
 #define UREACT_EVENT_EMITTER_HPP
@@ -762,7 +764,6 @@ UREACT_END_NAMESPACE
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <limits>
 #include <memory>
 #include <tuple>
@@ -4502,6 +4503,8 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_OBSERVE_HPP
 #define UREACT_OBSERVE_HPP
 
+#include <functional>
+
 
 #ifndef UREACT_OBSERVER_HPP
 #define UREACT_OBSERVER_HPP
@@ -5592,6 +5595,8 @@ UREACT_END_NAMESPACE
 
 #ifndef UREACT_TRANSACTION_HPP
 #define UREACT_TRANSACTION_HPP
+
+#include <functional>
 
 
 UREACT_BEGIN_NAMESPACE

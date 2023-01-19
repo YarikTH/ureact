@@ -10,6 +10,8 @@
 #ifndef UREACT_OBSERVE_HPP
 #define UREACT_OBSERVE_HPP
 
+#include <functional>
+
 #include <ureact/closure.hpp>
 #include <ureact/observer.hpp>
 #include <ureact/signal_pack.hpp>

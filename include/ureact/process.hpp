@@ -10,6 +10,8 @@
 #ifndef UREACT_PROCESS_HPP
 #define UREACT_PROCESS_HPP
 
+#include <functional>
+
 #include <ureact/closure.hpp>
 #include <ureact/event_emitter.hpp>
 #include <ureact/event_range.hpp>

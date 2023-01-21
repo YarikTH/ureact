@@ -73,19 +73,19 @@ endif()
 message(STATUS "ureact compiler warning options: \"${UREACT_WARNING_OPTION}\"")
 
 ### ureact
-add_library(${PROJECT_NAME} INTERFACE)
+add_library(ureact INTERFACE)
 
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(ureact::ureact ALIAS ureact)
 
 target_include_directories(
-    ${PROJECT_NAME}
+    ureact
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+target_compile_features(ureact INTERFACE cxx_std_17)
 if(MSVC)
     # See https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
-    target_compile_options(${PROJECT_NAME} INTERFACE "/Zc:__cplusplus")
+    target_compile_options(ureact INTERFACE "/Zc:__cplusplus")
 endif()
 
 ################################################################################
@@ -120,16 +120,16 @@ set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     include(GNUInstallDirs)
     set(include_install_dir ${CMAKE_INSTALL_INCLUDEDIR})
-    set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+    set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/ureact")
 else()
     set(include_install_dir "include")
-    set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+    set(config_install_dir "lib/cmake/ureact")
 endif()
 
-set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
-set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
-set(targets_export_name "${PROJECT_NAME}Targets")
-set(namespace "${PROJECT_NAME}::")
+set(version_config "${generated_dir}/ureactConfigVersion.cmake")
+set(project_config "${generated_dir}/ureactConfig.cmake")
+set(targets_export_name "ureactTargets")
+set(namespace "ureact::")
 
 include(CMakePackageConfigHelpers)
 
@@ -152,7 +152,7 @@ configure_file("support/cmake/Config.cmake.in" "${project_config}" @ONLY)
 
 if(UREACT_INSTALL)
     install(
-        TARGETS ${PROJECT_NAME}
+        TARGETS ureact
         EXPORT "${targets_export_name}"
         INCLUDES DESTINATION "${include_install_dir}"
     )

@@ -186,10 +186,8 @@ class observable
 public:
     observable() = default;
 
-    observable( const observable& ) = delete;
-    observable& operator=( const observable& ) = delete;
-    observable( observable&& ) noexcept = delete;
-    observable& operator=( observable&& ) noexcept = delete;
+    UREACT_MAKE_NONCOPYABLE( observable );
+    UREACT_MAKE_NONMOVABLE( observable );
 
     ~observable()
     {

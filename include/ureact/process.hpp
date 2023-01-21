@@ -13,6 +13,7 @@
 #include <functional>
 
 #include <ureact/closure.hpp>
+#include <ureact/detail/linker_functor.hpp>
 #include <ureact/event_emitter.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/events.hpp>

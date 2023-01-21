@@ -13,6 +13,7 @@
 #include <functional>
 
 #include <ureact/closure.hpp>
+#include <ureact/detail/linker_functor.hpp>
 #include <ureact/observer.hpp>
 #include <ureact/signal_pack.hpp>
 #include <ureact/type_traits.hpp>

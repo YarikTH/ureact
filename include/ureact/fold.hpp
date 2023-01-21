@@ -11,6 +11,7 @@
 #define UREACT_FOLD_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/detail/linker_functor.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/signal_pack.hpp>

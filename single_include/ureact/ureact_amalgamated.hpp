@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-20 00:24:24.686758
+// Generated: 2023-01-21 19:24:39.195127
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -543,6 +543,94 @@ UREACT_END_NAMESPACE
 #include <functional>
 
 
+#ifndef UREACT_DETAIL_LINKER_FUNCTOR_HPP
+#define UREACT_DETAIL_LINKER_FUNCTOR_HPP
+
+#include <memory>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+class react_graph;
+
+template <typename Node>
+class linker_functor_base
+{
+protected:
+    explicit linker_functor_base( Node& node )
+        : m_node( node )
+        , m_graph( m_node.get_graph() )
+    {}
+
+    Node& m_node;
+    react_graph& m_graph;
+};
+
+template <typename Node>
+class attach_functor : linker_functor_base<Node>
+{
+public:
+    explicit attach_functor( Node& node )
+        : linker_functor_base<Node>( node )
+    {}
+
+    template <typename... Deps>
+    void operator()( const Deps&... deps ) const
+    {
+        ( attach( deps ), ... );
+    }
+
+private:
+    template <typename T>
+    void attach( const T& op ) const
+    {
+        op.template attach_rec<Node>( *this );
+    }
+
+    template <typename T>
+    void attach( const std::shared_ptr<T>& dep_ptr ) const
+    {
+        this->m_graph.on_node_attach( this->m_node, *dep_ptr );
+    }
+};
+
+template <typename Node>
+class detach_functor : linker_functor_base<Node>
+{
+public:
+    explicit detach_functor( Node& node )
+        : linker_functor_base<Node>( node )
+    {}
+
+    template <typename... Deps>
+    void operator()( const Deps&... deps ) const
+    {
+        ( detach( deps ), ... );
+    }
+
+private:
+    template <typename T>
+    void detach( const T& op ) const
+    {
+        op.template detach_rec<Node>( *this );
+    }
+
+    template <typename T>
+    void detach( const std::shared_ptr<T>& dep_ptr ) const
+    {
+        this->m_graph.on_node_detach( this->m_node, *dep_ptr );
+    }
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_DETAIL_LINKER_FUNCTOR_HPP
+
 #ifndef UREACT_EVENT_EMITTER_HPP
 #define UREACT_EVENT_EMITTER_HPP
 
@@ -926,10 +1014,8 @@ class observable
 public:
     observable() = default;
 
-    observable( const observable& ) = delete;
-    observable& operator=( const observable& ) = delete;
-    observable( observable&& ) noexcept = delete;
-    observable& operator=( observable&& ) noexcept = delete;
+    UREACT_MAKE_NONCOPYABLE( observable );
+    UREACT_MAKE_NONMOVABLE( observable );
 
     ~observable()
     {
@@ -1396,118 +1482,6 @@ public:
     explicit observable_node( context& context )
         : node_base( context )
     {}
-};
-
-template <typename Node>
-class linker_functor_base
-{
-protected:
-    explicit linker_functor_base( Node& node )
-        : m_node( node )
-        , m_graph( m_node.get_graph() )
-    {}
-
-    Node& m_node;
-    react_graph& m_graph;
-};
-
-template <typename Node>
-class attach_functor : linker_functor_base<Node>
-{
-public:
-    explicit attach_functor( Node& node )
-        : linker_functor_base<Node>( node )
-    {}
-
-    template <typename... Deps>
-    void operator()( const Deps&... deps ) const
-    {
-        ( attach( deps ), ... );
-    }
-
-private:
-    template <typename T>
-    void attach( const T& op ) const
-    {
-        op.template attach_rec<Node>( *this );
-    }
-
-    template <typename T>
-    void attach( const std::shared_ptr<T>& dep_ptr ) const
-    {
-        this->m_graph.on_node_attach( this->m_node, *dep_ptr );
-    }
-};
-
-template <typename Node>
-class detach_functor : linker_functor_base<Node>
-{
-public:
-    explicit detach_functor( Node& node )
-        : linker_functor_base<Node>( node )
-    {}
-
-    template <typename... Deps>
-    void operator()( const Deps&... deps ) const
-    {
-        ( detach( deps ), ... );
-    }
-
-private:
-    template <typename T>
-    void detach( const T& op ) const
-    {
-        op.template detach_rec<Node>( *this );
-    }
-
-    template <typename T>
-    void detach( const std::shared_ptr<T>& dep_ptr ) const
-    {
-        this->m_graph.on_node_detach( this->m_node, *dep_ptr );
-    }
-};
-
-template <typename... Deps>
-class reactive_op_base
-{
-public:
-    using dep_holder_t = std::tuple<Deps...>;
-
-    template <typename... Args>
-    explicit reactive_op_base( dont_move, Args&&... args )
-        : m_deps( std::forward<Args>( args )... )
-    {}
-
-    reactive_op_base( reactive_op_base&& ) noexcept = default;
-    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
-
-    template <typename Node>
-    void attach( Node& node ) const
-    {
-        std::apply( attach_functor<Node>{ node }, m_deps );
-    }
-
-    template <typename Node>
-    void detach( Node& node ) const
-    {
-        std::apply( detach_functor<Node>{ node }, m_deps );
-    }
-
-    template <typename Node, typename Functor>
-    void attach_rec( const Functor& functor ) const
-    {
-        // Same memory layout, different func
-        std::apply( reinterpret_cast<const attach_functor<Node>&>( functor ), m_deps );
-    }
-
-    template <typename Node, typename Functor>
-    void detach_rec( const Functor& functor ) const
-    {
-        std::apply( reinterpret_cast<const detach_functor<Node>&>( functor ), m_deps );
-    }
-
-protected:
-    dep_holder_t m_deps;
 };
 
 template <typename Node>
@@ -3695,6 +3669,64 @@ UREACT_WARN_UNUSED_RESULT auto count()
 UREACT_END_NAMESPACE
 
 #endif // UREACT_COUNT_HPP
+
+#ifndef UREACT_DETAIL_REACTIVE_OP_BASE_HPP
+#define UREACT_DETAIL_REACTIVE_OP_BASE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename... Deps>
+class reactive_op_base
+{
+public:
+    using dep_holder_t = std::tuple<Deps...>;
+
+    template <typename... Args>
+    explicit reactive_op_base( dont_move, Args&&... args )
+        : m_deps( std::forward<Args>( args )... )
+    {}
+
+    reactive_op_base( reactive_op_base&& ) noexcept = default;
+    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
+
+    template <typename Node>
+    void attach( Node& node ) const
+    {
+        std::apply( attach_functor<Node>{ node }, m_deps );
+    }
+
+    template <typename Node>
+    void detach( Node& node ) const
+    {
+        std::apply( detach_functor<Node>{ node }, m_deps );
+    }
+
+    template <typename Node, typename Functor>
+    void attach_rec( const Functor& functor ) const
+    {
+        // Same memory layout, different func
+        std::apply( reinterpret_cast<const attach_functor<Node>&>( functor ), m_deps );
+    }
+
+    template <typename Node, typename Functor>
+    void detach_rec( const Functor& functor ) const
+    {
+        std::apply( reinterpret_cast<const detach_functor<Node>&>( functor ), m_deps );
+    }
+
+protected:
+    dep_holder_t m_deps;
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_DETAIL_REACTIVE_OP_BASE_HPP
 
 #ifndef UREACT_FLATTEN_HPP
 #define UREACT_FLATTEN_HPP

@@ -1,23 +1,14 @@
-// ureact - C++ header-only FRP library
 //
 //         Copyright (C) 2014-2017 Sebastian Jeckel.
 //         Copyright (C) 2020-2023 Krylov Yaroslav.
+//
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-// The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
-// which uses the Boost Software License - Version 1.0
-// see here - https://github.com/snakster/cpp.react/blob/master/LICENSE_1_0.txt
-// Project started as a complex refactoring and transformation of cpp.react's codebase
-// but with different design goals.
-//
-// The documentation can be found at the library's page:
-// https://github.com/YarikTH/ureact/blob/main/README.md
-//
 
-#ifndef UREACT_UREACT_HPP
-#define UREACT_UREACT_HPP
+#ifndef UREACT_DETAIL_BASE_HPP
+#define UREACT_DETAIL_BASE_HPP
 
 #include <cassert>
 #include <cstddef>
@@ -38,7 +29,17 @@
 
 UREACT_BEGIN_NAMESPACE
 
+class context;
+
 class transaction;
+
+namespace detail
+{
+class context_internals;
+}
+
+/// TODO: looks ugly. Replace context_internals with more proper feature
+UREACT_WARN_UNUSED_RESULT detail::context_internals& _get_internals( context& ctx );
 
 namespace detail
 {
@@ -548,43 +549,6 @@ private:
     std::unique_ptr<react_graph> m_graph = std::make_unique<react_graph>();
 };
 
-// forward declaration
-class node_base;
-
-} // namespace detail
-
-/*!
- * @brief Core class that connects all reactive nodes together.
- *
- *  Each signal and node belongs to a single ureact context.
- *  Signals from different contexts can't interact with each other.
- */
-class context final : protected detail::context_internals
-{
-public:
-    UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
-    {
-        return this == &rsh;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool operator!=( const context& rsh ) const
-    {
-        return !( *this == rsh );
-    }
-
-private:
-    friend class detail::node_base;
-
-    /// Returns internals. Not intended to use in user code
-    UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
-    {
-        return ctx;
-    }
-};
-
-namespace detail
-{
-
 class node_base : public reactive_node
 {
 public:
@@ -694,4 +658,4 @@ protected:
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_UREACT_HPP
+#endif // UREACT_DETAIL_BASE_HPP

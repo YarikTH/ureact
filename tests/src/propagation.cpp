@@ -9,7 +9,6 @@
 #include "ureact/lift.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/transaction.hpp"
-#include "ureact/ureact.hpp"
 
 TEST_CASE( "Reacting to value changes" )
 {

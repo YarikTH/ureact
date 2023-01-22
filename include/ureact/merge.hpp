@@ -10,8 +10,8 @@
 #ifndef UREACT_MERGE_HPP
 #define UREACT_MERGE_HPP
 
+#include <ureact/detail/base.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

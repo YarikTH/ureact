@@ -10,9 +10,10 @@
 #ifndef UREACT_EVENTS_HPP
 #define UREACT_EVENTS_HPP
 
+#include <ureact/context.hpp>
+#include <ureact/detail/base.hpp>
 #include <ureact/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/unit.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

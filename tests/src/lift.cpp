@@ -14,7 +14,6 @@
 #include "identity.hpp"
 #include "ureact/observe.hpp"
 #include "ureact/transaction.hpp"
-#include "ureact/ureact.hpp"
 
 namespace
 {

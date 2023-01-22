@@ -5,8 +5,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "ureact/context.hpp"
+
 #include "doctest_extra.h"
-#include "ureact/ureact.hpp"
 
 // non-copyable and non-movable
 static_assert( std::is_default_constructible_v<ureact::context> );

@@ -7,7 +7,6 @@
 //
 #include "doctest_extra.h"
 #include "ureact/lift.hpp"
-#include "ureact/ureact.hpp"
 
 // TODO: check type traits for signals
 // * signal<S>

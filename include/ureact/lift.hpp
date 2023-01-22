@@ -11,12 +11,12 @@
 #define UREACT_LIFT_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/detail/base.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/signal_pack.hpp>
 #include <ureact/temp_signal.hpp>
 #include <ureact/type_traits.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

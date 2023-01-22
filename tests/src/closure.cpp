@@ -11,7 +11,6 @@
 #include "ureact/collect.hpp"
 #include "ureact/filter.hpp"
 #include "ureact/transform.hpp"
-#include "ureact/ureact.hpp"
 
 /*!
  *  Closure objects take one reactive object as its only argument and may return a value.

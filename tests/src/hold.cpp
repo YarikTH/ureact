@@ -10,7 +10,6 @@
 #include "doctest_extra.h"
 #include "ureact/events.hpp"
 #include "ureact/observe.hpp"
-#include "ureact/ureact.hpp"
 
 // hold the last event value as a signal
 TEST_CASE( "Hold" )

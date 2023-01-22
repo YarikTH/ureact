@@ -10,9 +10,10 @@
 #ifndef UREACT_SIGNAL_HPP
 #define UREACT_SIGNAL_HPP
 
+#include <ureact/context.hpp>
+#include <ureact/detail/base.hpp>
 #include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

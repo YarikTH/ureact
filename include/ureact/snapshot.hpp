@@ -11,9 +11,9 @@
 #define UREACT_SNAPSHOT_HPP
 
 #include <ureact/closure.hpp>
+#include <ureact/detail/base.hpp>
 #include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
-#include <ureact/ureact.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

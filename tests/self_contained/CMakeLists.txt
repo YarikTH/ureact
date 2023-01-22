@@ -9,7 +9,7 @@ add_executable(ureact_self_contained_headers_test main.cpp)
 
 function(ureact_setup_self_contained_test_sources)
     file(
-        GLOB ureact_headers
+        GLOB_RECURSE ureact_headers
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/../../include"
         "../../include/ureact/*.hpp"
     )

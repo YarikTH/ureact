@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include <ureact/defines.hpp>
+#include <ureact/detail/defines.hpp>
 #include <ureact/unit.hpp>
 
 UREACT_BEGIN_NAMESPACE

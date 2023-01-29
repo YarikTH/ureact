@@ -13,7 +13,7 @@
 #include <functional>
 #include <type_traits>
 
-#include <ureact/defines.hpp>
+#include <ureact/detail/defines.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DEFINES_HPP
-#define UREACT_DEFINES_HPP
+#ifndef UREACT_DETAIL_DEFINES_HPP
+#define UREACT_DETAIL_DEFINES_HPP
 
 // Preprocessor feature detections
 // Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
@@ -128,4 +128,4 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 #define UREACT_MAKE_NONMOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, delete )
 #define UREACT_MAKE_MOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, default )
 
-#endif //UREACT_DEFINES_HPP
+#endif //UREACT_DETAIL_DEFINES_HPP

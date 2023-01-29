@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.0 wip
-// Generated: 2023-01-22 18:15:27.932623
+// Generated: 2023-01-29 03:04:49.367018
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -38,8 +38,8 @@
 #include <utility>
 
 
-#ifndef UREACT_DEFINES_HPP
-#define UREACT_DEFINES_HPP
+#ifndef UREACT_DETAIL_DEFINES_HPP
+#define UREACT_DETAIL_DEFINES_HPP
 
 // Preprocessor feature detections
 // Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
@@ -159,7 +159,7 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 #define UREACT_MAKE_NONMOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, delete )
 #define UREACT_MAKE_MOVABLE( ClassName ) UREACT_SETUP_MOVE( ClassName, default )
 
-#endif //UREACT_DEFINES_HPP
+#endif //UREACT_DETAIL_DEFINES_HPP
 
 #ifndef UREACT_TYPE_TRAITS_HPP
 #define UREACT_TYPE_TRAITS_HPP

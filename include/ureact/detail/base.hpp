@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include <ureact/defines.hpp>
+#include <ureact/detail/defines.hpp>
 #include <ureact/type_traits.hpp>
 
 #ifdef UREACT_USE_STD_ALGORITHM

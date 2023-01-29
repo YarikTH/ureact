@@ -8,7 +8,6 @@
 #include <nanobench.h>
 
 #include "ureact/lift.hpp"
-#include "ureact/ureact.hpp"
 
 namespace
 {
@@ -60,15 +59,15 @@ void signal_functions_separate( ankerl::nanobench::Bench& bench )
     ureact::context ctx;
     auto a = make_var( ctx, 1 );
 
-    auto b1 = lift( with( a, a ), std::plus<>() );
-    auto b2 = lift( with( a, a ), std::plus<>() );
-    auto b3 = lift( with( a, a ), std::plus<>() );
-    auto b4 = lift( with( a, a ), std::plus<>() );
+    auto b1 = a + a;
+    auto b2 = a + a;
+    auto b3 = a + a;
+    auto b4 = a + a;
 
-    auto c1 = lift( with( b1, b2 ), std::multiplies<>() );
-    auto c2 = lift( with( b3, b4 ), std::multiplies<>() );
+    auto c1 = b1 * b2;
+    auto c2 = b3 * b4;
 
-    auto d = lift( with( c1, c2 ), std::plus<>() );
+    auto d = c1 + c2;
 
     perform_test( "separate", bench, a, d );
 }

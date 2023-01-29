@@ -3,6 +3,124 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.0](https://github.com/YarikTH/ureact/releases/tag/0.8.0) (2023-01-29)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.7.0...0.8.0)
+
+Great headers rework
+
+- BREAKING! "include/ureact/ureact.hpp" is separated into several more
+  specialized headers.
+  Unlike 0.7.0, ureact.hpp is completely replaced with the new headers.
+  More fractional includes allow to reduce inclusion cost.
+  All headers are guarantied to be self-contained.
+  Use textual search to search wanted functionality because code reference is
+  not made yet.
+- BREAKING! constructors of `var_signal` and `event_source` that allow
+  non-default construction
+  without `make_var` and `make_source` are removed
+- add function object version of `var_signal<S>::set()`.
+  It allows to mimic not only getter functions, but also setter functions.
+
+```C++
+struct A
+{
+    void foo(const int& newValue);
+    [[nodiscard]] int foo() const;
+
+    var_signal<int> bar;
+};
+
+int main()
+{
+    A test;
+    test.foo(42);
+    std::cout << test.foo() << "\n";
+
+    test.bar(42);
+    std::cout << test.bar() << "\n";
+}
+```
+
+- add sanity checks for functions passed in non-observer algorithms such as
+  `lift`, `process` and `fold`.
+  This check works only if `NDEBUG` is not defined and prevents common misuses:
+    - creation of nodes from callback (`make_XXX` and algorithms producing new
+      signal/events/observer)
+    - read/setting/modification of signal value from callback
+    - emitting event from callback
+- add `transaction` class that is RAII version of `do_transaction()`
+- add `member_XXX` classes that restrict reassignment only for Owner class.
+  Base idea was taken
+  from https://danieldinu.com/observable/getting-started.html#getting-started-with-observable-properties
+  `member_signal<Owner, S>`, `member_var_signal<Owner, S>`,
+  `member_events<Owner, E>` and `member_event_source<Owner, E>` are added.
+  Interfaces `member_events_user`, `member_signal_user` and
+  macro `UREACT_USE_MEMBER_SIGNALS`, `UREACT_USE_MEMBER_EVENTS` are added to
+  make usage easier.
+- add `sink` algorithm that allows to assign value to reactive value in complex expressions
+```C++
+ureact::context ctx;
+
+ureact::var_signal<int> src = make_var( ctx, 1 );
+ureact::signal<int> squared;
+ureact::signal<int> minus_squared;
+static const auto square = []( auto i ) { return i * i; };
+
+std::ignore =                                  // TODO: remove it once nodiscard done right
+    src                                        //
+    | ureact::lift( square ) | sink( squared ) //
+    | ureact::lift( std::negate<>{} ) | sink( minus_squared );
+
+assert( squared.get() == 1 );
+assert( minus_squared.get() == -1 );
+
+src <<= -2;
+
+assert( squared.get() == 4 );
+assert( minus_squared.get() == -4 );
+```
+- add `fork` algorithm that allows to express multiple transformation of the same source
+```C++
+ureact::context ctx;
+
+auto src = ureact::make_source<int>( ctx );
+static const auto negate = []( auto i ) { return -i; };
+static const auto x2 = []( auto i ) { return i * 2; };
+static const auto square = []( auto i ) { return i * i; };
+
+ureact::events<int> dst1;
+ureact::events<int> dst2;
+ureact::events<int> dst;
+
+// makes void lambda to check if fork supports it
+auto make_transform_to = []( auto func, ureact::events<int>& where ) {
+    return [func, &where]( const auto& src ) { //
+        std::ignore =                          // TODO: remove it once nodiscard done right
+            src | ureact::transform( func ) | ureact::sink( where );
+    };
+};
+
+dst =                                                       //
+    src                                                     //
+    | ureact::fork(                                         //
+        ureact::transform( negate ) | ureact::sink( dst1 ), //
+        make_transform_to( x2, dst2 )                       //
+        )
+    | ureact::transform( square );
+
+const auto negate_result = ureact::collect<std::vector>( dst1 );
+const auto x2_result = ureact::collect<std::vector>( dst2 );
+const auto square_result = ureact::collect<std::vector>( dst );
+
+for( int i = 1; i < 4; ++i )
+    src << i;
+
+assert( negate_result.get() == std::vector<int>{ -1, -2, -3 } );
+assert( x2_result.get() == std::vector<int>{ 2, 4, 6 } );
+assert( square_result.get() == std::vector<int>{ 1, 4, 9 } );
+```
+
 ## [0.7.0](https://github.com/YarikTH/ureact/releases/tag/0.7.0) (2022-11-27)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.6.0...0.7.0)

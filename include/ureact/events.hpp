@@ -429,7 +429,7 @@ private:
 };
 
 /*!
- * @brief Interface for events<S> that allows construction and assigment only for Owner class
+ * @brief Interface for `ureact::events<E>` that allows construction and assigment only for Owner class
  * 
  * member_events is intended to be used as type for public members, so everybody can freely
  * access its public interface while being restricted from reassignment that should be allowed
@@ -464,7 +464,7 @@ class member_events : public events<E>
 };
 
 /*!
- * @brief Interface for event_source<S> that allows construction and assigment only for Owner class
+ * @brief Interface for `ureact::event_source<E>` that allows construction and assigment only for Owner class
  * 
  * member_event_source is intended to be used as type for public members, so everybody can freely
  * access its public interface while being restricted from reassignment that should be allowed

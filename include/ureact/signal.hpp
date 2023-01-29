@@ -481,7 +481,7 @@ protected:
 };
 
 /*!
- * @brief Interface for signal<S> that allows construction and assigment only for Owner class
+ * @brief Interface for `signal<S>` that allows construction and assigment only for Owner class
  * 
  * member_signal is intended to be used as type for public members, so everybody can freely
  * access its public interface while being restricted from reassignment that should be allowed
@@ -516,7 +516,7 @@ class member_signal : public signal<S>
 };
 
 /*!
- * @brief Interface for var_signal<S> that allows construction and assigment only for Owner class
+ * @brief Interface for `var_signal<S>` that allows construction and assigment only for Owner class
  * 
  * member_var_signal is intended to be used as type for public members, so everybody can freely
  * access its public interface while being restricted from reassignment that should be allowed

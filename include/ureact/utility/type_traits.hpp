@@ -180,7 +180,7 @@ template <typename S>
 class signal;
 
 /*!
- * @brief Return if type is signal or its inheritor
+ * @brief Return if type is @ref signal or its inheritor
  */
 template <typename T>
 struct is_signal : detail::is_base_of_template<signal, T>
@@ -199,7 +199,7 @@ template <typename S>
 class var_signal;
 
 /*!
- * @brief Return if type is var_signal or its inheritor
+ * @brief Return if type is @ref var_signal or its inheritor
  */
 template <typename T>
 struct is_var_signal : detail::is_base_of_template<var_signal, T>
@@ -218,7 +218,7 @@ template <typename... Values>
 class signal_pack;
 
 /*!
- * @brief Return if type is signal_pack
+ * @brief Return if type is @ref signal_pack
  */
 template <typename T>
 struct is_signal_pack : detail::is_base_of_template<signal_pack, T>
@@ -233,7 +233,7 @@ inline constexpr bool is_signal_pack_v = is_signal_pack<T>::value;
 
 
 /*!
- * @brief Return if type is signal's inheritor or signal_pack
+ * @brief Return if type is @ref signal's inheritor or @ref signal_pack
  */
 template <typename T>
 struct is_signal_or_pack : std::disjunction<is_signal<T>, is_signal_pack<T>>
@@ -252,7 +252,7 @@ template <typename E>
 class events;
 
 /*!
- * @brief Return if type is events or its inheritor
+ * @brief Return if type is @ref events or its inheritor
  */
 template <typename T>
 struct is_event : detail::is_base_of_template<events, T>
@@ -271,7 +271,7 @@ template <typename E>
 class event_source;
 
 /*!
- * @brief Return if type is event_source or its inheritor
+ * @brief Return if type is @ref event_source or its inheritor
  */
 template <typename T>
 struct is_event_source : detail::is_base_of_template<event_source, T>
@@ -289,7 +289,7 @@ inline constexpr bool is_event_source_v = is_event_source<T>::value;
 class observer;
 
 /*!
- * @brief Return if type is observer
+ * @brief Return if type is @ref observer
  */
 template <typename T>
 struct is_observer : std::is_same<T, observer>
@@ -304,7 +304,7 @@ inline constexpr bool is_observer_v = is_observer<T>::value;
 
 
 /*!
- * @brief Return if type is signal or event inheritor
+ * @brief Return if type is @ref signal or @ref event inheritor
  */
 template <typename T>
 struct is_observable : std::disjunction<is_signal<T>, is_event<T>>
@@ -319,7 +319,7 @@ inline constexpr bool is_observable_v = is_observable<T>::value;
 
 
 /*!
- * @brief Return if type is signal or event or observer
+ * @brief Return if type is @ref signal or @ref events or @ref observer
  */
 template <typename T>
 struct is_reactive : std::disjunction<is_observable<T>, is_observer<T>>

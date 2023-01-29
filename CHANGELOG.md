@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.1](https://github.com/YarikTH/ureact/releases/tag/0.8.1) (2023-01-29)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.8.0...0.8.1)
+
+Fix broken CMake installation script after headers rework made in 0.8.0.
+
 ## [0.8.0](https://github.com/YarikTH/ureact/releases/tag/0.8.0) (2023-01-29)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.7.0...0.8.0)

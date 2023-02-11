@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.1
-// Generated: 2023-02-11 11:16:41.969481
+// Generated: 2023-02-11 11:47:44.963779
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2111,7 +2111,7 @@ template <typename S>
 class signal;
 
 /*!
- * @brief A wrapper type for a tuple of signal references
+ * @brief A wrapper type for a tuple of signals
  * @tparam Values types of signal values
  *
  *  Created with @ref with()
@@ -2121,25 +2121,6 @@ class signal_pack final
 {
 public:
     /*!
-     * @brief Class to store signals instead of signal references
-     */
-    class stored
-    {
-    public:
-        /*!
-         * @brief Construct from signals
-         */
-        explicit stored( const signal<Values>&... deps )
-            : data( std::tie( deps... ) )
-        {}
-
-        /*!
-         * @brief The wrapped tuple
-         */
-        std::tuple<signal<Values>...> data;
-    };
-
-    /*!
      * @brief Construct from signals
      */
     explicit signal_pack( const signal<Values>&... deps )
@@ -2147,26 +2128,9 @@ public:
     {}
 
     /*!
-     * @brief Construct from stored signals
-     */
-    explicit signal_pack( const stored& value )
-        : data( std::apply(
-            []( const signal<Values>&... deps ) { return std::tie( deps... ); }, value.data ) )
-    {}
-
-    /*!
-     * @brief Convert signal references to signals so they can be stored
-     */
-    UREACT_WARN_UNUSED_RESULT stored store() const
-    {
-        return std::apply(
-            []( const signal<Values>&... deps ) { return stored{ deps... }; }, data );
-    }
-
-    /*!
      * @brief The wrapped tuple
      */
-    std::tuple<const signal<Values>&...> data;
+    std::tuple<signal<Values>...> data;
 };
 
 /*!
@@ -2174,7 +2138,9 @@ public:
  * @tparam Values types of signal values
  *
  *  Creates a signal_pack from the signals passed as deps.
- *  Semantically, this is equivalent to std::tie.
+ *  Semantically, this is equivalent to std::make_tuple.
+ *  
+ *  TODO: receive universal references and make valid signal_pack from them
  */
 template <typename... Values>
 UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )
@@ -2295,12 +2261,11 @@ UREACT_WARN_UNUSED_RESULT auto process(
 template <typename OutE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
 {
-    return detail::closure{
-        [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
-        } };
+    return detail::closure{ [dep_pack = dep_pack, op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), dep_pack, op );
+    } };
 }
 
 /*!
@@ -2370,12 +2335,11 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
 {
-    return detail::closure{
-        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
-        } };
+    return detail::closure{ [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), dep_pack, func );
+    } };
 }
 
 /*!
@@ -2470,11 +2434,6 @@ template <typename E, typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter(
     const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred ) -> events<E>
 {
-    using F = std::decay_t<Pred>;
-    using result_t = std::invoke_result_t<F, E, DepValues...>;
-    static_assert(
-        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
-
     return detail::process_impl<E>( source,
         dep_pack, //
         [pred = std::forward<Pred>( pred )](
@@ -2492,10 +2451,10 @@ template <typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
 {
     return detail::closure{
-        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
+            return filter( std::forward<arg_t>( source ), dep_pack, pred );
         } };
 }
 
@@ -3528,14 +3487,13 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 template <typename V, typename InF, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
 {
-    return detail::closure{ [init = std::forward<V>( init ),
-                                deps = dep_pack.store(),
-                                func = std::forward<InF>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return fold(
-            std::forward<arg_t>( source ), std::move( init ), signal_pack<Deps...>( deps ), func );
-    } };
+    return detail::closure{
+        [init = std::forward<V>( init ), dep_pack = dep_pack, func = std::forward<InF>( func )](
+            auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return fold( std::forward<arg_t>( source ), std::move( init ), dep_pack, func );
+        } };
 }
 
 /*!
@@ -4980,11 +4938,11 @@ UREACT_WARN_UNUSED_RESULT auto observe(
     const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
 {
     return detail::closure{
-        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
             using arg_t = decltype( subject );
             static_assert( is_observable_v<std::decay_t<arg_t>>,
                 "Observable type is required (signal or event)" );
-            return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+            return observe( std::forward<arg_t>( subject ), dep_pack, func );
         } };
 }
 
@@ -5341,11 +5299,11 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return detail::closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
+    return detail::closure{ [dep_pack = dep_pack, pred = std::forward<Pred>( pred )] //
         ( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return take_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+            return take_while( std::forward<arg_t>( source ), dep_pack, pred );
         } };
 }
 
@@ -5405,10 +5363,10 @@ UREACT_WARN_UNUSED_RESULT inline auto drop_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
     return detail::closure{
-        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return drop_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+            return drop_while( std::forward<arg_t>( source ), dep_pack, pred );
         } };
 }
 
@@ -5537,11 +5495,11 @@ template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& func )
 {
     return detail::closure{
-        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
             using arg_t = decltype( subject );
             static_assert( is_observable_v<std::decay_t<arg_t>>,
                 "Observable type is required (signal or event)" );
-            return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+            return tap( std::forward<arg_t>( subject ), dep_pack, func );
         } };
 }
 

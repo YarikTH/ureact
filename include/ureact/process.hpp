@@ -129,12 +129,11 @@ UREACT_WARN_UNUSED_RESULT auto process(
 template <typename OutE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
 {
-    return detail::closure{
-        [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
-        } };
+    return detail::closure{ [dep_pack = dep_pack, op = std::forward<Op>( op )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return process<OutE>( std::forward<arg_t>( source ), dep_pack, op );
+    } };
 }
 
 /*!

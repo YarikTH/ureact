@@ -51,12 +51,11 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
 {
-    return detail::closure{
-        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
-        } };
+    return detail::closure{ [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& source ) {
+        using arg_t = decltype( source );
+        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+        return transform( std::forward<arg_t>( source ), dep_pack, func );
+    } };
 }
 
 /*!

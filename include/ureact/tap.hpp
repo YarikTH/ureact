@@ -105,11 +105,11 @@ template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& func )
 {
     return detail::closure{
-        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
             using arg_t = decltype( subject );
             static_assert( is_observable_v<std::decay_t<arg_t>>,
                 "Observable type is required (signal or event)" );
-            return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+            return tap( std::forward<arg_t>( subject ), dep_pack, func );
         } };
 }
 

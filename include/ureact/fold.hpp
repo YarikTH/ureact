@@ -232,14 +232,13 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 template <typename V, typename InF, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
 {
-    return detail::closure{ [init = std::forward<V>( init ),
-                                deps = dep_pack.store(),
-                                func = std::forward<InF>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return fold(
-            std::forward<arg_t>( source ), std::move( init ), signal_pack<Deps...>( deps ), func );
-    } };
+    return detail::closure{
+        [init = std::forward<V>( init ), dep_pack = dep_pack, func = std::forward<InF>( func )](
+            auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return fold( std::forward<arg_t>( source ), std::move( init ), dep_pack, func );
+        } };
 }
 
 /*!

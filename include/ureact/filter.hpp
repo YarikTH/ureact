@@ -50,10 +50,10 @@ template <typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
 {
     return detail::closure{
-        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
+            return filter( std::forward<arg_t>( source ), dep_pack, pred );
         } };
 }
 

@@ -20,7 +20,7 @@ template <typename S>
 class signal;
 
 /*!
- * @brief A wrapper type for a tuple of signal references
+ * @brief A wrapper type for a tuple of signals
  * @tparam Values types of signal values
  *
  *  Created with @ref with()
@@ -30,25 +30,6 @@ class signal_pack final
 {
 public:
     /*!
-     * @brief Class to store signals instead of signal references
-     */
-    class stored
-    {
-    public:
-        /*!
-         * @brief Construct from signals
-         */
-        explicit stored( const signal<Values>&... deps )
-            : data( std::tie( deps... ) )
-        {}
-
-        /*!
-         * @brief The wrapped tuple
-         */
-        std::tuple<signal<Values>...> data;
-    };
-
-    /*!
      * @brief Construct from signals
      */
     explicit signal_pack( const signal<Values>&... deps )
@@ -56,26 +37,9 @@ public:
     {}
 
     /*!
-     * @brief Construct from stored signals
-     */
-    explicit signal_pack( const stored& value )
-        : data( std::apply(
-            []( const signal<Values>&... deps ) { return std::tie( deps... ); }, value.data ) )
-    {}
-
-    /*!
-     * @brief Convert signal references to signals so they can be stored
-     */
-    UREACT_WARN_UNUSED_RESULT stored store() const
-    {
-        return std::apply(
-            []( const signal<Values>&... deps ) { return stored{ deps... }; }, data );
-    }
-
-    /*!
      * @brief The wrapped tuple
      */
-    std::tuple<const signal<Values>&...> data;
+    std::tuple<signal<Values>...> data;
 };
 
 /*!
@@ -83,7 +47,9 @@ public:
  * @tparam Values types of signal values
  *
  *  Creates a signal_pack from the signals passed as deps.
- *  Semantically, this is equivalent to std::tie.
+ *  Semantically, this is equivalent to std::make_tuple.
+ *  
+ *  TODO: receive universal references and make valid signal_pack from them
  */
 template <typename... Values>
 UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )

@@ -36,6 +36,7 @@ PRETTY_PY_OPTIONS = --clang-format clang-format-11
 PRETTY_PY_OPTIONS += --exclude='tests/thirdparty'
 PRETTY_PY_OPTIONS += --exclude='tests/integration'
 PRETTY_PY_OPTIONS += --exclude='support/thirdparty'
+PRETTY_PY_OPTIONS += --exclude='single_include'
 #TODO: support adding of additional path after excluding
 #PRETTY_PY_OPTIONS += "--include='tests/integration/test_integration.cmake'"
 #PRETTY_PY_OPTIONS += "--include='tests/thirdparty/doctest/CMakeLists.txt'"

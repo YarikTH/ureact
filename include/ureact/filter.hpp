@@ -33,11 +33,6 @@ template <typename E, typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter(
     const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred ) -> events<E>
 {
-    using F = std::decay_t<Pred>;
-    using result_t = std::invoke_result_t<F, E, DepValues...>;
-    static_assert(
-        std::is_same_v<result_t, bool>, "Filter function result should be exactly bool" );
-
     return detail::process_impl<E>( source,
         dep_pack, //
         [pred = std::forward<Pred>( pred )](

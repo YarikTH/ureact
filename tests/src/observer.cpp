@@ -56,7 +56,7 @@ TEST_CASE( "SelfObserverDetach" )
     {
         auto src = ureact::make_var<int>( ctx, -1 );
 
-        ureact::observer obs = observe( src, observe_handler );
+        ureact::observer obs = ureact::observe( src, observe_handler );
 
         for( int i : input_values )
             src <<= i;
@@ -65,7 +65,7 @@ TEST_CASE( "SelfObserverDetach" )
     {
         auto src = ureact::make_source<int>( ctx );
 
-        ureact::observer obs = observe( src, observe_handler );
+        ureact::observer obs = ureact::observe( src, observe_handler );
 
         for( int i : input_values )
             src << i;
@@ -83,19 +83,19 @@ TEST_CASE( "NoObserveOnNoChanged" )
 
     auto product = a * b;
 
-    auto expressionString
-        = lift( with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
-              return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
-                   + std::to_string( product_ );
-          } );
+    auto expressionString = ureact::lift(
+        with( a, b, product ), []( const int a_, const int b_, const int product_ ) {
+            return std::to_string( a_ ) + " * " + std::to_string( b_ ) + " = "
+                 + std::to_string( product_ );
+        } );
 
     int aObserveCount = 0;
     int bObserveCount = 0;
     int productObserveCount = 0;
 
-    observe( a, [&]( int /*v*/ ) { ++aObserveCount; } );
-    observe( b, [&]( int /*v*/ ) { ++bObserveCount; } );
-    observe( product, [&]( int /*v*/ ) { ++productObserveCount; } );
+    ureact::observe( a, [&]( int /*v*/ ) { ++aObserveCount; } );
+    ureact::observe( b, [&]( int /*v*/ ) { ++bObserveCount; } );
+    ureact::observe( product, [&]( int /*v*/ ) { ++productObserveCount; } );
 
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 0 );
@@ -154,9 +154,10 @@ TEST_CASE( "SyncedObserveTest" )
 
         result_t result;
 
-        observe( src, with( sum, prod, diff ), [&]( ureact::unit, int sum, int prod, int diff ) {
-            result.emplace_back( sum, prod, diff );
-        } );
+        ureact::observe(
+            src, with( sum, prod, diff ), [&]( ureact::unit, int sum, int prod, int diff ) {
+                result.emplace_back( sum, prod, diff );
+            } );
 
         a <<= 22;
         b <<= 11;
@@ -177,7 +178,7 @@ TEST_CASE( "SyncedObserveTest" )
 
         result_t result;
 
-        observe(
+        ureact::observe(
             src, with( sum, prod, diff ), [&]( const std::string& e, int sum, int prod, int diff ) {
                 result.emplace_back( e, sum, prod, diff );
             } );
@@ -212,11 +213,11 @@ TEST_CASE( "Observers" )
         // Inner scope
         {
             // Create a signal in the function scope
-            auto my_signal = lift( x, identity{} );
+            auto my_signal = ureact::lift( x, identity{} );
 
             // The lifetime of the observer is bound to my_signal.
             // After scope my_signal is destroyed, and so is the observer
-            observe( my_signal, on_x_value_change );
+            ureact::observe( my_signal, on_x_value_change );
 
             x <<= 1;
 
@@ -238,10 +239,10 @@ TEST_CASE( "Observers" )
 
             // Inner scope
             {
-                auto my_signal = lift( x, identity{} );
+                auto my_signal = ureact::lift( x, identity{} );
 
                 // Move-assign to obs
-                obs = observe( my_signal, on_x_value_change );
+                obs = ureact::observe( my_signal, on_x_value_change );
 
                 // The node linked to my_signal is now also owned by obs
 

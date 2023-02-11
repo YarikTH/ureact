@@ -20,7 +20,7 @@ TEST_CASE( "Merge" )
     auto src2 = ureact::make_source<int>( ctx );
     auto src3 = ureact::make_source<int>( ctx );
 
-    ureact::events<int> src = merge( src1, src2, src3 );
+    ureact::events<int> src = ureact::merge( src1, src2, src3 );
 
     const auto result = ureact::collect<std::vector>( src );
 

@@ -30,8 +30,8 @@
 //        changes_to_zero = src | ureact::changed_to( 0 );
 //    }
 //
-//    const auto changes_count = count( changes );
-//    const auto changes_to_zero_count = count( changes_to_zero );
+//    const auto changes_count = ureact::count( changes );
+//    const auto changes_to_zero_count = ureact::count( changes_to_zero );
 //
 //    // pass values into src
 //    for( int i : { 0, 0, 0, 1, 1, 2, 3, 0 } )

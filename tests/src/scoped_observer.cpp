@@ -44,13 +44,13 @@ TEST_CASE( "ScopedObserver" )
 
     SUBCASE( "ScopedObserver" )
     {
-        ureact::scoped_observer obs = observe( src, observe_handler );
+        ureact::scoped_observer obs = ureact::observe( src, observe_handler );
 
         src.emit();
     }
     SUBCASE( "ObserverDetach" )
     {
-        ureact::observer obs = observe( src, observe_handler );
+        ureact::observer obs = ureact::observe( src, observe_handler );
 
         src.emit();
 

@@ -36,7 +36,7 @@ TEST_CASE( "Snapshot" )
         snap = ureact::snapshot( trigger_int, target );
     }
 
-    const auto changes_count = ureact::count( monitor( snap ) );
+    const auto changes_count = ureact::count( ureact::monitor( snap ) );
 
     for( int i = 0; i < 10; ++i )
     {

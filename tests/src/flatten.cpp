@@ -28,11 +28,11 @@ TEST_CASE( "Flatten1" )
 
     auto outer = make_var( ctx, inner1 );
 
-    auto flattened = flatten( outer );
+    auto flattened = ureact::flatten( outer );
 
     std::queue<int> results;
 
-    observe( flattened, [&]( int v ) { results.push( v ); } );
+    ureact::observe( flattened, [&]( int v ) { results.push( v ); } );
 
     CHECK( outer.get().equal_to( inner1 ) );
     CHECK( flattened.get() == 123 );
@@ -76,13 +76,13 @@ TEST_CASE( "Flatten2" )
 
     auto outer = make_var( ctx, inner1 );
 
-    auto flattened = flatten( outer );
+    auto flattened = ureact::flatten( outer );
 
     CHECK( flattened.get() == 200 );
 
     int observeCount = 0;
 
-    observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
+    ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto o1 = a0 + flattened;
     auto o2 = o1 + 0;
@@ -125,11 +125,11 @@ TEST_CASE( "Flatten3" )
 
     auto a0 = make_var( ctx, 30 );
 
-    auto flattened = flatten( outer );
+    auto flattened = ureact::flatten( outer );
 
     int observeCount = 0;
 
-    observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
+    ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto result = flattened + a0;
 
@@ -179,11 +179,11 @@ TEST_CASE( "Flatten4" )
 
     auto outer = make_var( ctx, inner1 );
 
-    auto flattened = flatten( outer );
+    auto flattened = ureact::flatten( outer );
 
     auto result = flattened + a3;
 
-    observe( result, [&]( int v ) { results.push_back( v ); } );
+    ureact::observe( result, [&]( int v ) { results.push_back( v ); } );
 
     do_transaction( ctx, [&] {
         a3 <<= 400;
@@ -205,11 +205,11 @@ TEST_CASE( "Flatten5" )
 
     auto outer = make_var( ctx, inner1 );
 
-    auto flattened = flatten( outer );
+    auto flattened = ureact::flatten( outer );
 
     std::queue<int> results;
 
-    observe( flattened, [&]( int v ) { results.push( v ); } );
+    ureact::observe( flattened, [&]( int v ) { results.push( v ); } );
 
     CHECK( outer.get().equal_to( inner1 ) );
     CHECK( flattened.get() == 123 );
@@ -232,9 +232,9 @@ TEST_CASE( "Member1" )
     auto outer = make_var( ctx, 10 );
     auto inner = make_var( ctx, outer );
 
-    auto flattened = flatten( inner );
+    auto flattened = ureact::flatten( inner );
 
-    observe( flattened, []( int v ) { CHECK_EQ( v, 30 ); } );
+    ureact::observe( flattened, []( int v ) { CHECK_EQ( v, 30 ); } );
 
     outer <<= 30;
 }
@@ -333,7 +333,7 @@ TEST_CASE( "DynamicSignalRefOrPtr" )
 
     std::vector<std::string> alice_company_names;
 
-    observe( alice_company_name,
+    ureact::observe( alice_company_name,
         [&]( const std::string& name ) { alice_company_names.push_back( name ); } );
 
     // assign company reference or pointer depends on type of employee
@@ -365,7 +365,7 @@ TEST_CASE( "Signal of events" )
 
     int reassign_count = 0;
 
-    observe( sig, [&]( const ureact::events<int>& ) { ++reassign_count; } );
+    ureact::observe( sig, [&]( const ureact::events<int>& ) { ++reassign_count; } );
 
     ureact::events<int> e;
 
@@ -380,7 +380,7 @@ TEST_CASE( "Signal of events" )
 
     std::vector<int> saved_events;
 
-    observe( e, [&]( const int value ) { saved_events.push_back( value ); } );
+    ureact::observe( e, [&]( const int value ) { saved_events.push_back( value ); } );
 
     in1 << -1;
     in2 << 1;

@@ -23,7 +23,7 @@ TEST_CASE( "Zip" )
 
     using zipped_t = std::tuple<int, std::string, char>;
 
-    ureact::events<zipped_t> src = zip( x, y, z );
+    ureact::events<zipped_t> src = ureact::zip( x, y, z );
 
     const auto result = ureact::collect<std::vector>( src );
 

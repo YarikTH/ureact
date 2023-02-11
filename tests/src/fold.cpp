@@ -93,8 +93,8 @@ TEST_CASE( "FoldByRef" )
     //        product_byref = src | ureact::fold( 1, batch_multiplies_ref );
     //    }
 
-    auto sum_byval_changes = count( monitor( sum_byval ) );
-    auto sum_byref_changes = count( monitor( sum_byref ) );
+    auto sum_byval_changes = ureact::count( ureact::monitor( sum_byval ) );
+    auto sum_byref_changes = ureact::count( ureact::monitor( sum_byref ) );
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -233,8 +233,8 @@ TEST_CASE( "FoldByRefSynced" )
     //        batch_sum_byref = src | ureact::fold( 0, with( mult ), batch_plus_ref );
     //    }
 
-    auto sum_byval_changes = count( monitor( sum_byval ) );
-    auto sum_byref_changes = count( monitor( sum_byref ) );
+    auto sum_byval_changes = ureact::count( ureact::monitor( sum_byval ) );
+    auto sum_byref_changes = ureact::count( ureact::monitor( sum_byref ) );
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 

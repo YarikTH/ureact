@@ -72,7 +72,7 @@ TEST_CASE( "EventsConstruction" )
     {
         auto src1 = ureact::make_source<>( ctx );
         auto src2 = ureact::make_source<>( ctx );
-        ureact::events<> evt = merge( src1, src2 );
+        ureact::events<> evt = ureact::merge( src1, src2 );
 
         CHECK( evt.is_valid() );
     }

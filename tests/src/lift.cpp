@@ -381,7 +381,7 @@ TEST_CASE( "Reactive class members" )
 
     auto on_size_value_change = [&]( const int new_value ) { size_values.push_back( new_value ); };
 
-    observe( my_shape.size, on_size_value_change );
+    ureact::observe( my_shape.size, on_size_value_change );
 
     CHECK( size_values == std::vector<int>{} );
 
@@ -420,7 +420,7 @@ TEST_CASE( "Hello World" )
 
     SUBCASE( "using lift()" )
     {
-        bothWords = lift( with( firstWord, secondWord ), concatFunc );
+        bothWords = ureact::lift( with( firstWord, secondWord ), concatFunc );
     }
 
     //    SUBCASE( "operators , and |" )

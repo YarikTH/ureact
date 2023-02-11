@@ -25,18 +25,18 @@ TEST_CASE( "Snapshot" )
     {
         snap = ureact::snapshot( trigger, target );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        snap = trigger | ureact::snapshot( target );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        snap = trigger | ureact::snapshot( target );
+    //    }
 
     SUBCASE( "Trigger can be any type" )
     {
-        snap = ureact::transform( trigger, []( ureact::unit ) { return 1; } )
-             | ureact::snapshot( target );
+        auto trigger_int = ureact::transform( trigger, []( ureact::unit ) { return 1; } );
+        snap = ureact::snapshot( trigger_int, target );
     }
 
-    const auto changes_count = monitor( snap ) | ureact::count();
+    const auto changes_count = ureact::count( monitor( snap ) );
 
     for( int i = 0; i < 10; ++i )
     {

@@ -195,7 +195,7 @@ TEST_CASE( "EventsSmartPointerSemantics" )
     const auto is_even = []( auto i ) { return i % 2 == 0; };
     const auto is_odd = []( auto i ) { return i % 2 == 1; };
 
-    auto filtered = src | ureact::filter( is_even );
+    auto filtered = ureact::filter( src, is_even );
 
     auto result_even = ureact::collect<std::vector>( filtered );
 
@@ -207,7 +207,7 @@ TEST_CASE( "EventsSmartPointerSemantics" )
 
     // reassigning of 'filtered' doesn't affect result_even, because it depends not on
     // 'filtered' itself, but on reactive node it pointed before
-    filtered = src | ureact::filter( is_odd );
+    filtered = ureact::filter( src, is_odd );
 
     auto result_odd = ureact::collect<std::vector>( filtered );
 
@@ -266,7 +266,7 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
     auto src = ureact::make_source<>( ctx );
     auto unit = ureact::unit{};
 
-    auto counted = src | ureact::count();
+    auto counted = ureact::count( src );
 
     SUBCASE( "emit method" )
     {

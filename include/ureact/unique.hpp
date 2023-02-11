@@ -37,14 +37,14 @@ UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
 /*!
  * @brief Curried version of unique(const events<E>& source)
  */
-UREACT_WARN_UNUSED_RESULT inline auto unique()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return unique( std::forward<arg_t>( source ) );
-    } };
-}
+//UREACT_WARN_UNUSED_RESULT inline auto unique()
+//{
+//    return detail::closure{ []( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return unique( std::forward<arg_t>( source ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

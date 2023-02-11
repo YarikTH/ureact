@@ -84,16 +84,16 @@ UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
 /*!
  * @brief Curried version of take(const events<E>& source, const size_t count)
  */
-template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto take( const N count )
-{
-    assert( count >= 0 );
-    return detail::closure{ [count]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take( std::forward<arg_t>( source ), count );
-    } };
-}
+//template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+//UREACT_WARN_UNUSED_RESULT auto take( const N count )
+//{
+//    assert( count >= 0 );
+//    return detail::closure{ [count]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return take( std::forward<arg_t>( source ), count );
+//    } };
+//}
 
 /*!
  * @brief Skips first N elements from the source stream
@@ -113,16 +113,16 @@ UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const N count )
 /*!
  * @brief Curried version of drop(const events<E>& source, const N count)
  */
-template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto drop( const N count )
-{
-    assert( count >= 0 );
-    return detail::closure{ [count]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return drop( std::forward<arg_t>( source ), count );
-    } };
-}
+//template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+//UREACT_WARN_UNUSED_RESULT auto drop( const N count )
+//{
+//    assert( count >= 0 );
+//    return detail::closure{ [count]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return drop( std::forward<arg_t>( source ), count );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

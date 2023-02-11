@@ -166,14 +166,14 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
 /*!
  * @brief Curried version of flatten(const signal<signal<InnerS>>& outer)
  */
-UREACT_WARN_UNUSED_RESULT inline auto flatten()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return flatten( std::forward<arg_t>( source ) );
-    } };
-}
+//UREACT_WARN_UNUSED_RESULT inline auto flatten()
+//{
+//    return detail::closure{ []( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+//        return flatten( std::forward<arg_t>( source ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

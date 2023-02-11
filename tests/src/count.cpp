@@ -24,11 +24,11 @@ TEST_CASE( "Count" )
         counter = ureact::count( src );              // Default version creates signal<size_t>
         integer_counter = ureact::count<int>( src ); // Type of signal can be explicitly requested
     }
-    SUBCASE( "Piped syntax" )
-    {
-        counter = src | ureact::count();
-        integer_counter = src | ureact::count<int>();
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        counter = src | ureact::count();
+    //        integer_counter = src | ureact::count<int>();
+    //    }
 
     src.emit();
     src.emit();

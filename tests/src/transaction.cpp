@@ -17,7 +17,7 @@ TEST_CASE( "TransactionGuard" )
     ureact::context ctx;
 
     ureact::var_signal src = ureact::make_var( ctx, 1 );
-    auto change_count = src | ureact::monitor() | ureact::count();
+    auto change_count = ureact::count( ureact::monitor( src ) );
 
     {
         ureact::transaction _{ ctx };
@@ -37,7 +37,7 @@ TEST_CASE( "RecursiveTransactions" )
     ureact::context ctx;
 
     ureact::var_signal src = ureact::make_var( ctx, 1 );
-    auto change_count = src | ureact::monitor() | ureact::count();
+    auto change_count = ureact::count( ureact::monitor( src ) );
 
     do_transaction( ctx, [&] {
         src <<= 7;

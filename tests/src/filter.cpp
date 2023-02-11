@@ -25,10 +25,10 @@ TEST_CASE( "Filter" )
     {
         filtered = ureact::filter( src, is_even );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        filtered = src | ureact::filter( is_even );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        filtered = src | ureact::filter( is_even );
+    //    }
 
     const auto result = ureact::collect<std::vector>( filtered );
 
@@ -57,10 +57,10 @@ TEST_CASE( "FilterSynced" )
     {
         filtered = ureact::filter( src, with( limit_min, limit_max ), in_range );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
+    //    }
 
     const auto result = ureact::collect<std::vector>( filtered );
 

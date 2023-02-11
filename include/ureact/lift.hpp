@@ -152,16 +152,16 @@ UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func 
 /*!
  * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
  */
-template <typename SIn = void, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
-{
-    return detail::closure{ [func = std::forward<InF>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert(
-            is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
-        return lift<SIn>( std::forward<arg_t>( source ), func );
-    } };
-}
+//template <typename SIn = void, typename InF>
+//UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
+//{
+//    return detail::closure{ [func = std::forward<InF>( func )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert(
+//            is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
+//        return lift<SIn>( std::forward<arg_t>( source ), func );
+//    } };
+//}
 
 /*!
  * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())

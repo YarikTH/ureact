@@ -229,17 +229,17 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 /*!
  * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
  */
-template <typename V, typename InF, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
-{
-    return detail::closure{
-        [init = std::forward<V>( init ), dep_pack = dep_pack, func = std::forward<InF>( func )](
-            auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return fold( std::forward<arg_t>( source ), std::move( init ), dep_pack, func );
-        } };
-}
+//template <typename V, typename InF, typename... Deps>
+//UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
+//{
+//    return detail::closure{
+//        [init = std::forward<V>( init ), dep_pack = dep_pack, func = std::forward<InF>( func )](
+//            auto&& source ) {
+//            using arg_t = decltype( source );
+//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//            return fold( std::forward<arg_t>( source ), std::move( init ), dep_pack, func );
+//        } };
+//}
 
 /*!
  * @brief Folds values from an event stream into a signal
@@ -257,16 +257,16 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, InF&& fu
 /*!
  * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
  */
-template <typename V, typename InF>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
-{
-    return detail::closure{
-        [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return fold( std::forward<arg_t>( source ), std::move( init ), func );
-        } };
-}
+//template <typename V, typename InF>
+//UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
+//{
+//    return detail::closure{
+//        [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
+//            using arg_t = decltype( source );
+//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//            return fold( std::forward<arg_t>( source ), std::move( init ), func );
+//        } };
+//}
 
 UREACT_END_NAMESPACE
 

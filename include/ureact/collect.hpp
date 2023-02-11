@@ -78,15 +78,15 @@ UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> sig
 /*!
  * @brief Curried version of collect(const events<E>& source)
  */
-template <template <typename...> class ContT>
-UREACT_WARN_UNUSED_RESULT auto collect()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return collect<ContT>( std::forward<arg_t>( source ) );
-    } };
-}
+//template <template <typename...> class ContT>
+//UREACT_WARN_UNUSED_RESULT auto collect()
+//{
+//    return detail::closure{ []( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return collect<ContT>( std::forward<arg_t>( source ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

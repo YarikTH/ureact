@@ -42,17 +42,17 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
 /*!
  * @brief Curried version of take_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
-template <typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto take_while(
-    const signal_pack<Deps...>& dep_pack, Pred&& pred )
-{
-    return detail::closure{ [dep_pack = dep_pack, pred = std::forward<Pred>( pred )] //
-        ( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return take_while( std::forward<arg_t>( source ), dep_pack, pred );
-        } };
-}
+//template <typename... Deps, typename Pred>
+//UREACT_WARN_UNUSED_RESULT inline auto take_while(
+//    const signal_pack<Deps...>& dep_pack, Pred&& pred )
+//{
+//    return detail::closure{ [dep_pack = dep_pack, pred = std::forward<Pred>( pred )] //
+//        ( auto&& source ) {
+//            using arg_t = decltype( source );
+//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//            return take_while( std::forward<arg_t>( source ), dep_pack, pred );
+//        } };
+//}
 
 /*!
  * @brief Keeps the first elements of the source stream that satisfy the unary predicate
@@ -70,15 +70,15 @@ UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred 
 /*!
  * @brief Curried version of take_while(const events<E>& source, Pred&& pred)
  */
-template <typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
-{
-    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take_while( std::forward<arg_t>( source ), pred );
-    } };
-}
+//template <typename Pred>
+//UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
+//{
+//    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return take_while( std::forward<arg_t>( source ), pred );
+//    } };
+//}
 
 /*!
  * @brief Skips the first elements of the source stream that satisfy the predicate
@@ -105,17 +105,17 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
 /*!
  * @brief Curried version of drop_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
-template <typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto drop_while(
-    const signal_pack<Deps...>& dep_pack, Pred&& pred )
-{
-    return detail::closure{
-        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return drop_while( std::forward<arg_t>( source ), dep_pack, pred );
-        } };
-}
+//template <typename... Deps, typename Pred>
+//UREACT_WARN_UNUSED_RESULT inline auto drop_while(
+//    const signal_pack<Deps...>& dep_pack, Pred&& pred )
+//{
+//    return detail::closure{
+//        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
+//            using arg_t = decltype( source );
+//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//            return drop_while( std::forward<arg_t>( source ), dep_pack, pred );
+//        } };
+//}
 
 /*!
  * @brief Skips the first elements of the source stream that satisfy the unary predicate
@@ -132,15 +132,15 @@ UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred 
 /*!
  * @brief Curried version of drop_while(const events<E>& source, Pred&& pred)
  */
-template <typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
-{
-    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return drop_while( std::forward<arg_t>( source ), pred );
-    } };
-}
+//template <typename Pred>
+//UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
+//{
+//    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return drop_while( std::forward<arg_t>( source ), pred );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

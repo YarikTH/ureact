@@ -29,10 +29,10 @@ UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
 /*!
  * @brief Curried version of unify(events_t&& source)
  */
-UREACT_WARN_UNUSED_RESULT inline auto unify()
-{
-    return cast<unit>();
-}
+//UREACT_WARN_UNUSED_RESULT inline auto unify()
+//{
+//    return cast<unit>();
+//}
 
 UREACT_END_NAMESPACE
 

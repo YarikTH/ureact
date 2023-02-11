@@ -35,15 +35,15 @@ UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> sign
 /*!
  * @brief Curried version of hold()
  */
-template <typename V>
-UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
-{
-    return detail::closure{ [init = std::forward<V>( init )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return hold( std::forward<arg_t>( source ), std::move( init ) );
-    } };
-}
+//template <typename V>
+//UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
+//{
+//    return detail::closure{ [init = std::forward<V>( init )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return hold( std::forward<arg_t>( source ), std::move( init ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

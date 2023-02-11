@@ -26,10 +26,10 @@ TEST_CASE( "Transform" )
     {
         squared = ureact::transform( src, square );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        squared = src | ureact::transform( square );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        squared = src | ureact::transform( square );
+    //    }
 
     const auto result = ureact::collect<std::vector>( squared );
 
@@ -57,10 +57,10 @@ TEST_CASE( "TransformSynced" )
     {
         clamped = ureact::transform( src, with( limit_min, limit_max ), clamp );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
+    //    }
 
     const auto result = ureact::collect<std::vector>( clamped );
 

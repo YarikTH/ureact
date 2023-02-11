@@ -69,14 +69,14 @@ UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
 /*!
  * @brief Curried version of monitor(const signal<S>& target)
  */
-UREACT_WARN_UNUSED_RESULT inline auto monitor()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return monitor( std::forward<arg_t>( source ) );
-    } };
-}
+//UREACT_WARN_UNUSED_RESULT inline auto monitor()
+//{
+//    return detail::closure{ []( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
+//        return monitor( std::forward<arg_t>( source ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

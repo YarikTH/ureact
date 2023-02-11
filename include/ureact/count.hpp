@@ -37,15 +37,15 @@ UREACT_WARN_UNUSED_RESULT auto count( const events<E>& source ) -> signal<S>
 /*!
  * @brief Curried version of count(const events<E>& source)
  */
-template <typename S = size_t>
-UREACT_WARN_UNUSED_RESULT auto count()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return count<S>( std::forward<arg_t>( source ) );
-    } };
-}
+//template <typename S = size_t>
+//UREACT_WARN_UNUSED_RESULT auto count()
+//{
+//    return detail::closure{ []( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return count<S>( std::forward<arg_t>( source ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

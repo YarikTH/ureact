@@ -35,15 +35,15 @@ UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
 /*!
  * @brief Curried version of cast(const events<InE>& source)
  */
-template <typename OutE>
-UREACT_WARN_UNUSED_RESULT auto cast()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return cast<OutE>( std::forward<arg_t>( source ) );
-    } };
-}
+//template <typename OutE>
+//UREACT_WARN_UNUSED_RESULT auto cast()
+//{
+//    return detail::closure{ []( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return cast<OutE>( std::forward<arg_t>( source ) );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

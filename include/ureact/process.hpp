@@ -126,15 +126,15 @@ UREACT_WARN_UNUSED_RESULT auto process(
 /*!
  * @brief Curried version of process(const events<in_t>& source, Op&& op)
  */
-template <typename OutE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
-{
-    return detail::closure{ [dep_pack = dep_pack, op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), dep_pack, op );
-    } };
-}
+//template <typename OutE, typename Op, typename... Deps>
+//UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
+//{
+//    return detail::closure{ [dep_pack = dep_pack, op = std::forward<Op>( op )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return process<OutE>( std::forward<arg_t>( source ), dep_pack, op );
+//    } };
+//}
 
 /*!
  * @brief Create a new event stream by batch processing events from other stream
@@ -152,15 +152,15 @@ UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> 
 /*!
  * @brief Curried version of process(const events<in_t>& source, Op&& op)
  */
-template <typename OutE, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
-{
-    return detail::closure{ [op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), op );
-    } };
-}
+//template <typename OutE, typename Op>
+//UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
+//{
+//    return detail::closure{ [op = std::forward<Op>( op )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return process<OutE>( std::forward<arg_t>( source ), op );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

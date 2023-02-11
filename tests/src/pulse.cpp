@@ -25,15 +25,15 @@ TEST_CASE( "Pulse" )
     {
         beat = ureact::pulse( trigger, target );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        beat = trigger | ureact::pulse( target );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        beat = trigger | ureact::pulse( target );
+    //    }
 
     SUBCASE( "Trigger can be any type" )
     {
-        beat = ureact::transform( trigger, []( ureact::unit ) { return 1; } )
-             | ureact::pulse( target );
+        auto trigger_int = ureact::transform( trigger, []( ureact::unit ) { return 1; } );
+        beat = ureact::pulse( trigger_int, target );
     }
 
     auto result = ureact::collect<std::vector>( beat );

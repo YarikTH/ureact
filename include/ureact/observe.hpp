@@ -392,35 +392,35 @@ auto observe( events<E>&& subject, F&& func ) -> observer // TODO: check in test
 /*!
  * @brief Curried version of observe(T&& subject, F&& func)
  */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
-{
-    // TODO: propagate [[nodiscard]] to closure operator() and operator|
-    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
-    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
-    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
-        using arg_t = decltype( subject );
-        static_assert(
-            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-        return observe( std::forward<arg_t>( subject ), func );
-    } };
-}
+//template <typename F>
+//UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
+//{
+//    // TODO: propagate [[nodiscard]] to closure operator() and operator|
+//    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
+//    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
+//    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
+//        using arg_t = decltype( subject );
+//        static_assert(
+//            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
+//        return observe( std::forward<arg_t>( subject ), func );
+//    } };
+//}
 
 /*!
  * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto observe(
-    const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
-{
-    return detail::closure{
-        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
-            using arg_t = decltype( subject );
-            static_assert( is_observable_v<std::decay_t<arg_t>>,
-                "Observable type is required (signal or event)" );
-            return observe( std::forward<arg_t>( subject ), dep_pack, func );
-        } };
-}
+//template <typename F, typename... Deps>
+//UREACT_WARN_UNUSED_RESULT auto observe(
+//    const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
+//{
+//    return detail::closure{
+//        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
+//            using arg_t = decltype( subject );
+//            static_assert( is_observable_v<std::decay_t<arg_t>>,
+//                "Observable type is required (signal or event)" );
+//            return observe( std::forward<arg_t>( subject ), dep_pack, func );
+//        } };
+//}
 
 UREACT_END_NAMESPACE
 

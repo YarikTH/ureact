@@ -37,15 +37,15 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
 /*!
  * @brief Curried version of pulse()
  */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
-{
-    return detail::closure{ [target = target]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return pulse( std::forward<arg_t>( source ), target );
-    } };
-}
+//template <typename S>
+//UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
+//{
+//    return detail::closure{ [target = target]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return pulse( std::forward<arg_t>( source ), target );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

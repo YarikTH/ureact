@@ -27,11 +27,11 @@ TEST_CASE( "TakeOrDropWhile" )
         before_negative = ureact::take_while( src, is_not_negative );
         from_negative = ureact::drop_while( src, is_not_negative );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        before_negative = src | ureact::take_while( is_not_negative );
-        from_negative = src | ureact::drop_while( is_not_negative );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        before_negative = src | ureact::take_while( is_not_negative );
+    //        from_negative = src | ureact::drop_while( is_not_negative );
+    //    }
 
     const auto result_before_negative = ureact::collect<std::vector>( before_negative );
     const auto result_from_negative = ureact::collect<std::vector>( from_negative );
@@ -72,11 +72,11 @@ TEST_CASE( "TakeOrDropWhileSynced" )
         before_overflow = ureact::take_while( src, with( sum, blackjack ), is_not_overflowed );
         from_overflow = ureact::drop_while( src, with( sum, blackjack ), is_not_overflowed );
     }
-    SUBCASE( "Piped syntax" )
-    {
-        before_overflow = src | ureact::take_while( with( sum, blackjack ), is_not_overflowed );
-        from_overflow = src | ureact::drop_while( with( sum, blackjack ), is_not_overflowed );
-    }
+    //    SUBCASE( "Piped syntax" )
+    //    {
+    //        before_overflow = src | ureact::take_while( with( sum, blackjack ), is_not_overflowed );
+    //        from_overflow = src | ureact::drop_while( with( sum, blackjack ), is_not_overflowed );
+    //    }
     SUBCASE( "Calculated bool condition" )
     {
         before_overflow = ureact::take_while( src, with( overflowed ), is_not_overflowed_2 );

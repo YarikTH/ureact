@@ -48,15 +48,15 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 /*!
  * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
-{
-    return detail::closure{ [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), dep_pack, func );
-    } };
-}
+//template <typename F, typename... Deps>
+//UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
+//{
+//    return detail::closure{ [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return transform( std::forward<arg_t>( source ), dep_pack, func );
+//    } };
+//}
 
 /*!
  * @brief Create a new event stream that transforms events from other stream
@@ -74,15 +74,15 @@ UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) 
 /*!
  * @brief Curried version of transform(const events<InE>& source, F&& func)
  */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
-{
-    return detail::closure{ [func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), func );
-    } };
-}
+//template <typename F>
+//UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
+//{
+//    return detail::closure{ [func = std::forward<F>( func )]( auto&& source ) {
+//        using arg_t = decltype( source );
+//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+//        return transform( std::forward<arg_t>( source ), func );
+//    } };
+//}
 
 UREACT_END_NAMESPACE
 

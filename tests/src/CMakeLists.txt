@@ -23,7 +23,6 @@ target_sources(
         filter.cpp
         flatten.cpp
         fold.cpp
-        fork.cpp
         hold.cpp
         lift.cpp
         merge.cpp
@@ -34,7 +33,6 @@ target_sources(
         pulse.cpp
         scoped_observer.cpp
         signal.cpp
-        sink.cpp
         snapshot.cpp
         take_drop.cpp
         take_drop_while.cpp

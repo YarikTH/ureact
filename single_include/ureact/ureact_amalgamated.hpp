@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.1
-// Generated: 2023-01-29 22:28:37.888072
+// Generated: 2023-02-11 10:01:30.129373
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -3908,58 +3908,6 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_FLATTEN_HPP
 
-#ifndef UREACT_FORK_HPP
-#define UREACT_FORK_HPP
-
-#include <tuple>
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Gets 1 or more functors (or closures) and invoke them all with the value from the left
- *
- *  Forward source so it can be chained further. Works similar to "tap" and "sink"
- */
-template <typename... Destinations>
-UREACT_WARN_UNUSED_RESULT auto fork( Destinations&&... destinations )
-{
-    static_assert( sizeof...( Destinations ) >= 1, "fork: at least 1 argument is required" );
-
-    // TODO: propagate [[nodiscard(false)]] somehow
-    return closure{
-        [destinations = std::make_tuple( std::forward<Destinations>( destinations )... )] //
-        ( const auto& source ) -> decltype( auto ) {
-            /// call each passed function F(source)...
-            std::apply(
-                [&source]( const auto&... args ) { //
-                    // TODO: remove it once nodiscard done right
-                    static auto f = [&source]( const auto& f ) {
-                        if constexpr( std::is_same_v<
-                                          std::invoke_result_t<decltype( f ), decltype( source )>,
-                                          void> )
-                        {
-                            f( source );
-                        }
-                        else
-                        {
-                            std::ignore = f( source );
-                        }
-                    };
-                    ( f( args ), ... );
-                    // TODO: use correct compact version after nodiscard done right
-                    // ( args( source ), ... );
-                },
-                destinations );
-
-            return source;
-        } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_FORK_HPP
-
 #ifndef UREACT_HOLD_HPP
 #define UREACT_HOLD_HPP
 
@@ -5190,51 +5138,6 @@ private:
 UREACT_END_NAMESPACE
 
 #endif //UREACT_SCOPED_OBSERVER_HPP
-
-#ifndef UREACT_SINK_HPP
-#define UREACT_SINK_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Gets the reference to the destination and assign value from the left to it
- *
- *  Forward source so it can be chained further. Works similar to "tap"
- */
-template <class Dst, class = std::enable_if_t<is_reactive_v<std::decay_t<Dst>>>>
-UREACT_WARN_UNUSED_RESULT auto sink( Dst& dst )
-{
-    // TODO: propagate [[nodiscard(false)]] somehow
-    return closure{ [&dst]( auto&& source ) -> decltype( auto ) {
-        using arg_t = decltype( source );
-
-        if constexpr( is_signal_v<std::decay_t<Dst>> )
-        {
-            static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        }
-        else if constexpr( is_event_v<std::decay_t<Dst>> )
-        {
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Events type is required" );
-        }
-        else if constexpr( is_observer_v<std::decay_t<Dst>> )
-        {
-            static_assert( is_observer_v<std::decay_t<arg_t>>, "Observer type is required" );
-        }
-        else
-        {
-            static_assert( detail::always_false<Dst>, "Unsupported Dst type" );
-        }
-
-        dst = std::forward<arg_t>( source );
-
-        return dst;
-    } };
-}
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_SINK_HPP
 
 #ifndef UREACT_SNAPSHOT_HPP
 #define UREACT_SNAPSHOT_HPP

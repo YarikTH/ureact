@@ -28,7 +28,7 @@ namespace detail
 template <typename S>
 class signal_node;
 
-template <typename InE, typename OutE, typename Func, typename... DepValues>
+template <typename InE, typename OutE, typename Func, typename... Deps>
 class event_processing_node final : public event_stream_node<OutE>
 {
 public:
@@ -36,7 +36,7 @@ public:
     event_processing_node( context& context,
         const std::shared_ptr<event_stream_node<InE>>& source,
         F&& func,
-        const std::shared_ptr<signal_node<DepValues>>&... deps )
+        const std::shared_ptr<signal_node<Deps>>&... deps )
         : event_processing_node::event_stream_node( context )
         , m_source( source )
         , m_func( std::forward<F>( func ) )
@@ -63,7 +63,7 @@ public:
         if( !m_source->events().empty() )
         {
             std::apply(
-                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<InE>( m_source->events() ),
@@ -77,7 +77,7 @@ public:
     }
 
 private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
+    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
 
     std::shared_ptr<event_stream_node<InE>> m_source;
 
@@ -85,16 +85,16 @@ private:
     dep_holder_t m_deps;
 };
 
-template <typename OutE, typename InE, typename Op, typename... DepValues>
+template <typename OutE, typename InE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process_impl(
-    const events<InE>& source, const signal_pack<DepValues...>& dep_pack, Op&& op ) -> events<OutE>
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
 {
     using F = std::decay_t<Op>;
 
     context& context = source.get_context();
 
-    auto node_builder = [&context, &source, &op]( const signal<DepValues>&... deps ) {
-        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, DepValues...>>(
+    auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
+        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, Deps...>>(
             context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
     };
 

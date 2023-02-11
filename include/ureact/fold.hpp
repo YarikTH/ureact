@@ -72,7 +72,7 @@ private:
     F m_func;
 };
 
-template <typename S, typename E, typename F, typename... DepValues>
+template <typename S, typename E, typename F, typename... Deps>
 class fold_node final : public signal_node<S>
 {
 public:
@@ -81,7 +81,7 @@ public:
         InS&& init,
         const std::shared_ptr<event_stream_node<E>>& events,
         InF&& func,
-        const std::shared_ptr<signal_node<DepValues>>&... deps )
+        const std::shared_ptr<signal_node<Deps>>&... deps )
         : fold_node::signal_node( context, std::forward<InS>( init ) )
         , m_events( events )
         , m_func( std::forward<InF>( func ) )
@@ -105,10 +105,10 @@ public:
         if( m_events->events().empty() )
             return;
 
-        if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, DepValues...> )
+        if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
         {
             this->pulse_if_value_changed( std::apply(
-                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
                         event_range<E>( m_events->events() ),
@@ -117,10 +117,10 @@ public:
                 },
                 m_deps ) );
         }
-        else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, DepValues...> )
+        else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, Deps...> )
         {
             std::apply(
-                [this]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<E>( m_events->events() ),
@@ -139,7 +139,7 @@ public:
     }
 
 private:
-    using DepHolder = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
+    using DepHolder = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
 
     std::shared_ptr<event_stream_node<E>> m_events;
 

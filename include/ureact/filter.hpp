@@ -29,9 +29,9 @@ UREACT_BEGIN_NAMESPACE
  *
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename E, typename Pred, typename... DepValues>
+template <typename E, typename Pred, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto filter(
-    const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred ) -> events<E>
+    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) -> events<E>
 {
     return detail::process_impl<E>( source,
         dep_pack, //
@@ -44,10 +44,10 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 }
 
 /*!
- * @brief Curried version of filter(const events<E>& source, const signal_pack<DepValues...>& dep_pack, Pred&& pred)
+ * @brief Curried version of filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
-template <typename Pred, typename... DepValues>
-UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
+template <typename Pred, typename... Deps>
+UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
     return detail::closure{
         [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {

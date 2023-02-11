@@ -139,7 +139,7 @@ private:
     F m_func;
 };
 
-template <typename E, typename F, typename... DepValues>
+template <typename E, typename F, typename... Deps>
 class events_observer_node final : public observer_node
 {
 public:
@@ -147,7 +147,7 @@ public:
     events_observer_node( context& context,
         const std::shared_ptr<event_stream_node<E>>& subject,
         InF&& func,
-        const std::shared_ptr<signal_node<DepValues>>&... deps )
+        const std::shared_ptr<signal_node<Deps>>&... deps )
         : events_observer_node::observer_node( context )
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
@@ -170,7 +170,7 @@ public:
             {
                 should_detach
                     = std::apply(
-                          [this, &p]( const std::shared_ptr<signal_node<DepValues>>&... args ) {
+                          [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                               return std::invoke(
                                   m_func, event_range<E>( p->events() ), args->value_ref()... );
                           },
@@ -194,7 +194,7 @@ public:
     }
 
 private:
-    using DepHolder = std::tuple<std::shared_ptr<signal_node<DepValues>>...>;
+    using DepHolder = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
 
     std::weak_ptr<event_stream_node<E>> m_subject;
 

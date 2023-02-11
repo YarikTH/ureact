@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/observer.hpp>
 #include <ureact/signal_pack.hpp>
@@ -398,7 +398,7 @@ UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
     // TODO: propagate [[nodiscard]] to closure operator() and operator|
     //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
     //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
-    return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
+    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
             is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
@@ -413,12 +413,13 @@ template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto observe(
     const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
 {
-    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
-        using arg_t = decltype( subject );
-        static_assert(
-            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-        return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+            using arg_t = decltype( subject );
+            static_assert( is_observable_v<std::decay_t<arg_t>>,
+                "Observable type is required (signal or event)" );
+            return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+        } };
 }
 
 UREACT_END_NAMESPACE

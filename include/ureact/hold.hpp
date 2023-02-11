@@ -10,7 +10,7 @@
 #ifndef UREACT_HOLD_HPP
 #define UREACT_HOLD_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -38,7 +38,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> sign
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 {
-    return closure{ [init = std::forward<V>( init )]( auto&& source ) {
+    return detail::closure{ [init = std::forward<V>( init )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return hold( std::forward<arg_t>( source ), std::move( init ) );

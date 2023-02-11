@@ -10,7 +10,7 @@
 #ifndef UREACT_TRANSFORM_HPP
 #define UREACT_TRANSFORM_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/process.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -51,11 +51,12 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
 {
-    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
+        } };
 }
 
 /*!
@@ -77,7 +78,7 @@ UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) 
 template <typename F>
 UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
 {
-    return closure{ [func = std::forward<F>( func )]( auto&& source ) {
+    return detail::closure{ [func = std::forward<F>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return transform( std::forward<arg_t>( source ), func );

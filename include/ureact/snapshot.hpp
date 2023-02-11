@@ -10,8 +10,8 @@
 #ifndef UREACT_SNAPSHOT_HPP
 #define UREACT_SNAPSHOT_HPP
 
-#include <ureact/closure.hpp>
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -41,7 +41,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 {
-    return closure{ [target = target]( auto&& source ) {
+    return detail::closure{ [target = target]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return snapshot( std::forward<arg_t>( source ), target );

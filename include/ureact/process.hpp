@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/event_emitter.hpp>
 #include <ureact/event_range.hpp>
@@ -129,11 +129,12 @@ UREACT_WARN_UNUSED_RESULT auto process(
 template <typename OutE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
 {
-    return closure{ [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
+        } };
 }
 
 /*!
@@ -155,7 +156,7 @@ UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> 
 template <typename OutE, typename Op>
 UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
 {
-    return closure{ [op = std::forward<Op>( op )]( auto&& source ) {
+    return detail::closure{ [op = std::forward<Op>( op )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return process<OutE>( std::forward<arg_t>( source ), op );

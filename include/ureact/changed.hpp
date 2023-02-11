@@ -10,7 +10,7 @@
 #ifndef UREACT_CHANGED_HPP
 #define UREACT_CHANGED_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/monitor.hpp>
 #include <ureact/type_traits.hpp>
@@ -34,7 +34,7 @@ UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit
  */
 UREACT_WARN_UNUSED_RESULT inline auto changed()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return changed( std::forward<arg_t>( source ) );
@@ -58,7 +58,7 @@ UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) 
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )
 {
-    return closure{ [value = std::forward<V>( value )]( auto&& source ) {
+    return detail::closure{ [value = std::forward<V>( value )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return changed_to( std::forward<arg_t>( source ), std::move( value ) );

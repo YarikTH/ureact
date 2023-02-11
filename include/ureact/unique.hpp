@@ -10,7 +10,7 @@
 #ifndef UREACT_UNIQUE_HPP
 #define UREACT_UNIQUE_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -39,7 +39,7 @@ UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
  */
 UREACT_WARN_UNUSED_RESULT inline auto unique()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return unique( std::forward<arg_t>( source ) );

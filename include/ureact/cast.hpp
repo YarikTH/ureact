@@ -10,7 +10,7 @@
 #ifndef UREACT_CAST_HPP
 #define UREACT_CAST_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/transform.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -38,7 +38,7 @@ UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
 template <typename OutE>
 UREACT_WARN_UNUSED_RESULT auto cast()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return cast<OutE>( std::forward<arg_t>( source ) );

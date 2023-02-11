@@ -10,8 +10,8 @@
 #ifndef UREACT_FLATTEN_HPP
 #define UREACT_FLATTEN_HPP
 
-#include <ureact/closure.hpp>
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -168,7 +168,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
  */
 UREACT_WARN_UNUSED_RESULT inline auto flatten()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return flatten( std::forward<arg_t>( source ) );

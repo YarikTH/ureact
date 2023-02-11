@@ -10,7 +10,7 @@
 #ifndef UREACT_COUNT_HPP
 #define UREACT_COUNT_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -40,7 +40,7 @@ UREACT_WARN_UNUSED_RESULT auto count( const events<E>& source ) -> signal<S>
 template <typename S = size_t>
 UREACT_WARN_UNUSED_RESULT auto count()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return count<S>( std::forward<arg_t>( source ) );

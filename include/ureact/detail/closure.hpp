@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_CLOSURE_HPP
-#define UREACT_CLOSURE_HPP
+#ifndef UREACT_DETAIL_CLOSURE_HPP
+#define UREACT_DETAIL_CLOSURE_HPP
 
 #include <utility>
 
@@ -16,6 +16,26 @@
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+// Forward
+template <class F>
+class closure;
+
+/*!
+ * @brief Return if type is closure
+ */
+template <typename T>
+struct is_closure : detail::is_base_of_template<closure, T>
+{};
+
+/*!
+ * @brief Helper variable template for closure
+ */
+template <typename T>
+inline constexpr bool is_closure_v = is_closure<T>::value;
 
 /*!
  * @brief Closure objects used for partial application of reactive functions and chaining of algorithms
@@ -78,7 +98,7 @@ UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> 
         // chain two closures to make another one
         using FirstClosure = Arg;
         using SecondClosure = Closure;
-        return closure{
+        return detail::closure{
             [first_closure = std::forward<FirstClosure>( arg ),
                 second_closure = std::forward<SecondClosure>( closure_obj )]( auto&& source ) {
                 using arg_t = decltype( source );
@@ -92,6 +112,8 @@ UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> 
     }
 }
 
+} // namespace detail
+
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CLOSURE_HPP
+#endif // UREACT_DETAIL_CLOSURE_HPP

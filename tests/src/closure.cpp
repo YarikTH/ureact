@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/closure.hpp"
+#include "ureact/detail/closure.hpp"
 
 #include "doctest_extra.h"
 #include "ureact/collect.hpp"
@@ -90,7 +90,7 @@ TEST_CASE( "ClosureChaining" )
     }
     SUBCASE( "closure composition L-value" )
     {
-        ureact::closure chained = C | D;
+        auto chained = C | D;
         e = R | chained;
     }
 

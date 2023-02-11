@@ -10,7 +10,7 @@
 #ifndef UREACT_COLLECT_HPP
 #define UREACT_COLLECT_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -81,7 +81,7 @@ UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> sig
 template <template <typename...> class ContT>
 UREACT_WARN_UNUSED_RESULT auto collect()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return collect<ContT>( std::forward<arg_t>( source ) );

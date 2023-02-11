@@ -10,7 +10,7 @@
 #ifndef UREACT_PULSE_HPP
 #define UREACT_PULSE_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/process.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -40,7 +40,7 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
 {
-    return closure{ [target = target]( auto&& source ) {
+    return detail::closure{ [target = target]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return pulse( std::forward<arg_t>( source ), target );

@@ -10,7 +10,7 @@
 #ifndef UREACT_FILTER_HPP
 #define UREACT_FILTER_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/process.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -54,11 +54,12 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 template <typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
+        } };
 }
 
 /*!
@@ -80,7 +81,7 @@ UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) ->
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 {
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return filter( std::forward<arg_t>( source ), pred );

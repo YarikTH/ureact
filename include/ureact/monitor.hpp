@@ -10,8 +10,8 @@
 #ifndef UREACT_MONITOR_HPP
 #define UREACT_MONITOR_HPP
 
-#include <ureact/closure.hpp>
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/events.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -71,7 +71,7 @@ UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
  */
 UREACT_WARN_UNUSED_RESULT inline auto monitor()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return monitor( std::forward<arg_t>( source ) );

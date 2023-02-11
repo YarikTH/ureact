@@ -10,7 +10,7 @@
 #ifndef UREACT_FOLD_HPP
 #define UREACT_FOLD_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/signal.hpp>
@@ -232,9 +232,9 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 template <typename V, typename InF, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
 {
-    return closure{ [init = std::forward<V>( init ),
-                        deps = dep_pack.store(),
-                        func = std::forward<InF>( func )]( auto&& source ) {
+    return detail::closure{ [init = std::forward<V>( init ),
+                                deps = dep_pack.store(),
+                                func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return fold(
@@ -261,7 +261,7 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, InF&& fu
 template <typename V, typename InF>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
 {
-    return closure{
+    return detail::closure{
         [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );

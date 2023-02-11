@@ -10,8 +10,8 @@
 #ifndef UREACT_LIFT_HPP
 #define UREACT_LIFT_HPP
 
-#include <ureact/closure.hpp>
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/signal_pack.hpp>
@@ -155,7 +155,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func 
 template <typename SIn = void, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
 {
-    return closure{ [func = std::forward<InF>( func )]( auto&& source ) {
+    return detail::closure{ [func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert(
             is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );

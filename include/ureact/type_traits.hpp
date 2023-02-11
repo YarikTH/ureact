@@ -276,25 +276,6 @@ template <typename T>
 inline constexpr bool is_reactive_v = is_reactive<T>::value;
 
 
-
-// Forward
-template <class F>
-class closure;
-
-/*!
- * @brief Return if type is closure
- */
-template <typename T>
-struct is_closure : detail::is_base_of_template<closure, T>
-{};
-
-/*!
- * @brief Helper variable template for closure
- */
-template <typename T>
-inline constexpr bool is_closure_v = is_closure<T>::value;
-
-
 UREACT_END_NAMESPACE
 
 #endif //UREACT_TYPE_TRAITS_HPP

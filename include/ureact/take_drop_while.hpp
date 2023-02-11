@@ -10,7 +10,7 @@
 #ifndef UREACT_TAKE_DROP_WHILE_HPP
 #define UREACT_TAKE_DROP_WHILE_HPP
 
-#include <ureact/closure.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -46,7 +46,7 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
+    return detail::closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
         ( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
@@ -73,7 +73,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred 
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
 {
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return take_while( std::forward<arg_t>( source ), pred );
@@ -109,11 +109,12 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return drop_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return drop_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+        } };
 }
 
 /*!
@@ -134,7 +135,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred 
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 {
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return drop_while( std::forward<arg_t>( source ), pred );

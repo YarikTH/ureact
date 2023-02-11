@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.8.1
-// Generated: 2023-02-11 10:01:30.129373
+// Generated: 2023-02-11 11:16:41.969481
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -32,8 +32,8 @@
 #define UREACT_CAST_HPP
 
 
-#ifndef UREACT_CLOSURE_HPP
-#define UREACT_CLOSURE_HPP
+#ifndef UREACT_DETAIL_CLOSURE_HPP
+#define UREACT_DETAIL_CLOSURE_HPP
 
 #include <utility>
 
@@ -429,6 +429,14 @@ template <typename T>
 inline constexpr bool is_reactive_v = is_reactive<T>::value;
 
 
+UREACT_END_NAMESPACE
+
+#endif //UREACT_TYPE_TRAITS_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
 
 // Forward
 template <class F>
@@ -446,13 +454,6 @@ struct is_closure : detail::is_base_of_template<closure, T>
  */
 template <typename T>
 inline constexpr bool is_closure_v = is_closure<T>::value;
-
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_TYPE_TRAITS_HPP
-
-UREACT_BEGIN_NAMESPACE
 
 /*!
  * @brief Closure objects used for partial application of reactive functions and chaining of algorithms
@@ -515,7 +516,7 @@ UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> 
         // chain two closures to make another one
         using FirstClosure = Arg;
         using SecondClosure = Closure;
-        return closure{
+        return detail::closure{
             [first_closure = std::forward<FirstClosure>( arg ),
                 second_closure = std::forward<SecondClosure>( closure_obj )]( auto&& source ) {
                 using arg_t = decltype( source );
@@ -529,9 +530,11 @@ UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> 
     }
 }
 
+} // namespace detail
+
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CLOSURE_HPP
+#endif // UREACT_DETAIL_CLOSURE_HPP
 
 #ifndef UREACT_TRANSFORM_HPP
 #define UREACT_TRANSFORM_HPP
@@ -2292,11 +2295,12 @@ UREACT_WARN_UNUSED_RESULT auto process(
 template <typename OutE, typename Op, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
 {
-    return closure{ [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), op = std::forward<Op>( op )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return process<OutE>( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, op );
+        } };
 }
 
 /*!
@@ -2318,7 +2322,7 @@ UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> 
 template <typename OutE, typename Op>
 UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
 {
-    return closure{ [op = std::forward<Op>( op )]( auto&& source ) {
+    return detail::closure{ [op = std::forward<Op>( op )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return process<OutE>( std::forward<arg_t>( source ), op );
@@ -2366,11 +2370,12 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
 {
-    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return transform( std::forward<arg_t>( source ), signal_pack<Deps...>{ deps }, func );
+        } };
 }
 
 /*!
@@ -2392,7 +2397,7 @@ UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) 
 template <typename F>
 UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
 {
-    return closure{ [func = std::forward<F>( func )]( auto&& source ) {
+    return detail::closure{ [func = std::forward<F>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return transform( std::forward<arg_t>( source ), func );
@@ -2427,7 +2432,7 @@ UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
 template <typename OutE>
 UREACT_WARN_UNUSED_RESULT auto cast()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return cast<OutE>( std::forward<arg_t>( source ) );
@@ -2486,11 +2491,12 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 template <typename Pred, typename... DepValues>
 UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<DepValues...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return filter( std::forward<arg_t>( source ), signal_pack<DepValues...>{ deps }, pred );
+        } };
 }
 
 /*!
@@ -2512,7 +2518,7 @@ UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) ->
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
 {
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return filter( std::forward<arg_t>( source ), pred );
@@ -2583,7 +2589,7 @@ UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
  */
 UREACT_WARN_UNUSED_RESULT inline auto monitor()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return monitor( std::forward<arg_t>( source ) );
@@ -2641,7 +2647,7 @@ UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit
  */
 UREACT_WARN_UNUSED_RESULT inline auto changed()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return changed( std::forward<arg_t>( source ) );
@@ -2665,7 +2671,7 @@ UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) 
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )
 {
-    return closure{ [value = std::forward<V>( value )]( auto&& source ) {
+    return detail::closure{ [value = std::forward<V>( value )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return changed_to( std::forward<arg_t>( source ), std::move( value ) );
@@ -3522,9 +3528,9 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 template <typename V, typename InF, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
 {
-    return closure{ [init = std::forward<V>( init ),
-                        deps = dep_pack.store(),
-                        func = std::forward<InF>( func )]( auto&& source ) {
+    return detail::closure{ [init = std::forward<V>( init ),
+                                deps = dep_pack.store(),
+                                func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return fold(
@@ -3551,7 +3557,7 @@ UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, InF&& fu
 template <typename V, typename InF>
 UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
 {
-    return closure{
+    return detail::closure{
         [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
@@ -3630,7 +3636,7 @@ UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> sig
 template <template <typename...> class ContT>
 UREACT_WARN_UNUSED_RESULT auto collect()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return collect<ContT>( std::forward<arg_t>( source ) );
@@ -3671,7 +3677,7 @@ UREACT_WARN_UNUSED_RESULT auto count( const events<E>& source ) -> signal<S>
 template <typename S = size_t>
 UREACT_WARN_UNUSED_RESULT auto count()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return count<S>( std::forward<arg_t>( source ) );
@@ -3897,7 +3903,7 @@ UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
  */
 UREACT_WARN_UNUSED_RESULT inline auto flatten()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
         return flatten( std::forward<arg_t>( source ) );
@@ -3936,7 +3942,7 @@ UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> sign
 template <typename V>
 UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
 {
-    return closure{ [init = std::forward<V>( init )]( auto&& source ) {
+    return detail::closure{ [init = std::forward<V>( init )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return hold( std::forward<arg_t>( source ), std::move( init ) );
@@ -4200,7 +4206,7 @@ UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func 
 template <typename SIn = void, typename InF>
 UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
 {
-    return closure{ [func = std::forward<InF>( func )]( auto&& source ) {
+    return detail::closure{ [func = std::forward<InF>( func )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert(
             is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
@@ -4958,7 +4964,7 @@ UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
     // TODO: propagate [[nodiscard]] to closure operator() and operator|
     //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
     //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
-    return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
+    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
             is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
@@ -4973,12 +4979,13 @@ template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto observe(
     const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
 {
-    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
-        using arg_t = decltype( subject );
-        static_assert(
-            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-        return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+            using arg_t = decltype( subject );
+            static_assert( is_observable_v<std::decay_t<arg_t>>,
+                "Observable type is required (signal or event)" );
+            return observe( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+        } };
 }
 
 UREACT_END_NAMESPACE
@@ -5015,7 +5022,7 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
 {
-    return closure{ [target = target]( auto&& source ) {
+    return detail::closure{ [target = target]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return pulse( std::forward<arg_t>( source ), target );
@@ -5169,7 +5176,7 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
 template <typename S>
 UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
 {
-    return closure{ [target = target]( auto&& source ) {
+    return detail::closure{ [target = target]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return snapshot( std::forward<arg_t>( source ), target );
@@ -5258,7 +5265,7 @@ template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
 UREACT_WARN_UNUSED_RESULT auto take( const N count )
 {
     assert( count >= 0 );
-    return closure{ [count]( auto&& source ) {
+    return detail::closure{ [count]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return take( std::forward<arg_t>( source ), count );
@@ -5287,7 +5294,7 @@ template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
 UREACT_WARN_UNUSED_RESULT auto drop( const N count )
 {
     assert( count >= 0 );
-    return closure{ [count]( auto&& source ) {
+    return detail::closure{ [count]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return drop( std::forward<arg_t>( source ), count );
@@ -5334,7 +5341,7 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
+    return detail::closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )] //
         ( auto&& source ) {
             using arg_t = decltype( source );
             static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
@@ -5361,7 +5368,7 @@ UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred 
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
 {
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return take_while( std::forward<arg_t>( source ), pred );
@@ -5397,11 +5404,12 @@ template <typename... Deps, typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while(
     const signal_pack<Deps...>& dep_pack, Pred&& pred )
 {
-    return closure{ [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return drop_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), pred = std::forward<Pred>( pred )]( auto&& source ) {
+            using arg_t = decltype( source );
+            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
+            return drop_while( std::forward<arg_t>( source ), signal_pack<Deps...>( deps ), pred );
+        } };
 }
 
 /*!
@@ -5422,7 +5430,7 @@ UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred 
 template <typename Pred>
 UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
 {
-    return closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
+    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return drop_while( std::forward<arg_t>( source ), pred );
@@ -5514,7 +5522,7 @@ UREACT_WARN_UNUSED_RESULT auto tap( Events&& subject, F&& func )
 template <typename F>
 UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
 {
-    return closure{ [func = std::forward<F>( func )]( auto&& subject ) {
+    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
         using arg_t = decltype( subject );
         static_assert(
             is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
@@ -5528,12 +5536,13 @@ UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
 template <typename F, typename... Deps>
 UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& func )
 {
-    return closure{ [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
-        using arg_t = decltype( subject );
-        static_assert(
-            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-        return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
-    } };
+    return detail::closure{
+        [deps = dep_pack.store(), func = std::forward<F>( func )]( auto&& subject ) {
+            using arg_t = decltype( subject );
+            static_assert( is_observable_v<std::decay_t<arg_t>>,
+                "Observable type is required (signal or event)" );
+            return tap( std::forward<arg_t>( subject ), signal_pack<Deps...>( deps ), func );
+        } };
 }
 
 UREACT_END_NAMESPACE
@@ -5635,7 +5644,7 @@ UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
  */
 UREACT_WARN_UNUSED_RESULT inline auto unique()
 {
-    return closure{ []( auto&& source ) {
+    return detail::closure{ []( auto&& source ) {
         using arg_t = decltype( source );
         static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
         return unique( std::forward<arg_t>( source ) );

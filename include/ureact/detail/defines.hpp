@@ -10,6 +10,12 @@
 #ifndef UREACT_DETAIL_DEFINES_HPP
 #define UREACT_DETAIL_DEFINES_HPP
 
+#ifdef __has_include
+#    if __has_include( <version>)
+#        include <version>
+#    endif
+#endif
+
 // Preprocessor feature detections
 // Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
 // and on https://github.com/nemequ/hedley

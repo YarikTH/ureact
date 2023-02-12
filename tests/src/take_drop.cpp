@@ -5,10 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/adaptor/take_drop.hpp"
-
 #include "doctest_extra.h"
 #include "ureact/adaptor/collect.hpp"
+#include "ureact/adaptor/drop.hpp"
+#include "ureact/adaptor/take.hpp"
 
 // filters that take first N elements or skip first N elements
 TEST_CASE( "TakeOrDrop" )

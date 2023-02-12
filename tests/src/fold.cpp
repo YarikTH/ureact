@@ -11,8 +11,8 @@
 
 #include "doctest_extra.h"
 #include "ureact/adaptor/count.hpp"
+#include "ureact/adaptor/drop.hpp"
 #include "ureact/adaptor/monitor.hpp"
-#include "ureact/adaptor/take_drop.hpp"
 #include "ureact/transaction.hpp"
 
 // calculate sum and product of range of integers using value based function

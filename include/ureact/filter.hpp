@@ -16,6 +16,12 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct FilterAdaptor : Adaptor
+{
+
 /*!
  * @brief Create a new event stream that filters events from other stream
  *
@@ -30,10 +36,10 @@ UREACT_BEGIN_NAMESPACE
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
 template <typename E, typename Pred, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto filter(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) -> events<E>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
 {
-    return detail::process_impl<E>( source,
+    return process<E>( source,
         dep_pack, //
         [pred = std::forward<Pred>( pred )](
             event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
@@ -46,16 +52,11 @@ UREACT_WARN_UNUSED_RESULT auto filter(
 /*!
  * @brief Curried version of filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
-//template <typename Pred, typename... Deps>
-//UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<Deps...>& dep_pack, Pred&& pred )
-//{
-//    return detail::closure{
-//        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
-//            using arg_t = decltype( source );
-//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//            return filter( std::forward<arg_t>( source ), dep_pack, pred );
-//        } };
-//}
+template <typename Pred, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+{
+    return make_partial<FilterAdaptor>( dep_pack, std::forward<Pred>( pred ) );
+}
 
 /*!
  * @brief Create a new event stream that filters events from other stream
@@ -65,23 +66,25 @@ UREACT_WARN_UNUSED_RESULT auto filter(
  *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
  */
 template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, Pred&& pred ) const
 {
-    return filter( source, signal_pack<>(), std::forward<Pred>( pred ) );
+    return operator()( source, signal_pack<>(), std::forward<Pred>( pred ) );
 }
 
 /*!
  * @brief Curried version of filter(const events<E>& source, Pred&& pred)
  */
-//template <typename Pred>
-//UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
-//{
-//    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return filter( std::forward<arg_t>( source ), pred );
-//    } };
-//}
+template <typename Pred>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+{
+    return make_partial<FilterAdaptor>( std::forward<Pred>( pred ) );
+}
+
+};
+
+} // namespace detail
+
+inline constexpr detail::FilterAdaptor filter;
 
 UREACT_END_NAMESPACE
 

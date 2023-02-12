@@ -188,8 +188,8 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
     return std::apply( node_builder, dep_pack.data );
 }
 
-} // namespace detail
-
+struct FoldAdaptor : Adaptor
+{
 /*!
  * @brief Folds values from an event stream into a signal
  *
@@ -218,10 +218,9 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
  *  @note The event_range<E> option allows to explicitly batch process single turn events
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
-template <typename E, typename V, typename InF, typename... Deps, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold(
-    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
-    -> signal<S>
+template <typename E, typename V, typename InF, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
 {
     return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
 }
@@ -229,17 +228,11 @@ UREACT_WARN_UNUSED_RESULT auto fold(
 /*!
  * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
  */
-//template <typename V, typename InF, typename... Deps>
-//UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
-//{
-//    return detail::closure{
-//        [init = std::forward<V>( init ), dep_pack = dep_pack, func = std::forward<InF>( func )](
-//            auto&& source ) {
-//            using arg_t = decltype( source );
-//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//            return fold( std::forward<arg_t>( source ), std::move( init ), dep_pack, func );
-//        } };
-//}
+template <typename V, typename InF, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
+{
+    return make_partial<FoldAdaptor>( std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
+}
 
 /*!
  * @brief Folds values from an event stream into a signal
@@ -248,25 +241,25 @@ UREACT_WARN_UNUSED_RESULT auto fold(
  *
  *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
  */
-template <typename E, typename V, typename InF, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, InF&& func ) -> signal<S>
+template <typename E, typename V, typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& events, V&& init, InF&& func ) const
 {
-    return fold_impl( events, std::forward<V>( init ), signal_pack<>(), std::forward<InF>( func ) );
+    return operator()( events, std::forward<V>( init ), signal_pack<>{}, std::forward<InF>( func ) );
 }
 
 /*!
  * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
  */
-//template <typename V, typename InF>
-//UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
-//{
-//    return detail::closure{
-//        [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
-//            using arg_t = decltype( source );
-//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//            return fold( std::forward<arg_t>( source ), std::move( init ), func );
-//        } };
-//}
+template <typename V, typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init, InF&& func ) const
+{
+    return make_partial<FoldAdaptor>( std::forward<V>( init ), std::forward<InF>( func ) );
+}
+};
+
+} // namespace detail
+
+inline constexpr detail::FoldAdaptor fold;
 
 UREACT_END_NAMESPACE
 

@@ -40,11 +40,11 @@ TEST_CASE( "FoldByValue" )
         sum = ureact::fold( src, 0, plus );
         product = ureact::fold( src, 1, batch_multiplies );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        sum = src | ureact::fold( 0, plus );
-    //        product = src | ureact::fold( 1, batch_multiplies );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        sum = src | ureact::fold( 0, plus );
+        product = src | ureact::fold( 1, batch_multiplies );
+    }
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -86,12 +86,12 @@ TEST_CASE( "FoldByRef" )
         sum_byref = ureact::fold( src, 0, plus_ref );
         product_byref = ureact::fold( src, 1, batch_multiplies_ref );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        sum_byval = src | ureact::fold( 0, std::plus<>() );
-    //        sum_byref = src | ureact::fold( 0, plus_ref );
-    //        product_byref = src | ureact::fold( 1, batch_multiplies_ref );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        sum_byval = src | ureact::fold( 0, std::plus<>() );
+        sum_byref = src | ureact::fold( 0, plus_ref );
+        product_byref = src | ureact::fold( 1, batch_multiplies_ref );
+    }
 
     auto sum_byval_changes = ureact::count( ureact::monitor( sum_byval ) );
     auto sum_byref_changes = ureact::count( ureact::monitor( sum_byref ) );
@@ -158,11 +158,11 @@ TEST_CASE( "FoldByValueSynced" )
         sum = ureact::fold( src, 0, with( mult ), plus );
         batch_sum = ureact::fold( src, 0, with( mult ), batch_plus );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        sum = src | ureact::fold( 0, with( mult ), plus );
-    //        batch_sum = src | ureact::fold( 0, with( mult ), batch_plus );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        sum = src | ureact::fold( 0, with( mult ), plus );
+        batch_sum = src | ureact::fold( 0, with( mult ), batch_plus );
+    }
 
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -226,12 +226,12 @@ TEST_CASE( "FoldByRefSynced" )
         sum_byref = ureact::fold( src, 0, with( mult ), plus_ref );
         batch_sum_byref = ureact::fold( src, 0, with( mult ), batch_plus_ref );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        sum_byval = src | ureact::fold( 0, with( mult ), plus_val );
-    //        sum_byref = src | ureact::fold( 0, with( mult ), plus_ref );
-    //        batch_sum_byref = src | ureact::fold( 0, with( mult ), batch_plus_ref );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        sum_byval = src | ureact::fold( 0, with( mult ), plus_val );
+        sum_byref = src | ureact::fold( 0, with( mult ), plus_ref );
+        batch_sum_byref = src | ureact::fold( 0, with( mult ), batch_plus_ref );
+    }
 
     auto sum_byval_changes = ureact::count( ureact::monitor( sum_byval ) );
     auto sum_byref_changes = ureact::count( ureact::monitor( sum_byref ) );
@@ -322,13 +322,12 @@ TEST_CASE( "FoldVsAccumulate" )
                 std::to_string( v[0] ),
                 dash_fold_2 );
         }
-        //        SUBCASE( "Piped syntax" )
-        //        {
-        //            sum_s = src | ureact::fold( 0, std::plus<>() );
-        //            product_s = src | ureact::fold( 1, std::multiplies<>() );
-        //            dashed_s
-        //                = src | ureact::drop( 1 ) | ureact::fold( std::to_string( v[0] ), dash_fold_2 );
-        //        }
+        SUBCASE( "Piped syntax" )
+        {
+            sum_s = src | ureact::fold( 0, std::plus<>() );
+            product_s = src | ureact::fold( 1, std::multiplies<>() );
+            dashed_s = ureact::drop( src, 1 ) | ureact::fold( std::to_string( v[0] ), dash_fold_2 );
+        }
 
         std::copy( v.begin(), v.end(), src.begin() );
 

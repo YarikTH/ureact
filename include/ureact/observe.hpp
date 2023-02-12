@@ -287,7 +287,8 @@ auto observe_events_impl(
     return observer( raw_node, subject_node );
 }
 
-} // namespace detail
+struct ObserveAdaptor : Adaptor
+{
 
 /*!
  * @brief Create observer for signal
@@ -305,7 +306,7 @@ auto observe_events_impl(
  *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
  */
 template <typename F, typename S>
-auto observe( const signal<S>& subject, F&& func ) -> observer
+constexpr auto operator()( const signal<S>& subject, F&& func ) const
 {
     return observe_signal_impl( subject, std::forward<F>( func ) );
 }
@@ -318,7 +319,7 @@ auto observe( const signal<S>& subject, F&& func ) -> observer
  */
 template <typename F, typename S>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( signal<S>&& subject, F&& func ) -> observer
+constexpr auto operator()( signal<S>&& subject, F&& func ) const
 {
     return observe_signal_impl( std::move( subject ), std::forward<F>( func ) );
 }
@@ -344,7 +345,7 @@ auto observe( signal<S>&& subject, F&& func ) -> observer
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  */
 template <typename F, typename E, typename... Deps>
-auto observe( const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) -> observer
+constexpr auto operator()( const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
 {
     return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
 }
@@ -357,8 +358,7 @@ auto observe( const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&
  */
 template <typename F, typename E, typename... Deps>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, const signal_pack<Deps...>& dep_pack, F&& func )
-    -> observer // TODO: check in tests
+constexpr auto operator()( events<E>&& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const // TODO: check in tests
 {
     return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
 }
@@ -371,9 +371,9 @@ auto observe( events<E>&& subject, const signal_pack<Deps...>& dep_pack, F&& fun
  *  See observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func)
  */
 template <typename F, typename E>
-auto observe( const events<E>& subject, F&& func ) -> observer
+constexpr auto operator()( const events<E>& subject, F&& func ) const
 {
-    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
+    return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
 }
 
 /*!
@@ -384,43 +384,37 @@ auto observe( const events<E>& subject, F&& func ) -> observer
  */
 template <typename F, typename E>
 UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, F&& func ) -> observer // TODO: check in tests
+constexpr auto operator()( events<E>&& subject, F&& func ) const // TODO: check in tests
 {
-    return observe_events_impl( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
+    return operator()( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
 }
 
 /*!
  * @brief Curried version of observe(T&& subject, F&& func)
  */
-//template <typename F>
-//UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
-//{
-//    // TODO: propagate [[nodiscard]] to closure operator() and operator|
-//    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
-//    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
-//    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
-//        using arg_t = decltype( subject );
-//        static_assert(
-//            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-//        return observe( std::forward<arg_t>( subject ), func );
-//    } };
-//}
+template <typename F>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const // TODO: check in tests
+{
+    // TODO: propagate [[nodiscard]] to closure operator() and operator|
+    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
+    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
+    return make_partial<ObserveAdaptor>( std::forward<F>( func ) );
+}
 
 /*!
  * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-//template <typename F, typename... Deps>
-//UREACT_WARN_UNUSED_RESULT auto observe(
-//    const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
-//{
-//    return detail::closure{
-//        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
-//            using arg_t = decltype( subject );
-//            static_assert( is_observable_v<std::decay_t<arg_t>>,
-//                "Observable type is required (signal or event)" );
-//            return observe( std::forward<arg_t>( subject ), dep_pack, func );
-//        } };
-//}
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const signal_pack<Deps...>& dep_pack, F&& func ) const // TODO: check in tests
+{
+    return make_partial<ObserveAdaptor>( dep_pack, std::forward<F>( func ) );
+}
+};
+
+} // namespace detail
+
+inline constexpr detail::ObserveAdaptor observe;
 
 UREACT_END_NAMESPACE
 

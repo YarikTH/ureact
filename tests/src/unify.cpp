@@ -22,10 +22,10 @@ TEST_CASE( "Unify" )
     {
         unified = ureact::unify( src );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        unified = src | ureact::unify();
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        unified = src | ureact::unify;
+    }
 
     const auto events_amount = ureact::count( unified );
 

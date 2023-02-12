@@ -20,19 +20,7 @@ UREACT_BEGIN_NAMESPACE
  *
  *  Emits a unit for any event that passes source
  */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
-{
-    return cast<unit>( source );
-}
-
-/*!
- * @brief Curried version of unify(events_t&& source)
- */
-//UREACT_WARN_UNUSED_RESULT inline auto unify()
-//{
-//    return cast<unit>();
-//}
+inline constexpr auto unify = cast<unit>;
 
 UREACT_END_NAMESPACE
 

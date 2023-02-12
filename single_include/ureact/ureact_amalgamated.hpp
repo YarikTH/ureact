@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 18:42:55.743214
+// Generated: 2023-02-12 18:44:45.447846
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2406,24 +2406,23 @@ namespace detail
 template <typename Derived>
 struct SyncedAdaptorBase : Adaptor
 {
-    template <typename E, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, Pred&& pred ) const
+    template <typename E, typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, F&& func ) const
     {
-        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
+        return Derived{}.operator()( source, signal_pack<>{}, std::forward<F>( func ) );
     }
 
-    template <typename... Deps, typename Pred>
+    template <typename F, typename... Deps>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+        const signal_pack<Deps...>& dep_pack, F&& func ) const
     {
-        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
+        return make_partial<Derived>( dep_pack, std::forward<F>( func ) );
     }
 
-    template <typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
     {
-        return make_partial<Derived>( std::forward<Pred>( pred ) );
+        return make_partial<Derived>( std::forward<F>( func ) );
     }
 };
 

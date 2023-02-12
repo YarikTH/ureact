@@ -10,8 +10,8 @@
 #ifndef UREACT_FLATTEN_HPP
 #define UREACT_FLATTEN_HPP
 
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
-#include <ureact/detail/closure.hpp>
 #include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
 

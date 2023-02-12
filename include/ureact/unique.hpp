@@ -10,7 +10,7 @@
 #ifndef UREACT_UNIQUE_HPP
 #define UREACT_UNIQUE_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/type_traits.hpp>
 

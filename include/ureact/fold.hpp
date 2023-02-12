@@ -10,7 +10,7 @@
 #ifndef UREACT_FOLD_HPP
 #define UREACT_FOLD_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/event_range.hpp>
 #include <ureact/signal.hpp>

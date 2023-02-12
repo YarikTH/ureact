@@ -10,7 +10,7 @@
 #ifndef UREACT_CHANGED_HPP
 #define UREACT_CHANGED_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/monitor.hpp>
 #include <ureact/type_traits.hpp>

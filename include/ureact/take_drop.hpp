@@ -10,7 +10,7 @@
 #ifndef UREACT_TAKE_DROP_HPP
 #define UREACT_TAKE_DROP_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/filter.hpp>
 #include <ureact/type_traits.hpp>
 

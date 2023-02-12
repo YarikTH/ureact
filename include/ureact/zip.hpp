@@ -12,8 +12,8 @@
 
 #include <deque>
 
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
-#include <ureact/detail/closure.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

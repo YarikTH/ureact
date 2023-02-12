@@ -10,7 +10,7 @@
 #ifndef UREACT_TRANSFORM_HPP
 #define UREACT_TRANSFORM_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/process.hpp>
 #include <ureact/type_traits.hpp>
 

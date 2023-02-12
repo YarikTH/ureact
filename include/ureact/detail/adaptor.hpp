@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_CLOSURE_HPP
-#define UREACT_DETAIL_CLOSURE_HPP
+#ifndef UREACT_DETAIL_ADAPTOR_HPP
+#define UREACT_DETAIL_ADAPTOR_HPP
 
 #include <tuple>
 #include <utility>
@@ -168,4 +168,4 @@ protected:
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_CLOSURE_HPP
+#endif // UREACT_DETAIL_ADAPTOR_HPP

@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/observer.hpp>
 #include <ureact/signal_pack.hpp>

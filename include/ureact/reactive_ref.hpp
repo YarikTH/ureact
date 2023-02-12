@@ -10,7 +10,7 @@
 #ifndef UREACT_REACTIVE_REF_HPP
 #define UREACT_REACTIVE_REF_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/flatten.hpp>
 #include <ureact/lift.hpp>
 #include <ureact/type_traits.hpp>

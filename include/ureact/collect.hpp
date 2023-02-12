@@ -10,7 +10,7 @@
 #ifndef UREACT_COLLECT_HPP
 #define UREACT_COLLECT_HPP
 
-#include <ureact/detail/closure.hpp>
+#include <ureact/detail/adaptor.hpp>
 #include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 

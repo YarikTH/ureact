@@ -373,10 +373,10 @@ TEST_CASE( "Signal of events" )
     {
         e = ureact::flatten( sig );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        e = sig | ureact::flatten();
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        e = sig | ureact::flatten;
+    }
 
     std::vector<int> saved_events;
 

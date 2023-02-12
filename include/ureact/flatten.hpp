@@ -126,11 +126,13 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
+struct FlattenClosure : AdaptorClosure
+{
 /*!
  * @brief Create a new event stream by flattening a signal
  */
 template <typename InnerS>
-UREACT_WARN_UNUSED_RESULT auto flatten_impl( const signal<InnerS>& outer )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<InnerS>& outer ) const
 {
     context& context = outer.get_context();
 
@@ -151,29 +153,11 @@ UREACT_WARN_UNUSED_RESULT auto flatten_impl( const signal<InnerS>& outer )
 
     return InnerS{ std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
 }
+};
 
 } // namespace detail
 
-/*!
- * @brief Create a new event stream by flattening a signal
- */
-template <typename InnerS>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
-{
-    return detail::flatten_impl( outer );
-}
-
-/*!
- * @brief Curried version of flatten(const signal<signal<InnerS>>& outer)
- */
-//UREACT_WARN_UNUSED_RESULT inline auto flatten()
-//{
-//    return detail::closure{ []( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-//        return flatten( std::forward<arg_t>( source ) );
-//    } };
-//}
+inline constexpr detail::FlattenClosure flatten;
 
 UREACT_END_NAMESPACE
 

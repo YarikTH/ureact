@@ -24,11 +24,11 @@ TEST_CASE( "TakeOrDrop" )
         first_n = ureact::take( src, 5 );
         without_first_n = ureact::drop( src, 5 );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        first_n = src | ureact::take( 5 );
-    //        without_first_n = src | ureact::drop( 5 );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        first_n = src | ureact::take( 5 );
+        without_first_n = src | ureact::drop( 5 );
+    }
 
     const auto result_first_n = ureact::collect<std::vector>( first_n );
     const auto result_without_first_n = ureact::collect<std::vector>( without_first_n );

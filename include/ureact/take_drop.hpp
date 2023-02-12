@@ -64,7 +64,18 @@ private:
     size_t m_value;
 };
 
-} // namespace detail
+template <typename Derived>
+struct TakeDropAdaptorBase : Adaptor
+{
+    template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const
+    {
+        return make_partial<Derived>( count );
+    }
+};
+
+struct TakeAdaptor : TakeDropAdaptorBase<TakeAdaptor>
+{
 
 /*!
  * @brief Keeps first N elements from the source stream
@@ -72,7 +83,7 @@ private:
  *  Semantically equivalent of std::ranges::views::take
  */
 template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, const N count ) const
 {
     assert( count >= 0 );
     return filter( source,                                        //
@@ -81,19 +92,11 @@ UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
         } );
 }
 
-/*!
- * @brief Curried version of take(const events<E>& source, const size_t count)
- */
-//template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-//UREACT_WARN_UNUSED_RESULT auto take( const N count )
-//{
-//    assert( count >= 0 );
-//    return detail::closure{ [count]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return take( std::forward<arg_t>( source ), count );
-//    } };
-//}
+    using TakeDropAdaptorBase::operator();
+};
+
+struct DropAdaptor : TakeDropAdaptorBase<DropAdaptor>
+{
 
 /*!
  * @brief Skips first N elements from the source stream
@@ -101,7 +104,7 @@ UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
  *  Semantically equivalent of std::ranges::views::drop
  */
 template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const N count )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, const N count ) const
 {
     assert( count >= 0 );
     return filter( source,                                        //
@@ -110,19 +113,24 @@ UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const N count )
         } );
 }
 
+    using TakeDropAdaptorBase::operator();
+};
+
+} // namespace detail
+
 /*!
- * @brief Curried version of drop(const events<E>& source, const N count)
+ * @brief Keeps first N elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::take
  */
-//template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-//UREACT_WARN_UNUSED_RESULT auto drop( const N count )
-//{
-//    assert( count >= 0 );
-//    return detail::closure{ [count]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return drop( std::forward<arg_t>( source ), count );
-//    } };
-//}
+inline constexpr detail::TakeAdaptor take;
+
+/*!
+ * @brief Skips first N elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::drop
+ */
+inline constexpr detail::DropAdaptor drop;
 
 UREACT_END_NAMESPACE
 

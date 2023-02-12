@@ -8,9 +8,9 @@
 #include "ureact/transaction.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/count.hpp"
-#include "ureact/lift.hpp"
-#include "ureact/monitor.hpp"
+#include "ureact/adaptor/count.hpp"
+#include "ureact/adaptor/lift.hpp"
+#include "ureact/adaptor/monitor.hpp"
 
 TEST_CASE( "TransactionGuard" )
 {

@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_LIFT_HPP
-#define UREACT_LIFT_HPP
+#ifndef UREACT_ADAPTOR_LIFT_HPP
+#define UREACT_ADAPTOR_LIFT_HPP
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
@@ -353,4 +353,4 @@ UREACT_DECLARE_UNARY_LIFT_OPERATOR( !, std::logical_not<> )
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_LIFT_HPP
+#endif // UREACT_ADAPTOR_LIFT_HPP

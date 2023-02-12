@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_FLATTEN_HPP
-#define UREACT_FLATTEN_HPP
+#ifndef UREACT_ADAPTOR_FLATTEN_HPP
+#define UREACT_ADAPTOR_FLATTEN_HPP
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
@@ -162,4 +162,4 @@ inline constexpr detail::FlattenClosure flatten;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_FLATTEN_HPP
+#endif // UREACT_ADAPTOR_FLATTEN_HPP

@@ -7,10 +7,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UNIFY_HPP
-#define UREACT_UNIFY_HPP
+#ifndef UREACT_ADAPTOR_UNIFY_HPP
+#define UREACT_ADAPTOR_UNIFY_HPP
 
-#include <ureact/cast.hpp>
+#include <ureact/adaptor/cast.hpp>
 #include <ureact/unit.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -24,4 +24,4 @@ inline constexpr auto unify = cast<unit>;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_UNIFY_HPP
+#endif // UREACT_ADAPTOR_UNIFY_HPP

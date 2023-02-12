@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_OBSERVE_HPP
-#define UREACT_OBSERVE_HPP
+#ifndef UREACT_ADAPTOR_OBSERVE_HPP
+#define UREACT_ADAPTOR_OBSERVE_HPP
 
 #include <functional>
 
@@ -421,4 +421,4 @@ inline constexpr detail::ObserveAdaptor observe;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_OBSERVE_HPP
+#endif // UREACT_ADAPTOR_OBSERVE_HPP

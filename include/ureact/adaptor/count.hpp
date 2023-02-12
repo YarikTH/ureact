@@ -7,10 +7,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_COUNT_HPP
-#define UREACT_COUNT_HPP
+#ifndef UREACT_ADAPTOR_COUNT_HPP
+#define UREACT_ADAPTOR_COUNT_HPP
 
-#include <ureact/fold.hpp>
+#include <ureact/adaptor/fold.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -34,4 +34,4 @@ inline constexpr auto count = count_<size_t>;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_COUNT_HPP
+#endif // UREACT_ADAPTOR_COUNT_HPP

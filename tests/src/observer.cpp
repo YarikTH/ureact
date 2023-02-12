@@ -7,9 +7,9 @@
 //
 #include "doctest_extra.h"
 #include "identity.hpp"
+#include "ureact/adaptor/lift.hpp"
+#include "ureact/adaptor/observe.hpp"
 #include "ureact/events.hpp"
-#include "ureact/lift.hpp"
-#include "ureact/observe.hpp"
 #include "ureact/transaction.hpp"
 
 // default constructive

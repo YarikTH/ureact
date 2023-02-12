@@ -5,12 +5,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/snapshot.hpp"
+#include "ureact/adaptor/snapshot.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/count.hpp"
-#include "ureact/monitor.hpp"
-#include "ureact/transform.hpp"
+#include "ureact/adaptor/count.hpp"
+#include "ureact/adaptor/monitor.hpp"
+#include "ureact/adaptor/transform.hpp"
 
 // sets signal value to value of other signal when event is received
 TEST_CASE( "Snapshot" )

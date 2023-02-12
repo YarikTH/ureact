@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 16:59:53.197962
+// Generated: 2023-02-12 17:35:08.895266
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -41,16 +41,22 @@
 
 #endif //UREACT_VERSION_HPP
 
-#ifndef UREACT_CAST_HPP
-#define UREACT_CAST_HPP
+#ifndef UREACT_ADAPTOR_CAST_HPP
+#define UREACT_ADAPTOR_CAST_HPP
 
 
-#ifndef UREACT_TRANSFORM_HPP
-#define UREACT_TRANSFORM_HPP
+#ifndef UREACT_ADAPTOR_TRANSFORM_HPP
+#define UREACT_ADAPTOR_TRANSFORM_HPP
 
 
-#ifndef UREACT_DETAIL_CLOSURE_HPP
-#define UREACT_DETAIL_CLOSURE_HPP
+#ifndef UREACT_ADAPTOR_PROCESS_HPP
+#define UREACT_ADAPTOR_PROCESS_HPP
+
+#include <functional>
+
+
+#ifndef UREACT_DETAIL_ADAPTOR_HPP
+#define UREACT_DETAIL_ADAPTOR_HPP
 
 #include <tuple>
 #include <utility>
@@ -633,13 +639,7 @@ protected:
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_CLOSURE_HPP
-
-#ifndef UREACT_PROCESS_HPP
-#define UREACT_PROCESS_HPP
-
-#include <functional>
-
+#endif // UREACT_DETAIL_ADAPTOR_HPP
 
 #ifndef UREACT_DETAIL_LINKER_FUNCTOR_HPP
 #define UREACT_DETAIL_LINKER_FUNCTOR_HPP
@@ -2392,7 +2392,7 @@ inline constexpr detail::ProcessAdaptor<OutE> process;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_PROCESS_HPP
+#endif // UREACT_ADAPTOR_PROCESS_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -2470,7 +2470,7 @@ inline constexpr detail::TransformAdaptor transform;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TRANSFORM_HPP
+#endif // UREACT_ADAPTOR_TRANSFORM_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -2486,14 +2486,14 @@ inline constexpr auto cast = transform( []( const auto& e ) { return static_cast
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CAST_HPP
+#endif // UREACT_ADAPTOR_CAST_HPP
 
-#ifndef UREACT_CHANGED_HPP
-#define UREACT_CHANGED_HPP
+#ifndef UREACT_ADAPTOR_CHANGED_HPP
+#define UREACT_ADAPTOR_CHANGED_HPP
 
 
-#ifndef UREACT_FILTER_HPP
-#define UREACT_FILTER_HPP
+#ifndef UREACT_ADAPTOR_FILTER_HPP
+#define UREACT_ADAPTOR_FILTER_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -2571,10 +2571,10 @@ inline constexpr detail::FilterAdaptor filter;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_FILTER_HPP
+#endif // UREACT_ADAPTOR_FILTER_HPP
 
-#ifndef UREACT_MONITOR_HPP
-#define UREACT_MONITOR_HPP
+#ifndef UREACT_ADAPTOR_MONITOR_HPP
+#define UREACT_ADAPTOR_MONITOR_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -2637,10 +2637,10 @@ inline constexpr detail::MonitorClosure monitor;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_MONITOR_HPP
+#endif // UREACT_ADAPTOR_MONITOR_HPP
 
-#ifndef UREACT_UNIFY_HPP
-#define UREACT_UNIFY_HPP
+#ifndef UREACT_ADAPTOR_UNIFY_HPP
+#define UREACT_ADAPTOR_UNIFY_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -2654,7 +2654,7 @@ inline constexpr auto unify = cast<unit>;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_UNIFY_HPP
+#endif // UREACT_ADAPTOR_UNIFY_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -2694,14 +2694,14 @@ inline constexpr detail::ChangedToAdaptor changed_to;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CHANGED_HPP
+#endif // UREACT_ADAPTOR_CHANGED_HPP
 
-#ifndef UREACT_COLLECT_HPP
-#define UREACT_COLLECT_HPP
+#ifndef UREACT_ADAPTOR_COLLECT_HPP
+#define UREACT_ADAPTOR_COLLECT_HPP
 
 
-#ifndef UREACT_FOLD_HPP
-#define UREACT_FOLD_HPP
+#ifndef UREACT_ADAPTOR_FOLD_HPP
+#define UREACT_ADAPTOR_FOLD_HPP
 
 
 #ifndef UREACT_SIGNAL_HPP
@@ -3577,7 +3577,7 @@ inline constexpr detail::FoldAdaptor fold;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_FOLD_HPP
+#endif // UREACT_ADAPTOR_FOLD_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -3650,10 +3650,10 @@ inline constexpr detail::CollectClosure<ContT> collect;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_COLLECT_HPP
+#endif // UREACT_ADAPTOR_COLLECT_HPP
 
-#ifndef UREACT_COUNT_HPP
-#define UREACT_COUNT_HPP
+#ifndef UREACT_ADAPTOR_COUNT_HPP
+#define UREACT_ADAPTOR_COUNT_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -3678,68 +3678,10 @@ inline constexpr auto count = count_<size_t>;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_COUNT_HPP
+#endif // UREACT_ADAPTOR_COUNT_HPP
 
-#ifndef UREACT_DETAIL_REACTIVE_OP_BASE_HPP
-#define UREACT_DETAIL_REACTIVE_OP_BASE_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-template <typename... Deps>
-class reactive_op_base
-{
-public:
-    using dep_holder_t = std::tuple<Deps...>;
-
-    template <typename... Args>
-    explicit reactive_op_base( dont_move, Args&&... args )
-        : m_deps( std::forward<Args>( args )... )
-    {}
-
-    reactive_op_base( reactive_op_base&& ) noexcept = default;
-    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
-
-    template <typename Node>
-    void attach( Node& node ) const
-    {
-        std::apply( attach_functor<Node>{ node }, m_deps );
-    }
-
-    template <typename Node>
-    void detach( Node& node ) const
-    {
-        std::apply( detach_functor<Node>{ node }, m_deps );
-    }
-
-    template <typename Node, typename Functor>
-    void attach_rec( const Functor& functor ) const
-    {
-        // Same memory layout, different func
-        std::apply( reinterpret_cast<const attach_functor<Node>&>( functor ), m_deps );
-    }
-
-    template <typename Node, typename Functor>
-    void detach_rec( const Functor& functor ) const
-    {
-        std::apply( reinterpret_cast<const detach_functor<Node>&>( functor ), m_deps );
-    }
-
-protected:
-    dep_holder_t m_deps;
-};
-
-} // namespace detail
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_DETAIL_REACTIVE_OP_BASE_HPP
-
-#ifndef UREACT_FLATTEN_HPP
-#define UREACT_FLATTEN_HPP
+#ifndef UREACT_ADAPTOR_FLATTEN_HPP
+#define UREACT_ADAPTOR_FLATTEN_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -3889,10 +3831,10 @@ inline constexpr detail::FlattenClosure flatten;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_FLATTEN_HPP
+#endif // UREACT_ADAPTOR_FLATTEN_HPP
 
-#ifndef UREACT_HOLD_HPP
-#define UREACT_HOLD_HPP
+#ifndef UREACT_ADAPTOR_HOLD_HPP
+#define UREACT_ADAPTOR_HOLD_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -3935,11 +3877,69 @@ inline constexpr detail::HoldAdaptor hold;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_HOLD_HPP
+#endif // UREACT_ADAPTOR_HOLD_HPP
 
-#ifndef UREACT_LIFT_HPP
-#define UREACT_LIFT_HPP
+#ifndef UREACT_ADAPTOR_LIFT_HPP
+#define UREACT_ADAPTOR_LIFT_HPP
 
+
+#ifndef UREACT_DETAIL_REACTIVE_OP_BASE_HPP
+#define UREACT_DETAIL_REACTIVE_OP_BASE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename... Deps>
+class reactive_op_base
+{
+public:
+    using dep_holder_t = std::tuple<Deps...>;
+
+    template <typename... Args>
+    explicit reactive_op_base( dont_move, Args&&... args )
+        : m_deps( std::forward<Args>( args )... )
+    {}
+
+    reactive_op_base( reactive_op_base&& ) noexcept = default;
+    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
+
+    template <typename Node>
+    void attach( Node& node ) const
+    {
+        std::apply( attach_functor<Node>{ node }, m_deps );
+    }
+
+    template <typename Node>
+    void detach( Node& node ) const
+    {
+        std::apply( detach_functor<Node>{ node }, m_deps );
+    }
+
+    template <typename Node, typename Functor>
+    void attach_rec( const Functor& functor ) const
+    {
+        // Same memory layout, different func
+        std::apply( reinterpret_cast<const attach_functor<Node>&>( functor ), m_deps );
+    }
+
+    template <typename Node, typename Functor>
+    void detach_rec( const Functor& functor ) const
+    {
+        std::apply( reinterpret_cast<const detach_functor<Node>&>( functor ), m_deps );
+    }
+
+protected:
+    dep_holder_t m_deps;
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_DETAIL_REACTIVE_OP_BASE_HPP
 
 #ifndef UREACT_TEMP_SIGNAL_HPP
 #define UREACT_TEMP_SIGNAL_HPP
@@ -4388,10 +4388,10 @@ UREACT_DECLARE_UNARY_LIFT_OPERATOR( !, std::logical_not<> )
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_LIFT_HPP
+#endif // UREACT_ADAPTOR_LIFT_HPP
 
-#ifndef UREACT_MERGE_HPP
-#define UREACT_MERGE_HPP
+#ifndef UREACT_ADAPTOR_MERGE_HPP
+#define UREACT_ADAPTOR_MERGE_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -4496,10 +4496,10 @@ inline constexpr detail::MergeAdaptor merge;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_MERGE_HPP
+#endif // UREACT_ADAPTOR_MERGE_HPP
 
-#ifndef UREACT_OBSERVE_HPP
-#define UREACT_OBSERVE_HPP
+#ifndef UREACT_ADAPTOR_OBSERVE_HPP
+#define UREACT_ADAPTOR_OBSERVE_HPP
 
 #include <functional>
 
@@ -4987,10 +4987,10 @@ inline constexpr detail::ObserveAdaptor observe;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_OBSERVE_HPP
+#endif // UREACT_ADAPTOR_OBSERVE_HPP
 
-#ifndef UREACT_PULSE_HPP
-#define UREACT_PULSE_HPP
+#ifndef UREACT_ADAPTOR_PULSE_HPP
+#define UREACT_ADAPTOR_PULSE_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5035,10 +5035,10 @@ inline constexpr detail::PulseAdaptor pulse;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_PULSE_HPP
+#endif // UREACT_ADAPTOR_PULSE_HPP
 
-#ifndef UREACT_REACTIVE_REF_HPP
-#define UREACT_REACTIVE_REF_HPP
+#ifndef UREACT_ADAPTOR_REACTIVE_REF_HPP
+#define UREACT_ADAPTOR_REACTIVE_REF_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5110,61 +5110,10 @@ inline constexpr detail::ReactiveRefAdaptor reactive_ref;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_REACTIVE_REF_HPP
+#endif // UREACT_ADAPTOR_REACTIVE_REF_HPP
 
-#ifndef UREACT_SCOPED_OBSERVER_HPP
-#define UREACT_SCOPED_OBSERVER_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Takes ownership of an observer and automatically detaches it on scope exit
- */
-class scoped_observer final
-{
-public:
-    UREACT_MAKE_NONCOPYABLE( scoped_observer );
-    UREACT_MAKE_MOVABLE( scoped_observer );
-
-    /*!
-     * @brief is not intended to be default constructive
-     */
-    scoped_observer() = delete;
-
-    /*!
-     * @brief Constructs instance from observer
-     */
-    scoped_observer( observer&& observer ) // NOLINT no explicit by design
-        : m_observer( std::move( observer ) )
-    {}
-
-    /*!
-     * @brief Destructor
-     */
-    ~scoped_observer()
-    {
-        m_observer.detach();
-    }
-
-    /*!
-     * @brief Tests if this instance is linked to a node
-     */
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const // TODO: check in tests
-    {
-        return m_observer.is_valid();
-    }
-
-private:
-    observer m_observer;
-};
-
-UREACT_END_NAMESPACE
-
-#endif //UREACT_SCOPED_OBSERVER_HPP
-
-#ifndef UREACT_SNAPSHOT_HPP
-#define UREACT_SNAPSHOT_HPP
+#ifndef UREACT_ADAPTOR_SNAPSHOT_HPP
+#define UREACT_ADAPTOR_SNAPSHOT_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5209,10 +5158,10 @@ inline constexpr detail::SnapshotAdaptor snapshot;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_SNAPSHOT_HPP
+#endif // UREACT_ADAPTOR_SNAPSHOT_HPP
 
-#ifndef UREACT_TAKE_DROP_HPP
-#define UREACT_TAKE_DROP_HPP
+#ifndef UREACT_ADAPTOR_TAKE_DROP_HPP
+#define UREACT_ADAPTOR_TAKE_DROP_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5337,10 +5286,10 @@ inline constexpr detail::DropAdaptor drop;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TAKE_DROP_HPP
+#endif // UREACT_ADAPTOR_TAKE_DROP_HPP
 
-#ifndef UREACT_TAKE_DROP_WHILE_HPP
-#define UREACT_TAKE_DROP_WHILE_HPP
+#ifndef UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
+#define UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5456,10 +5405,10 @@ inline constexpr detail::DropWhileAdaptor drop_while;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TAKE_DROP_WHILE_HPP
+#endif // UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
 
-#ifndef UREACT_TAP_HPP
-#define UREACT_TAP_HPP
+#ifndef UREACT_ADAPTOR_TAP_HPP
+#define UREACT_ADAPTOR_TAP_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5564,76 +5513,10 @@ inline constexpr detail::TapAdaptor tap;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TAP_HPP
+#endif // UREACT_ADAPTOR_TAP_HPP
 
-#ifndef UREACT_TRANSACTION_HPP
-#define UREACT_TRANSACTION_HPP
-
-#include <functional>
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Guard class to perform several changes atomically
- *
- */
-class UREACT_WARN_UNUSED_RESULT transaction
-{
-public:
-    explicit transaction( context& ctx )
-        : self( _get_internals( ctx ).get_graph() )
-    {
-        ++self.m_transaction_level;
-    }
-
-    ~transaction()
-    {
-        --self.m_transaction_level;
-
-        if( self.m_transaction_level == 0 )
-        {
-            self.finalize_transaction();
-        }
-    }
-
-private:
-    UREACT_MAKE_NONCOPYABLE( transaction );
-    UREACT_MAKE_NONMOVABLE( transaction );
-
-    detail::react_graph& self;
-};
-
-/*!
- * @brief Perform several changes atomically
- * @tparam F type of passed functor
- * @tparam Args types of additional arguments passed to functor F
- *
- *  Can pass additional arguments to the functiona and optionally return a result
- */
-template <typename F,
-    typename... Args,
-    class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
-UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&... args )
-{
-    transaction _{ ctx };
-
-    if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
-    {
-        std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
-    }
-    else
-    {
-        return std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
-    }
-}
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_TRANSACTION_HPP
-
-#ifndef UREACT_UNIQUE_HPP
-#define UREACT_UNIQUE_HPP
+#ifndef UREACT_ADAPTOR_UNIQUE_HPP
+#define UREACT_ADAPTOR_UNIQUE_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5668,10 +5551,10 @@ inline constexpr detail::UniqueClosure unique;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_UNIQUE_HPP
+#endif // UREACT_ADAPTOR_UNIQUE_HPP
 
-#ifndef UREACT_ZIP_HPP
-#define UREACT_ZIP_HPP
+#ifndef UREACT_ADAPTOR_ZIP_HPP
+#define UREACT_ADAPTOR_ZIP_HPP
 
 #include <deque>
 
@@ -5802,5 +5685,122 @@ inline constexpr detail::ZipAdaptor zip;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_ZIP_HPP
+#endif // UREACT_ADAPTOR_ZIP_HPP
+
+#ifndef UREACT_SCOPED_OBSERVER_HPP
+#define UREACT_SCOPED_OBSERVER_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Takes ownership of an observer and automatically detaches it on scope exit
+ */
+class scoped_observer final
+{
+public:
+    UREACT_MAKE_NONCOPYABLE( scoped_observer );
+    UREACT_MAKE_MOVABLE( scoped_observer );
+
+    /*!
+     * @brief is not intended to be default constructive
+     */
+    scoped_observer() = delete;
+
+    /*!
+     * @brief Constructs instance from observer
+     */
+    scoped_observer( observer&& observer ) // NOLINT no explicit by design
+        : m_observer( std::move( observer ) )
+    {}
+
+    /*!
+     * @brief Destructor
+     */
+    ~scoped_observer()
+    {
+        m_observer.detach();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const // TODO: check in tests
+    {
+        return m_observer.is_valid();
+    }
+
+private:
+    observer m_observer;
+};
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_SCOPED_OBSERVER_HPP
+
+#ifndef UREACT_TRANSACTION_HPP
+#define UREACT_TRANSACTION_HPP
+
+#include <functional>
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Guard class to perform several changes atomically
+ *
+ */
+class UREACT_WARN_UNUSED_RESULT transaction
+{
+public:
+    explicit transaction( context& ctx )
+        : self( _get_internals( ctx ).get_graph() )
+    {
+        ++self.m_transaction_level;
+    }
+
+    ~transaction()
+    {
+        --self.m_transaction_level;
+
+        if( self.m_transaction_level == 0 )
+        {
+            self.finalize_transaction();
+        }
+    }
+
+private:
+    UREACT_MAKE_NONCOPYABLE( transaction );
+    UREACT_MAKE_NONMOVABLE( transaction );
+
+    detail::react_graph& self;
+};
+
+/*!
+ * @brief Perform several changes atomically
+ * @tparam F type of passed functor
+ * @tparam Args types of additional arguments passed to functor F
+ *
+ *  Can pass additional arguments to the functiona and optionally return a result
+ */
+template <typename F,
+    typename... Args,
+    class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
+UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&... args )
+{
+    transaction _{ ctx };
+
+    if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
+    {
+        std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
+    }
+    else
+    {
+        return std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
+    }
+}
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_TRANSACTION_HPP
 #endif // UREACT_UREACT_AMALGAMATED_HPP

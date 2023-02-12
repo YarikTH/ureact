@@ -5,10 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/changed.hpp"
+#include "ureact/adaptor/changed.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/count.hpp"
+#include "ureact/adaptor/count.hpp"
 
 // Emits value changes of signal as events
 TEST_CASE( "Changed" )

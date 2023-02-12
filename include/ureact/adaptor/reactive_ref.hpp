@@ -7,12 +7,12 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_REACTIVE_REF_HPP
-#define UREACT_REACTIVE_REF_HPP
+#ifndef UREACT_ADAPTOR_REACTIVE_REF_HPP
+#define UREACT_ADAPTOR_REACTIVE_REF_HPP
 
+#include <ureact/adaptor/flatten.hpp>
+#include <ureact/adaptor/lift.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/flatten.hpp>
-#include <ureact/lift.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -84,4 +84,4 @@ inline constexpr detail::ReactiveRefAdaptor reactive_ref;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_REACTIVE_REF_HPP
+#endif // UREACT_ADAPTOR_REACTIVE_REF_HPP

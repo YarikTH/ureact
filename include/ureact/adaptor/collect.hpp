@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_COLLECT_HPP
-#define UREACT_COLLECT_HPP
+#ifndef UREACT_ADAPTOR_COLLECT_HPP
+#define UREACT_ADAPTOR_COLLECT_HPP
 
+#include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -85,4 +85,4 @@ inline constexpr detail::CollectClosure<ContT> collect;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_COLLECT_HPP
+#endif // UREACT_ADAPTOR_COLLECT_HPP

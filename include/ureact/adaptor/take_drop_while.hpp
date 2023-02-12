@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_TAKE_DROP_WHILE_HPP
-#define UREACT_TAKE_DROP_WHILE_HPP
+#ifndef UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
+#define UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
 
+#include <ureact/adaptor/filter.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/filter.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -127,4 +127,4 @@ inline constexpr detail::DropWhileAdaptor drop_while;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TAKE_DROP_WHILE_HPP
+#endif // UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP

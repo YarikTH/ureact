@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_ZIP_HPP
-#define UREACT_ZIP_HPP
+#ifndef UREACT_ADAPTOR_ZIP_HPP
+#define UREACT_ADAPTOR_ZIP_HPP
 
 #include <deque>
 
@@ -141,4 +141,4 @@ inline constexpr detail::ZipAdaptor zip;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_ZIP_HPP
+#endif // UREACT_ADAPTOR_ZIP_HPP

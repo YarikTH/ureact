@@ -5,10 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/monitor.hpp"
+#include "ureact/adaptor/monitor.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/collect.hpp"
+#include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
 
 // Emits value changes of signal as events

@@ -5,10 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/unique.hpp"
+#include "ureact/adaptor/unique.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/collect.hpp"
+#include "ureact/adaptor/collect.hpp"
 
 // demonstrate and test special filter function unique
 TEST_CASE( "Unique" )

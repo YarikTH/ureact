@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_TRANSFORM_HPP
-#define UREACT_TRANSFORM_HPP
+#ifndef UREACT_ADAPTOR_TRANSFORM_HPP
+#define UREACT_ADAPTOR_TRANSFORM_HPP
 
+#include <ureact/adaptor/process.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/process.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -90,4 +90,4 @@ inline constexpr detail::TransformAdaptor transform;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TRANSFORM_HPP
+#endif // UREACT_ADAPTOR_TRANSFORM_HPP

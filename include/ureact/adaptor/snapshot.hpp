@@ -7,11 +7,12 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_PULSE_HPP
-#define UREACT_PULSE_HPP
+#ifndef UREACT_ADAPTOR_SNAPSHOT_HPP
+#define UREACT_ADAPTOR_SNAPSHOT_HPP
 
+#include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/process.hpp>
+#include <ureact/detail/base.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -19,41 +20,41 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct PulseAdaptor : Adaptor
+struct SnapshotAdaptor : Adaptor
 {
 
     /*!
-	 * @brief Emits the value of a target signal when an event is received
+	 * @brief Sets the signal value to the value of a target signal when an event is received
 	 *
-	 *  Creates an event stream that emits target.get() when receiving an event from trigger.
-	 *  The values of the received events are irrelevant.
+	 *  Creates a signal with value v = target.get().
+	 *  The value is set on construction and updated only when receiving an event from trigger
 	 */
     template <typename S, typename E>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<E>& trigger, const signal<S>& target ) const
     {
-        return process<S>( trigger,
+        return fold( trigger,
+            target.get(),
             with( target ),
-            []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
-                for( size_t i = 0, ie = range.size(); i < ie; ++i )
-                    out << target_value;
+            []( event_range<E> range, const S&, const S& value ) { //
+                return value;
             } );
     }
 
     /*!
-	 * @brief Curried version of pulse()
+	 * @brief Curried version of snapshot()
 	 */
     template <typename S>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
     {
-        return make_partial<PulseAdaptor>( target );
+        return make_partial<SnapshotAdaptor>( target );
     }
 };
 
 } // namespace detail
 
-inline constexpr detail::PulseAdaptor pulse;
+inline constexpr detail::SnapshotAdaptor snapshot;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_PULSE_HPP
+#endif // UREACT_ADAPTOR_SNAPSHOT_HPP

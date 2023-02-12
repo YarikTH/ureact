@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_PROCESS_HPP
-#define UREACT_PROCESS_HPP
+#ifndef UREACT_ADAPTOR_PROCESS_HPP
+#define UREACT_ADAPTOR_PROCESS_HPP
 
 #include <functional>
 
@@ -165,4 +165,4 @@ inline constexpr detail::ProcessAdaptor<OutE> process;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_PROCESS_HPP
+#endif // UREACT_ADAPTOR_PROCESS_HPP

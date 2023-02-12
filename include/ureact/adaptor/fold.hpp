@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_FOLD_HPP
-#define UREACT_FOLD_HPP
+#ifndef UREACT_ADAPTOR_FOLD_HPP
+#define UREACT_ADAPTOR_FOLD_HPP
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
@@ -267,4 +267,4 @@ inline constexpr detail::FoldAdaptor fold;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_FOLD_HPP
+#endif // UREACT_ADAPTOR_FOLD_HPP

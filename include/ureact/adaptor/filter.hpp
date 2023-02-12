@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_FILTER_HPP
-#define UREACT_FILTER_HPP
+#ifndef UREACT_ADAPTOR_FILTER_HPP
+#define UREACT_ADAPTOR_FILTER_HPP
 
+#include <ureact/adaptor/process.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/process.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -89,4 +89,4 @@ inline constexpr detail::FilterAdaptor filter;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_FILTER_HPP
+#endif // UREACT_ADAPTOR_FILTER_HPP

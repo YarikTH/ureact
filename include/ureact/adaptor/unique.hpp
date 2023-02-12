@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UNIQUE_HPP
-#define UREACT_UNIQUE_HPP
+#ifndef UREACT_ADAPTOR_UNIQUE_HPP
+#define UREACT_ADAPTOR_UNIQUE_HPP
 
+#include <ureact/adaptor/filter.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/filter.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -46,4 +46,4 @@ inline constexpr detail::UniqueClosure unique;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_UNIQUE_HPP
+#endif // UREACT_ADAPTOR_UNIQUE_HPP

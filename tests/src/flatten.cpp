@@ -5,16 +5,16 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/flatten.hpp"
+#include "ureact/adaptor/flatten.hpp"
 
 #include <algorithm>
 #include <queue>
 #include <variant>
 
 #include "doctest_extra.h"
+#include "ureact/adaptor/observe.hpp"
+#include "ureact/adaptor/reactive_ref.hpp"
 #include "ureact/events.hpp"
-#include "ureact/observe.hpp"
-#include "ureact/reactive_ref.hpp"
 #include "ureact/transaction.hpp"
 
 // TODO: replace FlattenN tests with more meaningful ones

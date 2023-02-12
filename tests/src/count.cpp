@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/count.hpp"
+#include "ureact/adaptor/count.hpp"
 
 #include "doctest_extra.h"
 #include "ureact/events.hpp"

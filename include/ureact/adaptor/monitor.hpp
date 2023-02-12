@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_MONITOR_HPP
-#define UREACT_MONITOR_HPP
+#ifndef UREACT_ADAPTOR_MONITOR_HPP
+#define UREACT_ADAPTOR_MONITOR_HPP
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
@@ -75,4 +75,4 @@ inline constexpr detail::MonitorClosure monitor;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_MONITOR_HPP
+#endif // UREACT_ADAPTOR_MONITOR_HPP

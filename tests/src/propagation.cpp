@@ -6,8 +6,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "doctest_extra.h"
-#include "ureact/lift.hpp"
-#include "ureact/observe.hpp"
+#include "ureact/adaptor/lift.hpp"
+#include "ureact/adaptor/observe.hpp"
 #include "ureact/transaction.hpp"
 
 TEST_CASE( "Reacting to value changes" )

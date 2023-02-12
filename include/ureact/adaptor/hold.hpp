@@ -7,11 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_HOLD_HPP
-#define UREACT_HOLD_HPP
+#ifndef UREACT_ADAPTOR_HOLD_HPP
+#define UREACT_ADAPTOR_HOLD_HPP
 
+#include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/fold.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -54,4 +54,4 @@ inline constexpr detail::HoldAdaptor hold;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_HOLD_HPP
+#endif // UREACT_ADAPTOR_HOLD_HPP

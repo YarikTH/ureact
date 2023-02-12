@@ -5,14 +5,14 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/fold.hpp"
+#include "ureact/adaptor/fold.hpp"
 
 #include <numeric>
 
 #include "doctest_extra.h"
-#include "ureact/count.hpp"
-#include "ureact/monitor.hpp"
-#include "ureact/take_drop.hpp"
+#include "ureact/adaptor/count.hpp"
+#include "ureact/adaptor/monitor.hpp"
+#include "ureact/adaptor/take_drop.hpp"
 #include "ureact/transaction.hpp"
 
 // calculate sum and product of range of integers using value based function

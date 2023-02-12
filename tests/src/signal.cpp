@@ -6,7 +6,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "doctest_extra.h"
-#include "ureact/lift.hpp"
+#include "ureact/adaptor/lift.hpp"
 
 // TODO: check type traits for signals
 // * signal<S>

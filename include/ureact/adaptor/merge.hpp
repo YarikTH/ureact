@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_MERGE_HPP
-#define UREACT_MERGE_HPP
+#ifndef UREACT_ADAPTOR_MERGE_HPP
+#define UREACT_ADAPTOR_MERGE_HPP
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
@@ -116,4 +116,4 @@ inline constexpr detail::MergeAdaptor merge;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_MERGE_HPP
+#endif // UREACT_ADAPTOR_MERGE_HPP

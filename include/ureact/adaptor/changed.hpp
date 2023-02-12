@@ -7,14 +7,14 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_CHANGED_HPP
-#define UREACT_CHANGED_HPP
+#ifndef UREACT_ADAPTOR_CHANGED_HPP
+#define UREACT_ADAPTOR_CHANGED_HPP
 
+#include <ureact/adaptor/filter.hpp>
+#include <ureact/adaptor/monitor.hpp>
+#include <ureact/adaptor/unify.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/filter.hpp>
-#include <ureact/monitor.hpp>
 #include <ureact/type_traits.hpp>
-#include <ureact/unify.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -54,4 +54,4 @@ inline constexpr detail::ChangedToAdaptor changed_to;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CHANGED_HPP
+#endif // UREACT_ADAPTOR_CHANGED_HPP

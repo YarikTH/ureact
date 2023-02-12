@@ -7,10 +7,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_CAST_HPP
-#define UREACT_CAST_HPP
+#ifndef UREACT_ADAPTOR_CAST_HPP
+#define UREACT_ADAPTOR_CAST_HPP
 
-#include <ureact/transform.hpp>
+#include <ureact/adaptor/transform.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -26,4 +26,4 @@ inline constexpr auto cast = transform( []( const auto& e ) { return static_cast
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_CAST_HPP
+#endif // UREACT_ADAPTOR_CAST_HPP

@@ -10,10 +10,10 @@
 #include <algorithm>
 
 #include "doctest_extra.h"
-#include "ureact/collect.hpp"
-#include "ureact/count.hpp"
-#include "ureact/filter.hpp"
-#include "ureact/merge.hpp"
+#include "ureact/adaptor/collect.hpp"
+#include "ureact/adaptor/count.hpp"
+#include "ureact/adaptor/filter.hpp"
+#include "ureact/adaptor/merge.hpp"
 
 // copyable and nothrow movable
 static_assert( std::is_default_constructible_v<ureact::events<>> );

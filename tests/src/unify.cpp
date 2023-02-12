@@ -5,10 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/unify.hpp"
+#include "ureact/adaptor/unify.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/count.hpp"
+#include "ureact/adaptor/count.hpp"
 
 // Transform values of event stream to ureact::unit
 TEST_CASE( "Unify" )

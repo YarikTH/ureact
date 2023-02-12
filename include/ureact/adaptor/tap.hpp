@@ -7,10 +7,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_TAP_HPP
-#define UREACT_TAP_HPP
+#ifndef UREACT_ADAPTOR_TAP_HPP
+#define UREACT_ADAPTOR_TAP_HPP
 
-#include <ureact/observe.hpp>
+#include <ureact/adaptor/observe.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -115,4 +115,4 @@ inline constexpr detail::TapAdaptor tap;
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_TAP_HPP
+#endif // UREACT_ADAPTOR_TAP_HPP

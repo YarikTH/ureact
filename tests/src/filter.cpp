@@ -5,10 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/filter.hpp"
+#include "ureact/adaptor/filter.hpp"
 
 #include "doctest_extra.h"
-#include "ureact/collect.hpp"
+#include "ureact/adaptor/collect.hpp"
 #include "ureact/transaction.hpp"
 
 // filter only even integer events

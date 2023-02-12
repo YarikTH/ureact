@@ -15,6 +15,12 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct TapAdaptor : Adaptor
+{
+
 /*!
  * @brief Create observer for signal and return observed signal
  *
@@ -31,9 +37,9 @@ UREACT_BEGIN_NAMESPACE
 template <typename F,
     typename Signal, //
     class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-UREACT_WARN_UNUSED_RESULT auto tap( Signal&& subject, F&& func )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& subject, F&& func ) const
 {
-    std::ignore = observe_signal_impl( subject, std::forward<F>( func ) );
+    std::ignore = observe( subject, std::forward<F>( func ) );
     return std::forward<Signal>( subject );
 }
 
@@ -60,10 +66,10 @@ template <typename F,
     typename Events,
     typename... Deps,
     class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
-UREACT_WARN_UNUSED_RESULT auto tap(
-    Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
 {
-    std::ignore = observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+    std::ignore = observe( subject, dep_pack, std::forward<F>( func ) );
     return std::forward<Events>( subject );
 }
 
@@ -78,40 +84,35 @@ template <typename F,
     typename Events,
     int wtf = 0, // hack to resolve ambiguity with signal version of tap
     class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
-UREACT_WARN_UNUSED_RESULT auto tap( Events&& subject, F&& func )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Events&& subject, F&& func ) const
 {
-    std::ignore = observe_events_impl( subject, signal_pack<>{}, std::forward<F>( func ) );
-    return std::forward<Events>( subject );
+    return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
 }
 
 /*!
  * @brief Curried version of tap(T&& subject, F&& func)
  */
-//template <typename F>
-//UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
-//{
-//    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
-//        using arg_t = decltype( subject );
-//        static_assert(
-//            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-//        return tap( std::forward<arg_t>( subject ), func );
-//    } };
-//}
+template <typename F>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
+{
+    return make_partial<TapAdaptor>( std::forward<F>( func ) );
+}
 
 /*!
  * @brief Curried version of tap(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-//template <typename F, typename... Deps>
-//UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& func )
-//{
-//    return detail::closure{
-//        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
-//            using arg_t = decltype( subject );
-//            static_assert( is_observable_v<std::decay_t<arg_t>>,
-//                "Observable type is required (signal or event)" );
-//            return tap( std::forward<arg_t>( subject ), dep_pack, func );
-//        } };
-//}
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const signal_pack<Deps...>& dep_pack, F&& func ) const
+{
+    return make_partial<TapAdaptor>( dep_pack, std::forward<F>( func ) );
+}
+
+};
+
+} // namespace detail
+
+inline constexpr detail::TapAdaptor tap;
 
 UREACT_END_NAMESPACE
 

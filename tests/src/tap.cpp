@@ -28,10 +28,10 @@ TEST_CASE( "TapSignal" )
     {
         result = ureact::tap( src, collector );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        result = src | ureact::tap( collector );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        result = src | ureact::tap( collector );
+    }
 
     CHECK( result.equal_to( src ) );
 
@@ -58,10 +58,10 @@ TEST_CASE( "TapEvents" )
     {
         result = ureact::tap( src, collector );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        result = src | ureact::tap( collector );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        result = src | ureact::tap( collector );
+    }
 
     CHECK( result.equal_to( src ) );
 
@@ -90,10 +90,10 @@ TEST_CASE( "TapEventsSynced" )
     {
         result = ureact::tap( src, with( _2 ), collector );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        result = src | ureact::tap( with( _2 ), collector );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        result = src | ureact::tap( with( _2 ), collector );
+    }
 
     CHECK( result.equal_to( src ) );
 

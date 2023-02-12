@@ -25,10 +25,10 @@ TEST_CASE( "Snapshot" )
     {
         snap = ureact::snapshot( trigger, target );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        snap = trigger | ureact::snapshot( target );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        snap = trigger | ureact::snapshot( target );
+    }
 
     SUBCASE( "Trigger can be any type" )
     {

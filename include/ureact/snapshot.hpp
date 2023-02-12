@@ -17,6 +17,12 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct SnapshotAdaptor : Adaptor
+{
+
 /*!
  * @brief Sets the signal value to the value of a target signal when an event is received
  *
@@ -24,8 +30,7 @@ UREACT_BEGIN_NAMESPACE
  *  The value is set on construction and updated only when receiving an event from trigger
  */
 template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<S>& target )
-    -> signal<S>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& trigger, const signal<S>& target ) const
 {
     return fold( trigger,
         target.get(),
@@ -38,15 +43,16 @@ UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<
 /*!
  * @brief Curried version of snapshot()
  */
-//template <typename S>
-//UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
-//{
-//    return detail::closure{ [target = target]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return snapshot( std::forward<arg_t>( source ), target );
-//    } };
-//}
+template <typename S>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+{
+    return make_partial<SnapshotAdaptor>( target );
+}
+};
+
+} // namespace detail
+
+inline constexpr detail::SnapshotAdaptor snapshot;
 
 UREACT_END_NAMESPACE
 

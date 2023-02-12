@@ -53,7 +53,7 @@ public:
 
 private:
     // decrement operator decrements only to 0
-    [[nodiscard]] static size_t dec( const size_t value )
+    UREACT_WARN_UNUSED_RESULT static size_t dec( const size_t value )
     {
         if( value == 0 ) // [[likely]]
             return 0;

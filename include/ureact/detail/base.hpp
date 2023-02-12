@@ -248,7 +248,7 @@ class callback_sanitizer
 {
 public:
     /// Return if external callback is in progress
-    [[nodiscard]] bool is_locked() const
+    UREACT_WARN_UNUSED_RESULT bool is_locked() const
     {
         return m_is_locked;
     }

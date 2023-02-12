@@ -13,6 +13,7 @@
 #include <deque>
 
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/closure.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -111,8 +112,8 @@ private:
     std::tuple<slot<Values>...> m_slots;
 };
 
-} // namespace detail
-
+struct ZipAdaptor : Adaptor
+{
 /*!
  * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N
  *
@@ -122,8 +123,8 @@ private:
  *  Semantically equivalent of ranges::zip
  */
 template <typename Source, typename... Sources>
-UREACT_WARN_UNUSED_RESULT auto zip( const events<Source>& source1,
-    const events<Sources>&... sources ) -> events<std::tuple<Source, Sources...>>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<Source>& source1, const events<Sources>&... sources ) const
 {
     static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
 
@@ -132,6 +133,11 @@ UREACT_WARN_UNUSED_RESULT auto zip( const events<Source>& source1,
         std::make_shared<detail::event_zip_node<Source, Sources...>>(
             context, source1.get_node(), sources.get_node()... ) );
 }
+};
+
+} // namespace detail
+
+inline constexpr detail::ZipAdaptor zip;
 
 UREACT_END_NAMESPACE
 

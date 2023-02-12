@@ -7,12 +7,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
-#define UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
+#ifndef UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+#define UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 
-#include <ureact/adaptor/filter.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
+#include <ureact/signal_pack.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -20,7 +19,7 @@ namespace detail
 {
 
 template <typename Derived>
-struct TakeDropWhileAdaptorBase : Adaptor
+struct SyncedAdaptorBase : Adaptor
 {
     template <typename E, typename Pred>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
@@ -47,4 +46,4 @@ struct TakeDropWhileAdaptorBase : Adaptor
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
+#endif // UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 18:18:54.140374
+// Generated: 2023-02-12 18:42:55.743214
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -2394,14 +2394,52 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_PROCESS_HPP
 
+#ifndef UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+#define UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+
+
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct TransformAdaptor : Adaptor
+template <typename Derived>
+struct SyncedAdaptorBase : Adaptor
+{
+    template <typename E, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, Pred&& pred ) const
+    {
+        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
+    }
+
+    template <typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
+    }
+
+    template <typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+    {
+        return make_partial<Derived>( std::forward<Pred>( pred ) );
+    }
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
 {
 
+struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
+{
     /*!
 	 * @brief Create a new event stream that transforms events from other stream
 	 *
@@ -2431,37 +2469,7 @@ struct TransformAdaptor : Adaptor
             } );
     }
 
-    /*!
-	 * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
-	 */
-    template <typename F, typename... Deps>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, F&& func ) const
-    {
-        return make_partial<TransformAdaptor>( dep_pack, std::forward<F>( func ) );
-    }
-
-    /*!
-	 * @brief Create a new event stream that transforms events from other stream
-	 *
-	 *  Version without synchronization with additional signals
-	 *
-	 *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
-	 */
-    template <typename InE, typename F>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, F&& func ) const
-    {
-        return operator()( source, signal_pack<>(), std::forward<F>( func ) );
-    }
-
-    /*!
-	 * @brief Curried version of transform(const events<InE>& source, F&& func)
-	 */
-    template <typename F>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
-    {
-        return make_partial<TransformAdaptor>( std::forward<F>( func ) );
-    }
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail
@@ -2501,9 +2509,8 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct FilterAdaptor : Adaptor
+struct FilterAdaptor : SyncedAdaptorBase<FilterAdaptor>
 {
-
     /*!
 	 * @brief Create a new event stream that filters events from other stream
 	 *
@@ -2531,38 +2538,7 @@ struct FilterAdaptor : Adaptor
             } );
     }
 
-    /*!
-	 * @brief Curried version of filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
-	 */
-    template <typename Pred, typename... Deps>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-    {
-        return make_partial<FilterAdaptor>( dep_pack, std::forward<Pred>( pred ) );
-    }
-
-    /*!
-	 * @brief Create a new event stream that filters events from other stream
-	 *
-	 *  Version without synchronization with additional signals
-	 *
-	 *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
-	 */
-    template <typename E, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, Pred&& pred ) const
-    {
-        return operator()( source, signal_pack<>(), std::forward<Pred>( pred ) );
-    }
-
-    /*!
-	 * @brief Curried version of filter(const events<E>& source, Pred&& pred)
-	 */
-    template <typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
-    {
-        return make_partial<FilterAdaptor>( std::forward<Pred>( pred ) );
-    }
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail
@@ -3797,51 +3773,12 @@ UREACT_END_NAMESPACE
 #define UREACT_ADAPTOR_DROP_WHILE_HPP
 
 
-#ifndef UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
-#define UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
-
-
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-template <typename Derived>
-struct TakeDropWhileAdaptorBase : Adaptor
-{
-    template <typename E, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, Pred&& pred ) const
-    {
-        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
-    }
-
-    template <typename... Deps, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-    {
-        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
-    }
-
-    template <typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
-    {
-        return make_partial<Derived>( std::forward<Pred>( pred ) );
-    }
-};
-
-} // namespace detail
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
+struct DropWhileAdaptor : SyncedAdaptorBase<DropWhileAdaptor>
 {
     /*!
 	 * @brief Skips the first elements of the source stream that satisfy the predicate
@@ -3865,7 +3802,7 @@ struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
             } );
     }
 
-    using TakeDropWhileAdaptorBase::operator();
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail
@@ -5432,7 +5369,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
+struct TakeWhileAdaptor : SyncedAdaptorBase<TakeWhileAdaptor>
 {
     /*!
 	 * @brief Keeps the first elements of the source stream that satisfy the predicate
@@ -5457,7 +5394,7 @@ struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
             } );
     }
 
-    using TakeDropWhileAdaptorBase::operator();
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail

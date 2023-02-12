@@ -11,14 +11,14 @@
 #define UREACT_ADAPTOR_TAKE_WHILE_HPP
 
 #include <ureact/adaptor/filter.hpp>
-#include <ureact/detail/take_drop_while_base.hpp>
+#include <ureact/detail/synced_adaptor_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
+struct TakeWhileAdaptor : SyncedAdaptorBase<TakeWhileAdaptor>
 {
     /*!
 	 * @brief Keeps the first elements of the source stream that satisfy the predicate
@@ -43,7 +43,7 @@ struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
             } );
     }
 
-    using TakeDropWhileAdaptorBase::operator();
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail

@@ -11,17 +11,15 @@
 #define UREACT_ADAPTOR_TRANSFORM_HPP
 
 #include <ureact/adaptor/process.hpp>
-#include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
+#include <ureact/detail/synced_adaptor_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct TransformAdaptor : Adaptor
+struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
 {
-
     /*!
 	 * @brief Create a new event stream that transforms events from other stream
 	 *
@@ -51,37 +49,7 @@ struct TransformAdaptor : Adaptor
             } );
     }
 
-    /*!
-	 * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
-	 */
-    template <typename F, typename... Deps>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, F&& func ) const
-    {
-        return make_partial<TransformAdaptor>( dep_pack, std::forward<F>( func ) );
-    }
-
-    /*!
-	 * @brief Create a new event stream that transforms events from other stream
-	 *
-	 *  Version without synchronization with additional signals
-	 *
-	 *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
-	 */
-    template <typename InE, typename F>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, F&& func ) const
-    {
-        return operator()( source, signal_pack<>(), std::forward<F>( func ) );
-    }
-
-    /*!
-	 * @brief Curried version of transform(const events<InE>& source, F&& func)
-	 */
-    template <typename F>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
-    {
-        return make_partial<TransformAdaptor>( std::forward<F>( func ) );
-    }
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail

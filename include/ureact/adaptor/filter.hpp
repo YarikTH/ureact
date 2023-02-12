@@ -11,17 +11,15 @@
 #define UREACT_ADAPTOR_FILTER_HPP
 
 #include <ureact/adaptor/process.hpp>
-#include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
+#include <ureact/detail/synced_adaptor_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct FilterAdaptor : Adaptor
+struct FilterAdaptor : SyncedAdaptorBase<FilterAdaptor>
 {
-
     /*!
 	 * @brief Create a new event stream that filters events from other stream
 	 *
@@ -49,38 +47,7 @@ struct FilterAdaptor : Adaptor
             } );
     }
 
-    /*!
-	 * @brief Curried version of filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
-	 */
-    template <typename Pred, typename... Deps>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-    {
-        return make_partial<FilterAdaptor>( dep_pack, std::forward<Pred>( pred ) );
-    }
-
-    /*!
-	 * @brief Create a new event stream that filters events from other stream
-	 *
-	 *  Version without synchronization with additional signals
-	 *
-	 *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
-	 */
-    template <typename E, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, Pred&& pred ) const
-    {
-        return operator()( source, signal_pack<>(), std::forward<Pred>( pred ) );
-    }
-
-    /*!
-	 * @brief Curried version of filter(const events<E>& source, Pred&& pred)
-	 */
-    template <typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
-    {
-        return make_partial<FilterAdaptor>( std::forward<Pred>( pred ) );
-    }
+    using SyncedAdaptorBase::operator();
 };
 
 } // namespace detail

@@ -10,6 +10,7 @@
 #ifndef UREACT_DETAIL_CLOSURE_HPP
 #define UREACT_DETAIL_CLOSURE_HPP
 
+#include <tuple>
 #include <utility>
 
 #include <ureact/detail/defines.hpp>
@@ -112,6 +113,40 @@ private:
     Rhs m_rhs;
 };
 
+/// Partial application of the adaptor
+template <typename Adaptor, typename... Args>
+class Partial : public AdaptorClosure
+{
+public:
+    constexpr explicit Partial( Args... args )
+        : m_args( std::move( args )... )
+    {}
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) const&
+    {
+        auto forwarder = [&r]( const auto&... args ) {
+            return Adaptor{}( std::forward<Reactive>( r ), args... );
+        };
+        return std::apply( forwarder, m_args );
+    }
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) &&
+    {
+        auto forwarder = [&r]( auto&... args ) {
+            return Adaptor{}( std::forward<Reactive>( r ), std::move( args )... );
+        };
+        return std::apply( forwarder, m_args );
+    }
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) const&& = delete;
+
+private:
+    std::tuple<Args...> m_args;
+};
+
 /*!
  * @brief Base class for reactive adaptors
  *
@@ -120,7 +155,14 @@ private:
  *  Equivalent of "Range adaptors" from std ranges library
  */
 struct Adaptor
-{};
+{
+protected:
+    template <typename Derived, typename... Args>
+    static constexpr auto make_partial( Args&&... args )
+    {
+        return Partial<Derived, std::decay_t<Args>...>{ std::forward<Args>( args )... };
+    }
+};
 
 } // namespace detail
 

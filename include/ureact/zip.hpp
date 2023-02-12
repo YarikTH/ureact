@@ -114,25 +114,25 @@ private:
 
 struct ZipAdaptor : Adaptor
 {
-/*!
- * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N
- *
- *  Each source slot has its own unbounded buffer queue that persistently stores incoming events.
- *  For as long as all queues are not empty, one value is popped from each and emitted together as a tuple.
- *
- *  Semantically equivalent of ranges::zip
- */
-template <typename Source, typename... Sources>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const events<Source>& source1, const events<Sources>&... sources ) const
-{
-    static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
+    /*!
+	 * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N
+	 *
+	 *  Each source slot has its own unbounded buffer queue that persistently stores incoming events.
+	 *  For as long as all queues are not empty, one value is popped from each and emitted together as a tuple.
+	 *
+	 *  Semantically equivalent of ranges::zip
+	 */
+    template <typename Source, typename... Sources>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<Source>& source1, const events<Sources>&... sources ) const
+    {
+        static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
 
-    context& context = source1.get_context();
-    return events<std::tuple<Source, Sources...>>(
-        std::make_shared<detail::event_zip_node<Source, Sources...>>(
-            context, source1.get_node(), sources.get_node()... ) );
-}
+        context& context = source1.get_context();
+        return events<std::tuple<Source, Sources...>>(
+            std::make_shared<detail::event_zip_node<Source, Sources...>>(
+                context, source1.get_node(), sources.get_node()... ) );
+    }
 };
 
 } // namespace detail

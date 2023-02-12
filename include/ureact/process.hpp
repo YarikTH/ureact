@@ -105,58 +105,57 @@ template <typename OutE>
 struct ProcessAdaptor : Adaptor
 {
 
-/*!
- * @brief Create a new event stream by batch processing events from other stream
- *
- *  op is called with all events range from source in current turn.
- *  New events are emitted through "out".
- *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
- *
- *  The signature of op should be equivalent to:
- *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
- */
-template <typename InE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
-{
-    return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
-}
+    /*!
+	 * @brief Create a new event stream by batch processing events from other stream
+	 *
+	 *  op is called with all events range from source in current turn.
+	 *  New events are emitted through "out".
+	 *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+	 *
+	 *  The signature of op should be equivalent to:
+	 *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
+	 *
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
+	 */
+    template <typename InE, typename Op, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
+    {
+        return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+    }
 
-/*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op)
- */
-template <typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const signal_pack<Deps...>& dep_pack, Op&& op ) const
-{
-    return make_partial<ProcessAdaptor>( dep_pack, std::forward<Op>( op ) );
-}
+    /*!
+	 * @brief Curried version of process(const events<in_t>& source, Op&& op)
+	 */
+    template <typename Op, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Op&& op ) const
+    {
+        return make_partial<ProcessAdaptor>( dep_pack, std::forward<Op>( op ) );
+    }
 
-/*!
- * @brief Create a new event stream by batch processing events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
- */
-template <typename InE, typename Op>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, Op&& op ) const
-{
-    return operator()( source, signal_pack<>{}, std::forward<Op>( op ) );
-}
+    /*!
+	 * @brief Create a new event stream by batch processing events from other stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
+	 */
+    template <typename InE, typename Op>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, Op&& op ) const
+    {
+        return operator()( source, signal_pack<>{}, std::forward<Op>( op ) );
+    }
 
-/*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op)
- */
-template <typename Op>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Op&& op ) const
-{
-    return make_partial<ProcessAdaptor>( std::forward<Op>( op ) );
-}
-
+    /*!
+	 * @brief Curried version of process(const events<in_t>& source, Op&& op)
+	 */
+    template <typename Op>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Op&& op ) const
+    {
+        return make_partial<ProcessAdaptor>( std::forward<Op>( op ) );
+    }
 };
 
 } // namespace detail

@@ -22,31 +22,30 @@ namespace detail
 struct HoldAdaptor : Adaptor
 {
 
-/*!
- * @brief Holds the most recent event in a signal
- *
- *  Creates a @ref signal with an initial value v = init.
- *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
- */
-template <typename V, typename E>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, V&& init ) const
-{
-    return fold( source,
-        std::forward<V>( init ),                  //
-        []( event_range<E> range, const auto& ) { //
-            return *range.rbegin();
-        } );
-}
+    /*!
+	 * @brief Holds the most recent event in a signal
+	 *
+	 *  Creates a @ref signal with an initial value v = init.
+	 *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
+	 */
+    template <typename V, typename E>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, V&& init ) const
+    {
+        return fold( source,
+            std::forward<V>( init ),                  //
+            []( event_range<E> range, const auto& ) { //
+                return *range.rbegin();
+            } );
+    }
 
-/*!
- * @brief Curried version of hold()
- */
-template <typename V>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init ) const
-{
-    return make_partial<HoldAdaptor>( std::forward<V>( init ) );
-}
-
+    /*!
+	 * @brief Curried version of hold()
+	 */
+    template <typename V>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init ) const
+    {
+        return make_partial<HoldAdaptor>( std::forward<V>( init ) );
+    }
 };
 
 } // namespace detail

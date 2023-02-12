@@ -290,126 +290,129 @@ auto observe_events_impl(
 struct ObserveAdaptor : Adaptor
 {
 
-/*!
- * @brief Create observer for signal
- *
- *  When the signal value S of subject changes, func is called
- *
- *  The signature of func should be equivalent to:
- *  * void func(const S&)
- *  * observer_action func(const S&)
- *
- *  By returning observer_action::stop_and_detach, the observer function can request
- *  its own detachment. Returning observer_action::next keeps the observer attached.
- *  Using a void return type is the same as always returning observer_action::next.
- *
- *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
- */
-template <typename F, typename S>
-constexpr auto operator()( const signal<S>& subject, F&& func ) const
-{
-    return observe_signal_impl( subject, std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create observer for signal
+	 *
+	 *  When the signal value S of subject changes, func is called
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * void func(const S&)
+	 *  * observer_action func(const S&)
+	 *
+	 *  By returning observer_action::stop_and_detach, the observer function can request
+	 *  its own detachment. Returning observer_action::next keeps the observer attached.
+	 *  Using a void return type is the same as always returning observer_action::next.
+	 *
+	 *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+	 */
+    template <typename F, typename S>
+    constexpr auto operator()( const signal<S>& subject, F&& func ) const
+    {
+        return observe_signal_impl( subject, std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Create observer for temporary signal
- *
- *  Same as observe(const signal<S>& subject, F&& func),
- *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
- */
-template <typename F, typename S>
-UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-constexpr auto operator()( signal<S>&& subject, F&& func ) const
-{
-    return observe_signal_impl( std::move( subject ), std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create observer for temporary signal
+	 *
+	 *  Same as observe(const signal<S>& subject, F&& func),
+	 *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+	 */
+    template <typename F, typename S>
+    UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+    constexpr auto operator()( signal<S>&& subject, F&& func ) const
+    {
+        return observe_signal_impl( std::move( subject ), std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Create observer for event stream
- *
- *  For every event e in subject, func is called.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * observer_action func(event_range<E> range, const Deps& ...)
- *  * observer_action func(const E&, const Deps& ...)
- *  * void func(event_range<E> range, const Deps& ...)
- *  * void func(const E&, const Deps& ...)
- *
- *  By returning observer_action::stop_and_detach, the observer function can request
- *  its own detachment. Returning observer_action::next keeps the observer attached.
- *  Using a void return type is the same as always returning observer_action::next.
- *
- *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
- *  @note The event_range<E> option allows to explicitly batch process single turn events
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename F, typename E, typename... Deps>
-constexpr auto operator()( const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
-{
-    return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create observer for event stream
+	 *
+	 *  For every event e in subject, func is called.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * observer_action func(event_range<E> range, const Deps& ...)
+	 *  * observer_action func(const E&, const Deps& ...)
+	 *  * void func(event_range<E> range, const Deps& ...)
+	 *  * void func(const E&, const Deps& ...)
+	 *
+	 *  By returning observer_action::stop_and_detach, the observer function can request
+	 *  its own detachment. Returning observer_action::next keeps the observer attached.
+	 *  Using a void return type is the same as always returning observer_action::next.
+	 *
+	 *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+	 *  @note The event_range<E> option allows to explicitly batch process single turn events
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename F, typename E, typename... Deps>
+    constexpr auto operator()(
+        const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
+    {
+        return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Create observer for temporary event stream
- *
- *  Same as observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func),
- *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
- */
-template <typename F, typename E, typename... Deps>
-UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-constexpr auto operator()( events<E>&& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const // TODO: check in tests
-{
-    return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create observer for temporary event stream
+	 *
+	 *  Same as observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func),
+	 *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+	 */
+    template <typename F, typename E, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+    constexpr auto operator()( events<E>&& subject,
+        const signal_pack<Deps...>& dep_pack,
+        F&& func ) const // TODO: check in tests
+    {
+        return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Create observer for event stream
- *
- *  Version without synchronization with additional signals
- *
- *  See observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename E>
-constexpr auto operator()( const events<E>& subject, F&& func ) const
-{
-    return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create observer for event stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F, typename E>
+    constexpr auto operator()( const events<E>& subject, F&& func ) const
+    {
+        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Create observer for temporary event stream
- *
- *  Same as observe(const events<E>& subject, F&& func),
- *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
- */
-template <typename F, typename E>
-UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-constexpr auto operator()( events<E>&& subject, F&& func ) const // TODO: check in tests
-{
-    return operator()( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create observer for temporary event stream
+	 *
+	 *  Same as observe(const events<E>& subject, F&& func),
+	 *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+	 */
+    template <typename F, typename E>
+    UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+    constexpr auto operator()( events<E>&& subject, F&& func ) const // TODO: check in tests
+    {
+        return operator()( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Curried version of observe(T&& subject, F&& func)
- */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const // TODO: check in tests
-{
-    // TODO: propagate [[nodiscard]] to closure operator() and operator|
-    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
-    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
-    return make_partial<ObserveAdaptor>( std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Curried version of observe(T&& subject, F&& func)
+	 */
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const // TODO: check in tests
+    {
+        // TODO: propagate [[nodiscard]] to closure operator() and operator|
+        //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
+        //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
+        return make_partial<ObserveAdaptor>( std::forward<F>( func ) );
+    }
 
-/*!
- * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const signal_pack<Deps...>& dep_pack, F&& func ) const // TODO: check in tests
-{
-    return make_partial<ObserveAdaptor>( dep_pack, std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, F&& func ) const // TODO: check in tests
+    {
+        return make_partial<ObserveAdaptor>( dep_pack, std::forward<F>( func ) );
+    }
 };
 
 } // namespace detail

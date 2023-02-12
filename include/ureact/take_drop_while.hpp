@@ -46,28 +46,28 @@ struct TakeDropWhileAdaptorBase : Adaptor
 struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
 {
 
-/*!
- * @brief Keeps the first elements of the source stream that satisfy the predicate
- *
- *  Keeps events from the source stream, starting at the beginning and ending
- *  at the first element for which the predicate returns false.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of pred should be equivalent to:
- *  * bool func(const E&, const Deps& ...)
- */
-template <typename E, typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-{
-    return filter( source,
-        dep_pack,
-        [passed = true, pred = std::forward<Pred>( pred )] //
-        ( const auto& e, const auto... deps ) mutable {
-            passed = passed && std::invoke( pred, e, deps... );
-            return passed;
-        } );
-}
+    /*!
+	 * @brief Keeps the first elements of the source stream that satisfy the predicate
+	 *
+	 *  Keeps events from the source stream, starting at the beginning and ending
+	 *  at the first element for which the predicate returns false.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of pred should be equivalent to:
+	 *  * bool func(const E&, const Deps& ...)
+	 */
+    template <typename E, typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return filter( source,
+            dep_pack,
+            [passed = true, pred = std::forward<Pred>( pred )] //
+            ( const auto& e, const auto... deps ) mutable {
+                passed = passed && std::invoke( pred, e, deps... );
+                return passed;
+            } );
+    }
 
     using TakeDropWhileAdaptorBase::operator();
 };
@@ -75,27 +75,27 @@ UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
 struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
 {
 
-/*!
- * @brief Skips the first elements of the source stream that satisfy the predicate
- *
- *  Takes events beginning at the first for which the predicate returns false.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of pred should be equivalent to:
- *  * bool func(const E&, const Deps& ...)
- */
-template <typename E, typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-{
-    return filter( source,
-        dep_pack,
-        [passed = false, pred = std::forward<Pred>( pred )] //
-        ( const auto& e, const auto... deps ) mutable {
-            passed = passed || !std::invoke( pred, e, deps... );
-            return passed;
-        } );
-}
+    /*!
+	 * @brief Skips the first elements of the source stream that satisfy the predicate
+	 *
+	 *  Takes events beginning at the first for which the predicate returns false.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of pred should be equivalent to:
+	 *  * bool func(const E&, const Deps& ...)
+	 */
+    template <typename E, typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return filter( source,
+            dep_pack,
+            [passed = false, pred = std::forward<Pred>( pred )] //
+            ( const auto& e, const auto... deps ) mutable {
+                passed = passed || !std::invoke( pred, e, deps... );
+                return passed;
+            } );
+    }
 
     using TakeDropWhileAdaptorBase::operator();
 };

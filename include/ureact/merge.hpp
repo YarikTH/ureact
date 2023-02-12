@@ -89,25 +89,25 @@ using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
 struct MergeAdaptor : Adaptor
 {
-/*!
- * @brief Emit all events in source1, ... sources
- *
- *  @warning Not to be confused with std::merge() or ranges::merge()
- */
-template <typename Source, typename... Sources, typename E = Source>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const events<Source>& source1, const events<Sources>&... sources ) const
-{
-    static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
+    /*!
+	 * @brief Emit all events in source1, ... sources
+	 *
+	 *  @warning Not to be confused with std::merge() or ranges::merge()
+	 */
+    template <typename Source, typename... Sources, typename E = Source>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<Source>& source1, const events<Sources>&... sources ) const
+    {
+        static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-    using Op = detail::event_merge_op<E,
-        detail::event_stream_node_ptr_t<Source>,
-        detail::event_stream_node_ptr_t<Sources>...>;
+        using Op = detail::event_merge_op<E,
+            detail::event_stream_node_ptr_t<Source>,
+            detail::event_stream_node_ptr_t<Sources>...>;
 
-    context& context = source1.get_context();
-    return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
-        context, source1.get_node(), sources.get_node()... ) );
-}
+        context& context = source1.get_context();
+        return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
+            context, source1.get_node(), sources.get_node()... ) );
+    }
 };
 
 } // namespace detail

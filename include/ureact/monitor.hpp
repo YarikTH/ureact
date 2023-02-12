@@ -54,17 +54,18 @@ private:
 
 struct MonitorClosure : AdaptorClosure
 {
-/*!
-* @brief Emits value changes of signal as events
-*
-*  When target changes, emit the new value 'e = target.get()'.
-*/
-template <typename S>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const -> events<S>
-{
-    context& context = target.get_context();
-    return events<S>( std::make_shared<monitor_node<S>>( context, target.get_node() ) );
-}
+    /*!
+	 * @brief Emits value changes of signal as events
+	 *
+	 *  When target changes, emit the new value 'e = target.get()'.
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+        -> events<S>
+    {
+        context& context = target.get_context();
+        return events<S>( std::make_shared<monitor_node<S>>( context, target.get_node() ) );
+    }
 };
 
 } // namespace detail

@@ -100,188 +100,193 @@ template <typename SIn = void>
 struct LiftAdaptor : Adaptor
 {
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, arg_pack.get(), ...)
- * @tparam Values types of signal values
- *
- * This value is set on construction and updated when any args have changed
- */
-template <typename... Values, typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal_pack<Values...>& arg_pack, InF&& func ) const
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, Values...>;
-    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, arg_pack.get(), ...)
+	 * @tparam Values types of signal values
+	 *
+	 * This value is set on construction and updated when any args have changed
+	 */
+    template <typename... Values, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Values...>& arg_pack, InF&& func ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, Values...>;
+        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
 
-    context& context = std::get<0>( arg_pack.data ).get_context();
+        context& context = std::get<0>( arg_pack.data ).get_context();
 
-    auto node_builder = [&context, &func]( const signal<Values>&... args ) {
-        return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
-    };
+        auto node_builder = [&context, &func]( const signal<Values>&... args ) {
+            return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
+        };
 
-    return std::apply( node_builder, arg_pack.data );
-}
+        return std::apply( node_builder, arg_pack.data );
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, arg.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename Value, typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<Value>& arg, InF&& func ) const
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, Value>;
-    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
-    return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
-}
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, arg.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename Value, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal<Value>& arg, InF&& func ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, Value>;
+        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
+        return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, arg.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename Value, typename OpIn, typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( temp_signal<Value, OpIn>&& arg, InF&& func ) const
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, Value>;
-    using Op = detail::function_op<S, F, OpIn>;
-    return temp_signal<S, Op>{
-        arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
-}
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, arg.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename Value, typename OpIn, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        temp_signal<Value, OpIn>&& arg, InF&& func ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, Value>;
+        using Op = detail::function_op<S, F, OpIn>;
+        return temp_signal<S, Op>{
+            arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
+    }
 
-/*!
- * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
- */
-template <typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
-{
-    return make_partial<LiftAdaptor>( std::forward<InF>( func ) );
-}
+    /*!
+	 * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
+	 */
+    template <typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
+    {
+        return make_partial<LiftAdaptor>( std::forward<InF>( func ) );
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename LeftSignal,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<is_signal_v<LeftSignal>>,
-    class = std::enable_if_t<is_signal_v<RightSignal>>>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const LeftSignal& lhs, InF&& func, const RightSignal& rhs ) const
-{
-    return operator()( with( lhs, rhs ), std::forward<InF>( func ) );
-}
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftSignal,
+        typename InF,
+        typename RightSignal,
+        class = std::enable_if_t<is_signal_v<LeftSignal>>,
+        class = std::enable_if_t<is_signal_v<RightSignal>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const LeftSignal& lhs, InF&& func, const RightSignal& rhs ) const
+    {
+        return operator()( with( lhs, rhs ), std::forward<InF>( func ) );
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename LeftSignal,
-    typename InF,
-    typename RightVal,
-    class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
-    class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( LeftSignal&& lhs, InF&& func, RightVal&& rhs ) const
-{
-    return operator()( std::forward<LeftSignal>( lhs ),
-        std::bind(
-            std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
-}
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftSignal,
+        typename InF,
+        typename RightVal,
+        class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
+        class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        LeftSignal&& lhs, InF&& func, RightVal&& rhs ) const
+    {
+        return operator()( std::forward<LeftSignal>( lhs ),
+            std::bind(
+                std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename LeftVal,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
-    class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
-    typename Wtf = void>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( LeftVal&& lhs, InF&& func, RightSignal&& rhs ) const
-{
-    return operator()( std::forward<RightSignal>( rhs ),
-        std::bind(
-            std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
-}
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftVal,
+        typename InF,
+        typename RightSignal,
+        class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
+        class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
+        typename Wtf = void>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        LeftVal&& lhs, InF&& func, RightSignal&& rhs ) const
+    {
+        return operator()( std::forward<RightSignal>( rhs ),
+            std::bind(
+                std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename LeftVal, typename LeftOp, typename InF, typename RightVal, typename RightOp>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-    using Op = detail::function_op<S, F, LeftOp, RightOp>;
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftVal, typename LeftOp, typename InF, typename RightVal, typename RightOp>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = detail::function_op<S, F, LeftOp, RightOp>;
 
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
+        context& context = lhs.get_context();
+        assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{ context,
-        std::forward<InF>( func ),
-        std::move( lhs ).steal_op(),
-        std::move( rhs ).steal_op() };
-}
+        return temp_signal<S, Op>{ context,
+            std::forward<InF>( func ),
+            std::move( lhs ).steal_op(),
+            std::move( rhs ).steal_op() };
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename LeftVal,
-    typename LeftOp,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<is_signal_v<RightSignal>>>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs ) const
-{
-    using RightVal = typename RightSignal::value_t;
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-    using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftVal,
+        typename LeftOp,
+        typename InF,
+        typename RightSignal,
+        class = std::enable_if_t<is_signal_v<RightSignal>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs ) const
+    {
+        using RightVal = typename RightSignal::value_t;
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
 
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
+        context& context = lhs.get_context();
+        assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{
-        context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
-}
+        return temp_signal<S, Op>{
+            context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
+    }
 
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename LeftSignal,
-    typename InF,
-    typename RightVal,
-    typename RightOp,
-    class = std::enable_if_t<is_signal_v<LeftSignal>>>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
-{
-    using LeftVal = typename LeftSignal::value_t;
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftSignal,
+        typename InF,
+        typename RightVal,
+        typename RightOp,
+        class = std::enable_if_t<is_signal_v<LeftSignal>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
+    {
+        using LeftVal = typename LeftSignal::value_t;
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
 
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
+        context& context = lhs.get_context();
+        assert( context == rhs.get_context() );
 
-    return temp_signal<S, Op>{
-        context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
-}
-
+        return temp_signal<S, Op>{
+            context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
+    }
 };
 
 } // namespace detail

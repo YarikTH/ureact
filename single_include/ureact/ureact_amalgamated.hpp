@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.8.1
-// Generated: 2023-02-11 11:51:45.202303
+// Ureact v0.9.0 wip
+// Generated: 2023-02-12 16:59:53.197962
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -28,18 +28,42 @@
 #ifndef UREACT_UREACT_AMALGAMATED_HPP
 #define UREACT_UREACT_AMALGAMATED_HPP
 
+#ifndef UREACT_VERSION_HPP
+#define UREACT_VERSION_HPP
+
+#define UREACT_VERSION_MAJOR 0
+#define UREACT_VERSION_MINOR 9
+#define UREACT_VERSION_PATCH 0
+#define UREACT_VERSION_STR "0.9.0 wip"
+
+#define UREACT_VERSION                                                                             \
+    ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
+
+#endif //UREACT_VERSION_HPP
+
 #ifndef UREACT_CAST_HPP
 #define UREACT_CAST_HPP
+
+
+#ifndef UREACT_TRANSFORM_HPP
+#define UREACT_TRANSFORM_HPP
 
 
 #ifndef UREACT_DETAIL_CLOSURE_HPP
 #define UREACT_DETAIL_CLOSURE_HPP
 
+#include <tuple>
 #include <utility>
 
 
 #ifndef UREACT_DETAIL_DEFINES_HPP
 #define UREACT_DETAIL_DEFINES_HPP
+
+#ifdef __has_include
+#    if __has_include( <version>)
+#        include <version>
+#    endif
+#endif
 
 // Preprocessor feature detections
 // Mostly based on https://github.com/fmtlib/fmt/blob/master/include/fmt/core.h
@@ -269,6 +293,30 @@ struct dont_move
 template <typename L, typename R>
 using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
+// TODO: make macro to eliminate duplication hereA
+#if defined( __cpp_lib_remove_cvref ) && __cpp_lib_remove_cvref >= 201711L
+
+template <class T>
+using remove_cvref = std::remove_cvref<T>;
+
+template <class T>
+using remove_cvref_t = std::remove_cvref_t<T>;
+
+#else
+
+// Based on Possible implementation from
+// https://en.cppreference.com/w/cpp/types/remove_cvref
+template <class T>
+struct remove_cvref
+{
+    typedef std::remove_cv_t<std::remove_reference_t<T>> type;
+};
+
+template <class T>
+using remove_cvref_t = typename remove_cvref<T>::type;
+
+#endif
+
 } // namespace detail
 
 
@@ -439,14 +487,16 @@ namespace detail
 {
 
 // Forward
-template <class F>
-class closure;
+struct AdaptorClosure;
+
+template <typename Lhs, typename Rhs>
+class Pipe;
 
 /*!
  * @brief Return if type is closure
  */
 template <typename T>
-struct is_closure : detail::is_base_of_template<closure, T>
+struct is_closure : std::is_base_of<AdaptorClosure, remove_cvref_t<T>>
 {};
 
 /*!
@@ -474,71 +524,116 @@ inline constexpr bool is_closure_v = is_closure<T>::value;
  *
  * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
  */
-template <class F>
-class closure
+struct AdaptorClosure
 {
-public:
-    // TODO: add type specialization to closure (not concrete type, but signal/events), so we can write specialized operator overloads
-    //       need to tag both input and output value. Also closure is single in, single out function. Or no output function
-    explicit closure( F&& func )
-        : m_func( std::move( func ) )
-    {}
-
-    template <typename Arg, class = std::enable_if_t<std::is_invocable_v<F, Arg&&>>>
-    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg ) const -> decltype( auto )
+    /// chain two closures to make another one
+    template <typename Lhs,
+        typename Rhs,
+        class = std::enable_if_t<is_closure_v<Lhs>>,
+        class = std::enable_if_t<is_closure_v<Rhs>>>
+    UREACT_WARN_UNUSED_RESULT friend constexpr auto operator|( Lhs lhs, Rhs rhs )
     {
-        if constexpr( std::is_same_v<std::invoke_result_t<F, Arg&&>, void> )
-        {
-            m_func( std::forward<Arg>( arg ) );
-        }
-        else
-        {
-            return m_func( std::forward<Arg>( arg ) );
-        }
+        return Pipe<Lhs, Rhs>{ std::move( lhs ), std::move( rhs ) };
     }
 
+    /// apply arg to given closure and return its result
+    template <typename Self,
+        typename Reactive,
+        class = std::enable_if_t<is_closure_v<Self>>,
+        class = std::enable_if_t<!is_closure_v<Reactive>>,
+        class = std::enable_if_t<std::is_invocable_v<Self&&, Reactive&&>>>
+    UREACT_WARN_UNUSED_RESULT friend constexpr auto operator|( Reactive&& r, Self&& self )
+    {
+        return std::forward<Self>( self )( std::forward<Reactive>( r ) );
+    }
+};
+
+/// Composition of the adaptor closures Lhs and Rhs.
+template <typename Lhs, typename Rhs>
+class Pipe : public AdaptorClosure
+{
+public:
+    constexpr Pipe( Lhs lhs, Rhs rhs )
+        : m_lhs( std::move( lhs ) )
+        , m_rhs( std::move( rhs ) )
+    {}
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) const&
+    {
+        return m_rhs( m_lhs( std::forward<Reactive>( r ) ) );
+    }
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) &&
+    {
+        return std::move( m_rhs )( std::move( m_lhs )( std::forward<Reactive>( r ) ) );
+    }
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) const&& = delete;
+
 private:
-    F m_func;
+    Lhs m_lhs;
+    Rhs m_rhs;
+};
+
+/// Partial application of the adaptor
+template <typename Adaptor, typename... Args>
+class Partial : public AdaptorClosure
+{
+public:
+    constexpr explicit Partial( Args... args )
+        : m_args( std::move( args )... )
+    {}
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) const&
+    {
+        auto forwarder = [&r]( const auto&... args ) {
+            return Adaptor{}( std::forward<Reactive>( r ), args... );
+        };
+        return std::apply( forwarder, m_args );
+    }
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) &&
+    {
+        auto forwarder = [&r]( auto&... args ) {
+            return Adaptor{}( std::forward<Reactive>( r ), std::move( args )... );
+        };
+        return std::apply( forwarder, m_args );
+    }
+
+    template <typename Reactive>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Reactive&& r ) const&& = delete;
+
+private:
+    std::tuple<Args...> m_args;
 };
 
 /*!
- * @brief operator| overload for closure object
+ * @brief Base class for reactive adaptors
  *
- *  See @ref closure
+ *  Even if it is empty, inheritance allows to find each adaptor in the library
+ *  
+ *  Equivalent of "Range adaptors" from std ranges library
  */
-template <typename Arg,
-    typename Closure,
-    class = std::enable_if_t<is_closure_v<std::decay_t<Closure>>>>
-UREACT_WARN_UNUSED_RESULT auto operator|( Arg&& arg, Closure&& closure_obj ) -> decltype( auto )
+struct Adaptor
 {
-    if constexpr( is_closure_v<std::decay_t<Arg>> )
+protected:
+    template <typename Derived, typename... Args>
+    static constexpr auto make_partial( Args&&... args )
     {
-        // chain two closures to make another one
-        using FirstClosure = Arg;
-        using SecondClosure = Closure;
-        return detail::closure{
-            [first_closure = std::forward<FirstClosure>( arg ),
-                second_closure = std::forward<SecondClosure>( closure_obj )]( auto&& source ) {
-                using arg_t = decltype( source );
-                return second_closure( first_closure( std::forward<arg_t>( source ) ) );
-            } };
+        return Partial<Derived, std::decay_t<Args>...>{ std::forward<Args>( args )... };
     }
-    else
-    {
-        // apply arg to given closure and return its result
-        return std::forward<Closure>( closure_obj )( std::forward<Arg>( arg ) );
-    }
-}
+};
 
 } // namespace detail
 
 UREACT_END_NAMESPACE
 
 #endif // UREACT_DETAIL_CLOSURE_HPP
-
-#ifndef UREACT_TRANSFORM_HPP
-#define UREACT_TRANSFORM_HPP
-
 
 #ifndef UREACT_PROCESS_HPP
 #define UREACT_PROCESS_HPP
@@ -1092,7 +1187,7 @@ class callback_sanitizer
 {
 public:
     /// Return if external callback is in progress
-    [[nodiscard]] bool is_locked() const
+    UREACT_WARN_UNUSED_RESULT bool is_locked() const
     {
         return m_is_locked;
     }
@@ -2233,66 +2328,67 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
     return std::apply( node_builder, dep_pack.data );
 }
 
+template <typename OutE>
+struct ProcessAdaptor : Adaptor
+{
+
+    /*!
+	 * @brief Create a new event stream by batch processing events from other stream
+	 *
+	 *  op is called with all events range from source in current turn.
+	 *  New events are emitted through "out".
+	 *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+	 *
+	 *  The signature of op should be equivalent to:
+	 *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
+	 *
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
+	 */
+    template <typename InE, typename Op, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
+    {
+        return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+    }
+
+    /*!
+	 * @brief Curried version of process(const events<in_t>& source, Op&& op)
+	 */
+    template <typename Op, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Op&& op ) const
+    {
+        return make_partial<ProcessAdaptor>( dep_pack, std::forward<Op>( op ) );
+    }
+
+    /*!
+	 * @brief Create a new event stream by batch processing events from other stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
+	 */
+    template <typename InE, typename Op>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, Op&& op ) const
+    {
+        return operator()( source, signal_pack<>{}, std::forward<Op>( op ) );
+    }
+
+    /*!
+	 * @brief Curried version of process(const events<in_t>& source, Op&& op)
+	 */
+    template <typename Op>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Op&& op ) const
+    {
+        return make_partial<ProcessAdaptor>( std::forward<Op>( op ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Create a new event stream by batch processing events from other stream
- *
- *  op is called with all events range from source in current turn.
- *  New events are emitted through "out".
- *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
- *
- *  The signature of op should be equivalent to:
- *  * bool op(event_range<in_t> range, event_emitter<out_t> out, const Deps& ...)
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
- */
-template <typename OutE, typename InE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
-{
-    return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
-}
-
-/*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op)
- */
-template <typename OutE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
-{
-    return detail::closure{ [dep_pack = dep_pack, op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), dep_pack, op );
-    } };
-}
-
-/*!
- * @brief Create a new event stream by batch processing events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
- */
-template <typename OutE, typename InE, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> events<OutE>
-{
-    return detail::process_impl<OutE>( source, signal_pack<>(), std::forward<Op>( op ) );
-}
-
-/*!
- * @brief Curried version of process(const events<in_t>& source, Op&& op)
- */
-template <typename OutE, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
-{
-    return detail::closure{ [op = std::forward<Op>( op )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return process<OutE>( std::forward<arg_t>( source ), op );
-    } };
-}
+template <typename OutE>
+inline constexpr detail::ProcessAdaptor<OutE> process;
 
 UREACT_END_NAMESPACE
 
@@ -2300,73 +2396,77 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Create a new event stream that transforms events from other stream
- *
- *  For every event e in source, emit t = func(e, deps...).
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * T func(const E&, const Deps& ...)
- *
- *  Semantically equivalent of ranges::transform
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename InE,
-    typename F,
-    typename... Deps,
-    typename OutE = std::invoke_result_t<F, InE, Deps...>>
-UREACT_WARN_UNUSED_RESULT auto transform(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) -> events<OutE>
+namespace detail
 {
-    return detail::process_impl<OutE>( source,
-        dep_pack, //
-        [func = std::forward<F>( func )](
-            event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
-            for( const auto& e : range )
-                out << std::invoke( func, e, deps... );
-        } );
-}
 
-/*!
- * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
+struct TransformAdaptor : Adaptor
 {
-    return detail::closure{ [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), dep_pack, func );
-    } };
-}
 
-/*!
- * @brief Create a new event stream that transforms events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename InE, typename F, typename OutE = std::invoke_result_t<F, InE>>
-UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) -> events<OutE>
-{
-    return transform( source, signal_pack<>(), std::forward<F>( func ) );
-}
+    /*!
+	 * @brief Create a new event stream that transforms events from other stream
+	 *
+	 *  For every event e in source, emit t = func(e, deps...).
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * T func(const E&, const Deps& ...)
+	 *
+	 *  Semantically equivalent of ranges::transform
+	 *
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename InE,
+        typename F,
+        typename... Deps,
+        typename OutE = std::invoke_result_t<F, InE, Deps...>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) const
+    {
+        return process<OutE>( source,
+            dep_pack, //
+            [func = std::forward<F>( func )](
+                event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
+                for( const auto& e : range )
+                    out << std::invoke( func, e, deps... );
+            } );
+    }
 
-/*!
- * @brief Curried version of transform(const events<InE>& source, F&& func)
- */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
-{
-    return detail::closure{ [func = std::forward<F>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return transform( std::forward<arg_t>( source ), func );
-    } };
-}
+    /*!
+	 * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, F&& func ) const
+    {
+        return make_partial<TransformAdaptor>( dep_pack, std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Create a new event stream that transforms events from other stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename InE, typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, F&& func ) const
+    {
+        return operator()( source, signal_pack<>(), std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of transform(const events<InE>& source, F&& func)
+	 */
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
+    {
+        return make_partial<TransformAdaptor>( std::forward<F>( func ) );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::TransformAdaptor transform;
 
 UREACT_END_NAMESPACE
 
@@ -2379,29 +2479,10 @@ UREACT_BEGIN_NAMESPACE
  *
  *  For every event e in source, emit t = static_cast<OutE>(e).
  *
- *  Type of resulting signal have to be explicitly specified.
+ *  Type of resulting ureact::events<E> have to be explicitly specified.
  */
-template <typename OutE, typename InE>
-UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
-{
-    return transform( source, //
-        []( const InE& e ) {  //
-            return static_cast<OutE>( e );
-        } );
-}
-
-/*!
- * @brief Curried version of cast(const events<InE>& source)
- */
-template <typename OutE>
-UREACT_WARN_UNUSED_RESULT auto cast()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return cast<OutE>( std::forward<arg_t>( source ) );
-    } };
-}
+template <typename E>
+inline constexpr auto cast = transform( []( const auto& e ) { return static_cast<E>( e ); } );
 
 UREACT_END_NAMESPACE
 
@@ -2417,72 +2498,76 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Create a new event stream that filters events from other stream
- *
- *  For every event e in source, emit e if pred(e, deps...) == true.
- *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
- *
- *  The signature of pred should be equivalent to:
- *  * bool pred(const E&, const Deps& ...)
- *
- *  Semantically equivalent of ranges::filter
- *
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename E, typename Pred, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto filter(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) -> events<E>
+namespace detail
 {
-    return detail::process_impl<E>( source,
-        dep_pack, //
-        [pred = std::forward<Pred>( pred )](
-            event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
-            for( const auto& e : range )
-                if( std::invoke( pred, e, deps... ) )
-                    out << e;
-        } );
-}
 
-/*!
- * @brief Curried version of filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-template <typename Pred, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto filter( const signal_pack<Deps...>& dep_pack, Pred&& pred )
+struct FilterAdaptor : Adaptor
 {
-    return detail::closure{
-        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return filter( std::forward<arg_t>( source ), dep_pack, pred );
-        } };
-}
 
-/*!
- * @brief Create a new event stream that filters events from other stream
- *
- *  Version without synchronization with additional signals
- *
- *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto filter( const events<E>& source, Pred&& pred ) -> events<E>
-{
-    return filter( source, signal_pack<>(), std::forward<Pred>( pred ) );
-}
+    /*!
+	 * @brief Create a new event stream that filters events from other stream
+	 *
+	 *  For every event e in source, emit e if pred(e, deps...) == true.
+	 *  Synchronized values of signals in dep_pack are passed to op as additional arguments.
+	 *
+	 *  The signature of pred should be equivalent to:
+	 *  * bool pred(const E&, const Deps& ...)
+	 *
+	 *  Semantically equivalent of ranges::filter
+	 *
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename E, typename Pred, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return process<E>( source,
+            dep_pack, //
+            [pred = std::forward<Pred>( pred )](
+                event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
+                for( const auto& e : range )
+                    if( std::invoke( pred, e, deps... ) )
+                        out << e;
+            } );
+    }
 
-/*!
- * @brief Curried version of filter(const events<E>& source, Pred&& pred)
- */
-template <typename Pred>
-UREACT_WARN_UNUSED_RESULT auto filter( Pred&& pred )
-{
-    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return filter( std::forward<arg_t>( source ), pred );
-    } };
-}
+    /*!
+	 * @brief Curried version of filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
+	 */
+    template <typename Pred, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return make_partial<FilterAdaptor>( dep_pack, std::forward<Pred>( pred ) );
+    }
+
+    /*!
+	 * @brief Create a new event stream that filters events from other stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See filter(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
+	 */
+    template <typename E, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, Pred&& pred ) const
+    {
+        return operator()( source, signal_pack<>(), std::forward<Pred>( pred ) );
+    }
+
+    /*!
+	 * @brief Curried version of filter(const events<E>& source, Pred&& pred)
+	 */
+    template <typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+    {
+        return make_partial<FilterAdaptor>( std::forward<Pred>( pred ) );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::FilterAdaptor filter;
 
 UREACT_END_NAMESPACE
 
@@ -2529,31 +2614,26 @@ private:
     const std::shared_ptr<signal_node<E>> m_target;
 };
 
+struct MonitorClosure : AdaptorClosure
+{
+    /*!
+	 * @brief Emits value changes of signal as events
+	 *
+	 *  When target changes, emit the new value 'e = target.get()'.
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+        -> events<S>
+    {
+        context& context = target.get_context();
+        return events<S>( std::make_shared<monitor_node<S>>( context, target.get_node() ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Emits value changes of signal as events
- *
- *  When target changes, emit the new value 'e = target.get()'.
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
-{
-    context& context = target.get_context();
-    return events<S>( std::make_shared<detail::monitor_node<S>>( context, target.get_node() ) );
-}
 
-/*!
- * @brief Curried version of monitor(const signal<S>& target)
- */
-UREACT_WARN_UNUSED_RESULT inline auto monitor()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return monitor( std::forward<arg_t>( source ) );
-    } };
-}
+inline constexpr detail::MonitorClosure monitor;
 
 UREACT_END_NAMESPACE
 
@@ -2570,19 +2650,7 @@ UREACT_BEGIN_NAMESPACE
  *
  *  Emits a unit for any event that passes source
  */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto unify( const events<E>& source )
-{
-    return cast<unit>( source );
-}
-
-/*!
- * @brief Curried version of unify(events_t&& source)
- */
-UREACT_WARN_UNUSED_RESULT inline auto unify()
-{
-    return cast<unit>();
-}
+inline constexpr auto unify = cast<unit>;
 
 UREACT_END_NAMESPACE
 
@@ -2590,52 +2658,39 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct ChangedToAdaptor : Adaptor
+{
+    template <typename V, typename S = std::decay_t<V>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target, V&& value ) const
+    {
+        return target | monitor | filter( [=]( const S& v ) { return v == value; } ) | unify;
+    }
+
+    template <typename V>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& value ) const
+    {
+        return make_partial<ChangedToAdaptor>( std::forward<V>( value ) );
+    }
+};
+
+} // namespace detail
+
 /*!
  * @brief Emits unit when target signal was changed
  *
  *  Creates a unit stream that emits when target is changed.
  */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto changed( const signal<S>& target ) -> events<unit>
-{
-    return monitor( target ) | unify();
-}
-
-/*!
- * @brief Curried version of changed(const signal<S>& target)
- */
-UREACT_WARN_UNUSED_RESULT inline auto changed()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return changed( std::forward<arg_t>( source ) );
-    } };
-}
+inline constexpr auto changed = monitor | unify;
 
 /*!
  * @brief Emits unit when target signal was changed to value
  *  Creates a unit stream that emits when target is changed and 'target.get() == value'.
  *  V and S should be comparable with ==.
  */
-template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto changed_to( const signal<S>& target, V&& value ) -> events<unit>
-{
-    return monitor( target ) | filter( [=]( const S& v ) { return v == value; } ) | unify();
-}
-
-/*!
- * @brief Curried version of changed_to(const signal<S>& target, V&& value)
- */
-template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT inline auto changed_to( V&& value )
-{
-    return detail::closure{ [value = std::forward<V>( value )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return changed_to( std::forward<arg_t>( source ), std::move( value ) );
-    } };
-}
+inline constexpr detail::ChangedToAdaptor changed_to;
 
 UREACT_END_NAMESPACE
 
@@ -3443,85 +3498,82 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
     return std::apply( node_builder, dep_pack.data );
 }
 
+struct FoldAdaptor : Adaptor
+{
+    /*!
+	 * @brief Folds values from an event stream into a signal
+	 *
+	 *  Iteratively combines signal value with values from event stream.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * S func(const E& event, const S& accum, const Deps& ...)
+	 *  * S func(event_range<E> range, const S& accum, const Deps& ...)
+	 *  * void func(const E& event, S& accum, const Deps& ...)
+	 *  * void func(event_range<E> range, S& accum, const Deps& ...)
+	 *
+	 *  The fold parameters:
+	 *    [const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack]
+	 *  match the corresponding arguments of the given function
+	 *    [const E& event_value, const S& accumulator, const Deps& ...deps]
+	 *
+	 *  Creates a signal with an initial value v = init.
+	 *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
+	 *  * If the return type of func is void: For every received event e in events,
+	 *    v is passed by non-cost reference to func(v, e, deps), making it mutable.
+	 *    This variant can be used if copying and comparing S is prohibitively expensive.
+	 *    Because the old and new values cannot be compared, updates will always trigger a change.
+	 *
+	 *  @note order of arguments is inverse compared with std::accumulate() to correspond fold parameters
+	 *  @note The event_range<E> option allows to explicitly batch process single turn events
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename E, typename V, typename InF, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
+    {
+        return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
+	 */
+    template <typename V, typename InF, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
+    {
+        return make_partial<FoldAdaptor>(
+            std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
+    }
+
+    /*!
+	 * @brief Folds values from an event stream into a signal
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
+	 */
+    template <typename E, typename V, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& events, V&& init, InF&& func ) const
+    {
+        return operator()(
+            events, std::forward<V>( init ), signal_pack<>{}, std::forward<InF>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
+	 */
+    template <typename V, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init, InF&& func ) const
+    {
+        return make_partial<FoldAdaptor>( std::forward<V>( init ), std::forward<InF>( func ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Folds values from an event stream into a signal
- *
- *  Iteratively combines signal value with values from event stream.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * S func(const E& event, const S& accum, const Deps& ...)
- *  * S func(event_range<E> range, const S& accum, const Deps& ...)
- *  * void func(const E& event, S& accum, const Deps& ...)
- *  * void func(event_range<E> range, S& accum, const Deps& ...)
- *
- *  The fold parameters:
- *    [const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack]
- *  match the corresponding arguments of the given function
- *    [const E& event_value, const S& accumulator, const Deps& ...deps]
- *
- *  Creates a signal with an initial value v = init.
- *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
- *  * If the return type of func is void: For every received event e in events,
- *    v is passed by non-cost reference to func(v, e, deps), making it mutable.
- *    This variant can be used if copying and comparing S is prohibitively expensive.
- *    Because the old and new values cannot be compared, updates will always trigger a change.
- *
- *  @note order of arguments is inverse compared with std::accumulate() to correspond fold parameters
- *  @note The event_range<E> option allows to explicitly batch process single turn events
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename E, typename V, typename InF, typename... Deps, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold(
-    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
-    -> signal<S>
-{
-    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
-}
-
-/*!
- * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
- */
-template <typename V, typename InF, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
-{
-    return detail::closure{
-        [init = std::forward<V>( init ), dep_pack = dep_pack, func = std::forward<InF>( func )](
-            auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return fold( std::forward<arg_t>( source ), std::move( init ), dep_pack, func );
-        } };
-}
-
-/*!
- * @brief Folds values from an event stream into a signal
- *
- *  Version without synchronization with additional signals
- *
- *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
- */
-template <typename E, typename V, typename InF, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold( const events<E>& events, V&& init, InF&& func ) -> signal<S>
-{
-    return fold_impl( events, std::forward<V>( init ), signal_pack<>(), std::forward<InF>( func ) );
-}
-
-/*!
- * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
- */
-template <typename V, typename InF>
-UREACT_WARN_UNUSED_RESULT auto fold( V&& init, InF&& func )
-{
-    return detail::closure{
-        [init = std::forward<V>( init ), func = std::forward<InF>( func )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return fold( std::forward<arg_t>( source ), std::move( init ), func );
-        } };
-}
+inline constexpr detail::FoldAdaptor fold;
 
 UREACT_END_NAMESPACE
 
@@ -3559,47 +3611,42 @@ struct has_insert_method<Cont,
 template <typename Cont, class Value>
 inline constexpr bool has_insert_method_v = has_insert_method<Cont, Value>::value;
 
+template <template <typename...> class ContT>
+struct CollectClosure : AdaptorClosure
+{
+    /*!
+	 * @brief Collects received events into signal<ContT<E>>
+	 *
+	 *  Type of resulting container must be specified explicitly, i.e. collect<std::vector>(src).
+	 *  Container type ContT should has either push_back(const E&) method or has insert(const E&) method.
+	 *  Mostly intended for testing purpose.
+	 *
+	 *  Semantically equivalent of ranges::to
+	 *
+	 *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
+	 *           because any observer or signal/events node will prolong its lifetime.
+	 */
+    template <class E, class Cont = ContT<E>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const
+        -> signal<Cont>
+    {
+        return fold( source,
+            Cont{},                         //
+            []( const E& e, Cont& accum ) { //
+                if constexpr( detail::has_push_back_method_v<Cont, E> )
+                    accum.push_back( e );
+                else if constexpr( detail::has_insert_method_v<Cont, E> )
+                    accum.insert( e );
+                else
+                    static_assert( detail::always_false<Cont, E>, "Unsupported container" );
+            } );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Collects received events into signal<ContT<E>>
- *
- *  Type of resulting container must be specified explicitly, i.e. collect<std::vector>(src).
- *  Container type ContT should has either push_back(const E&) method or has insert(const E&) method.
- *  Mostly intended for testing purpose.
- *
- *  Semantically equivalent of ranges::to
- *
- *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
- *           because any observer or signal/events node will prolong its lifetime.
- */
-template <template <typename...> class ContT, class E, class Cont = ContT<E>>
-UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> signal<Cont>
-{
-    return fold( source,
-        Cont{},                         //
-        []( const E& e, Cont& accum ) { //
-            if constexpr( detail::has_push_back_method_v<Cont, E> )
-                accum.push_back( e );
-            else if constexpr( detail::has_insert_method_v<Cont, E> )
-                accum.insert( e );
-            else
-                static_assert( detail::always_false<Cont, E>, "Unsupported container" );
-        } );
-}
-
-/*!
- * @brief Curried version of collect(const events<E>& source)
- */
 template <template <typename...> class ContT>
-UREACT_WARN_UNUSED_RESULT auto collect()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return collect<ContT>( std::forward<arg_t>( source ) );
-    } };
-}
+inline constexpr detail::CollectClosure<ContT> collect;
 
 UREACT_END_NAMESPACE
 
@@ -3614,33 +3661,20 @@ UREACT_BEGIN_NAMESPACE
 /*!
  * @brief Counts amount of received events into signal<S>
  *
- *  Type of resulting signal can be explicitly specified.
+ *  Type of resulting signal should be explicitly specified.
  *  Value type should be default constructing and prefix incremented
  *
  *  @warning Not to be confused with std::count(from, to, value)
  */
-template <typename S = size_t, class E>
-UREACT_WARN_UNUSED_RESULT auto count( const events<E>& source ) -> signal<S>
-{
-    return fold( source,
-        S{},                       //
-        []( const E&, S& accum ) { //
-            ++accum;
-        } );
-}
+template <typename S>
+inline constexpr auto count_ = fold( S{}, []( const auto&, S& accum ) { ++accum; } );
 
 /*!
- * @brief Curried version of count(const events<E>& source)
+ * @brief Counts amount of received events into signal<size_t>
+ *
+ *  @warning Not to be confused with std::count(from, to, value)
  */
-template <typename S = size_t>
-UREACT_WARN_UNUSED_RESULT auto count()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return count<S>( std::forward<arg_t>( source ) );
-    } };
-}
+inline constexpr auto count = count_<size_t>;
 
 UREACT_END_NAMESPACE
 
@@ -3819,54 +3853,39 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
-/*!
- * @brief Create a new event stream by flattening a signal
- */
-template <typename InnerS>
-UREACT_WARN_UNUSED_RESULT auto flatten_impl( const signal<InnerS>& outer )
+struct FlattenClosure : AdaptorClosure
 {
-    context& context = outer.get_context();
+    /*!
+	 * @brief Create a new event stream by flattening a signal
+	 */
+    template <typename InnerS>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<InnerS>& outer ) const
+    {
+        context& context = outer.get_context();
 
-    using value_t = typename InnerS::value_t;
+        using value_t = typename InnerS::value_t;
 
-    // clang-format off
-    using Node =
-        select_t<
-            condition<is_var_signal_v<InnerS>,   signal_flatten_node<InnerS, value_t>>,
-            condition<is_signal_v<InnerS>,       signal_flatten_node<InnerS, value_t>>,
-            condition<is_event_source_v<InnerS>, event_flatten_node<InnerS, value_t>>,
-            condition<is_event_v<InnerS>,        event_flatten_node<InnerS, value_t>>,
-            signature_mismatches>;
-    // clang-format on
+        // clang-format off
+	    using Node =
+	        select_t<
+	            condition<is_var_signal_v<InnerS>,   signal_flatten_node<InnerS, value_t>>,
+	            condition<is_signal_v<InnerS>,       signal_flatten_node<InnerS, value_t>>,
+	            condition<is_event_source_v<InnerS>, event_flatten_node<InnerS, value_t>>,
+	            condition<is_event_v<InnerS>,        event_flatten_node<InnerS, value_t>>,
+	            signature_mismatches>;
+        // clang-format on
 
-    static_assert( !std::is_same_v<Node, signature_mismatches>,
-        "flatten: Passed signal does not match any of the supported signatures" );
+        static_assert( !std::is_same_v<Node, signature_mismatches>,
+            "flatten: Passed signal does not match any of the supported signatures" );
 
-    return InnerS{ std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
-}
+        return InnerS{
+            std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
+    }
+};
 
 } // namespace detail
 
-/*!
- * @brief Create a new event stream by flattening a signal
- */
-template <typename InnerS>
-UREACT_WARN_UNUSED_RESULT auto flatten( const signal<InnerS>& outer )
-{
-    return detail::flatten_impl( outer );
-}
-
-/*!
- * @brief Curried version of flatten(const signal<signal<InnerS>>& outer)
- */
-UREACT_WARN_UNUSED_RESULT inline auto flatten()
-{
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-        return flatten( std::forward<arg_t>( source ) );
-    } };
-}
+inline constexpr detail::FlattenClosure flatten;
 
 UREACT_END_NAMESPACE
 
@@ -3878,34 +3897,41 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Holds the most recent event in a signal
- *
- *  Creates a @ref signal with an initial value v = init.
- *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
- */
-template <typename V, typename E>
-UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> signal<E>
+namespace detail
 {
-    return fold( source,
-        std::forward<V>( init ),                  //
-        []( event_range<E> range, const auto& ) { //
-            return *range.rbegin();
-        } );
-}
 
-/*!
- * @brief Curried version of hold()
- */
-template <typename V>
-UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
+struct HoldAdaptor : Adaptor
 {
-    return detail::closure{ [init = std::forward<V>( init )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return hold( std::forward<arg_t>( source ), std::move( init ) );
-    } };
-}
+
+    /*!
+	 * @brief Holds the most recent event in a signal
+	 *
+	 *  Creates a @ref signal with an initial value v = init.
+	 *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
+	 */
+    template <typename V, typename E>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, V&& init ) const
+    {
+        return fold( source,
+            std::forward<V>( init ),                  //
+            []( event_range<E> range, const auto& ) { //
+                return *range.rbegin();
+            } );
+    }
+
+    /*!
+	 * @brief Curried version of hold()
+	 */
+    template <typename V>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init ) const
+    {
+        return make_partial<HoldAdaptor>( std::forward<V>( init ) );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::HoldAdaptor hold;
 
 UREACT_END_NAMESPACE
 
@@ -4105,204 +4131,215 @@ struct unary_plus
     using is_transparent = void;
 };
 
+template <typename SIn = void>
+struct LiftAdaptor : Adaptor
+{
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, arg_pack.get(), ...)
+	 * @tparam Values types of signal values
+	 *
+	 * This value is set on construction and updated when any args have changed
+	 */
+    template <typename... Values, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Values...>& arg_pack, InF&& func ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, Values...>;
+        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
+
+        context& context = std::get<0>( arg_pack.data ).get_context();
+
+        auto node_builder = [&context, &func]( const signal<Values>&... args ) {
+            return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
+        };
+
+        return std::apply( node_builder, arg_pack.data );
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, arg.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename Value, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal<Value>& arg, InF&& func ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, Value>;
+        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
+        return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, arg.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename Value, typename OpIn, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        temp_signal<Value, OpIn>&& arg, InF&& func ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, Value>;
+        using Op = detail::function_op<S, F, OpIn>;
+        return temp_signal<S, Op>{
+            arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
+    }
+
+    /*!
+	 * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
+	 */
+    template <typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
+    {
+        return make_partial<LiftAdaptor>( std::forward<InF>( func ) );
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftSignal,
+        typename InF,
+        typename RightSignal,
+        class = std::enable_if_t<is_signal_v<LeftSignal>>,
+        class = std::enable_if_t<is_signal_v<RightSignal>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const LeftSignal& lhs, InF&& func, const RightSignal& rhs ) const
+    {
+        return operator()( with( lhs, rhs ), std::forward<InF>( func ) );
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftSignal,
+        typename InF,
+        typename RightVal,
+        class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
+        class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        LeftSignal&& lhs, InF&& func, RightVal&& rhs ) const
+    {
+        return operator()( std::forward<LeftSignal>( lhs ),
+            std::bind(
+                std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftVal,
+        typename InF,
+        typename RightSignal,
+        class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
+        class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
+        typename Wtf = void>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        LeftVal&& lhs, InF&& func, RightSignal&& rhs ) const
+    {
+        return operator()( std::forward<RightSignal>( rhs ),
+            std::bind(
+                std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftVal, typename LeftOp, typename InF, typename RightVal, typename RightOp>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
+    {
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = detail::function_op<S, F, LeftOp, RightOp>;
+
+        context& context = lhs.get_context();
+        assert( context == rhs.get_context() );
+
+        return temp_signal<S, Op>{ context,
+            std::forward<InF>( func ),
+            std::move( lhs ).steal_op(),
+            std::move( rhs ).steal_op() };
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftVal,
+        typename LeftOp,
+        typename InF,
+        typename RightSignal,
+        class = std::enable_if_t<is_signal_v<RightSignal>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs ) const
+    {
+        using RightVal = typename RightSignal::value_t;
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
+
+        context& context = lhs.get_context();
+        assert( context == rhs.get_context() );
+
+        return temp_signal<S, Op>{
+            context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
+    }
+
+    /*!
+	 * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+	 *
+	 * This value is set on construction and updated when arg have changed
+	 */
+    template <typename LeftSignal,
+        typename InF,
+        typename RightVal,
+        typename RightOp,
+        class = std::enable_if_t<is_signal_v<LeftSignal>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
+    {
+        using LeftVal = typename LeftSignal::value_t;
+        using F = std::decay_t<InF>;
+        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
+
+        context& context = lhs.get_context();
+        assert( context == rhs.get_context() );
+
+        return temp_signal<S, Op>{
+            context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
+    }
+};
+
 } // namespace detail
 
 /*!
- * @brief Create a new signal node with value v = std::invoke(func, arg_pack.get(), ...)
- * @tparam Values types of signal values
+ * @brief Create a new signal applying function to given signals
  *
- * This value is set on construction and updated when any args have changed
+ *  Type of resulting signal should be explicitly specified.
  */
-template <typename SIn = void, typename... Values, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF&& func )
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, Values...>;
-    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
-
-    context& context = std::get<0>( arg_pack.data ).get_context();
-
-    auto node_builder = [&context, &func]( const signal<Values>&... args ) {
-        return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
-    };
-
-    return std::apply( node_builder, arg_pack.data );
-}
+template <typename SIn = void>
+inline constexpr detail::LiftAdaptor<SIn> lift_;
 
 /*!
- * @brief Create a new signal node with value v = std::invoke(func, arg.get())
+ * @brief Create a new signal applying function to given signals
  *
- * This value is set on construction and updated when arg have changed
+ *  Type of resulting signal should be explicitly specified.
  */
-template <typename SIn = void, typename Value, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, Value>;
-    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
-    return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, arg.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void, typename Value, typename OpIn, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func )
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, Value>;
-    using Op = detail::function_op<S, F, OpIn>;
-    return temp_signal<S, Op>{
-        arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
-}
-
-/*!
- * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
- */
-template <typename SIn = void, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
-{
-    return detail::closure{ [func = std::forward<InF>( func )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert(
-            is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
-        return lift<SIn>( std::forward<arg_t>( source ), func );
-    } };
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftSignal,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<is_signal_v<LeftSignal>>,
-    class = std::enable_if_t<is_signal_v<RightSignal>>>
-UREACT_WARN_UNUSED_RESULT auto lift( const LeftSignal& lhs, InF&& func, const RightSignal& rhs )
-{
-    return lift<SIn>( with( lhs, rhs ), std::forward<InF>( func ) );
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftSignal,
-    typename InF,
-    typename RightVal,
-    class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
-    class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
-UREACT_WARN_UNUSED_RESULT auto lift( LeftSignal&& lhs, InF&& func, RightVal&& rhs )
-{
-    return lift<SIn>( std::forward<LeftSignal>( lhs ),
-        std::bind(
-            std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftVal,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
-    class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
-    typename Wtf = void>
-UREACT_WARN_UNUSED_RESULT auto lift( LeftVal&& lhs, InF&& func, RightSignal&& rhs )
-{
-    return lift<SIn>( std::forward<RightSignal>( rhs ),
-        std::bind(
-            std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftVal,
-    typename LeftOp,
-    typename InF,
-    typename RightVal,
-    typename RightOp>
-UREACT_WARN_UNUSED_RESULT auto lift(
-    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
-{
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-    using Op = detail::function_op<S, F, LeftOp, RightOp>;
-
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
-
-    return temp_signal<S, Op>{ context,
-        std::forward<InF>( func ),
-        std::move( lhs ).steal_op(),
-        std::move( rhs ).steal_op() };
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftVal,
-    typename LeftOp,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<is_signal_v<RightSignal>>>
-UREACT_WARN_UNUSED_RESULT auto lift(
-    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs )
-{
-    using RightVal = typename RightSignal::value_t;
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-    using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
-
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
-
-    return temp_signal<S, Op>{
-        context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
-}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftSignal,
-    typename InF,
-    typename RightVal,
-    typename RightOp,
-    class = std::enable_if_t<is_signal_v<LeftSignal>>>
-UREACT_WARN_UNUSED_RESULT auto lift(
-    const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
-{
-    using LeftVal = typename LeftSignal::value_t;
-    using F = std::decay_t<InF>;
-    using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-    using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
-
-    context& context = lhs.get_context();
-    assert( context == rhs.get_context() );
-
-    return temp_signal<S, Op>{
-        context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
-}
+inline constexpr detail::LiftAdaptor<> lift;
 
 #define UREACT_DECLARE_UNARY_LIFT_OPERATOR( op, fn )                                               \
     template <typename Signal, class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>        \
@@ -4430,27 +4467,32 @@ class event_op_node;
 template <typename E>
 using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
+struct MergeAdaptor : Adaptor
+{
+    /*!
+	 * @brief Emit all events in source1, ... sources
+	 *
+	 *  @warning Not to be confused with std::merge() or ranges::merge()
+	 */
+    template <typename Source, typename... Sources, typename E = Source>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<Source>& source1, const events<Sources>&... sources ) const
+    {
+        static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
+
+        using Op = detail::event_merge_op<E,
+            detail::event_stream_node_ptr_t<Source>,
+            detail::event_stream_node_ptr_t<Sources>...>;
+
+        context& context = source1.get_context();
+        return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
+            context, source1.get_node(), sources.get_node()... ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Emit all events in source1, ... sources
- *
- *  @warning Not to be confused with std::merge() or ranges::merge()
- */
-template <typename Source, typename... Sources, typename E = Source>
-UREACT_WARN_UNUSED_RESULT auto merge(
-    const events<Source>& source1, const events<Sources>&... sources ) -> events<E>
-{
-    static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
-
-    using Op = detail::event_merge_op<E,
-        detail::event_stream_node_ptr_t<Source>,
-        detail::event_stream_node_ptr_t<Sources>...>;
-
-    context& context = source1.get_context();
-    return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
-        context, source1.get_node(), sources.get_node()... ) );
-}
+inline constexpr detail::MergeAdaptor merge;
 
 UREACT_END_NAMESPACE
 
@@ -4811,140 +4853,137 @@ auto observe_events_impl(
     return observer( raw_node, subject_node );
 }
 
+struct ObserveAdaptor : Adaptor
+{
+
+    /*!
+	 * @brief Create observer for signal
+	 *
+	 *  When the signal value S of subject changes, func is called
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * void func(const S&)
+	 *  * observer_action func(const S&)
+	 *
+	 *  By returning observer_action::stop_and_detach, the observer function can request
+	 *  its own detachment. Returning observer_action::next keeps the observer attached.
+	 *  Using a void return type is the same as always returning observer_action::next.
+	 *
+	 *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+	 */
+    template <typename F, typename S>
+    constexpr auto operator()( const signal<S>& subject, F&& func ) const
+    {
+        return observe_signal_impl( subject, std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Create observer for temporary signal
+	 *
+	 *  Same as observe(const signal<S>& subject, F&& func),
+	 *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+	 */
+    template <typename F, typename S>
+    UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+    constexpr auto operator()( signal<S>&& subject, F&& func ) const
+    {
+        return observe_signal_impl( std::move( subject ), std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Create observer for event stream
+	 *
+	 *  For every event e in subject, func is called.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * observer_action func(event_range<E> range, const Deps& ...)
+	 *  * observer_action func(const E&, const Deps& ...)
+	 *  * void func(event_range<E> range, const Deps& ...)
+	 *  * void func(const E&, const Deps& ...)
+	 *
+	 *  By returning observer_action::stop_and_detach, the observer function can request
+	 *  its own detachment. Returning observer_action::next keeps the observer attached.
+	 *  Using a void return type is the same as always returning observer_action::next.
+	 *
+	 *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
+	 *  @note The event_range<E> option allows to explicitly batch process single turn events
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename F, typename E, typename... Deps>
+    constexpr auto operator()(
+        const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
+    {
+        return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Create observer for temporary event stream
+	 *
+	 *  Same as observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func),
+	 *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+	 */
+    template <typename F, typename E, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+    constexpr auto operator()( events<E>&& subject,
+        const signal_pack<Deps...>& dep_pack,
+        F&& func ) const // TODO: check in tests
+    {
+        return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Create observer for event stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F, typename E>
+    constexpr auto operator()( const events<E>& subject, F&& func ) const
+    {
+        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Create observer for temporary event stream
+	 *
+	 *  Same as observe(const events<E>& subject, F&& func),
+	 *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
+	 */
+    template <typename F, typename E>
+    UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
+    constexpr auto operator()( events<E>&& subject, F&& func ) const // TODO: check in tests
+    {
+        return operator()( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of observe(T&& subject, F&& func)
+	 */
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const // TODO: check in tests
+    {
+        // TODO: propagate [[nodiscard]] to closure operator() and operator|
+        //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
+        //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
+        return make_partial<ObserveAdaptor>( std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, F&& func ) const // TODO: check in tests
+    {
+        return make_partial<ObserveAdaptor>( dep_pack, std::forward<F>( func ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Create observer for signal
- *
- *  When the signal value S of subject changes, func is called
- *
- *  The signature of func should be equivalent to:
- *  * void func(const S&)
- *  * observer_action func(const S&)
- *
- *  By returning observer_action::stop_and_detach, the observer function can request
- *  its own detachment. Returning observer_action::next keeps the observer attached.
- *  Using a void return type is the same as always returning observer_action::next.
- *
- *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
- */
-template <typename F, typename S>
-auto observe( const signal<S>& subject, F&& func ) -> observer
-{
-    return observe_signal_impl( subject, std::forward<F>( func ) );
-}
-
-/*!
- * @brief Create observer for temporary signal
- *
- *  Same as observe(const signal<S>& subject, F&& func),
- *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
- */
-template <typename F, typename S>
-UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( signal<S>&& subject, F&& func ) -> observer
-{
-    return observe_signal_impl( std::move( subject ), std::forward<F>( func ) );
-}
-
-/*!
- * @brief Create observer for event stream
- *
- *  For every event e in subject, func is called.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * observer_action func(event_range<E> range, const Deps& ...)
- *  * observer_action func(const E&, const Deps& ...)
- *  * void func(event_range<E> range, const Deps& ...)
- *  * void func(const E&, const Deps& ...)
- *
- *  By returning observer_action::stop_and_detach, the observer function can request
- *  its own detachment. Returning observer_action::next keeps the observer attached.
- *  Using a void return type is the same as always returning observer_action::next.
- *
- *  @note Resulting observer can be ignored. Lifetime of observer node will match subject signal's lifetime
- *  @note The event_range<E> option allows to explicitly batch process single turn events
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename F, typename E, typename... Deps>
-auto observe( const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) -> observer
-{
-    return observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
-}
-
-/*!
- * @brief Create observer for temporary event stream
- *
- *  Same as observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func),
- *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
- */
-template <typename F, typename E, typename... Deps>
-UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, const signal_pack<Deps...>& dep_pack, F&& func )
-    -> observer // TODO: check in tests
-{
-    return observe_events_impl( std::move( subject ), dep_pack, std::forward<F>( func ) );
-}
-
-/*!
- * @brief Create observer for event stream
- *
- *  Version without synchronization with additional signals
- *
- *  See observe(const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename E>
-auto observe( const events<E>& subject, F&& func ) -> observer
-{
-    return observe_events_impl( subject, signal_pack<>(), std::forward<F>( func ) );
-}
-
-/*!
- * @brief Create observer for temporary event stream
- *
- *  Same as observe(const events<E>& subject, F&& func),
- *  but subject signal is about to die so caller must use result, otherwise observation isn't performed.
- */
-template <typename F, typename E>
-UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
-auto observe( events<E>&& subject, F&& func ) -> observer // TODO: check in tests
-{
-    return observe_events_impl( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
-}
-
-/*!
- * @brief Curried version of observe(T&& subject, F&& func)
- */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT auto observe( F&& func ) // TODO: check in tests
-{
-    // TODO: propagate [[nodiscard]] to closure operator() and operator|
-    //       they should not be nodiscard for l-value arguments, but only for r-values like observe() does
-    //       but maybe all observe() concept should be reconsidered before to not do feature that is possibly not needed
-    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
-        using arg_t = decltype( subject );
-        static_assert(
-            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-        return observe( std::forward<arg_t>( subject ), func );
-    } };
-}
-
-/*!
- * @brief Curried version of observe(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto observe(
-    const signal_pack<Deps...>& dep_pack, F&& func ) // TODO: check in tests
-{
-    return detail::closure{
-        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
-            using arg_t = decltype( subject );
-            static_assert( is_observable_v<std::decay_t<arg_t>>,
-                "Observable type is required (signal or event)" );
-            return observe( std::forward<arg_t>( subject ), dep_pack, func );
-        } };
-}
+inline constexpr detail::ObserveAdaptor observe;
 
 UREACT_END_NAMESPACE
 
@@ -4956,36 +4995,43 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Emits the value of a target signal when an event is received
- *
- *  Creates an event stream that emits target.get() when receiving an event from trigger.
- *  The values of the received events are irrelevant.
- */
-template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>& target )
-    -> events<S>
+namespace detail
 {
-    return process<S>( trigger,
-        with( target ),
-        []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
-            for( size_t i = 0, ie = range.size(); i < ie; ++i )
-                out << target_value;
-        } );
-}
 
-/*!
- * @brief Curried version of pulse()
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
+struct PulseAdaptor : Adaptor
 {
-    return detail::closure{ [target = target]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return pulse( std::forward<arg_t>( source ), target );
-    } };
-}
+
+    /*!
+	 * @brief Emits the value of a target signal when an event is received
+	 *
+	 *  Creates an event stream that emits target.get() when receiving an event from trigger.
+	 *  The values of the received events are irrelevant.
+	 */
+    template <typename S, typename E>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& trigger, const signal<S>& target ) const
+    {
+        return process<S>( trigger,
+            with( target ),
+            []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
+                for( size_t i = 0, ie = range.size(); i < ie; ++i )
+                    out << target_value;
+            } );
+    }
+
+    /*!
+	 * @brief Curried version of pulse()
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+    {
+        return make_partial<PulseAdaptor>( target );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::PulseAdaptor pulse;
 
 UREACT_END_NAMESPACE
 
@@ -5028,26 +5074,39 @@ struct decay_input<member_var_signal<Owner, S>>
 template <typename T>
 using decay_input_t = typename decay_input<T>::type;
 
+struct ReactiveRefAdaptor : Adaptor
+{
+
+    /*!
+	 * @brief Adaptor to flatten public signal attribute of class pointed be reference
+	 *
+	 *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
+	 *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
+	 *  This utility receives a signal pointer bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
+	 */
+    template <typename Signal,
+        typename InF,
+        class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& outer, InF&& func ) const
+    {
+        using S = typename std::decay_t<Signal>::value_t;
+        using F = std::decay_t<InF>;
+        using R = std::invoke_result_t<F, S>;
+        using DecayedR = detail::decay_input_t<std::decay_t<R>>;
+        return flatten(
+            lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
+    }
+
+    template <typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
+    {
+        return make_partial<ReactiveRefAdaptor>( std::forward<InF>( func ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Utility to flatten public signal attribute of class pointed be reference
- *
- *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
- *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
- *  This utility receives a signal pointer bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
- */
-template <typename Signal,
-    typename InF,
-    class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
-{
-    using S = typename std::decay_t<Signal>::value_t;
-    using F = std::decay_t<InF>;
-    using R = std::invoke_result_t<F, S>;
-    using DecayedR = detail::decay_input_t<std::decay_t<R>>;
-    return flatten( lift<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
-}
+inline constexpr detail::ReactiveRefAdaptor reactive_ref;
 
 UREACT_END_NAMESPACE
 
@@ -5110,36 +5169,43 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Sets the signal value to the value of a target signal when an event is received
- *
- *  Creates a signal with value v = target.get().
- *  The value is set on construction and updated only when receiving an event from trigger
- */
-template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto snapshot( const events<E>& trigger, const signal<S>& target )
-    -> signal<S>
+namespace detail
 {
-    return fold( trigger,
-        target.get(),
-        with( target ),
-        []( event_range<E> range, const S&, const S& value ) { //
-            return value;
-        } );
-}
 
-/*!
- * @brief Curried version of snapshot()
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT auto snapshot( const signal<S>& target )
+struct SnapshotAdaptor : Adaptor
 {
-    return detail::closure{ [target = target]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return snapshot( std::forward<arg_t>( source ), target );
-    } };
-}
+
+    /*!
+	 * @brief Sets the signal value to the value of a target signal when an event is received
+	 *
+	 *  Creates a signal with value v = target.get().
+	 *  The value is set on construction and updated only when receiving an event from trigger
+	 */
+    template <typename S, typename E>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& trigger, const signal<S>& target ) const
+    {
+        return fold( trigger,
+            target.get(),
+            with( target ),
+            []( event_range<E> range, const S&, const S& value ) { //
+                return value;
+            } );
+    }
+
+    /*!
+	 * @brief Curried version of snapshot()
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+    {
+        return make_partial<SnapshotAdaptor>( target );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::SnapshotAdaptor snapshot;
 
 UREACT_END_NAMESPACE
 
@@ -5188,7 +5254,7 @@ public:
 
 private:
     // decrement operator decrements only to 0
-    [[nodiscard]] static size_t dec( const size_t value )
+    UREACT_WARN_UNUSED_RESULT static size_t dec( const size_t value )
     {
         if( value == 0 ) // [[likely]]
             return 0;
@@ -5199,6 +5265,60 @@ private:
     size_t m_value;
 };
 
+template <typename Derived>
+struct TakeDropAdaptorBase : Adaptor
+{
+    template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const
+    {
+        return make_partial<Derived>( count );
+    }
+};
+
+struct TakeAdaptor : TakeDropAdaptorBase<TakeAdaptor>
+{
+
+    /*!
+	 * @brief Keeps first N elements from the source stream
+	 *
+	 *  Semantically equivalent of std::ranges::views::take
+	 */
+    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const N count ) const
+    {
+        assert( count >= 0 );
+        return filter( source,                                        //
+            [i = detail::countdown( count )]( const auto& ) mutable { //
+                return bool( i-- );
+            } );
+    }
+
+    using TakeDropAdaptorBase::operator();
+};
+
+struct DropAdaptor : TakeDropAdaptorBase<DropAdaptor>
+{
+
+    /*!
+	 * @brief Skips first N elements from the source stream
+	 *
+	 *  Semantically equivalent of std::ranges::views::drop
+	 */
+    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const N count ) const
+    {
+        assert( count >= 0 );
+        return filter( source,                                        //
+            [i = detail::countdown( count )]( const auto& ) mutable { //
+                return !bool( i-- );
+            } );
+    }
+
+    using TakeDropAdaptorBase::operator();
+};
+
 } // namespace detail
 
 /*!
@@ -5206,58 +5326,14 @@ private:
  *
  *  Semantically equivalent of std::ranges::views::take
  */
-template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto take( const events<E>& source, const N count )
-{
-    assert( count >= 0 );
-    return filter( source,                                        //
-        [i = detail::countdown( count )]( const auto& ) mutable { //
-            return bool( i-- );
-        } );
-}
-
-/*!
- * @brief Curried version of take(const events<E>& source, const size_t count)
- */
-template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto take( const N count )
-{
-    assert( count >= 0 );
-    return detail::closure{ [count]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take( std::forward<arg_t>( source ), count );
-    } };
-}
+inline constexpr detail::TakeAdaptor take;
 
 /*!
  * @brief Skips first N elements from the source stream
  *
  *  Semantically equivalent of std::ranges::views::drop
  */
-template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto drop( const events<E>& source, const N count )
-{
-    assert( count >= 0 );
-    return filter( source,                                        //
-        [i = detail::countdown( count )]( const auto& ) mutable { //
-            return !bool( i-- );
-        } );
-}
-
-/*!
- * @brief Curried version of drop(const events<E>& source, const N count)
- */
-template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-UREACT_WARN_UNUSED_RESULT auto drop( const N count )
-{
-    assert( count >= 0 );
-    return detail::closure{ [count]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return drop( std::forward<arg_t>( source ), count );
-    } };
-}
+inline constexpr detail::DropAdaptor drop;
 
 UREACT_END_NAMESPACE
 
@@ -5269,6 +5345,92 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+template <typename Derived>
+struct TakeDropWhileAdaptorBase : Adaptor
+{
+    template <typename E, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, Pred&& pred ) const
+    {
+        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
+    }
+
+    template <typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
+    }
+
+    template <typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+    {
+        return make_partial<Derived>( std::forward<Pred>( pred ) );
+    }
+};
+
+struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
+{
+
+    /*!
+	 * @brief Keeps the first elements of the source stream that satisfy the predicate
+	 *
+	 *  Keeps events from the source stream, starting at the beginning and ending
+	 *  at the first element for which the predicate returns false.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of pred should be equivalent to:
+	 *  * bool func(const E&, const Deps& ...)
+	 */
+    template <typename E, typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return filter( source,
+            dep_pack,
+            [passed = true, pred = std::forward<Pred>( pred )] //
+            ( const auto& e, const auto... deps ) mutable {
+                passed = passed && std::invoke( pred, e, deps... );
+                return passed;
+            } );
+    }
+
+    using TakeDropWhileAdaptorBase::operator();
+};
+
+struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
+{
+
+    /*!
+	 * @brief Skips the first elements of the source stream that satisfy the predicate
+	 *
+	 *  Takes events beginning at the first for which the predicate returns false.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of pred should be equivalent to:
+	 *  * bool func(const E&, const Deps& ...)
+	 */
+    template <typename E, typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return filter( source,
+            dep_pack,
+            [passed = false, pred = std::forward<Pred>( pred )] //
+            ( const auto& e, const auto... deps ) mutable {
+                passed = passed || !std::invoke( pred, e, deps... );
+                return passed;
+            } );
+    }
+
+    using TakeDropWhileAdaptorBase::operator();
+};
+
+} // namespace detail
+
 /*!
  * @brief Keeps the first elements of the source stream that satisfy the predicate
  *
@@ -5279,59 +5441,7 @@ UREACT_BEGIN_NAMESPACE
  *  The signature of pred should be equivalent to:
  *  * bool func(const E&, const Deps& ...)
  */
-template <typename E, typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto take_while(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
-{
-    return filter( source,
-        dep_pack,
-        [passed = true, pred = std::forward<Pred>( pred )] //
-        ( const auto& e, const auto... deps ) mutable {
-            passed = passed && std::invoke( pred, e, deps... );
-            return passed;
-        } );
-}
-
-/*!
- * @brief Curried version of take_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-template <typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto take_while(
-    const signal_pack<Deps...>& dep_pack, Pred&& pred )
-{
-    return detail::closure{ [dep_pack = dep_pack, pred = std::forward<Pred>( pred )] //
-        ( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return take_while( std::forward<arg_t>( source ), dep_pack, pred );
-        } };
-}
-
-/*!
- * @brief Keeps the first elements of the source stream that satisfy the unary predicate
- *
- *  Keeps events from the source stream, starting at the beginning and ending
- *  at the first element for which the predicate returns false.
- *  Semantically equivalent of std::ranges::views::take_while
- */
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred )
-{
-    return take_while( source, signal_pack<>(), std::forward<Pred>( pred ) );
-}
-
-/*!
- * @brief Curried version of take_while(const events<E>& source, Pred&& pred)
- */
-template <typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
-{
-    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return take_while( std::forward<arg_t>( source ), pred );
-    } };
-}
+inline constexpr detail::TakeWhileAdaptor take_while;
 
 /*!
  * @brief Skips the first elements of the source stream that satisfy the predicate
@@ -5342,58 +5452,7 @@ UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
  *  The signature of pred should be equivalent to:
  *  * bool func(const E&, const Deps& ...)
  */
-template <typename E, typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto drop_while(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
-{
-    return filter( source,
-        dep_pack,
-        [passed = false, pred = std::forward<Pred>( pred )] //
-        ( const auto& e, const auto... deps ) mutable {
-            passed = passed || !std::invoke( pred, e, deps... );
-            return passed;
-        } );
-}
-
-/*!
- * @brief Curried version of drop_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-template <typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto drop_while(
-    const signal_pack<Deps...>& dep_pack, Pred&& pred )
-{
-    return detail::closure{
-        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
-            using arg_t = decltype( source );
-            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-            return drop_while( std::forward<arg_t>( source ), dep_pack, pred );
-        } };
-}
-
-/*!
- * @brief Skips the first elements of the source stream that satisfy the unary predicate
- *
- *  Takes events beginning at the first for which the predicate returns false.
- *  Semantically equivalent of std::ranges::views::drop_while
- */
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred )
-{
-    return drop_while( source, signal_pack<>(), std::forward<Pred>( pred ) );
-}
-
-/*!
- * @brief Curried version of drop_while(const events<E>& source, Pred&& pred)
- */
-template <typename Pred>
-UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
-{
-    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return drop_while( std::forward<arg_t>( source ), pred );
-    } };
-}
+inline constexpr detail::DropWhileAdaptor drop_while;
 
 UREACT_END_NAMESPACE
 
@@ -5405,103 +5464,103 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Create observer for signal and return observed signal
- *
- *  When the signal value S of subject changes, func is called
- *
- *  The signature of func should be equivalent to:
- *  * void func(const S&)
- *  * observer_action func(const S&)
- *
- *  By returning observer_action::stop_and_detach, the observer function can request
- *  its own detachment. Returning observer_action::next keeps the observer attached.
- *  Using a void return type is the same as always returning observer_action::next.
- */
-template <typename F,
-    typename Signal, //
-    class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-UREACT_WARN_UNUSED_RESULT auto tap( Signal&& subject, F&& func )
+namespace detail
 {
-    std::ignore = observe_signal_impl( subject, std::forward<F>( func ) );
-    return std::forward<Signal>( subject );
-}
 
-/*!
- * @brief Create observer for event stream and return observed event stream
- *
- *  For every event e in subject, func is called.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * observer_action func(event_range<E> range, const Deps& ...)
- *  * observer_action func(const E&, const Deps& ...)
- *  * void func(event_range<E> range, const Deps& ...)
- *  * void func(const E&, const Deps& ...)
- *
- *  By returning observer_action::stop_and_detach, the observer function can request
- *  its own detachment. Returning observer_action::next keeps the observer attached.
- *  Using a void return type is the same as always returning observer_action::next.
- *
- *  @note The event_range<E> option allows to explicitly batch process single turn events
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename F,
-    typename Events,
-    typename... Deps,
-    class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
-UREACT_WARN_UNUSED_RESULT auto tap(
-    Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func )
+struct TapAdaptor : Adaptor
 {
-    std::ignore = observe_events_impl( subject, dep_pack, std::forward<F>( func ) );
-    return std::forward<Events>( subject );
-}
 
-/*!
- * @brief Create observer for event stream and return observed event stream
- *
- *  Version without synchronization with additional signals
- *
- *  See tap(Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F,
-    typename Events,
-    int wtf = 0, // hack to resolve ambiguity with signal version of tap
-    class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
-UREACT_WARN_UNUSED_RESULT auto tap( Events&& subject, F&& func )
-{
-    std::ignore = observe_events_impl( subject, signal_pack<>{}, std::forward<F>( func ) );
-    return std::forward<Events>( subject );
-}
+    /*!
+	 * @brief Create observer for signal and return observed signal
+	 *
+	 *  When the signal value S of subject changes, func is called
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * void func(const S&)
+	 *  * observer_action func(const S&)
+	 *
+	 *  By returning observer_action::stop_and_detach, the observer function can request
+	 *  its own detachment. Returning observer_action::next keeps the observer attached.
+	 *  Using a void return type is the same as always returning observer_action::next.
+	 */
+    template <typename F,
+        typename Signal, //
+        class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& subject, F&& func ) const
+    {
+        std::ignore = observe( subject, std::forward<F>( func ) );
+        return std::forward<Signal>( subject );
+    }
 
-/*!
- * @brief Curried version of tap(T&& subject, F&& func)
- */
-template <typename F>
-UREACT_WARN_UNUSED_RESULT auto tap( F&& func )
-{
-    return detail::closure{ [func = std::forward<F>( func )]( auto&& subject ) {
-        using arg_t = decltype( subject );
-        static_assert(
-            is_observable_v<std::decay_t<arg_t>>, "Observable type is required (signal or event)" );
-        return tap( std::forward<arg_t>( subject ), func );
-    } };
-}
+    /*!
+	 * @brief Create observer for event stream and return observed event stream
+	 *
+	 *  For every event e in subject, func is called.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * observer_action func(event_range<E> range, const Deps& ...)
+	 *  * observer_action func(const E&, const Deps& ...)
+	 *  * void func(event_range<E> range, const Deps& ...)
+	 *  * void func(const E&, const Deps& ...)
+	 *
+	 *  By returning observer_action::stop_and_detach, the observer function can request
+	 *  its own detachment. Returning observer_action::next keeps the observer attached.
+	 *  Using a void return type is the same as always returning observer_action::next.
+	 *
+	 *  @note The event_range<E> option allows to explicitly batch process single turn events
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename F,
+        typename Events,
+        typename... Deps,
+        class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
+    {
+        std::ignore = observe( subject, dep_pack, std::forward<F>( func ) );
+        return std::forward<Events>( subject );
+    }
 
-/*!
- * @brief Curried version of tap(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
- */
-template <typename F, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto tap( const signal_pack<Deps...>& dep_pack, F&& func )
-{
-    return detail::closure{
-        [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& subject ) {
-            using arg_t = decltype( subject );
-            static_assert( is_observable_v<std::decay_t<arg_t>>,
-                "Observable type is required (signal or event)" );
-            return tap( std::forward<arg_t>( subject ), dep_pack, func );
-        } };
-}
+    /*!
+	 * @brief Create observer for event stream and return observed event stream
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See tap(Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F,
+        typename Events,
+        int wtf = 0, // hack to resolve ambiguity with signal version of tap
+        class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Events&& subject, F&& func ) const
+    {
+        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of tap(T&& subject, F&& func)
+	 */
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
+    {
+        return make_partial<TapAdaptor>( std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of tap(T&& subject, const signal_pack<Deps...>& dep_pack, F&& func)
+	 */
+    template <typename F, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, F&& func ) const
+    {
+        return make_partial<TapAdaptor>( dep_pack, std::forward<F>( func ) );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::TapAdaptor tap;
 
 UREACT_END_NAMESPACE
 
@@ -5579,52 +5638,37 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-/*!
- * @brief Filter out all except the first element from every consecutive group of equivalent elements
- *
- *  In other words: removes consecutive (adjacent) duplicates
- *
- *  Semantically equivalent of std::unique
- */
-template <typename E>
-UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
+namespace detail
 {
-    return filter( source, [first = true, prev = E{}]( const E& e ) mutable {
-        const bool pass = first || e != prev;
-        first = false;
-        prev = e;
-        return pass;
-    } );
-}
 
-/*!
- * @brief Curried version of unique(const events<E>& source)
- */
-UREACT_WARN_UNUSED_RESULT inline auto unique()
+struct UniqueClosure : AdaptorClosure
 {
-    return detail::closure{ []( auto&& source ) {
-        using arg_t = decltype( source );
-        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-        return unique( std::forward<arg_t>( source ) );
-    } };
-}
+    /*!
+	 * @brief Filter out all except the first element from every consecutive group of equivalent elements
+	 *
+	 *  In other words: removes consecutive (adjacent) duplicates
+	 *
+	 *  Semantically equivalent of std::unique
+	 */
+    template <typename E>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const
+    {
+        return filter( source, [first = true, prev = E{}]( const E& e ) mutable {
+            const bool pass = first || e != prev;
+            first = false;
+            prev = e;
+            return pass;
+        } );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::UniqueClosure unique;
 
 UREACT_END_NAMESPACE
 
 #endif // UREACT_UNIQUE_HPP
-
-#ifndef UREACT_VERSION_HPP
-#define UREACT_VERSION_HPP
-
-#define UREACT_VERSION_MAJOR 0
-#define UREACT_VERSION_MINOR 8
-#define UREACT_VERSION_PATCH 1
-#define UREACT_VERSION_STR "0.8.1"
-
-#define UREACT_VERSION                                                                             \
-    ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
-
-#endif //UREACT_VERSION_HPP
 
 #ifndef UREACT_ZIP_HPP
 #define UREACT_ZIP_HPP
@@ -5729,27 +5773,32 @@ private:
     std::tuple<slot<Values>...> m_slots;
 };
 
+struct ZipAdaptor : Adaptor
+{
+    /*!
+	 * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N
+	 *
+	 *  Each source slot has its own unbounded buffer queue that persistently stores incoming events.
+	 *  For as long as all queues are not empty, one value is popped from each and emitted together as a tuple.
+	 *
+	 *  Semantically equivalent of ranges::zip
+	 */
+    template <typename Source, typename... Sources>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<Source>& source1, const events<Sources>&... sources ) const
+    {
+        static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
+
+        context& context = source1.get_context();
+        return events<std::tuple<Source, Sources...>>(
+            std::make_shared<detail::event_zip_node<Source, Sources...>>(
+                context, source1.get_node(), sources.get_node()... ) );
+    }
+};
+
 } // namespace detail
 
-/*!
- * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N
- *
- *  Each source slot has its own unbounded buffer queue that persistently stores incoming events.
- *  For as long as all queues are not empty, one value is popped from each and emitted together as a tuple.
- *
- *  Semantically equivalent of ranges::zip
- */
-template <typename Source, typename... Sources>
-UREACT_WARN_UNUSED_RESULT auto zip( const events<Source>& source1,
-    const events<Sources>&... sources ) -> events<std::tuple<Source, Sources...>>
-{
-    static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
-
-    context& context = source1.get_context();
-    return events<std::tuple<Source, Sources...>>(
-        std::make_shared<detail::event_zip_node<Source, Sources...>>(
-            context, source1.get_node(), sources.get_node()... ) );
-}
+inline constexpr detail::ZipAdaptor zip;
 
 UREACT_END_NAMESPACE
 

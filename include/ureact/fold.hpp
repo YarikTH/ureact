@@ -190,71 +190,75 @@ UREACT_WARN_UNUSED_RESULT auto fold_impl(
 
 struct FoldAdaptor : Adaptor
 {
-/*!
- * @brief Folds values from an event stream into a signal
- *
- *  Iteratively combines signal value with values from event stream.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of func should be equivalent to:
- *  * S func(const E& event, const S& accum, const Deps& ...)
- *  * S func(event_range<E> range, const S& accum, const Deps& ...)
- *  * void func(const E& event, S& accum, const Deps& ...)
- *  * void func(event_range<E> range, S& accum, const Deps& ...)
- *
- *  The fold parameters:
- *    [const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack]
- *  match the corresponding arguments of the given function
- *    [const E& event_value, const S& accumulator, const Deps& ...deps]
- *
- *  Creates a signal with an initial value v = init.
- *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
- *  * If the return type of func is void: For every received event e in events,
- *    v is passed by non-cost reference to func(v, e, deps), making it mutable.
- *    This variant can be used if copying and comparing S is prohibitively expensive.
- *    Because the old and new values cannot be compared, updates will always trigger a change.
- *
- *  @note order of arguments is inverse compared with std::accumulate() to correspond fold parameters
- *  @note The event_range<E> option allows to explicitly batch process single turn events
- *  @note Changes of signals in dep_pack do not trigger an update - only received events do
- */
-template <typename E, typename V, typename InF, typename... Deps>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
-{
-    return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
-}
+    /*!
+	 * @brief Folds values from an event stream into a signal
+	 *
+	 *  Iteratively combines signal value with values from event stream.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of func should be equivalent to:
+	 *  * S func(const E& event, const S& accum, const Deps& ...)
+	 *  * S func(event_range<E> range, const S& accum, const Deps& ...)
+	 *  * void func(const E& event, S& accum, const Deps& ...)
+	 *  * void func(event_range<E> range, S& accum, const Deps& ...)
+	 *
+	 *  The fold parameters:
+	 *    [const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack]
+	 *  match the corresponding arguments of the given function
+	 *    [const E& event_value, const S& accumulator, const Deps& ...deps]
+	 *
+	 *  Creates a signal with an initial value v = init.
+	 *  * If the return type of func is S: For every received event e in events, v is updated to v = func(e,v, deps).
+	 *  * If the return type of func is void: For every received event e in events,
+	 *    v is passed by non-cost reference to func(v, e, deps), making it mutable.
+	 *    This variant can be used if copying and comparing S is prohibitively expensive.
+	 *    Because the old and new values cannot be compared, updates will always trigger a change.
+	 *
+	 *  @note order of arguments is inverse compared with std::accumulate() to correspond fold parameters
+	 *  @note The event_range<E> option allows to explicitly batch process single turn events
+	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
+	 */
+    template <typename E, typename V, typename InF, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
+    {
+        return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
+    }
 
-/*!
- * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
- */
-template <typename V, typename InF, typename... Deps>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
-{
-    return make_partial<FoldAdaptor>( std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
-}
+    /*!
+	 * @brief Curried version of fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
+	 */
+    template <typename V, typename InF, typename... Deps>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
+    {
+        return make_partial<FoldAdaptor>(
+            std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
+    }
 
-/*!
- * @brief Folds values from an event stream into a signal
- *
- *  Version without synchronization with additional signals
- *
- *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
- */
-template <typename E, typename V, typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& events, V&& init, InF&& func ) const
-{
-    return operator()( events, std::forward<V>( init ), signal_pack<>{}, std::forward<InF>( func ) );
-}
+    /*!
+	 * @brief Folds values from an event stream into a signal
+	 *
+	 *  Version without synchronization with additional signals
+	 *
+	 *  See fold(const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func)
+	 */
+    template <typename E, typename V, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& events, V&& init, InF&& func ) const
+    {
+        return operator()(
+            events, std::forward<V>( init ), signal_pack<>{}, std::forward<InF>( func ) );
+    }
 
-/*!
- * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
- */
-template <typename V, typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init, InF&& func ) const
-{
-    return make_partial<FoldAdaptor>( std::forward<V>( init ), std::forward<InF>( func ) );
-}
+    /*!
+	 * @brief Curried version of fold(const events<E>& events, V&& init, InF&& func)
+	 */
+    template <typename V, typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init, InF&& func ) const
+    {
+        return make_partial<FoldAdaptor>( std::forward<V>( init ), std::forward<InF>( func ) );
+    }
 };
 
 } // namespace detail

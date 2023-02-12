@@ -23,31 +23,32 @@ namespace detail
 struct SnapshotAdaptor : Adaptor
 {
 
-/*!
- * @brief Sets the signal value to the value of a target signal when an event is received
- *
- *  Creates a signal with value v = target.get().
- *  The value is set on construction and updated only when receiving an event from trigger
- */
-template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& trigger, const signal<S>& target ) const
-{
-    return fold( trigger,
-        target.get(),
-        with( target ),
-        []( event_range<E> range, const S&, const S& value ) { //
-            return value;
-        } );
-}
+    /*!
+	 * @brief Sets the signal value to the value of a target signal when an event is received
+	 *
+	 *  Creates a signal with value v = target.get().
+	 *  The value is set on construction and updated only when receiving an event from trigger
+	 */
+    template <typename S, typename E>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& trigger, const signal<S>& target ) const
+    {
+        return fold( trigger,
+            target.get(),
+            with( target ),
+            []( event_range<E> range, const S&, const S& value ) { //
+                return value;
+            } );
+    }
 
-/*!
- * @brief Curried version of snapshot()
- */
-template <typename S>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
-{
-    return make_partial<SnapshotAdaptor>( target );
-}
+    /*!
+	 * @brief Curried version of snapshot()
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+    {
+        return make_partial<SnapshotAdaptor>( target );
+    }
 };
 
 } // namespace detail

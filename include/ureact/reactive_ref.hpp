@@ -51,31 +51,31 @@ using decay_input_t = typename decay_input<T>::type;
 struct ReactiveRefAdaptor : Adaptor
 {
 
-/*!
- * @brief Adaptor to flatten public signal attribute of class pointed be reference
- *
- *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
- *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
- *  This utility receives a signal pointer bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
- */
-template <typename Signal,
-    typename InF,
-    class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& outer, InF&& func ) const
-{
-    using S = typename std::decay_t<Signal>::value_t;
-    using F = std::decay_t<InF>;
-    using R = std::invoke_result_t<F, S>;
-    using DecayedR = detail::decay_input_t<std::decay_t<R>>;
-    return flatten( lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
-}
+    /*!
+	 * @brief Adaptor to flatten public signal attribute of class pointed be reference
+	 *
+	 *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
+	 *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
+	 *  This utility receives a signal pointer bar and attribute pointer &Foo::bar and flattens it to signal<int> foobar
+	 */
+    template <typename Signal,
+        typename InF,
+        class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& outer, InF&& func ) const
+    {
+        using S = typename std::decay_t<Signal>::value_t;
+        using F = std::decay_t<InF>;
+        using R = std::invoke_result_t<F, S>;
+        using DecayedR = detail::decay_input_t<std::decay_t<R>>;
+        return flatten(
+            lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
+    }
 
-template <typename InF>
-UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
-{
-    return make_partial<ReactiveRefAdaptor>( std::forward<InF>( func ) );
-}
-
+    template <typename InF>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
+    {
+        return make_partial<ReactiveRefAdaptor>( std::forward<InF>( func ) );
+    }
 };
 
 } // namespace detail

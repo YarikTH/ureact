@@ -3,6 +3,76 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.9.0](https://github.com/YarikTH/ureact/releases/tag/0.9.0) (2023-02-12)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.8.1...0.9.0)
+
+Great closure/adaptor rework
+
+- BREAKING! `sink` and `fork` introduced in 0.8.0 are removed because they don't
+  fit into the library and lead to a lot of complicated logic to support them
+- BREAKING! ureact::closure is renamed and moved in ureact::detail namespace
+  library is not ready for such extension point yet
+- BREAKING! free functions that create new reactives (signals/events/observes)
+  from existing ones also called "algorithms" are replaced with inline constexpr
+  instances of special functor-like classes inherited from Adaptor or AdaptorClosure.
+  This is the same approach as used in std::ranges and range-v3.
+  There are some differences in usage compared with free functions:
+    - [Argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl)
+      is not working with adaptors, so namespace is required, while before it was optional
+    ```C++
+    ureact::context ctx;
+    ureact::var_signal<int> src = make_var( ctx, 1 );
+
+    // before 0.9.0
+    ureact::signal<int> minus_src = lift( src, std::negate<>{} );
+
+    // after 0.9.0
+    ureact::signal<int> minus_src = ureact::lift( src, std::negate<>{} );
+    ```
+    - single argument adaptors like ureact::monitor and ureact::count no longer
+      require functional call scopes
+    ```C++
+    ureact::context ctx;
+    ureact::var_signal src = make_var( ctx, 1 );
+
+    // before 0.9.0
+    ureact::signal changes = src | ureact::monitor() | ureact::count();
+
+    // after 0.9.0
+    ureact::signal changes = src | ureact::monitor | ureact::count;
+    ```
+    - unlike free functions, adaptors can't have optional template arguments, so
+      new adaptors with underscopes are introduced for such cases, because <>
+      would be required for default case.
+    ```C++
+    ureact::context ctx;
+    ureact::event_source<int> src = make_source<int>( ctx );
+
+    // before 0.9.0
+    ureact::signal<size_t> changes = src | ureact::count();
+    ureact::signal<float> changes_f = src | ureact::count<float>();
+
+    // after 0.9.0
+    ureact::signal<size_t> changes = src | ureact::count;
+    ureact::signal<float> changes_f = src | ureact::count_<float>;
+    ```
+- BREAKING! yet another great headers rework:
+  - `ureact/take_drop.hpp` is separated into
+    `ureact/take.hpp` and `ureact/drop.hpp`
+  - `ureact/take_drop_while.hpp` is separated into
+    `ureact/take_while.hpp` and `ureact/drop_while.hpp`
+  - all adaptors are moved into `ureact/adaptor` subdirectory.
+    As a result library headers become easier to navigate.
+- New adaptor `ureact::once` is introduced.
+  Or reintroduced, because it was added before and then removed in 0.6.0.
+  It is merely a `ureact::take(1)` overload with more precise name.
+- `ureact::signal_pack` is reworked to hold tuple of signals
+  instead of tuple of signal references.
+  It reduces space for errors and reduces artificial complexity
+  when working with signal_pack with a tiny cost of copying shared
+  pointers on reactive value construction.
+
 ## [0.8.1](https://github.com/YarikTH/ureact/releases/tag/0.8.1) (2023-01-29)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.8.0...0.8.1)

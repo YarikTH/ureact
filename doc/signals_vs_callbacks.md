@@ -186,11 +186,9 @@ What it boils down to, is that the change propagation must be handled by hand.
 The next example shows how signals can be used for this scenario.
 
 
-## Final solution: Signals ([run](https://godbolt.org/z/qe3PnK8x7))
+## Final solution: Signals ([run](https://godbolt.org/z/KcfrzKvMM))
 
 ```cpp
-#include "ureact/ureact.hpp"
-
 class Shape
 {
 public:
@@ -216,8 +214,8 @@ ureact::context ctx;
 Shape myShape( ctx );
 
 // Set dimensions
-myShape.width.set( 20 );
-myShape.height.set( 20 );
+myShape.width( 20 );
+myShape.height( 20 );
 
 // Get size
 const auto curSize = myShape.size();
@@ -226,14 +224,14 @@ const auto curSize = myShape.size();
 Every reactive value automatically supports registration of callbacks (they are called observers):
 ```cpp
 // Callback on change
-observe( myShape.size,
-         []( int newSize )   { std::cout << "size -> "   << newSize   << "\n"; } );
+ureact::observe( myShape.size,
+    []( int newSize )   { std::cout << "size -> "   << newSize   << "\n"; } );
 
 // Those would work, too
-observe( myShape.width,
-         []( int newWidth )  { std::cout << "width -> "  << newWidth  << "\n"; } );
-observe( myShape.height,
-         []( int newHeight ) { std::cout << "height -> " << newHeight << "\n"; } );
+ureact::observe( myShape.width,
+    []( int newWidth )  { std::cout << "width -> "  << newWidth  << "\n"; } );
+ureact::observe( myShape.height,
+    []( int newHeight ) { std::cout << "height -> " << newHeight << "\n"; } );
 ```
 
 ---------------

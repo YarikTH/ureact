@@ -32,10 +32,10 @@ TEST_CASE( "Process" )
     {
         processed = ureact::process<int>( src, repeater );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        processed = src | ureact::process<int>( repeater );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        processed = src | ureact::process<int>( repeater );
+    }
 
     const auto result = ureact::collect<std::vector>( processed );
 
@@ -75,10 +75,10 @@ TEST_CASE( "ProcessSynced" )
     {
         processed = ureact::process<record_t>( src, with( n, timestamp ), repeater );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        processed = src | ureact::process<record_t>( with( n, timestamp ), repeater );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        processed = src | ureact::process<record_t>( with( n, timestamp ), repeater );
+    }
 
     const auto result = ureact::collect<std::vector>( processed );
 

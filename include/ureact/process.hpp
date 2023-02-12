@@ -101,7 +101,9 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
     return std::apply( node_builder, dep_pack.data );
 }
 
-} // namespace detail
+template <typename OutE>
+struct ProcessAdaptor : Adaptor
+{
 
 /*!
  * @brief Create a new event stream by batch processing events from other stream
@@ -116,9 +118,9 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
  *  @note Changes of signals in dep_pack do not trigger an update - only received events do
  *  @note The type of outgoing events T has to be specified explicitly, i.e. process<T>(src, with(deps), op)
  */
-template <typename OutE, typename InE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
+template <typename InE, typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
 {
     return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
 }
@@ -126,15 +128,12 @@ UREACT_WARN_UNUSED_RESULT auto process(
 /*!
  * @brief Curried version of process(const events<in_t>& source, Op&& op)
  */
-//template <typename OutE, typename Op, typename... Deps>
-//UREACT_WARN_UNUSED_RESULT auto process( const signal_pack<Deps...>& dep_pack, Op&& op )
-//{
-//    return detail::closure{ [dep_pack = dep_pack, op = std::forward<Op>( op )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return process<OutE>( std::forward<arg_t>( source ), dep_pack, op );
-//    } };
-//}
+template <typename Op, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const signal_pack<Deps...>& dep_pack, Op&& op ) const
+{
+    return make_partial<ProcessAdaptor>( dep_pack, std::forward<Op>( op ) );
+}
 
 /*!
  * @brief Create a new event stream by batch processing events from other stream
@@ -143,24 +142,27 @@ UREACT_WARN_UNUSED_RESULT auto process(
  *
  *  See process(const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op)
  */
-template <typename OutE, typename InE, typename Op>
-UREACT_WARN_UNUSED_RESULT auto process( const events<InE>& source, Op&& op ) -> events<OutE>
+template <typename InE, typename Op>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, Op&& op ) const
 {
-    return detail::process_impl<OutE>( source, signal_pack<>(), std::forward<Op>( op ) );
+    return operator()( source, signal_pack<>{}, std::forward<Op>( op ) );
 }
 
 /*!
  * @brief Curried version of process(const events<in_t>& source, Op&& op)
  */
-//template <typename OutE, typename Op>
-//UREACT_WARN_UNUSED_RESULT auto process( Op&& op )
-//{
-//    return detail::closure{ [op = std::forward<Op>( op )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return process<OutE>( std::forward<arg_t>( source ), op );
-//    } };
-//}
+template <typename Op>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Op&& op ) const
+{
+    return make_partial<ProcessAdaptor>( std::forward<Op>( op ) );
+}
+
+};
+
+} // namespace detail
+
+template <typename OutE>
+inline constexpr detail::ProcessAdaptor<OutE> process;
 
 UREACT_END_NAMESPACE
 

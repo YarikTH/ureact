@@ -23,10 +23,10 @@ TEST_CASE( "Hold" )
     {
         held = ureact::hold( src, -1 );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        held = src | ureact::hold( -1 );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        held = src | ureact::hold( -1 );
+    }
 
     int changes = 0;
     ureact::observe( held, [&changes]( const auto& ) { ++changes; } );

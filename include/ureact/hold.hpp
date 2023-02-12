@@ -16,6 +16,12 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct HoldAdaptor : Adaptor
+{
+
 /*!
  * @brief Holds the most recent event in a signal
  *
@@ -23,7 +29,7 @@ UREACT_BEGIN_NAMESPACE
  *  For received event values e1, e2, ... eN in events, it is updated to v = eN.
  */
 template <typename V, typename E>
-UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> signal<E>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, V&& init ) const
 {
     return fold( source,
         std::forward<V>( init ),                  //
@@ -35,15 +41,17 @@ UREACT_WARN_UNUSED_RESULT auto hold( const events<E>& source, V&& init ) -> sign
 /*!
  * @brief Curried version of hold()
  */
-//template <typename V>
-//UREACT_WARN_UNUSED_RESULT auto hold( V&& init )
-//{
-//    return detail::closure{ [init = std::forward<V>( init )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return hold( std::forward<arg_t>( source ), std::move( init ) );
-//    } };
-//}
+template <typename V>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& init ) const
+{
+    return make_partial<HoldAdaptor>( std::forward<V>( init ) );
+}
+
+};
+
+} // namespace detail
+
+inline constexpr detail::HoldAdaptor hold;
 
 UREACT_END_NAMESPACE
 

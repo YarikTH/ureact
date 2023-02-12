@@ -28,13 +28,13 @@ TEST_CASE( "Collect" )
         collected_lst = ureact::collect<std::list>( src );
         collected_set = ureact::collect<std::set>( src );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        collected_vec = src | ureact::collect<std::vector>();
-    //        collected_deq = src | ureact::collect<std::deque>();
-    //        collected_lst = src | ureact::collect<std::list>();
-    //        collected_set = src | ureact::collect<std::set>();
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        collected_vec = src | ureact::collect<std::vector>;
+        collected_deq = src | ureact::collect<std::deque>;
+        collected_lst = src | ureact::collect<std::list>;
+        collected_set = src | ureact::collect<std::set>;
+    }
 
     for( int i : { 1, 2, 3 } )
         src << i;

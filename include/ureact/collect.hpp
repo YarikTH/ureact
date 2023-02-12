@@ -46,8 +46,9 @@ struct has_insert_method<Cont,
 template <typename Cont, class Value>
 inline constexpr bool has_insert_method_v = has_insert_method<Cont, Value>::value;
 
-} // namespace detail
-
+template <template <typename...> class ContT>
+struct CollectClosure : AdaptorClosure
+{
 /*!
  * @brief Collects received events into signal<ContT<E>>
  *
@@ -60,8 +61,8 @@ inline constexpr bool has_insert_method_v = has_insert_method<Cont, Value>::valu
  *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
  *           because any observer or signal/events node will prolong its lifetime.
  */
-template <template <typename...> class ContT, class E, class Cont = ContT<E>>
-UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> signal<Cont>
+template <class E, class Cont = ContT<E>>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const -> signal<Cont>
 {
     return fold( source,
         Cont{},                         //
@@ -74,19 +75,12 @@ UREACT_WARN_UNUSED_RESULT auto collect( const ureact::events<E>& source ) -> sig
                 static_assert( detail::always_false<Cont, E>, "Unsupported container" );
         } );
 }
+};
 
-/*!
- * @brief Curried version of collect(const events<E>& source)
- */
-//template <template <typename...> class ContT>
-//UREACT_WARN_UNUSED_RESULT auto collect()
-//{
-//    return detail::closure{ []( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return collect<ContT>( std::forward<arg_t>( source ) );
-//    } };
-//}
+} // namespace detail
+
+template <template <typename...> class ContT>
+inline constexpr detail::CollectClosure<ContT> collect;
 
 UREACT_END_NAMESPACE
 

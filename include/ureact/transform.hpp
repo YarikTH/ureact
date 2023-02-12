@@ -16,6 +16,12 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct TransformAdaptor : Adaptor
+{
+
 /*!
  * @brief Create a new event stream that transforms events from other stream
  *
@@ -33,10 +39,10 @@ template <typename InE,
     typename F,
     typename... Deps,
     typename OutE = std::invoke_result_t<F, InE, Deps...>>
-UREACT_WARN_UNUSED_RESULT auto transform(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) -> events<OutE>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) const
 {
-    return detail::process_impl<OutE>( source,
+    return process<OutE>( source,
         dep_pack, //
         [func = std::forward<F>( func )](
             event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
@@ -48,15 +54,11 @@ UREACT_WARN_UNUSED_RESULT auto transform(
 /*!
  * @brief Curried version of transform(const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-//template <typename F, typename... Deps>
-//UREACT_WARN_UNUSED_RESULT auto transform( const signal_pack<Deps...>& dep_pack, F&& func )
-//{
-//    return detail::closure{ [dep_pack = dep_pack, func = std::forward<F>( func )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return transform( std::forward<arg_t>( source ), dep_pack, func );
-//    } };
-//}
+template <typename F, typename... Deps>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal_pack<Deps...>& dep_pack, F&& func ) const
+{
+    return make_partial<TransformAdaptor>( dep_pack, std::forward<F>( func ) );
+}
 
 /*!
  * @brief Create a new event stream that transforms events from other stream
@@ -65,24 +67,26 @@ UREACT_WARN_UNUSED_RESULT auto transform(
  *
  *  See transform(const events<in_t>& source, const signal_pack<Deps...>& dep_pack, F&& func)
  */
-template <typename InE, typename F, typename OutE = std::invoke_result_t<F, InE>>
-UREACT_WARN_UNUSED_RESULT auto transform( const events<InE>& source, F&& func ) -> events<OutE>
+template <typename InE, typename F>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source, F&& func ) const
 {
-    return transform( source, signal_pack<>(), std::forward<F>( func ) );
+    return operator()( source, signal_pack<>(), std::forward<F>( func ) );
 }
 
 /*!
  * @brief Curried version of transform(const events<InE>& source, F&& func)
  */
-//template <typename F>
-//UREACT_WARN_UNUSED_RESULT auto transform( F&& func )
-//{
-//    return detail::closure{ [func = std::forward<F>( func )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return transform( std::forward<arg_t>( source ), func );
-//    } };
-//}
+template <typename F>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
+{
+    return make_partial<TransformAdaptor>( std::forward<F>( func ) );
+}
+
+};
+
+} // namespace detail
+
+inline constexpr detail::TransformAdaptor transform;
 
 UREACT_END_NAMESPACE
 

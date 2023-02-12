@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 18:07:45.597650
+// Generated: 2023-02-12 18:18:54.140374
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -3793,6 +3793,98 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_DROP_HPP
 
+#ifndef UREACT_ADAPTOR_DROP_WHILE_HPP
+#define UREACT_ADAPTOR_DROP_WHILE_HPP
+
+
+#ifndef UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
+#define UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename Derived>
+struct TakeDropWhileAdaptorBase : Adaptor
+{
+    template <typename E, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, Pred&& pred ) const
+    {
+        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
+    }
+
+    template <typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
+    }
+
+    template <typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+    {
+        return make_partial<Derived>( std::forward<Pred>( pred ) );
+    }
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_TAKE_DROP_WHILE_BASE_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
+{
+    /*!
+	 * @brief Skips the first elements of the source stream that satisfy the predicate
+	 *
+	 *  Takes events beginning at the first for which the predicate returns false.
+	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+	 *
+	 *  The signature of pred should be equivalent to:
+	 *  * bool func(const E&, const Deps& ...)
+	 */
+    template <typename E, typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return filter( source,
+            dep_pack,
+            [passed = false, pred = std::forward<Pred>( pred )] //
+            ( const auto& e, const auto... deps ) mutable {
+                passed = passed || !std::invoke( pred, e, deps... );
+                return passed;
+            } );
+    }
+
+    using TakeDropWhileAdaptorBase::operator();
+};
+
+} // namespace detail
+
+/*!
+ * @brief Skips the first elements of the source stream that satisfy the predicate
+ *
+ *  Takes events beginning at the first for which the predicate returns false.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool func(const E&, const Deps& ...)
+ */
+inline constexpr detail::DropWhileAdaptor drop_while;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_DROP_WHILE_HPP
+
 #ifndef UREACT_ADAPTOR_FLATTEN_HPP
 #define UREACT_ADAPTOR_FLATTEN_HPP
 
@@ -5331,8 +5423,8 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_SNAPSHOT_HPP
 
-#ifndef UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
-#define UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
+#ifndef UREACT_ADAPTOR_TAKE_WHILE_HPP
+#define UREACT_ADAPTOR_TAKE_WHILE_HPP
 
 
 UREACT_BEGIN_NAMESPACE
@@ -5340,33 +5432,8 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename Derived>
-struct TakeDropWhileAdaptorBase : Adaptor
-{
-    template <typename E, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, Pred&& pred ) const
-    {
-        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
-    }
-
-    template <typename... Deps, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-    {
-        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
-    }
-
-    template <typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
-    {
-        return make_partial<Derived>( std::forward<Pred>( pred ) );
-    }
-};
-
 struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
 {
-
     /*!
 	 * @brief Keeps the first elements of the source stream that satisfy the predicate
 	 *
@@ -5393,34 +5460,6 @@ struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
     using TakeDropWhileAdaptorBase::operator();
 };
 
-struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
-{
-
-    /*!
-	 * @brief Skips the first elements of the source stream that satisfy the predicate
-	 *
-	 *  Takes events beginning at the first for which the predicate returns false.
-	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
-	 *
-	 *  The signature of pred should be equivalent to:
-	 *  * bool func(const E&, const Deps& ...)
-	 */
-    template <typename E, typename... Deps, typename Pred>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
-    {
-        return filter( source,
-            dep_pack,
-            [passed = false, pred = std::forward<Pred>( pred )] //
-            ( const auto& e, const auto... deps ) mutable {
-                passed = passed || !std::invoke( pred, e, deps... );
-                return passed;
-            } );
-    }
-
-    using TakeDropWhileAdaptorBase::operator();
-};
-
 } // namespace detail
 
 /*!
@@ -5435,20 +5474,9 @@ struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
  */
 inline constexpr detail::TakeWhileAdaptor take_while;
 
-/*!
- * @brief Skips the first elements of the source stream that satisfy the predicate
- *
- *  Takes events beginning at the first for which the predicate returns false.
- *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
- *
- *  The signature of pred should be equivalent to:
- *  * bool func(const E&, const Deps& ...)
- */
-inline constexpr detail::DropWhileAdaptor drop_while;
-
 UREACT_END_NAMESPACE
 
-#endif // UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
+#endif // UREACT_ADAPTOR_TAKE_WHILE_HPP
 
 #ifndef UREACT_ADAPTOR_TAP_HPP
 #define UREACT_ADAPTOR_TAP_HPP

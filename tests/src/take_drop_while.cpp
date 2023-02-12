@@ -5,11 +5,11 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/adaptor/take_drop_while.hpp"
-
 #include "doctest_extra.h"
 #include "ureact/adaptor/collect.hpp"
+#include "ureact/adaptor/drop_while.hpp"
 #include "ureact/adaptor/lift.hpp"
+#include "ureact/adaptor/take_while.hpp"
 
 // filters that take first elements or skip first elements according to given predicate
 TEST_CASE( "TakeOrDropWhile" )

@@ -11,6 +11,7 @@
 #define UREACT_MERGE_HPP
 
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/closure.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -86,16 +87,16 @@ class event_op_node;
 template <typename E>
 using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
-} // namespace detail
-
+struct MergeAdaptor : Adaptor
+{
 /*!
  * @brief Emit all events in source1, ... sources
  *
  *  @warning Not to be confused with std::merge() or ranges::merge()
  */
 template <typename Source, typename... Sources, typename E = Source>
-UREACT_WARN_UNUSED_RESULT auto merge(
-    const events<Source>& source1, const events<Sources>&... sources ) -> events<E>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<Source>& source1, const events<Sources>&... sources ) const
 {
     static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
@@ -107,6 +108,11 @@ UREACT_WARN_UNUSED_RESULT auto merge(
     return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
         context, source1.get_node(), sources.get_node()... ) );
 }
+};
+
+} // namespace detail
+
+inline constexpr detail::MergeAdaptor merge;
 
 UREACT_END_NAMESPACE
 

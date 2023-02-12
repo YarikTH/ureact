@@ -112,6 +112,17 @@ namespace detail
 //    }
 //}
 
+
+/*!
+ * @brief Base class for reactive adaptors
+ *
+ *  Even if it is empty, inheritance allows to find each adaptor in the library
+ *  
+ *  Equivalent of "Range adaptors" from std ranges library
+ */
+struct Adaptor
+{};
+
 } // namespace detail
 
 UREACT_END_NAMESPACE

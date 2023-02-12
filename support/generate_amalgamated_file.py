@@ -105,6 +105,8 @@ def discover_hpp(where: Path) -> List[Path]:
 
     result.sort()
 
+    result = [Path('ureact', 'version.hpp')] + result
+
     return result
 
 

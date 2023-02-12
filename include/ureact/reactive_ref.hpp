@@ -10,6 +10,7 @@
 #ifndef UREACT_REACTIVE_REF_HPP
 #define UREACT_REACTIVE_REF_HPP
 
+#include <ureact/detail/closure.hpp>
 #include <ureact/flatten.hpp>
 #include <ureact/lift.hpp>
 #include <ureact/type_traits.hpp>
@@ -47,10 +48,11 @@ struct decay_input<member_var_signal<Owner, S>>
 template <typename T>
 using decay_input_t = typename decay_input<T>::type;
 
-} // namespace detail
+struct ReactiveRefAdaptor : Adaptor
+{
 
 /*!
- * @brief Utility to flatten public signal attribute of class pointed be reference
+ * @brief Adaptor to flatten public signal attribute of class pointed be reference
  *
  *  For example we have a class Foo with a public signal bar: struct Foo{ signal<int> bar; };
  *  Also, we have signal that points to this class by pointer: signal<Foo*> bar
@@ -59,7 +61,7 @@ using decay_input_t = typename decay_input<T>::type;
 template <typename Signal,
     typename InF,
     class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& outer, InF&& func ) const
 {
     using S = typename std::decay_t<Signal>::value_t;
     using F = std::decay_t<InF>;
@@ -67,6 +69,18 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
     using DecayedR = detail::decay_input_t<std::decay_t<R>>;
     return flatten( lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
 }
+
+template <typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
+{
+    return make_partial<ReactiveRefAdaptor>( std::forward<InF>( func ) );
+}
+
+};
+
+} // namespace detail
+
+inline constexpr detail::ReactiveRefAdaptor reactive_ref;
 
 UREACT_END_NAMESPACE
 

@@ -319,16 +319,30 @@ TEST_CASE( "DynamicSignalRefOrPtr" )
     SUBCASE( "Reference" )
     {
         Alice = Employee{ ctx, company1 };
+        auto alice_company = std::get<Employee>( Alice ).company;
 
-        alice_company_name
-            = ureact::reactive_ref( std::get<Employee>( Alice ).company, &Company::name );
+        SUBCASE( "Functional syntax" )
+        {
+            alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
+        }
+        SUBCASE( "Piped syntax" )
+        {
+            alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
+        }
     }
     SUBCASE( "Pointer" )
     {
         Alice = Employee2{ ctx, &company1 };
+        auto alice_company = std::get<Employee2>( Alice ).company;
 
-        alice_company_name
-            = ureact::reactive_ref( std::get<Employee2>( Alice ).company, &Company::name );
+        SUBCASE( "Functional syntax" )
+        {
+            alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
+        }
+        SUBCASE( "Piped syntax" )
+        {
+            alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
+        }
     }
 
     std::vector<std::string> alice_company_names;

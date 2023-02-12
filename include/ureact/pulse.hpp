@@ -16,6 +16,12 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct PulseAdaptor : Adaptor
+{
+
 /*!
  * @brief Emits the value of a target signal when an event is received
  *
@@ -23,8 +29,7 @@ UREACT_BEGIN_NAMESPACE
  *  The values of the received events are irrelevant.
  */
 template <typename S, typename E>
-UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>& target )
-    -> events<S>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& trigger, const signal<S>& target ) const
 {
     return process<S>( trigger,
         with( target ),
@@ -37,15 +42,16 @@ UREACT_WARN_UNUSED_RESULT auto pulse( const events<E>& trigger, const signal<S>&
 /*!
  * @brief Curried version of pulse()
  */
-//template <typename S>
-//UREACT_WARN_UNUSED_RESULT auto pulse( const signal<S>& target )
-//{
-//    return detail::closure{ [target = target]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return pulse( std::forward<arg_t>( source ), target );
-//    } };
-//}
+template <typename S>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+{
+    return make_partial<PulseAdaptor>( target );
+}
+};
+
+} // namespace detail
+
+inline constexpr detail::PulseAdaptor pulse;
 
 UREACT_END_NAMESPACE
 

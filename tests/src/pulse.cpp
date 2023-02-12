@@ -25,10 +25,10 @@ TEST_CASE( "Pulse" )
     {
         beat = ureact::pulse( trigger, target );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        beat = trigger | ureact::pulse( target );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        beat = trigger | ureact::pulse( target );
+    }
 
     SUBCASE( "Trigger can be any type" )
     {

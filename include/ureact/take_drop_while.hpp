@@ -16,6 +16,36 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+template <typename Derived>
+struct TakeDropWhileAdaptorBase : Adaptor
+{
+    template <typename E, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, Pred&& pred ) const
+    {
+        return Derived{}( source, signal_pack<>(), std::forward<Pred>( pred ) );
+    }
+
+    template <typename... Deps, typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
+    {
+        return make_partial<Derived>( dep_pack, std::forward<Pred>( pred ) );
+    }
+
+    template <typename Pred>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pred&& pred ) const
+    {
+        return make_partial<Derived>( std::forward<Pred>( pred ) );
+    }
+};
+
+struct TakeWhileAdaptor : TakeDropWhileAdaptorBase<TakeWhileAdaptor>
+{
+
 /*!
  * @brief Keeps the first elements of the source stream that satisfy the predicate
  *
@@ -27,8 +57,8 @@ UREACT_BEGIN_NAMESPACE
  *  * bool func(const E&, const Deps& ...)
  */
 template <typename E, typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto take_while(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
 {
     return filter( source,
         dep_pack,
@@ -39,46 +69,11 @@ UREACT_WARN_UNUSED_RESULT auto take_while(
         } );
 }
 
-/*!
- * @brief Curried version of take_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-//template <typename... Deps, typename Pred>
-//UREACT_WARN_UNUSED_RESULT inline auto take_while(
-//    const signal_pack<Deps...>& dep_pack, Pred&& pred )
-//{
-//    return detail::closure{ [dep_pack = dep_pack, pred = std::forward<Pred>( pred )] //
-//        ( auto&& source ) {
-//            using arg_t = decltype( source );
-//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//            return take_while( std::forward<arg_t>( source ), dep_pack, pred );
-//        } };
-//}
+    using TakeDropWhileAdaptorBase::operator();
+};
 
-/*!
- * @brief Keeps the first elements of the source stream that satisfy the unary predicate
- *
- *  Keeps events from the source stream, starting at the beginning and ending
- *  at the first element for which the predicate returns false.
- *  Semantically equivalent of std::ranges::views::take_while
- */
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred )
+struct DropWhileAdaptor : TakeDropWhileAdaptorBase<DropWhileAdaptor>
 {
-    return take_while( source, signal_pack<>(), std::forward<Pred>( pred ) );
-}
-
-/*!
- * @brief Curried version of take_while(const events<E>& source, Pred&& pred)
- */
-//template <typename Pred>
-//UREACT_WARN_UNUSED_RESULT inline auto take_while( Pred&& pred )
-//{
-//    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return take_while( std::forward<arg_t>( source ), pred );
-//    } };
-//}
 
 /*!
  * @brief Skips the first elements of the source stream that satisfy the predicate
@@ -90,8 +85,8 @@ UREACT_WARN_UNUSED_RESULT auto take_while( const events<E>& source, Pred&& pred 
  *  * bool func(const E&, const Deps& ...)
  */
 template <typename E, typename... Deps, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto drop_while(
-    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred ) const
 {
     return filter( source,
         dep_pack,
@@ -102,45 +97,33 @@ UREACT_WARN_UNUSED_RESULT auto drop_while(
         } );
 }
 
-/*!
- * @brief Curried version of drop_while(const events<E>& source, const signal_pack<Deps...>& dep_pack, Pred&& pred)
- */
-//template <typename... Deps, typename Pred>
-//UREACT_WARN_UNUSED_RESULT inline auto drop_while(
-//    const signal_pack<Deps...>& dep_pack, Pred&& pred )
-//{
-//    return detail::closure{
-//        [dep_pack = dep_pack, pred = std::forward<Pred>( pred )]( auto&& source ) {
-//            using arg_t = decltype( source );
-//            static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//            return drop_while( std::forward<arg_t>( source ), dep_pack, pred );
-//        } };
-//}
+    using TakeDropWhileAdaptorBase::operator();
+};
+
+} // namespace detail
 
 /*!
- * @brief Skips the first elements of the source stream that satisfy the unary predicate
+ * @brief Keeps the first elements of the source stream that satisfy the predicate
+ *
+ *  Keeps events from the source stream, starting at the beginning and ending
+ *  at the first element for which the predicate returns false.
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool func(const E&, const Deps& ...)
+ */
+inline constexpr detail::TakeWhileAdaptor take_while;
+
+/*!
+ * @brief Skips the first elements of the source stream that satisfy the predicate
  *
  *  Takes events beginning at the first for which the predicate returns false.
- *  Semantically equivalent of std::ranges::views::drop_while
+ *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
+ *
+ *  The signature of pred should be equivalent to:
+ *  * bool func(const E&, const Deps& ...)
  */
-template <typename E, typename Pred>
-UREACT_WARN_UNUSED_RESULT auto drop_while( const events<E>& source, Pred&& pred )
-{
-    return drop_while( source, signal_pack<>(), std::forward<Pred>( pred ) );
-}
-
-/*!
- * @brief Curried version of drop_while(const events<E>& source, Pred&& pred)
- */
-//template <typename Pred>
-//UREACT_WARN_UNUSED_RESULT inline auto drop_while( Pred&& pred )
-//{
-//    return detail::closure{ [pred = std::forward<Pred>( pred )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return drop_while( std::forward<arg_t>( source ), pred );
-//    } };
-//}
+inline constexpr detail::DropWhileAdaptor drop_while;
 
 UREACT_END_NAMESPACE
 

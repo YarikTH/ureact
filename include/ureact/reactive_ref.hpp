@@ -65,7 +65,7 @@ UREACT_WARN_UNUSED_RESULT auto reactive_ref( Signal&& outer, InF&& func )
     using F = std::decay_t<InF>;
     using R = std::invoke_result_t<F, S>;
     using DecayedR = detail::decay_input_t<std::decay_t<R>>;
-    return flatten( lift<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
+    return flatten( lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
 }
 
 UREACT_END_NAMESPACE

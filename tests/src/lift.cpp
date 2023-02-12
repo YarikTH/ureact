@@ -184,11 +184,11 @@ TEST_CASE( "LiftUnary" )
         result_1 = ureact::lift( src, std::negate<>{} );
         result_2 = ureact::lift( std::move( tmp ), std::negate<>{} );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        result_1 = src | ureact::lift( std::negate<>{} );
-    //        result_2 = std::move( tmp ) | ureact::lift( std::negate<>{} );
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        result_1 = src | ureact::lift( std::negate<>{} );
+        result_2 = std::move( tmp ) | ureact::lift( std::negate<>{} );
+    }
 
     CHECK( tmp.was_op_stolen() );
 
@@ -423,11 +423,11 @@ TEST_CASE( "Hello World" )
         bothWords = ureact::lift( with( firstWord, secondWord ), concatFunc );
     }
 
-    //    SUBCASE( "operators , and |" )
-    //    {
-    //        // operator "|" can be used instead of lift()
-    //        bothWords = with( firstWord, secondWord ) | ureact::lift( concatFunc );
-    //    }
+    SUBCASE( "operators , and |" )
+    {
+        // operator "|" can be used instead of lift()
+        bothWords = with( firstWord, secondWord ) | ureact::lift( concatFunc );
+    }
 
     // Imperative value access
     CHECK( bothWords.get() == "Change me!" );

@@ -96,7 +96,9 @@ struct unary_plus
     using is_transparent = void;
 };
 
-} // namespace detail
+template <typename SIn = void>
+struct LiftAdaptor : Adaptor
+{
 
 /*!
  * @brief Create a new signal node with value v = std::invoke(func, arg_pack.get(), ...)
@@ -104,8 +106,8 @@ struct unary_plus
  *
  * This value is set on construction and updated when any args have changed
  */
-template <typename SIn = void, typename... Values, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF&& func )
+template <typename... Values, typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal_pack<Values...>& arg_pack, InF&& func ) const
 {
     using F = std::decay_t<InF>;
     using S = detail::deduce_s<SIn, F, Values...>;
@@ -125,8 +127,8 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal_pack<Values...>& arg_pack, InF
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void, typename Value, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
+template <typename Value, typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<Value>& arg, InF&& func ) const
 {
     using F = std::decay_t<InF>;
     using S = detail::deduce_s<SIn, F, Value>;
@@ -139,8 +141,8 @@ UREACT_WARN_UNUSED_RESULT auto lift( const signal<Value>& arg, InF&& func )
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void, typename Value, typename OpIn, typename InF>
-UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func )
+template <typename Value, typename OpIn, typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( temp_signal<Value, OpIn>&& arg, InF&& func ) const
 {
     using F = std::decay_t<InF>;
     using S = detail::deduce_s<SIn, F, Value>;
@@ -152,31 +154,10 @@ UREACT_WARN_UNUSED_RESULT auto lift( temp_signal<Value, OpIn>&& arg, InF&& func 
 /*!
  * @brief Curried version of lift(const signal_pack<Values...>& arg_pack, InF&& func)
  */
-//template <typename SIn = void, typename InF>
-//UREACT_WARN_UNUSED_RESULT auto lift( InF&& func )
-//{
-//    return detail::closure{ [func = std::forward<InF>( func )]( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert(
-//            is_signal_or_pack_v<std::decay_t<arg_t>>, "Signal type or signal_pack is required" );
-//        return lift<SIn>( std::forward<arg_t>( source ), func );
-//    } };
-//}
-
-/*!
- * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
- *
- * This value is set on construction and updated when arg have changed
- */
-template <typename SIn = void,
-    typename LeftSignal,
-    typename InF,
-    typename RightSignal,
-    class = std::enable_if_t<is_signal_v<LeftSignal>>,
-    class = std::enable_if_t<is_signal_v<RightSignal>>>
-UREACT_WARN_UNUSED_RESULT auto lift( const LeftSignal& lhs, InF&& func, const RightSignal& rhs )
+template <typename InF>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( InF&& func ) const
 {
-    return lift<SIn>( with( lhs, rhs ), std::forward<InF>( func ) );
+    return make_partial<LiftAdaptor>( std::forward<InF>( func ) );
 }
 
 /*!
@@ -184,15 +165,29 @@ UREACT_WARN_UNUSED_RESULT auto lift( const LeftSignal& lhs, InF&& func, const Ri
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void,
-    typename LeftSignal,
+template <typename LeftSignal,
+    typename InF,
+    typename RightSignal,
+    class = std::enable_if_t<is_signal_v<LeftSignal>>,
+    class = std::enable_if_t<is_signal_v<RightSignal>>>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const LeftSignal& lhs, InF&& func, const RightSignal& rhs ) const
+{
+    return operator()( with( lhs, rhs ), std::forward<InF>( func ) );
+}
+
+/*!
+ * @brief Create a new signal node with value v = std::invoke(func, lhs.get(), rhs.get())
+ *
+ * This value is set on construction and updated when arg have changed
+ */
+template <typename LeftSignal,
     typename InF,
     typename RightVal,
     class = std::enable_if_t<is_signal_v<std::decay_t<LeftSignal>>>,
     class = std::enable_if_t<!is_signal_v<std::decay_t<RightVal>>>>
-UREACT_WARN_UNUSED_RESULT auto lift( LeftSignal&& lhs, InF&& func, RightVal&& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( LeftSignal&& lhs, InF&& func, RightVal&& rhs ) const
 {
-    return lift<SIn>( std::forward<LeftSignal>( lhs ),
+    return operator()( std::forward<LeftSignal>( lhs ),
         std::bind(
             std::forward<InF>( func ), std::placeholders::_1, std::forward<RightVal>( rhs ) ) );
 }
@@ -202,16 +197,15 @@ UREACT_WARN_UNUSED_RESULT auto lift( LeftSignal&& lhs, InF&& func, RightVal&& rh
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void,
-    typename LeftVal,
+template <typename LeftVal,
     typename InF,
     typename RightSignal,
     class = std::enable_if_t<!is_signal_v<std::decay_t<LeftVal>>>,
     class = std::enable_if_t<is_signal_v<std::decay_t<RightSignal>>>,
     typename Wtf = void>
-UREACT_WARN_UNUSED_RESULT auto lift( LeftVal&& lhs, InF&& func, RightSignal&& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( LeftVal&& lhs, InF&& func, RightSignal&& rhs ) const
 {
-    return lift<SIn>( std::forward<RightSignal>( rhs ),
+    return operator()( std::forward<RightSignal>( rhs ),
         std::bind(
             std::forward<InF>( func ), std::forward<LeftVal>( lhs ), std::placeholders::_1 ) );
 }
@@ -221,14 +215,9 @@ UREACT_WARN_UNUSED_RESULT auto lift( LeftVal&& lhs, InF&& func, RightSignal&& rh
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void,
-    typename LeftVal,
-    typename LeftOp,
-    typename InF,
-    typename RightVal,
-    typename RightOp>
-UREACT_WARN_UNUSED_RESULT auto lift(
-    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
+template <typename LeftVal, typename LeftOp, typename InF, typename RightVal, typename RightOp>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
 {
     using F = std::decay_t<InF>;
     using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
@@ -248,14 +237,13 @@ UREACT_WARN_UNUSED_RESULT auto lift(
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void,
-    typename LeftVal,
+template <typename LeftVal,
     typename LeftOp,
     typename InF,
     typename RightSignal,
     class = std::enable_if_t<is_signal_v<RightSignal>>>
-UREACT_WARN_UNUSED_RESULT auto lift(
-    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, const RightSignal& rhs ) const
 {
     using RightVal = typename RightSignal::value_t;
     using F = std::decay_t<InF>;
@@ -274,14 +262,13 @@ UREACT_WARN_UNUSED_RESULT auto lift(
  *
  * This value is set on construction and updated when arg have changed
  */
-template <typename SIn = void,
-    typename LeftSignal,
+template <typename LeftSignal,
     typename InF,
     typename RightVal,
     typename RightOp,
     class = std::enable_if_t<is_signal_v<LeftSignal>>>
-UREACT_WARN_UNUSED_RESULT auto lift(
-    const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+    const LeftSignal& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
 {
     using LeftVal = typename LeftSignal::value_t;
     using F = std::decay_t<InF>;
@@ -294,6 +281,25 @@ UREACT_WARN_UNUSED_RESULT auto lift(
     return temp_signal<S, Op>{
         context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
 }
+
+};
+
+} // namespace detail
+
+/*!
+ * @brief Create a new signal applying function to given signals
+ *
+ *  Type of resulting signal should be explicitly specified.
+ */
+template <typename SIn = void>
+inline constexpr detail::LiftAdaptor<SIn> lift_;
+
+/*!
+ * @brief Create a new signal applying function to given signals
+ *
+ *  Type of resulting signal should be explicitly specified.
+ */
+inline constexpr detail::LiftAdaptor<> lift;
 
 #define UREACT_DECLARE_UNARY_LIFT_OPERATOR( op, fn )                                               \
     template <typename Signal, class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>        \

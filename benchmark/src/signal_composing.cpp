@@ -34,7 +34,7 @@ void signal_functions_baseline( ankerl::nanobench::Bench& bench )
 {
     ureact::context ctx;
     auto a = make_var( ctx, 1 );
-    auto d = lift( a,
+    auto d = ureact::lift( a,
         []( int a ) { //
             return ( ( a + a ) * ( a + a ) ) + ( ( a + a ) * ( a + a ) );
         } );

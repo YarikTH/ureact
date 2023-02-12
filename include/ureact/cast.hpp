@@ -10,9 +10,7 @@
 #ifndef UREACT_CAST_HPP
 #define UREACT_CAST_HPP
 
-#include <ureact/detail/closure.hpp>
 #include <ureact/transform.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -21,29 +19,10 @@ UREACT_BEGIN_NAMESPACE
  *
  *  For every event e in source, emit t = static_cast<OutE>(e).
  *
- *  Type of resulting signal have to be explicitly specified.
+ *  Type of resulting ureact::events<E> have to be explicitly specified.
  */
-template <typename OutE, typename InE>
-UREACT_WARN_UNUSED_RESULT auto cast( const events<InE>& source ) -> events<OutE>
-{
-    return transform( source, //
-        []( const InE& e ) {  //
-            return static_cast<OutE>( e );
-        } );
-}
-
-/*!
- * @brief Curried version of cast(const events<InE>& source)
- */
-//template <typename OutE>
-//UREACT_WARN_UNUSED_RESULT auto cast()
-//{
-//    return detail::closure{ []( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return cast<OutE>( std::forward<arg_t>( source ) );
-//    } };
-//}
+template <typename E>
+inline constexpr auto cast = transform( []( const auto& e ) { return static_cast<E>( e ); } );
 
 UREACT_END_NAMESPACE
 

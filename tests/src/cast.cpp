@@ -25,11 +25,11 @@ TEST_CASE( "Cast" )
         ints = ureact::cast<int>( src );
         floats = ureact::cast<float>( src );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        ints = src | ureact::cast<int>();
-    //        floats = src | ureact::cast<float>();
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        ints = src | ureact::cast<int>;
+        floats = src | ureact::cast<float>;
+    }
 
     const auto ints_values = ureact::collect<std::vector>( ints );
     const auto floats_values = ureact::collect<std::vector>( floats );

@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 18:44:45.447846
+// Generated: 2023-02-12 18:52:42.185741
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -3432,47 +3432,6 @@ private:
     DepHolder m_deps;
 };
 
-template <typename E, typename V, typename InF, typename... Deps, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto fold_impl(
-    const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func )
-    -> signal<S>
-{
-    using F = std::decay_t<InF>;
-
-    // clang-format off
-    using Node =
-        select_t<
-            // S func(const S&, event_range<E> range, const Deps& ...)
-            condition<std::is_invocable_r_v<S, F, event_range<E>, S, Deps...>,
-                                  fold_node<S, E, F, Deps...>>,
-            // S func(const S&, const E&, const Deps& ...)
-            condition<std::is_invocable_r_v<S, F, E, S, Deps...>,
-                                  fold_node<S, E, add_fold_range_wrapper<E, S, F, Deps...>, Deps...>>,
-            // void func(S&, event_range<E> range, const Deps& ...)
-            condition<std::is_invocable_r_v<void, F, event_range<E>, S&, Deps...>,
-                                  fold_node<S, E, F, Deps...>>,
-            // void func(S&, const E&, const Deps& ...)
-            condition<std::is_invocable_r_v<void, F, E, S&, Deps...>,
-                                  fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, Deps...>, Deps...>>,
-            signature_mismatches>;
-    // clang-format on
-
-    static_assert( !std::is_same_v<Node, signature_mismatches>,
-        "fold: Passed function does not match any of the supported signatures" );
-
-    context& context = events.get_context();
-
-    auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
-        return signal<S>( std::make_shared<Node>( context,
-            std::forward<V>( init ),
-            events.get_node(),
-            std::forward<InF>( func ),
-            deps.get_node()... ) );
-    };
-
-    return std::apply( node_builder, dep_pack.data );
-}
-
 struct FoldAdaptor : Adaptor
 {
     /*!
@@ -3507,7 +3466,41 @@ struct FoldAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<E>& events, V&& init, const signal_pack<Deps...>& dep_pack, InF&& func ) const
     {
-        return fold_impl( events, std::forward<V>( init ), dep_pack, std::forward<InF>( func ) );
+        using F = std::decay_t<InF>;
+        using S = std::decay_t<V>;
+
+        // clang-format off
+        using Node =
+            select_t<
+                // S func(const S&, event_range<E> range, const Deps& ...)
+                condition<std::is_invocable_r_v<S, F, event_range<E>, S, Deps...>,
+                                      fold_node<S, E, F, Deps...>>,
+                // S func(const S&, const E&, const Deps& ...)
+                condition<std::is_invocable_r_v<S, F, E, S, Deps...>,
+                                      fold_node<S, E, add_fold_range_wrapper<E, S, F, Deps...>, Deps...>>,
+                // void func(S&, event_range<E> range, const Deps& ...)
+                condition<std::is_invocable_r_v<void, F, event_range<E>, S&, Deps...>,
+                                      fold_node<S, E, F, Deps...>>,
+                // void func(S&, const E&, const Deps& ...)
+                condition<std::is_invocable_r_v<void, F, E, S&, Deps...>,
+                                      fold_node<S, E, add_fold_by_ref_range_wrapper<E, S, F, Deps...>, Deps...>>,
+                signature_mismatches>;
+        // clang-format on
+
+        static_assert( !std::is_same_v<Node, signature_mismatches>,
+            "fold: Passed function does not match any of the supported signatures" );
+
+        context& context = events.get_context();
+
+        auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
+            return signal<S>( std::make_shared<Node>( context,
+                std::forward<V>( init ),
+                events.get_node(),
+                std::forward<InF>( func ),
+                deps.get_node()... ) );
+        };
+
+        return std::apply( node_builder, dep_pack.data );
     }
 
     /*!

@@ -16,6 +16,11 @@
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+struct UniqueClosure : AdaptorClosure
+{
 /*!
  * @brief Filter out all except the first element from every consecutive group of equivalent elements
  *
@@ -24,7 +29,7 @@ UREACT_BEGIN_NAMESPACE
  *  Semantically equivalent of std::unique
  */
 template <typename E>
-UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const
 {
     return filter( source, [first = true, prev = E{}]( const E& e ) mutable {
         const bool pass = first || e != prev;
@@ -33,18 +38,11 @@ UREACT_WARN_UNUSED_RESULT inline auto unique( const events<E>& source )
         return pass;
     } );
 }
+};
 
-/*!
- * @brief Curried version of unique(const events<E>& source)
- */
-//UREACT_WARN_UNUSED_RESULT inline auto unique()
-//{
-//    return detail::closure{ []( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_event_v<std::decay_t<arg_t>>, "Event type is required" );
-//        return unique( std::forward<arg_t>( source ) );
-//    } };
-//}
+} // namespace detail
+
+inline constexpr detail::UniqueClosure unique;
 
 UREACT_END_NAMESPACE
 

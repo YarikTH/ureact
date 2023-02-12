@@ -22,10 +22,10 @@ TEST_CASE( "Unique" )
     {
         uniq = ureact::unique( src );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        uniq = src | ureact::unique();
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        uniq = src | ureact::unique;
+    }
 
     const auto result = ureact::collect<std::vector>( uniq );
 

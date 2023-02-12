@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 17:35:08.895266
+// Generated: 2023-02-12 18:07:45.597650
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -3680,6 +3680,119 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_COUNT_HPP
 
+#ifndef UREACT_ADAPTOR_DROP_HPP
+#define UREACT_ADAPTOR_DROP_HPP
+
+
+#ifndef UREACT_DETAIL_TAKE_DROP_BASE_HPP
+#define UREACT_DETAIL_TAKE_DROP_BASE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+/*!
+ * @brief counter that counts down from N to 0
+ *
+ * prefix decrement operator decrements only to 0
+ * example: for(countdown i{N}; i; --i )
+ */
+class countdown
+{
+public:
+    explicit countdown( size_t value )
+        : m_value( value )
+    {}
+
+    countdown& operator--()
+    {
+        m_value = dec( m_value );
+        return *this;
+    }
+
+    const countdown operator--( int ) // NOLINT
+    {
+        countdown i{ m_value };
+        m_value = dec( m_value );
+        return i;
+    }
+
+    // checkable in boolean context
+    explicit operator bool() const
+    {
+        return m_value;
+    }
+
+private:
+    // decrement operator decrements only to 0
+    UREACT_WARN_UNUSED_RESULT static size_t dec( const size_t value )
+    {
+        if( value == 0 ) // [[likely]]
+            return 0;
+        else
+            return value - 1;
+    }
+
+    size_t m_value;
+};
+
+template <typename Derived>
+struct TakeDropAdaptorBase : Adaptor
+{
+    template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const
+    {
+        return make_partial<Derived>( count );
+    }
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_TAKE_DROP_BASE_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct DropAdaptor : TakeDropAdaptorBase<DropAdaptor>
+{
+    /*!
+	 * @brief Skips first N elements from the source stream
+	 *
+	 *  Semantically equivalent of std::ranges::views::drop
+	 */
+    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const N count ) const
+    {
+        assert( count >= 0 );
+        return filter( source,                                        //
+            [i = detail::countdown( count )]( const auto& ) mutable { //
+                return !bool( i-- );
+            } );
+    }
+
+    using TakeDropAdaptorBase::operator();
+};
+
+} // namespace detail
+
+/*!
+ * @brief Skips first N elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::drop
+ */
+inline constexpr detail::DropAdaptor drop;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_DROP_HPP
+
 #ifndef UREACT_ADAPTOR_FLATTEN_HPP
 #define UREACT_ADAPTOR_FLATTEN_HPP
 
@@ -4989,6 +5102,64 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_OBSERVE_HPP
 
+#ifndef UREACT_ADAPTOR_ONCE_HPP
+#define UREACT_ADAPTOR_ONCE_HPP
+
+
+#ifndef UREACT_ADAPTOR_TAKE_HPP
+#define UREACT_ADAPTOR_TAKE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct TakeAdaptor : TakeDropAdaptorBase<TakeAdaptor>
+{
+    /*!
+	 * @brief Keeps first N elements from the source stream
+	 *
+	 *  Semantically equivalent of std::ranges::views::take
+	 */
+    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const N count ) const
+    {
+        assert( count >= 0 );
+        return filter( source,                                        //
+            [i = detail::countdown( count )]( const auto& ) mutable { //
+                return bool( i-- );
+            } );
+    }
+
+    using TakeDropAdaptorBase::operator();
+};
+
+} // namespace detail
+
+/*!
+ * @brief Keeps first N elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::take
+ */
+inline constexpr detail::TakeAdaptor take;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_TAKE_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Passes a single event
+ */
+inline constexpr auto once = take( 1 );
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_ONCE_HPP
+
 #ifndef UREACT_ADAPTOR_PULSE_HPP
 #define UREACT_ADAPTOR_PULSE_HPP
 
@@ -5159,134 +5330,6 @@ inline constexpr detail::SnapshotAdaptor snapshot;
 UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_SNAPSHOT_HPP
-
-#ifndef UREACT_ADAPTOR_TAKE_DROP_HPP
-#define UREACT_ADAPTOR_TAKE_DROP_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-/*!
- * @brief counter that counts down from N to 0
- *
- * prefix decrement operator decrements only to 0
- * example: for(countdown i{N}; i; --i )
- */
-class countdown
-{
-public:
-    explicit countdown( size_t value )
-        : m_value( value )
-    {}
-
-    countdown& operator--()
-    {
-        m_value = dec( m_value );
-        return *this;
-    }
-
-    const countdown operator--( int ) // NOLINT
-    {
-        countdown i{ m_value };
-        m_value = dec( m_value );
-        return i;
-    }
-
-    // checkable in boolean context
-    explicit operator bool() const
-    {
-        return m_value;
-    }
-
-private:
-    // decrement operator decrements only to 0
-    UREACT_WARN_UNUSED_RESULT static size_t dec( const size_t value )
-    {
-        if( value == 0 ) // [[likely]]
-            return 0;
-        else
-            return value - 1;
-    }
-
-    size_t m_value;
-};
-
-template <typename Derived>
-struct TakeDropAdaptorBase : Adaptor
-{
-    template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const
-    {
-        return make_partial<Derived>( count );
-    }
-};
-
-struct TakeAdaptor : TakeDropAdaptorBase<TakeAdaptor>
-{
-
-    /*!
-	 * @brief Keeps first N elements from the source stream
-	 *
-	 *  Semantically equivalent of std::ranges::views::take
-	 */
-    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, const N count ) const
-    {
-        assert( count >= 0 );
-        return filter( source,                                        //
-            [i = detail::countdown( count )]( const auto& ) mutable { //
-                return bool( i-- );
-            } );
-    }
-
-    using TakeDropAdaptorBase::operator();
-};
-
-struct DropAdaptor : TakeDropAdaptorBase<DropAdaptor>
-{
-
-    /*!
-	 * @brief Skips first N elements from the source stream
-	 *
-	 *  Semantically equivalent of std::ranges::views::drop
-	 */
-    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        const events<E>& source, const N count ) const
-    {
-        assert( count >= 0 );
-        return filter( source,                                        //
-            [i = detail::countdown( count )]( const auto& ) mutable { //
-                return !bool( i-- );
-            } );
-    }
-
-    using TakeDropAdaptorBase::operator();
-};
-
-} // namespace detail
-
-/*!
- * @brief Keeps first N elements from the source stream
- *
- *  Semantically equivalent of std::ranges::views::take
- */
-inline constexpr detail::TakeAdaptor take;
-
-/*!
- * @brief Skips first N elements from the source stream
- *
- *  Semantically equivalent of std::ranges::views::drop
- */
-inline constexpr detail::DropAdaptor drop;
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_ADAPTOR_TAKE_DROP_HPP
 
 #ifndef UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP
 #define UREACT_ADAPTOR_TAKE_DROP_WHILE_HPP

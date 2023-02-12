@@ -8,6 +8,7 @@
 #include "doctest_extra.h"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/drop.hpp"
+#include "ureact/adaptor/once.hpp"
 #include "ureact/adaptor/take.hpp"
 
 // filters that take first N elements or skip first N elements
@@ -44,4 +45,29 @@ TEST_CASE( "TakeOrDrop" )
         /*          */ { 5, -1, 6, 7, 8, 9 };
     CHECK( result_first_n.get() == expected_first_n );
     CHECK( result_without_first_n.get() == expected_without_first_n );
+}
+
+TEST_CASE( "Once" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_source<int>( ctx );
+    ureact::events<int> first;
+
+    SUBCASE( "Functional syntax" )
+    {
+        first = ureact::once( src );
+    }
+    SUBCASE( "Piped syntax" )
+    {
+        first = src | ureact::once;
+    }
+
+    const auto result = ureact::collect<std::vector>( first );
+
+    // pass integers as events
+    for( int i : { 75, -1, 0 } )
+        src << i;
+
+    CHECK( result.get() == std::vector<int>{ 75 } );
 }

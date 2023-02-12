@@ -20,7 +20,6 @@ namespace detail
 
 struct TapAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Create observer for signal and return observed signal
 	 *
@@ -86,7 +85,7 @@ struct TapAdaptor : Adaptor
         class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Events&& subject, F&& func ) const
     {
-        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+        return operator()( subject, signal_pack<>{}, std::forward<F>( func ) );
     }
 
     /*!

@@ -12,7 +12,6 @@
 
 #include <ureact/adaptor/process.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -21,7 +20,6 @@ namespace detail
 
 struct PulseAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Emits the value of a target signal when an event is received
 	 *

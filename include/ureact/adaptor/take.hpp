@@ -10,9 +10,10 @@
 #ifndef UREACT_ADAPTOR_TAKE_HPP
 #define UREACT_ADAPTOR_TAKE_HPP
 
+#include <type_traits>
+
 #include <ureact/adaptor/filter.hpp>
 #include <ureact/detail/take_drop_base.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -31,8 +32,8 @@ struct TakeAdaptor : TakeDropAdaptorBase<TakeAdaptor>
         const events<E>& source, const N count ) const
     {
         assert( count >= 0 );
-        return filter( source,                                        //
-            [i = detail::countdown( count )]( const auto& ) mutable { //
+        return filter( source,                                //
+            [i = countdown( count )]( const auto& ) mutable { //
                 return bool( i-- );
             } );
     }

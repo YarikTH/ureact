@@ -50,7 +50,6 @@ using decay_input_t = typename decay_input<T>::type;
 
 struct ReactiveRefAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Adaptor to flatten public signal attribute of class pointed be reference
 	 *
@@ -66,7 +65,7 @@ struct ReactiveRefAdaptor : Adaptor
         using S = typename std::decay_t<Signal>::value_t;
         using F = std::decay_t<InF>;
         using R = std::invoke_result_t<F, S>;
-        using DecayedR = detail::decay_input_t<std::decay_t<R>>;
+        using DecayedR = decay_input_t<std::decay_t<R>>;
         return flatten(
             lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
     }

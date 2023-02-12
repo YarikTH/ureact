@@ -13,7 +13,6 @@
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
 #include <ureact/events.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

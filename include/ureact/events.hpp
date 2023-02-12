@@ -10,6 +10,8 @@
 #ifndef UREACT_EVENTS_HPP
 #define UREACT_EVENTS_HPP
 
+#include <type_traits>
+
 #include <ureact/context.hpp>
 #include <ureact/detail/base.hpp>
 #include <ureact/event_range.hpp> // event ranges often needed along with events.hpp header

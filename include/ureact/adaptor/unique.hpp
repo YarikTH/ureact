@@ -12,7 +12,6 @@
 
 #include <ureact/adaptor/filter.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

@@ -289,7 +289,6 @@ auto observe_events_impl(
 
 struct ObserveAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Create observer for signal
 	 *
@@ -376,7 +375,7 @@ struct ObserveAdaptor : Adaptor
     template <typename F, typename E>
     constexpr auto operator()( const events<E>& subject, F&& func ) const
     {
-        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+        return operator()( subject, signal_pack<>{}, std::forward<F>( func ) );
     }
 
     /*!
@@ -389,7 +388,7 @@ struct ObserveAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
     constexpr auto operator()( events<E>&& subject, F&& func ) const // TODO: check in tests
     {
-        return operator()( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
+        return operator()( std::move( subject ), signal_pack<>{}, std::forward<F>( func ) );
     }
 
     /*!

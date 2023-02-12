@@ -130,7 +130,7 @@ struct ZipAdaptor : Adaptor
 
         context& context = source1.get_context();
         return events<std::tuple<Source, Sources...>>(
-            std::make_shared<detail::event_zip_node<Source, Sources...>>(
+            std::make_shared<event_zip_node<Source, Sources...>>(
                 context, source1.get_node(), sources.get_node()... ) );
     }
 };

@@ -12,7 +12,6 @@
 
 #include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -21,7 +20,6 @@ namespace detail
 
 struct HoldAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Holds the most recent event in a signal
 	 *

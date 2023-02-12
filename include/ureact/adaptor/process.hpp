@@ -18,7 +18,6 @@
 #include <ureact/event_range.hpp>
 #include <ureact/events.hpp>
 #include <ureact/signal_pack.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -104,7 +103,6 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 template <typename OutE>
 struct ProcessAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Create a new event stream by batch processing events from other stream
 	 *
@@ -122,7 +120,7 @@ struct ProcessAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
     {
-        return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+        return process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
     }
 
     /*!
@@ -160,8 +158,8 @@ struct ProcessAdaptor : Adaptor
 
 } // namespace detail
 
-template <typename OutE>
-inline constexpr detail::ProcessAdaptor<OutE> process;
+template <typename E>
+inline constexpr detail::ProcessAdaptor<E> process;
 
 UREACT_END_NAMESPACE
 

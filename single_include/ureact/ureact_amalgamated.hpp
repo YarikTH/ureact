@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.9.0 wip
-// Generated: 2023-02-12 18:52:42.185741
+// Generated: 2023-02-12 19:07:00.960740
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -942,6 +942,8 @@ UREACT_END_NAMESPACE
 
 #ifndef UREACT_EVENTS_HPP
 #define UREACT_EVENTS_HPP
+
+#include <type_traits>
 
 
 #ifndef UREACT_CONTEXT_HPP
@@ -2331,7 +2333,6 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
 template <typename OutE>
 struct ProcessAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Create a new event stream by batch processing events from other stream
 	 *
@@ -2349,7 +2350,7 @@ struct ProcessAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
     {
-        return detail::process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+        return process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
     }
 
     /*!
@@ -2387,8 +2388,8 @@ struct ProcessAdaptor : Adaptor
 
 } // namespace detail
 
-template <typename OutE>
-inline constexpr detail::ProcessAdaptor<OutE> process;
+template <typename E>
+inline constexpr detail::ProcessAdaptor<E> process;
 
 UREACT_END_NAMESPACE
 
@@ -3601,12 +3602,12 @@ struct CollectClosure : AdaptorClosure
         return fold( source,
             Cont{},                         //
             []( const E& e, Cont& accum ) { //
-                if constexpr( detail::has_push_back_method_v<Cont, E> )
+                if constexpr( has_push_back_method_v<Cont, E> )
                     accum.push_back( e );
-                else if constexpr( detail::has_insert_method_v<Cont, E> )
+                else if constexpr( has_insert_method_v<Cont, E> )
                     accum.insert( e );
                 else
-                    static_assert( detail::always_false<Cont, E>, "Unsupported container" );
+                    static_assert( always_false<Cont, E>, "Unsupported container" );
             } );
     }
 };
@@ -3651,9 +3652,13 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_ADAPTOR_DROP_HPP
 #define UREACT_ADAPTOR_DROP_HPP
 
+#include <type_traits>
+
 
 #ifndef UREACT_DETAIL_TAKE_DROP_BASE_HPP
 #define UREACT_DETAIL_TAKE_DROP_BASE_HPP
+
+#include <type_traits>
 
 
 UREACT_BEGIN_NAMESPACE
@@ -3739,8 +3744,8 @@ struct DropAdaptor : TakeDropAdaptorBase<DropAdaptor>
         const events<E>& source, const N count ) const
     {
         assert( count >= 0 );
-        return filter( source,                                        //
-            [i = detail::countdown( count )]( const auto& ) mutable { //
+        return filter( source,                                //
+            [i = countdown( count )]( const auto& ) mutable { //
                 return !bool( i-- );
             } );
     }
@@ -3978,7 +3983,6 @@ namespace detail
 
 struct HoldAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Holds the most recent event in a signal
 	 *
@@ -4280,8 +4284,8 @@ struct LiftAdaptor : Adaptor
         const signal_pack<Values...>& arg_pack, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, Values...>;
-        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
+        using S = deduce_s<SIn, F, Values...>;
+        using Op = function_op<S, F, signal_node_ptr_t<Values>...>;
 
         context& context = std::get<0>( arg_pack.data ).get_context();
 
@@ -4302,8 +4306,8 @@ struct LiftAdaptor : Adaptor
         const signal<Value>& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, Value>;
-        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
+        using S = deduce_s<SIn, F, Value>;
+        using Op = function_op<S, F, signal_node_ptr_t<Value>>;
         return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
     }
 
@@ -4317,8 +4321,8 @@ struct LiftAdaptor : Adaptor
         temp_signal<Value, OpIn>&& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, Value>;
-        using Op = detail::function_op<S, F, OpIn>;
+        using S = deduce_s<SIn, F, Value>;
+        using Op = function_op<S, F, OpIn>;
         return temp_signal<S, Op>{
             arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
     }
@@ -4395,8 +4399,8 @@ struct LiftAdaptor : Adaptor
         temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-        using Op = detail::function_op<S, F, LeftOp, RightOp>;
+        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = function_op<S, F, LeftOp, RightOp>;
 
         context& context = lhs.get_context();
         assert( context == rhs.get_context() );
@@ -4422,8 +4426,8 @@ struct LiftAdaptor : Adaptor
     {
         using RightVal = typename RightSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-        using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
+        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
         context& context = lhs.get_context();
         assert( context == rhs.get_context() );
@@ -4447,8 +4451,8 @@ struct LiftAdaptor : Adaptor
     {
         using LeftVal = typename LeftSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
+        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
         context& context = lhs.get_context();
         assert( context == rhs.get_context() );
@@ -4614,12 +4618,12 @@ struct MergeAdaptor : Adaptor
     {
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-        using Op = detail::event_merge_op<E,
-            detail::event_stream_node_ptr_t<Source>,
-            detail::event_stream_node_ptr_t<Sources>...>;
+        using Op = event_merge_op<E,
+            event_stream_node_ptr_t<Source>,
+            event_stream_node_ptr_t<Sources>...>;
 
         context& context = source1.get_context();
-        return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
+        return events<E>( std::make_shared<event_op_node<E, Op>>(
             context, source1.get_node(), sources.get_node()... ) );
     }
 };
@@ -4989,7 +4993,6 @@ auto observe_events_impl(
 
 struct ObserveAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Create observer for signal
 	 *
@@ -5076,7 +5079,7 @@ struct ObserveAdaptor : Adaptor
     template <typename F, typename E>
     constexpr auto operator()( const events<E>& subject, F&& func ) const
     {
-        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+        return operator()( subject, signal_pack<>{}, std::forward<F>( func ) );
     }
 
     /*!
@@ -5089,7 +5092,7 @@ struct ObserveAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT_MSG( "Observing the temporary so observer should be stored" )
     constexpr auto operator()( events<E>&& subject, F&& func ) const // TODO: check in tests
     {
-        return operator()( std::move( subject ), signal_pack<>(), std::forward<F>( func ) );
+        return operator()( std::move( subject ), signal_pack<>{}, std::forward<F>( func ) );
     }
 
     /*!
@@ -5130,6 +5133,8 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_ADAPTOR_TAKE_HPP
 #define UREACT_ADAPTOR_TAKE_HPP
 
+#include <type_traits>
+
 
 UREACT_BEGIN_NAMESPACE
 
@@ -5148,8 +5153,8 @@ struct TakeAdaptor : TakeDropAdaptorBase<TakeAdaptor>
         const events<E>& source, const N count ) const
     {
         assert( count >= 0 );
-        return filter( source,                                        //
-            [i = detail::countdown( count )]( const auto& ) mutable { //
+        return filter( source,                                //
+            [i = countdown( count )]( const auto& ) mutable { //
                 return bool( i-- );
             } );
     }
@@ -5192,7 +5197,6 @@ namespace detail
 
 struct PulseAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Emits the value of a target signal when an event is received
 	 *
@@ -5268,7 +5272,6 @@ using decay_input_t = typename decay_input<T>::type;
 
 struct ReactiveRefAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Adaptor to flatten public signal attribute of class pointed be reference
 	 *
@@ -5284,7 +5287,7 @@ struct ReactiveRefAdaptor : Adaptor
         using S = typename std::decay_t<Signal>::value_t;
         using F = std::decay_t<InF>;
         using R = std::invoke_result_t<F, S>;
-        using DecayedR = detail::decay_input_t<std::decay_t<R>>;
+        using DecayedR = decay_input_t<std::decay_t<R>>;
         return flatten(
             lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
     }
@@ -5315,7 +5318,6 @@ namespace detail
 
 struct SnapshotAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Sets the signal value to the value of a target signal when an event is received
 	 *
@@ -5418,7 +5420,6 @@ namespace detail
 
 struct TapAdaptor : Adaptor
 {
-
     /*!
 	 * @brief Create observer for signal and return observed signal
 	 *
@@ -5484,7 +5485,7 @@ struct TapAdaptor : Adaptor
         class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Events&& subject, F&& func ) const
     {
-        return operator()( subject, signal_pack<>(), std::forward<F>( func ) );
+        return operator()( subject, signal_pack<>{}, std::forward<F>( func ) );
     }
 
     /*!
@@ -5674,7 +5675,7 @@ struct ZipAdaptor : Adaptor
 
         context& context = source1.get_context();
         return events<std::tuple<Source, Sources...>>(
-            std::make_shared<detail::event_zip_node<Source, Sources...>>(
+            std::make_shared<event_zip_node<Source, Sources...>>(
                 context, source1.get_node(), sources.get_node()... ) );
     }
 };
@@ -5742,6 +5743,7 @@ UREACT_END_NAMESPACE
 #define UREACT_TRANSACTION_HPP
 
 #include <functional>
+#include <type_traits>
 
 
 UREACT_BEGIN_NAMESPACE

@@ -10,9 +10,10 @@
 #ifndef UREACT_DETAIL_TAKE_DROP_BASE_HPP
 #define UREACT_DETAIL_TAKE_DROP_BASE_HPP
 
+#include <type_traits>
+
 #include <ureact/adaptor/filter.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

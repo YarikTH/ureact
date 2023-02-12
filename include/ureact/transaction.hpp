@@ -11,6 +11,7 @@
 #define UREACT_TRANSACTION_HPP
 
 #include <functional>
+#include <type_traits>
 
 #include <ureact/detail/base.hpp>
 

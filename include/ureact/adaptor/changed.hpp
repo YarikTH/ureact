@@ -14,7 +14,6 @@
 #include <ureact/adaptor/monitor.hpp>
 #include <ureact/adaptor/unify.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

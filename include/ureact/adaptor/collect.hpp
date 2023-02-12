@@ -12,7 +12,6 @@
 
 #include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -68,12 +67,12 @@ struct CollectClosure : AdaptorClosure
         return fold( source,
             Cont{},                         //
             []( const E& e, Cont& accum ) { //
-                if constexpr( detail::has_push_back_method_v<Cont, E> )
+                if constexpr( has_push_back_method_v<Cont, E> )
                     accum.push_back( e );
-                else if constexpr( detail::has_insert_method_v<Cont, E> )
+                else if constexpr( has_insert_method_v<Cont, E> )
                     accum.insert( e );
                 else
-                    static_assert( detail::always_false<Cont, E>, "Unsupported container" );
+                    static_assert( always_false<Cont, E>, "Unsupported container" );
             } );
     }
 };

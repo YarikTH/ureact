@@ -111,8 +111,8 @@ struct LiftAdaptor : Adaptor
         const signal_pack<Values...>& arg_pack, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, Values...>;
-        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Values>...>;
+        using S = deduce_s<SIn, F, Values...>;
+        using Op = function_op<S, F, signal_node_ptr_t<Values>...>;
 
         context& context = std::get<0>( arg_pack.data ).get_context();
 
@@ -133,8 +133,8 @@ struct LiftAdaptor : Adaptor
         const signal<Value>& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, Value>;
-        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<Value>>;
+        using S = deduce_s<SIn, F, Value>;
+        using Op = function_op<S, F, signal_node_ptr_t<Value>>;
         return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
     }
 
@@ -148,8 +148,8 @@ struct LiftAdaptor : Adaptor
         temp_signal<Value, OpIn>&& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, Value>;
-        using Op = detail::function_op<S, F, OpIn>;
+        using S = deduce_s<SIn, F, Value>;
+        using Op = function_op<S, F, OpIn>;
         return temp_signal<S, Op>{
             arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
     }
@@ -226,8 +226,8 @@ struct LiftAdaptor : Adaptor
         temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
     {
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-        using Op = detail::function_op<S, F, LeftOp, RightOp>;
+        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = function_op<S, F, LeftOp, RightOp>;
 
         context& context = lhs.get_context();
         assert( context == rhs.get_context() );
@@ -253,8 +253,8 @@ struct LiftAdaptor : Adaptor
     {
         using RightVal = typename RightSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-        using Op = detail::function_op<S, F, LeftOp, detail::signal_node_ptr_t<RightVal>>;
+        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
         context& context = lhs.get_context();
         assert( context == rhs.get_context() );
@@ -278,8 +278,8 @@ struct LiftAdaptor : Adaptor
     {
         using LeftVal = typename LeftSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = detail::deduce_s<SIn, F, LeftVal, RightVal>;
-        using Op = detail::function_op<S, F, detail::signal_node_ptr_t<LeftVal>, RightOp>;
+        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
         context& context = lhs.get_context();
         assert( context == rhs.get_context() );

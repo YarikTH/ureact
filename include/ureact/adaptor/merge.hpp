@@ -100,12 +100,12 @@ struct MergeAdaptor : Adaptor
     {
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-        using Op = detail::event_merge_op<E,
-            detail::event_stream_node_ptr_t<Source>,
-            detail::event_stream_node_ptr_t<Sources>...>;
+        using Op = event_merge_op<E,
+            event_stream_node_ptr_t<Source>,
+            event_stream_node_ptr_t<Sources>...>;
 
         context& context = source1.get_context();
-        return events<E>( std::make_shared<detail::event_op_node<E, Op>>(
+        return events<E>( std::make_shared<event_op_node<E, Op>>(
             context, source1.get_node(), sources.get_node()... ) );
     }
 };

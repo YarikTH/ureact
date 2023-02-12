@@ -32,7 +32,7 @@
   for what you don't use and to have very determined consistent behaviour
 * Ease of use: small self-contained single header code base, no external dependencies,
   permissive Boost Software License [license](LICENSE_1_0.txt)
-* Really easy to get started: it's just 1 header file - see the [tutorial](doc/tutorial.md)
+* Really easy to get started: it's just 1 header file
 * Reliability: the library has an extensive set of [tests](tests/src)
 * Portability: continuously tested under Windows, MacOS and Ubuntu using **MSVC**/**GCC**/**Clang**
 * Clean warning-free codebase even on the [**most aggressive**](support/cmake/set_warning_flags.cmake) warning levels for **MSVC**/**GCC**/**Clang**

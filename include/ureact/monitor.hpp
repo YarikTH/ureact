@@ -52,31 +52,25 @@ private:
     const std::shared_ptr<signal_node<E>> m_target;
 };
 
-} // namespace detail
-
+struct MonitorClosure : AdaptorClosure
+{
 /*!
- * @brief Emits value changes of signal as events
- *
- *  When target changes, emit the new value 'e = target.get()'.
- */
+* @brief Emits value changes of signal as events
+*
+*  When target changes, emit the new value 'e = target.get()'.
+*/
 template <typename S>
-UREACT_WARN_UNUSED_RESULT auto monitor( const signal<S>& target ) -> events<S>
+UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const -> events<S>
 {
     context& context = target.get_context();
-    return events<S>( std::make_shared<detail::monitor_node<S>>( context, target.get_node() ) );
+    return events<S>( std::make_shared<monitor_node<S>>( context, target.get_node() ) );
 }
+};
 
-/*!
- * @brief Curried version of monitor(const signal<S>& target)
- */
-//UREACT_WARN_UNUSED_RESULT inline auto monitor()
-//{
-//    return detail::closure{ []( auto&& source ) {
-//        using arg_t = decltype( source );
-//        static_assert( is_signal_v<std::decay_t<arg_t>>, "Signal type is required" );
-//        return monitor( std::forward<arg_t>( source ) );
-//    } };
-//}
+} // namespace detail
+
+
+inline constexpr detail::MonitorClosure monitor;
 
 UREACT_END_NAMESPACE
 

@@ -23,10 +23,10 @@ TEST_CASE( "Monitor" )
     {
         monitored = ureact::monitor( src );
     }
-    //    SUBCASE( "Piped syntax" )
-    //    {
-    //        monitored = src | ureact::monitor();
-    //    }
+    SUBCASE( "Piped syntax" )
+    {
+        monitored = src | ureact::monitor;
+    }
 
     const auto result = ureact::collect<std::vector>( monitored );
 

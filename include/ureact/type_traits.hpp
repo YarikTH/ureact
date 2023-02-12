@@ -116,6 +116,30 @@ struct dont_move
 template <typename L, typename R>
 using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
+// TODO: make macro to eliminate duplication hereA
+#if defined( __cpp_lib_remove_cvref ) && __cpp_lib_remove_cvref >= 201711L
+
+template <class T>
+using remove_cvref = std::remove_cvref<T>;
+
+template <class T>
+using remove_cvref_t = std::remove_cvref_t<T>;
+
+#else
+
+// Based on Possible implementation from
+// https://en.cppreference.com/w/cpp/types/remove_cvref
+template <class T>
+struct remove_cvref
+{
+    typedef std::remove_cv_t<std::remove_reference_t<T>> type;
+};
+
+template <class T>
+using remove_cvref_t = typename remove_cvref<T>::type;
+
+#endif
+
 } // namespace detail
 
 

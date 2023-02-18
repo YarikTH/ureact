@@ -98,7 +98,7 @@ public:
         std::apply( detach_functor<fold_node>( *this ), m_deps );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         if( m_events->events().empty() )
             return update_result::unchanged;

@@ -145,8 +145,6 @@ private:
     std::vector<Node*> m_data;
 };
 
-using turn_type = unsigned;
-
 enum class update_result
 {
     unchanged,
@@ -165,7 +163,7 @@ public:
 
     virtual ~reactive_node() = default;
 
-    UREACT_WARN_UNUSED_RESULT virtual update_result update( turn_type& ) = 0;
+    UREACT_WARN_UNUSED_RESULT virtual update_result update() = 0;
 
     /// Called after change propagation on changed nodes
     virtual void finalize()
@@ -329,14 +327,12 @@ private:
 
     void propagate()
     {
-        turn_type turn( next_turn_id() );
-
         std::vector<reactive_node*> changed_nodes;
 
         // Fill update queue with successors of changed inputs
         for( reactive_node* p : m_changed_inputs )
         {
-            const update_result result = p->update( turn );
+            const update_result result = p->update();
 
             if( result == update_result::changed )
             {
@@ -359,7 +355,7 @@ private:
                     continue;
                 }
 
-                const update_result result = cur_node->update( turn );
+                const update_result result = cur_node->update();
 
                 // Topology changed?
                 if( result == update_result::shifted )
@@ -418,14 +414,7 @@ private:
 
     void schedule_successors( reactive_node& node );
 
-    turn_type next_turn_id()
-    {
-        return m_next_turn_id++;
-    }
-
     topological_queue m_scheduled_nodes;
-
-    turn_type m_next_turn_id{ 0 };
 
     int m_transaction_level = 0;
 

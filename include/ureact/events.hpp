@@ -62,7 +62,7 @@ public:
         this->m_events.push_back( std::forward<V>( v ) );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }
@@ -88,7 +88,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         m_op.collect( event_collector( this->m_events ) );
 

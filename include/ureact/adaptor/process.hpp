@@ -52,7 +52,7 @@ public:
         std::apply( detach_functor<event_processing_node>( *this ), m_deps );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         if( !m_source->events().empty() )
         {

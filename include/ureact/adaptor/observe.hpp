@@ -99,7 +99,7 @@ public:
         this->attach_to( *subject );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         bool should_detach = false;
 
@@ -159,7 +159,7 @@ public:
         ( this->attach_to( *deps ), ... );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         bool should_detach = false;
 

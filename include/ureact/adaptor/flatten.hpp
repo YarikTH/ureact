@@ -47,7 +47,7 @@ public:
         this->detach_from( *m_outer );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         {
             const auto& new_inner = m_outer->value_ref().get_node();
@@ -93,7 +93,7 @@ public:
         this->detach_from( *m_outer );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         const auto& new_inner = m_outer->value_ref().get_node();
         if( !equal_to( new_inner, m_inner ) )

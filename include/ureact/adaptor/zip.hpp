@@ -42,7 +42,7 @@ public:
             m_slots );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         {
             // Move events into buffers

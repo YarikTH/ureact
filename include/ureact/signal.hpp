@@ -97,7 +97,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         if( m_is_input_added )
         {

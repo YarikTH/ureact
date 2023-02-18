@@ -38,13 +38,13 @@ public:
         this->detach_from( *m_target );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         this->set_current_turn_force_update( turn );
 
         this->m_events.push_back( m_target->value_ref() );
 
-        this->pulse_if_has_events();
+        return this->pulse_if_has_events();
     }
 
 private:

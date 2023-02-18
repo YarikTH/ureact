@@ -147,6 +147,13 @@ private:
 
 using turn_type = unsigned;
 
+enum class update_result
+{
+    unchanged,
+    changed,
+    shifted
+};
+
 class reactive_node
 {
 public:
@@ -158,7 +165,7 @@ public:
 
     virtual ~reactive_node() = default;
 
-    virtual void tick( turn_type& turn ) = 0;
+    UREACT_WARN_UNUSED_RESULT virtual update_result update( turn_type& turn ) = 0;
 };
 
 struct input_node_interface
@@ -360,7 +367,7 @@ private:
                     }
 
                     cur_node->queued = false;
-                    cur_node->tick( turn );
+                    std::ignore = cur_node->update( turn );
                 }
             }
         }

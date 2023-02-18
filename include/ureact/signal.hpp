@@ -41,19 +41,22 @@ public:
 
     // Assign a new value and do pulse only if new value is different from the current one
     template <class T>
-    void pulse_if_value_changed( T&& new_value )
+    UREACT_WARN_UNUSED_RESULT update_result pulse_if_value_changed( T&& new_value )
     {
         if( !equal_to( this->m_value, new_value ) )
         {
             this->m_value = std::forward<T>( new_value );
             this->get_graph().on_node_pulse( *this );
+            return update_result::changed;
         }
+        return update_result::unchanged;
     }
 
     // Perform pulse after value modification was performed
-    void pulse_after_modify()
+    UREACT_WARN_UNUSED_RESULT update_result pulse_after_modify()
     {
         this->get_graph().on_node_pulse( *this );
+        return update_result::changed;
     }
 
 protected:
@@ -73,7 +76,7 @@ public:
     {}
 
     // LCOV_EXCL_START
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
         assert( false && "Ticked var_node" );
     }

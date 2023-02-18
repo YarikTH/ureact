@@ -57,12 +57,14 @@ public:
         return m_events;
     }
 
-    void pulse_if_has_events()
+    UREACT_WARN_UNUSED_RESULT update_result pulse_if_has_events()
     {
         if( !m_events.empty() )
         {
             this->get_graph().on_node_pulse( *this );
+            return update_result::changed;
         }
+        return update_result::unchanged;
     }
 
 protected:
@@ -85,7 +87,7 @@ public:
     ~event_source_node() override = default;
 
     // LCOV_EXCL_START
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
         assert( false && "Ticked event_source_node" );
     }
@@ -143,13 +145,13 @@ public:
         }
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         this->set_current_turn_force_update( turn );
 
         m_op.collect( turn, event_collector( this->m_events ) );
 
-        this->pulse_if_has_events();
+        return this->pulse_if_has_events();
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()

@@ -47,7 +47,7 @@ public:
         this->detach_from( *m_outer );
     }
 
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
         {
             const auto& new_inner = m_outer->value_ref().get_node();
@@ -60,11 +60,11 @@ public:
                 this->dynamic_detach_from( *old_inner );
                 this->dynamic_attach_to( *new_inner );
 
-                return;
+                return update_result::shifted;
             }
         }
 
-        this->pulse_if_value_changed( m_inner->value_ref() );
+        return this->pulse_if_value_changed( m_inner->value_ref() );
     }
 
 private:
@@ -93,7 +93,7 @@ public:
         this->detach_from( *m_outer );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         this->set_current_turn_force_update( turn );
         m_inner->set_current_turn( turn );
@@ -111,14 +111,14 @@ public:
                 this->dynamic_detach_from( *old_inner );
                 this->dynamic_attach_to( *new_inner );
 
-                return;
+                return update_result::shifted;
             }
         }
 
         this->m_events.insert(
             this->m_events.end(), m_inner->events().begin(), m_inner->events().end() );
 
-        this->pulse_if_has_events();
+        return this->pulse_if_has_events();
     }
 
 private:

@@ -39,9 +39,9 @@ public:
         }
     }
 
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        this->pulse_if_value_changed( evaluate() );
+        return this->pulse_if_value_changed( evaluate() );
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()

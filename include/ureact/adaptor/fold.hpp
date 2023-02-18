@@ -98,16 +98,16 @@ public:
         std::apply( detach_functor<fold_node>( *this ), m_deps );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         m_events->set_current_turn( turn );
 
         if( m_events->events().empty() )
-            return;
+            return update_result::unchanged;
 
         if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
         {
-            this->pulse_if_value_changed( std::apply(
+            return this->pulse_if_value_changed( std::apply(
                 [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
@@ -130,7 +130,7 @@ public:
                 m_deps );
 
             // Always assume change
-            this->pulse_after_modify();
+            return this->pulse_after_modify();
         }
         else
         {

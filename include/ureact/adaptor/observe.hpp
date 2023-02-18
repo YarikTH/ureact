@@ -99,7 +99,7 @@ public:
         this->attach_to( *subject );
     }
 
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
         bool should_detach = false;
 
@@ -115,6 +115,8 @@ public:
         {
             get_graph().queue_observer_for_detach( *this );
         }
+
+        return update_result::unchanged;
     }
 
     void unregister_self() override
@@ -157,7 +159,7 @@ public:
         ( this->attach_to( *deps ), ... );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         bool should_detach = false;
 
@@ -183,6 +185,8 @@ public:
         {
             get_graph().queue_observer_for_detach( *this );
         }
+
+        return update_result::unchanged;
     }
 
     void unregister_self() override

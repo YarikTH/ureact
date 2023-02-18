@@ -42,7 +42,7 @@ public:
             m_slots );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         this->set_current_turn_force_update( turn );
 
@@ -78,7 +78,7 @@ public:
             }
         }
 
-        this->pulse_if_has_events();
+        return this->pulse_if_has_events();
     }
 
 private:

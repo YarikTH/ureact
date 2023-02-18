@@ -52,7 +52,7 @@ public:
         std::apply( detach_functor<event_processing_node>( *this ), m_deps );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         this->set_current_turn_force_update( turn );
         // Update of this node could be triggered from deps,
@@ -72,7 +72,7 @@ public:
                 m_deps );
         }
 
-        this->pulse_if_has_events();
+        return this->pulse_if_has_events();
     }
 
 private:

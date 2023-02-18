@@ -52,13 +52,8 @@ public:
         std::apply( detach_functor<event_processing_node>( *this ), m_deps );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        this->set_current_turn_force_update( turn );
-        // Update of this node could be triggered from deps,
-        // so make sure source doesn't contain events from last turn
-        m_source->set_current_turn( turn );
-
         if( !m_source->events().empty() )
         {
             std::apply(

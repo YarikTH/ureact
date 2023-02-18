@@ -42,14 +42,11 @@ public:
             m_slots );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        this->set_current_turn_force_update( turn );
-
         {
             // Move events into buffers
-            std::apply( [&turn]( slot<Values>&... slots ) { ( fetch_buffer( turn, slots ), ... ); },
-                m_slots );
+            std::apply( []( slot<Values>&... slots ) { ( fetch_buffer( slots ), ... ); }, m_slots );
 
             while( true )
             {
@@ -94,10 +91,8 @@ private:
     };
 
     template <typename T>
-    static void fetch_buffer( turn_type& turn, slot<T>& slot )
+    static void fetch_buffer( slot<T>& slot )
     {
-        slot.source->set_current_turn( turn );
-
         slot.buffer.insert(
             slot.buffer.end(), slot.source->events().begin(), slot.source->events().end() );
     }

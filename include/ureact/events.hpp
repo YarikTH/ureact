@@ -32,24 +32,9 @@ public:
         : observable_node( context )
     {}
 
-    void set_current_turn( const turn_type& turn )
+    void finalize() override
     {
-        if( m_cur_turn_id != turn )
-        {
-            m_cur_turn_id = turn;
-            m_events.clear();
-        }
-    }
-
-    void set_current_turn_force_update( const turn_type& turn )
-    {
-        m_cur_turn_id = turn;
         m_events.clear();
-    }
-
-    void set_current_turn_force_update_no_clear( const turn_type& turn )
-    {
-        m_cur_turn_id = turn;
     }
 
     data_t& events()
@@ -59,9 +44,6 @@ public:
 
 protected:
     data_t m_events;
-
-private:
-    unsigned m_cur_turn_id{ std::numeric_limits<unsigned>::max() };
 };
 
 template <typename E>
@@ -77,32 +59,13 @@ public:
     template <typename V>
     void emit_value( V&& v )
     {
-        // Clear input from previous turn
-        if( m_changed_flag )
-        {
-            m_changed_flag = false;
-            this->m_events.clear();
-        }
-
         this->m_events.push_back( std::forward<V>( v ) );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        if( this->m_events.size() > 0 && !m_changed_flag )
-        {
-            this->set_current_turn_force_update_no_clear( turn );
-            m_changed_flag = true;
-            return update_result::changed;
-        }
-        else
-        {
-            return update_result::unchanged;
-        }
+        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }
-
-private:
-    bool m_changed_flag = false;
 };
 
 template <typename E, typename Op>
@@ -125,11 +88,9 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        this->set_current_turn_force_update( turn );
-
-        m_op.collect( turn, event_collector( this->m_events ) );
+        m_op.collect( event_collector( this->m_events ) );
 
         return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }

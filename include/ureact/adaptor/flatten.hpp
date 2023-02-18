@@ -93,26 +93,19 @@ public:
         this->detach_from( *m_outer );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        this->set_current_turn_force_update( turn );
-        m_inner->set_current_turn( turn );
-
+        const auto& new_inner = m_outer->value_ref().get_node();
+        if( !equal_to( new_inner, m_inner ) )
         {
-            const auto& new_inner = m_outer->value_ref().get_node();
-            if( !equal_to( new_inner, m_inner ) )
-            {
-                new_inner->set_current_turn( turn ); // events specific
+            // Topology has been changed
+            auto old_inner = m_inner;
+            m_inner = new_inner;
 
-                // Topology has been changed
-                auto old_inner = m_inner;
-                m_inner = new_inner;
+            this->detach_from( *old_inner );
+            this->attach_to( *new_inner );
 
-                this->detach_from( *old_inner );
-                this->attach_to( *new_inner );
-
-                return update_result::shifted;
-            }
+            return update_result::shifted;
         }
 
         this->m_events.insert(

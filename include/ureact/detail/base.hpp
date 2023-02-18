@@ -165,7 +165,11 @@ public:
 
     virtual ~reactive_node() = default;
 
-    UREACT_WARN_UNUSED_RESULT virtual update_result update( turn_type& turn ) = 0;
+    UREACT_WARN_UNUSED_RESULT virtual update_result update( turn_type& ) = 0;
+
+    /// Called after change propagation on changed nodes
+    virtual void finalize()
+    {}
 };
 
 class observer_interface
@@ -375,6 +379,11 @@ private:
                 cur_node->queued = false;
             }
         }
+
+        // Cleanup buffers in changed nodes etc
+        for( reactive_node* nodePtr : changed_nodes )
+            nodePtr->finalize();
+        changed_nodes.clear();
 
         detach_queued_observers();
     }

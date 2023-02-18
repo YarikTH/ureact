@@ -159,26 +159,20 @@ public:
         ( this->attach_to( *deps ), ... );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
         bool should_detach = false;
 
         if( auto p = m_subject.lock() )
         {
-            // Update of this node could be triggered from deps,
-            // so make sure source doesn't contain events from last turn
-            p->set_current_turn( turn );
-
-            {
-                should_detach
-                    = std::apply(
-                          [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
-                              return std::invoke(
-                                  m_func, event_range<E>( p->events() ), args->value_ref()... );
-                          },
-                          m_deps )
-                   == observer_action::stop_and_detach;
-            }
+            should_detach
+                = std::apply(
+                      [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                          return std::invoke(
+                              m_func, event_range<E>( p->events() ), args->value_ref()... );
+                      },
+                      m_deps )
+               == observer_action::stop_and_detach;
         }
 
         if( should_detach )

@@ -57,7 +57,7 @@ struct CollectClosure : AdaptorClosure
 	 *
 	 *  Semantically equivalent of ranges::to
 	 *
-	 *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
+	 *  @warning Use with caution, because there is no way to finalize its value, or to ensure it destroyed
 	 *           because any observer or signal/events node will prolong its lifetime.
 	 */
     template <class E, class Cont = ContT<E>>

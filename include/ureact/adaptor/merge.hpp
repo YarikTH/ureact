@@ -31,9 +31,9 @@ public:
     UREACT_MAKE_MOVABLE( event_merge_op );
 
     template <typename Collector>
-    void collect( const turn_type& turn, const Collector& collector ) const
+    void collect( const Collector& collector ) const
     {
-        std::apply( collect_functor<Collector>( turn, collector ), this->m_deps );
+        std::apply( collect_functor<Collector>( collector ), this->m_deps );
     }
 
     template <typename Collector, typename Functor>
@@ -46,9 +46,8 @@ private:
     template <typename Collector>
     struct collect_functor
     {
-        collect_functor( const turn_type& turn, const Collector& collector )
-            : m_turn( turn )
-            , m_collector( collector )
+        collect_functor( const Collector& collector )
+            : m_collector( collector )
         {}
 
         void operator()( const Deps&... deps ) const
@@ -65,15 +64,12 @@ private:
         template <typename T>
         void collect( const std::shared_ptr<T>& dep_ptr ) const
         {
-            dep_ptr->set_current_turn( m_turn );
-
             for( const auto& v : dep_ptr->events() )
             {
                 m_collector( v );
             }
         }
 
-        const turn_type& m_turn;
         const Collector& m_collector;
     };
 };

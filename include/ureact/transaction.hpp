@@ -36,7 +36,7 @@ public:
 
         if( self.m_transaction_level == 0 )
         {
-            self.finalize_transaction();
+            self.propagate();
         }
     }
 

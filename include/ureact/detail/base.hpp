@@ -313,11 +313,9 @@ public:
 
         if( m_transaction_level == 0 )
         {
-            finalize_transaction();
+            propagate();
         }
     }
-
-    void propagate( turn_type& turn );
 
     void on_node_attach( reactive_node& node, reactive_node& parent );
     void on_node_detach( reactive_node& node, reactive_node& parent );
@@ -331,7 +329,7 @@ public:
 private:
     friend class ureact::transaction;
 
-    void finalize_transaction()
+    void propagate()
     {
         turn_type turn( next_turn_id() );
 
@@ -349,7 +347,22 @@ private:
         // propagate changes
         if( should_propagate )
         {
-            propagate( turn );
+            while( m_scheduled_nodes.fetch_next() )
+            {
+                for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
+                {
+                    if( cur_node->level < cur_node->new_level )
+                    {
+                        cur_node->level = cur_node->new_level;
+                        recalculate_successor_levels( *cur_node );
+                        m_scheduled_nodes.push( cur_node, cur_node->level );
+                        continue;
+                    }
+
+                    cur_node->queued = false;
+                    cur_node->tick( turn );
+                }
+            }
         }
 
         detach_queued_observers();
@@ -459,26 +472,6 @@ inline void react_graph::on_input_change( reactive_node& node )
 inline void react_graph::on_node_pulse( reactive_node& node )
 {
     process_children( node );
-}
-
-inline void react_graph::propagate( turn_type& turn )
-{
-    while( m_scheduled_nodes.fetch_next() )
-    {
-        for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
-        {
-            if( cur_node->level < cur_node->new_level )
-            {
-                cur_node->level = cur_node->new_level;
-                recalculate_successor_levels( *cur_node );
-                m_scheduled_nodes.push( cur_node, cur_node->level );
-                continue;
-            }
-
-            cur_node->queued = false;
-            cur_node->tick( turn );
-        }
-    }
 }
 
 inline void react_graph::on_dynamic_node_attach( reactive_node& node, reactive_node& parent )

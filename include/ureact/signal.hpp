@@ -165,9 +165,8 @@ protected:
         auto node_ptr = get_var_node();
         auto& graph_ref = node_ptr->get_graph();
         assert( !graph_ref.is_locked() && "Can't set signal value from callback" );
-
-        graph_ref.push_input( node_ptr,
-            [node_ptr, &new_value] { node_ptr->set_value( std::forward<T>( new_value ) ); } );
+        node_ptr->set_value( std::forward<T>( new_value ) );
+        graph_ref.push_input( node_ptr );
     }
 
     template <typename F>
@@ -176,8 +175,8 @@ protected:
         auto node_ptr = get_var_node();
         auto& graph_ref = node_ptr->get_graph();
         assert( !graph_ref.is_locked() && "Can't modify signal value from callback" );
-
-        graph_ref.push_input( node_ptr, [node_ptr, &func] { node_ptr->modify_value( func ); } );
+        node_ptr->modify_value( func );
+        graph_ref.push_input( node_ptr );
     }
 
 private:

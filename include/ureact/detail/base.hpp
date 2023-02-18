@@ -307,13 +307,9 @@ class react_graph
 public:
     react_graph() = default;
 
-    template <typename F>
-    void push_input( input_node_interface* node, F&& inputCallback )
+    void push_input( input_node_interface* node )
     {
         m_changed_inputs.push_back( node );
-
-        // This writes to the input buffer of the respective node.
-        std::forward<F>( inputCallback )();
 
         if( m_transaction_level == 0 )
         {

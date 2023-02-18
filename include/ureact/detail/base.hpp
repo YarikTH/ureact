@@ -168,13 +168,6 @@ public:
     UREACT_WARN_UNUSED_RESULT virtual update_result update( turn_type& turn ) = 0;
 };
 
-struct input_node_interface
-{
-    virtual ~input_node_interface() = default;
-
-    virtual bool apply_input( turn_type& turn ) = 0;
-};
-
 class observer_interface
 {
 public:
@@ -314,7 +307,7 @@ class react_graph
 public:
     react_graph() = default;
 
-    void push_input( input_node_interface* node )
+    void push_input( reactive_node* node )
     {
         m_changed_inputs.push_back( node );
 
@@ -342,9 +335,11 @@ private:
 
         // apply input node changes
         bool should_propagate = false;
-        for( input_node_interface* p : m_changed_inputs )
+        for( reactive_node* p : m_changed_inputs )
         {
-            if( p->apply_input( turn ) )
+            const update_result result = p->update( turn );
+
+            if( result == update_result::changed )
             {
                 should_propagate = true;
             }
@@ -416,7 +411,7 @@ private:
 
     int m_transaction_level = 0;
 
-    std::vector<input_node_interface*> m_changed_inputs;
+    std::vector<reactive_node*> m_changed_inputs;
 };
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()

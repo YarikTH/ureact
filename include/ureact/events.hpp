@@ -75,9 +75,7 @@ private:
 };
 
 template <typename E>
-class event_source_node final
-    : public event_stream_node<E>
-    , public input_node_interface
+class event_source_node final : public event_stream_node<E>
 {
 public:
     explicit event_source_node( context& context )
@@ -85,13 +83,6 @@ public:
     {}
 
     ~event_source_node() override = default;
-
-    // LCOV_EXCL_START
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
-    {
-        assert( false && "Ticked event_source_node" );
-    }
-    // LCOV_EXCL_STOP
 
     template <typename V>
     void emit_value( V&& v )
@@ -106,18 +97,18 @@ public:
         this->m_events.push_back( std::forward<V>( v ) );
     }
 
-    bool apply_input( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& turn ) override
     {
         if( this->m_events.size() > 0 && !m_changed_flag )
         {
             this->set_current_turn_force_update_no_clear( turn );
             m_changed_flag = true;
             this->get_graph().on_input_change( *this );
-            return true;
+            return update_result::changed;
         }
         else
         {
-            return false;
+            return update_result::unchanged;
         }
     }
 

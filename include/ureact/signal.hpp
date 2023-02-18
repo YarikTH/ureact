@@ -64,9 +64,7 @@ protected:
 };
 
 template <typename S>
-class var_node final
-    : public signal_node<S>
-    , public input_node_interface
+class var_node final : public signal_node<S>
 {
 public:
     template <typename T>
@@ -74,13 +72,6 @@ public:
         : var_node::signal_node( context, std::forward<T>( value ) )
         , m_new_value( value )
     {}
-
-    // LCOV_EXCL_START
-    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
-    {
-        assert( false && "Ticked var_node" );
-    }
-    // LCOV_EXCL_STOP
 
     template <typename V>
     void set_value( V&& new_value )
@@ -114,7 +105,7 @@ public:
         }
     }
 
-    bool apply_input( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
         if( m_is_input_added )
         {
@@ -124,18 +115,18 @@ public:
             {
                 this->m_value = std::move( m_new_value );
                 this->get_graph().on_input_change( *this );
-                return true;
+                return update_result::changed;
             }
-            return false;
+            return update_result::unchanged;
         }
         if( m_is_input_modified )
         {
             m_is_input_modified = false;
 
             this->get_graph().on_input_change( *this );
-            return true;
+            return update_result::changed;
         }
-        return false;
+        return update_result::unchanged;
     }
 
 private:

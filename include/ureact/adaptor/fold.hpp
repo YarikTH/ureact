@@ -107,7 +107,7 @@ public:
 
         if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
         {
-            return this->pulse_if_value_changed( std::apply(
+            return this->try_change_value( std::apply(
                 [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
@@ -130,7 +130,7 @@ public:
                 m_deps );
 
             // Always assume change
-            return this->pulse_after_modify();
+            return update_result::changed;
         }
         else
         {

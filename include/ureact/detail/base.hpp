@@ -320,12 +320,6 @@ public:
     void on_node_attach( reactive_node& node, reactive_node& parent );
     void on_node_detach( reactive_node& node, reactive_node& parent );
 
-    void on_input_change( reactive_node& node );
-    void on_node_pulse( reactive_node& node );
-
-    void on_dynamic_node_attach( reactive_node& node, reactive_node& parent );
-    void on_dynamic_node_detach( reactive_node& node, reactive_node& parent );
-
 private:
     friend class ureact::transaction;
 
@@ -333,37 +327,52 @@ private:
     {
         turn_type turn( next_turn_id() );
 
-        // apply input node changes
-        bool should_propagate = false;
+        std::vector<reactive_node*> changed_nodes;
+
+        // Fill update queue with successors of changed inputs
         for( reactive_node* p : m_changed_inputs )
         {
             const update_result result = p->update( turn );
 
             if( result == update_result::changed )
             {
-                should_propagate = true;
+                changed_nodes.push_back( p );
+                schedule_successors( *p );
             }
         }
         m_changed_inputs.clear();
 
-        // propagate changes
-        if( should_propagate )
+        // Propagate changes
+        while( m_scheduled_nodes.fetch_next() )
         {
-            while( m_scheduled_nodes.fetch_next() )
+            for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
             {
-                for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
+                if( cur_node->level < cur_node->new_level )
                 {
-                    if( cur_node->level < cur_node->new_level )
-                    {
-                        cur_node->level = cur_node->new_level;
-                        recalculate_successor_levels( *cur_node );
-                        m_scheduled_nodes.push( cur_node, cur_node->level );
-                        continue;
-                    }
-
-                    cur_node->queued = false;
-                    std::ignore = cur_node->update( turn );
+                    cur_node->level = cur_node->new_level;
+                    recalculate_successor_levels( *cur_node );
+                    m_scheduled_nodes.push( cur_node, cur_node->level );
+                    continue;
                 }
+
+                const update_result result = cur_node->update( turn );
+
+                // Topology changed?
+                if( result == update_result::shifted )
+                {
+                    // Re-schedule this node
+                    recalculate_successor_levels( *cur_node );
+                    m_scheduled_nodes.push( cur_node, cur_node->level );
+                    continue;
+                }
+
+                if( result == update_result::changed )
+                {
+                    changed_nodes.push_back( cur_node );
+                    schedule_successors( *cur_node );
+                }
+
+                cur_node->queued = false;
             }
         }
 
@@ -398,7 +407,7 @@ private:
 
     static void recalculate_successor_levels( reactive_node& node );
 
-    void process_children( reactive_node& node );
+    void schedule_successors( reactive_node& node );
 
     turn_type next_turn_id()
     {
@@ -466,33 +475,7 @@ inline void react_graph::on_node_detach( reactive_node& node, reactive_node& par
     parent.successors.remove( node );
 }
 
-inline void react_graph::on_input_change( reactive_node& node )
-{
-    process_children( node );
-}
-
-inline void react_graph::on_node_pulse( reactive_node& node )
-{
-    process_children( node );
-}
-
-inline void react_graph::on_dynamic_node_attach( reactive_node& node, reactive_node& parent )
-{
-    on_node_attach( node, parent );
-
-    recalculate_successor_levels( node );
-
-    // Re-schedule this node
-    node.queued = true;
-    m_scheduled_nodes.push( &node, node.level );
-}
-
-inline void react_graph::on_dynamic_node_detach( reactive_node& node, reactive_node& parent )
-{
-    on_node_detach( node, parent );
-}
-
-inline void react_graph::process_children( reactive_node& node )
+inline void react_graph::schedule_successors( reactive_node& node )
 {
     // add children to queue
     for( reactive_node* successor : node.successors )
@@ -572,16 +555,6 @@ protected:
     void detach_from( reactive_node& parent )
     {
         get_graph().on_node_detach( *this, parent );
-    }
-
-    void dynamic_attach_to( reactive_node& parent )
-    {
-        get_graph().on_dynamic_node_attach( *this, parent );
-    }
-
-    void dynamic_detach_from( reactive_node& parent )
-    {
-        get_graph().on_dynamic_node_detach( *this, parent );
     }
 
 private:

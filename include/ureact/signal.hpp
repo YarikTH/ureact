@@ -39,24 +39,16 @@ public:
         return m_value;
     }
 
-    // Assign a new value and do pulse only if new value is different from the current one
+    // Assign a new value if is differed and return if updated
     template <class T>
-    UREACT_WARN_UNUSED_RESULT update_result pulse_if_value_changed( T&& new_value )
+    UREACT_WARN_UNUSED_RESULT update_result try_change_value( T&& new_value )
     {
         if( !equal_to( this->m_value, new_value ) )
         {
             this->m_value = std::forward<T>( new_value );
-            this->get_graph().on_node_pulse( *this );
             return update_result::changed;
         }
         return update_result::unchanged;
-    }
-
-    // Perform pulse after value modification was performed
-    UREACT_WARN_UNUSED_RESULT update_result pulse_after_modify()
-    {
-        this->get_graph().on_node_pulse( *this );
-        return update_result::changed;
     }
 
 protected:
@@ -114,7 +106,6 @@ public:
             if( !equal_to( this->m_value, m_new_value ) )
             {
                 this->m_value = std::move( m_new_value );
-                this->get_graph().on_input_change( *this );
                 return update_result::changed;
             }
             return update_result::unchanged;
@@ -123,7 +114,6 @@ public:
         {
             m_is_input_modified = false;
 
-            this->get_graph().on_input_change( *this );
             return update_result::changed;
         }
         return update_result::unchanged;

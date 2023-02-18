@@ -41,7 +41,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update( turn_type& ) override
     {
-        return this->pulse_if_value_changed( evaluate() );
+        return this->try_change_value( evaluate() );
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()

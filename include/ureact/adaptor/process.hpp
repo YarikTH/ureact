@@ -72,7 +72,7 @@ public:
                 m_deps );
         }
 
-        return this->pulse_if_has_events();
+        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

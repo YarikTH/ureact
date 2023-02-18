@@ -57,14 +57,14 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->dynamic_detach_from( *old_inner );
-                this->dynamic_attach_to( *new_inner );
+                this->detach_from( *old_inner );
+                this->attach_to( *new_inner );
 
                 return update_result::shifted;
             }
         }
 
-        return this->pulse_if_value_changed( m_inner->value_ref() );
+        return this->try_change_value( m_inner->value_ref() );
     }
 
 private:
@@ -108,8 +108,8 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->dynamic_detach_from( *old_inner );
-                this->dynamic_attach_to( *new_inner );
+                this->detach_from( *old_inner );
+                this->attach_to( *new_inner );
 
                 return update_result::shifted;
             }
@@ -118,7 +118,7 @@ public:
         this->m_events.insert(
             this->m_events.end(), m_inner->events().begin(), m_inner->events().end() );
 
-        return this->pulse_if_has_events();
+        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

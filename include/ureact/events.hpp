@@ -57,16 +57,6 @@ public:
         return m_events;
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result pulse_if_has_events()
-    {
-        if( !m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-            return update_result::changed;
-        }
-        return update_result::unchanged;
-    }
-
 protected:
     data_t m_events;
 
@@ -103,7 +93,6 @@ public:
         {
             this->set_current_turn_force_update_no_clear( turn );
             m_changed_flag = true;
-            this->get_graph().on_input_change( *this );
             return update_result::changed;
         }
         else
@@ -142,7 +131,7 @@ public:
 
         m_op.collect( turn, event_collector( this->m_events ) );
 
-        return this->pulse_if_has_events();
+        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()

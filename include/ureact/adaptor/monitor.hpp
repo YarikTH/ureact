@@ -44,7 +44,7 @@ public:
 
         this->m_events.push_back( m_target->value_ref() );
 
-        return this->pulse_if_has_events();
+        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

@@ -126,15 +126,35 @@ private:
 };
 
 template <typename S>
-class signal_base : public reactive_base<signal_node<S>>
+class signal_base
 {
 public:
     signal_base() = default;
 
     template <typename Node>
     explicit signal_base( std::shared_ptr<Node>&& node )
-        : signal_base::reactive_base( std::move( node ) )
+        : m_node( std::move( node ) )
     {}
+
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_node != nullptr;
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const signal_base& other ) const
+    {
+        return this->m_node == other.m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT context& get_context() const
+    {
+        return m_node->get_context();
+    }
+
+    UREACT_WARN_UNUSED_RESULT const auto& get_node() const
+    {
+        return m_node;
+    }
 
 protected:
     UREACT_WARN_UNUSED_RESULT const S& get_value() const
@@ -162,6 +182,8 @@ protected:
         node_ptr->modify_value( func );
         graph_ref.push_input( node_ptr->get_node_id() );
     }
+
+    std::shared_ptr<signal_node<S>> m_node;
 
 private:
     UREACT_WARN_UNUSED_RESULT auto get_var_node() const

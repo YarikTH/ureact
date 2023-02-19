@@ -26,9 +26,6 @@ class events;
 namespace detail
 {
 
-template <typename Node>
-class reactive_base;
-
 /// c++17 analog of equality_comparable concept from c++20
 /// https://en.cppreference.com/w/cpp/concepts/equality_comparable
 template <typename T, typename = void>

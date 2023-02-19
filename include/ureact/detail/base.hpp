@@ -565,40 +565,6 @@ public:
     {}
 };
 
-template <typename Node>
-class reactive_base
-{
-public:
-    reactive_base() = default;
-
-    explicit reactive_base( std::shared_ptr<Node>&& node )
-        : m_node( std::move( node ) )
-    {}
-
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_node != nullptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool equal_to( const reactive_base& other ) const
-    {
-        return this->m_node == other.m_node;
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_node->get_context();
-    }
-
-    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<Node>& get_node() const
-    {
-        return m_node;
-    }
-
-protected:
-    std::shared_ptr<Node> m_node;
-};
-
 } // namespace detail
 
 UREACT_END_NAMESPACE

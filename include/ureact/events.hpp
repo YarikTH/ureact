@@ -74,7 +74,7 @@ public:
 };
 
 template <typename E>
-class event_stream_base : public reactive_base<event_stream_node<E>>
+class event_stream_base
 {
 public:
     event_stream_base() = default;
@@ -84,8 +84,28 @@ public:
 
     template <typename Node>
     explicit event_stream_base( std::shared_ptr<Node>&& node )
-        : event_stream_base::reactive_base( std::move( node ) )
+        : m_node( std::move( node ) )
     {}
+
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return m_node != nullptr;
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const event_stream_base& other ) const
+    {
+        return this->m_node == other.m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT context& get_context() const
+    {
+        return m_node->get_context();
+    }
+
+    UREACT_WARN_UNUSED_RESULT const auto& get_node() const
+    {
+        return m_node;
+    }
 
 private:
     UREACT_WARN_UNUSED_RESULT auto get_event_source_node() const -> event_source_node<E>*
@@ -103,6 +123,8 @@ protected:
         node_ptr->emit_value( std::forward<T>( e ) );
         graph_ref.push_input( node_ptr->get_node_id() );
     }
+
+    std::shared_ptr<event_stream_node<E>> m_node;
 };
 
 } // namespace detail

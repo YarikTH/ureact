@@ -61,13 +61,13 @@ public:
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<InE>( m_source->events() ),
-                        event_emitter( this->m_events ),
+                        event_emitter( this->events() ),
                         args->value_ref()... );
                 },
                 m_deps );
         }
 
-        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
+        return !this->events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

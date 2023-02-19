@@ -26,24 +26,29 @@ template <typename E>
 class event_stream_node : public observable_node
 {
 public:
-    using data_t = std::vector<E>;
+    using event_value_list = std::vector<E>;
 
     explicit event_stream_node( context& context )
         : observable_node( context )
     {}
 
-    void finalize() override
-    {
-        m_events.clear();
-    }
-
-    data_t& events()
+    event_value_list& events()
     {
         return m_events;
     }
 
-protected:
-    data_t m_events;
+    const event_value_list& events() const
+    {
+        return m_events;
+    }
+
+    void finalize() override
+    {
+        events().clear();
+    }
+
+private:
+    event_value_list m_events;
 };
 
 template <typename E>
@@ -59,12 +64,12 @@ public:
     template <typename V>
     void emit_value( V&& v )
     {
-        this->m_events.push_back( std::forward<V>( v ) );
+        this->events().push_back( std::forward<V>( v ) );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
+        return !this->events().empty() ? update_result::changed : update_result::unchanged;
     }
 };
 
@@ -90,9 +95,9 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        m_op.collect( event_collector( this->m_events ) );
+        m_op.collect( event_collector( this->events() ) );
 
-        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
+        return !this->events().empty() ? update_result::changed : update_result::unchanged;
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()
@@ -111,7 +116,7 @@ public:
 private:
     struct event_collector
     {
-        using data_t = typename event_op_node::data_t;
+        using data_t = typename event_op_node::event_value_list;
 
         explicit event_collector( data_t& events )
             : m_events( events )

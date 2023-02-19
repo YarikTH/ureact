@@ -40,7 +40,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->m_events.push_back( m_target->value_ref() );
+        this->events().push_back( m_target->value_ref() );
 
         return update_result::changed;
     }

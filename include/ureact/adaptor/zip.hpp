@@ -68,14 +68,14 @@ public:
                 // Pop values from buffers and emit tuple
                 std::apply(
                     [this]( slot<Values>&... slots ) {
-                        this->m_events.emplace_back( slots.buffer.front()... );
+                        this->events().emplace_back( slots.buffer.front()... );
                         ( slots.buffer.pop_front(), ... );
                     },
                     m_slots );
             }
         }
 
-        return !this->m_events.empty() ? update_result::changed : update_result::unchanged;
+        return !this->events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

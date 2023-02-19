@@ -13,14 +13,12 @@
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
 #include <ureact/events.hpp>
+#include <ureact/signal.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
-
-template <typename S>
-class signal_node;
 
 template <typename E>
 class monitor_node final : public event_stream_node<E>
@@ -30,12 +28,12 @@ public:
         : monitor_node::event_stream_node( context )
         , m_target( target )
     {
-        this->attach_to( *m_target );
+        this->attach_to( m_target->get_node_id() );
     }
 
     ~monitor_node() override
     {
-        this->detach_from( *m_target );
+        this->detach_from( m_target->get_node_id() );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

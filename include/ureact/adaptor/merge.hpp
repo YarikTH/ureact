@@ -31,14 +31,14 @@ public:
         : event_merge_node::event_stream_node( context )
         , m_sources( sources... )
     {
-        ( this->attach_to( *sources ), ... );
+        ( this->attach_to( sources->get_node_id() ), ... );
     }
 
     ~event_merge_node() override
     {
         std::apply(
             [this]( const event_stream_node_ptr_t<Sources>&... sources ) {
-                ( this->detach_from( *sources ), ... );
+                ( this->detach_from( sources->get_node_id() ), ... );
             },
             m_sources );
     }

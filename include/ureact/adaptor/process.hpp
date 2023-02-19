@@ -41,13 +41,13 @@ public:
         , m_func( std::forward<F>( func ) )
         , m_deps( deps... )
     {
-        this->attach_to( *source );
-        ( this->attach_to( *deps ), ... );
+        this->attach_to( source->get_node_id() );
+        ( this->attach_to( deps->get_node_id() ), ... );
     }
 
     ~event_processing_node() override
     {
-        this->detach_from( *m_source );
+        this->detach_from( m_source->get_node_id() );
 
         std::apply( detach_functor<event_processing_node>( *this ), m_deps );
     }

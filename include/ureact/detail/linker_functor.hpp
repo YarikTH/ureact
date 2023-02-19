@@ -58,7 +58,7 @@ private:
     template <typename T>
     void attach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        this->m_graph.on_node_attach( this->m_node, *dep_ptr );
+        this->m_graph.attach_node( this->m_node.get_node_id(), dep_ptr->get_node_id() );
     }
 };
 
@@ -86,7 +86,7 @@ private:
     template <typename T>
     void detach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        this->m_graph.on_node_detach( this->m_node, *dep_ptr );
+        this->m_graph.detach_node( this->m_node.get_node_id(), dep_ptr->get_node_id() );
     }
 };
 

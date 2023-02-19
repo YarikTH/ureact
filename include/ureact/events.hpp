@@ -101,7 +101,7 @@ protected:
         auto& graph_ref = node_ptr->get_graph();
         assert( !graph_ref.is_locked() && "Can't emit event from callback" );
         node_ptr->emit_value( std::forward<T>( e ) );
-        graph_ref.push_input( node_ptr );
+        graph_ref.push_input( node_ptr->get_node_id() );
     }
 };
 

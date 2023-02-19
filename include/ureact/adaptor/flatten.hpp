@@ -37,14 +37,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->attach_to( *m_outer );
-        this->attach_to( *m_inner );
+        this->attach_to( m_outer->get_node_id() );
+        this->attach_to( m_inner->get_node_id() );
     }
 
     ~signal_flatten_node() override
     {
-        this->detach_from( *m_inner );
-        this->detach_from( *m_outer );
+        this->detach_from( m_inner->get_node_id() );
+        this->detach_from( m_outer->get_node_id() );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
@@ -57,8 +57,8 @@ public:
                 auto old_inner = m_inner;
                 m_inner = new_inner;
 
-                this->detach_from( *old_inner );
-                this->attach_to( *new_inner );
+                this->detach_from( old_inner->get_node_id() );
+                this->attach_to( new_inner->get_node_id() );
 
                 return update_result::shifted;
             }
@@ -83,14 +83,14 @@ public:
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->attach_to( *m_outer );
-        this->attach_to( *m_inner );
+        this->attach_to( m_outer->get_node_id() );
+        this->attach_to( m_inner->get_node_id() );
     }
 
     ~event_flatten_node() override
     {
-        this->detach_from( *m_inner );
-        this->detach_from( *m_outer );
+        this->detach_from( m_inner->get_node_id() );
+        this->detach_from( m_outer->get_node_id() );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
@@ -102,8 +102,8 @@ public:
             auto old_inner = m_inner;
             m_inner = new_inner;
 
-            this->detach_from( *old_inner );
-            this->attach_to( *new_inner );
+            this->detach_from( old_inner->get_node_id() );
+            this->attach_to( new_inner->get_node_id() );
 
             return update_result::shifted;
         }

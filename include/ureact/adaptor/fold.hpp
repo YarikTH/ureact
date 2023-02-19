@@ -87,13 +87,13 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->attach_to( *events );
-        ( this->attach_to( *deps ), ... );
+        this->attach_to( events->get_node_id() );
+        ( this->attach_to( deps->get_node_id() ), ... );
     }
 
     ~fold_node() override
     {
-        this->detach_from( *m_events );
+        this->detach_from( m_events->get_node_id() );
 
         std::apply( detach_functor<fold_node>( *this ), m_deps );
     }

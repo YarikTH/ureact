@@ -96,7 +96,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
     {
-        this->attach_to( *subject );
+        this->attach_to( subject->get_node_id() );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
@@ -132,7 +132,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            detach_from( *p );
+            detach_from( p->get_node_id() );
             m_subject.reset();
         }
     }
@@ -155,8 +155,8 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->attach_to( *subject );
-        ( this->attach_to( *deps ), ... );
+        this->attach_to( subject->get_node_id() );
+        ( this->attach_to( deps->get_node_id() ), ... );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
@@ -203,7 +203,7 @@ private:
     {
         if( auto p = m_subject.lock() )
         {
-            detach_from( *p );
+            detach_from( p->get_node_id() );
 
             std::apply( detach_functor<events_observer_node>( *this ), m_deps );
 

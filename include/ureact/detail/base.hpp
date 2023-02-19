@@ -22,6 +22,7 @@
 
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
+#include <ureact/detail/slot_map.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -40,33 +41,34 @@ UREACT_WARN_UNUSED_RESULT detail::context_internals& _get_internals( context& ct
 namespace detail
 {
 
-template <typename Node>
-class node_vector
+class node_id
 {
 public:
-    void add( Node& node )
+    using value_type = size_t;
+
+    node_id() = default;
+
+    explicit node_id( value_type id )
+        : m_id( id )
+    {}
+
+    operator value_type() // NOLINT
     {
-        m_data.push_back( &node );
+        return m_id;
     }
 
-    void remove( const Node& node )
+    bool operator==( node_id other ) const noexcept
     {
-        const auto it = detail::find( m_data.begin(), m_data.end(), &node );
-        m_data.erase( it );
+        return m_id == other.m_id;
     }
 
-    auto begin()
+    bool operator!=( node_id other ) const noexcept
     {
-        return m_data.begin();
-    }
-
-    auto end()
-    {
-        return m_data.end();
+        return m_id != other.m_id;
     }
 
 private:
-    std::vector<Node*> m_data;
+    value_type m_id = -1;
 };
 
 enum class update_result
@@ -76,16 +78,9 @@ enum class update_result
     shifted
 };
 
-class reactive_node
+struct reactive_node_interface
 {
-public:
-    int level{ 0 };
-    int new_level{ 0 };
-    bool queued{ false };
-
-    node_vector<reactive_node> successors;
-
-    virtual ~reactive_node() = default;
+    virtual ~reactive_node_interface() = default;
 
     UREACT_WARN_UNUSED_RESULT virtual update_result update() = 0;
 
@@ -233,9 +228,15 @@ class react_graph
 public:
     react_graph() = default;
 
-    void push_input( reactive_node* node )
+    node_id register_node( reactive_node_interface* nodePtr );
+    void unregister_node( node_id nodeId );
+
+    void attach_node( node_id nodeId, node_id parentId );
+    void detach_node( node_id nodeId, node_id parentId );
+
+    void push_input( node_id nodeId )
     {
-        m_changed_inputs.push_back( node );
+        m_changed_inputs.push_back( nodeId );
 
         if( m_transaction_level == 0 )
         {
@@ -243,25 +244,25 @@ public:
         }
     }
 
-    void on_node_attach( reactive_node& node, reactive_node& parent );
-    void on_node_detach( reactive_node& node, reactive_node& parent );
-
 private:
     friend class ureact::transaction;
 
     void propagate()
     {
-        std::vector<reactive_node*> changed_nodes;
+        std::vector<reactive_node_interface*> changed_nodes;
 
         // Fill update queue with successors of changed inputs
-        for( reactive_node* p : m_changed_inputs )
+        for( node_id nodeId : m_changed_inputs )
         {
-            const update_result result = p->update();
+            auto& node = m_node_data[nodeId];
+            auto* nodePtr = node.node_ptr;
+
+            const update_result result = nodePtr->update();
 
             if( result == update_result::changed )
             {
-                changed_nodes.push_back( p );
-                schedule_successors( *p );
+                changed_nodes.push_back( nodePtr );
+                schedule_successors( node );
             }
         }
         m_changed_inputs.clear();
@@ -269,49 +270,73 @@ private:
         // Propagate changes
         while( m_scheduled_nodes.fetch_next() )
         {
-            for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
+            for( node_id nodeId : m_scheduled_nodes.next_values() )
             {
-                if( cur_node->level < cur_node->new_level )
+                auto& node = m_node_data[nodeId];
+                auto* nodePtr = node.node_ptr;
+
+                // A predecessor of this node has shifted to a lower level?
+                if( node.level < node.new_level )
                 {
-                    cur_node->level = cur_node->new_level;
-                    recalculate_successor_levels( *cur_node );
-                    m_scheduled_nodes.push( cur_node, cur_node->level );
+                    // Re-schedule this node
+                    node.level = node.new_level;
+
+                    recalculate_successor_levels( node );
+                    m_scheduled_nodes.push( nodeId, node.level );
                     continue;
                 }
 
-                const update_result result = cur_node->update();
+                const update_result result = nodePtr->update();
 
                 // Topology changed?
                 if( result == update_result::shifted )
                 {
                     // Re-schedule this node
-                    recalculate_successor_levels( *cur_node );
-                    m_scheduled_nodes.push( cur_node, cur_node->level );
+                    recalculate_successor_levels( node );
+                    m_scheduled_nodes.push( nodeId, node.level );
                     continue;
                 }
 
                 if( result == update_result::changed )
                 {
-                    changed_nodes.push_back( cur_node );
-                    schedule_successors( *cur_node );
+                    changed_nodes.push_back( nodePtr );
+                    schedule_successors( node );
                 }
 
-                cur_node->queued = false;
+                node.queued = false;
             }
         }
 
         // Cleanup buffers in changed nodes etc
-        for( reactive_node* nodePtr : changed_nodes )
+        for( reactive_node_interface* nodePtr : changed_nodes )
             nodePtr->finalize();
         changed_nodes.clear();
 
         detach_queued_observers();
     }
 
+    struct node_data
+    {
+        UREACT_MAKE_NONCOPYABLE( node_data );
+        UREACT_MAKE_MOVABLE( node_data );
+
+        explicit node_data( reactive_node_interface* node_ptr )
+            : node_ptr( node_ptr )
+        {}
+
+        int level = 0;
+        int new_level = 0;
+        bool queued = false;
+
+        reactive_node_interface* node_ptr = nullptr;
+
+        std::vector<node_id> successors;
+    };
+
     class topological_queue
     {
     public:
-        using value_type = reactive_node*;
+        using value_type = node_id;
 
         topological_queue() = default;
 
@@ -334,16 +359,28 @@ private:
         std::vector<entry> m_queue_data;
     };
 
-    static void recalculate_successor_levels( reactive_node& node );
+    void recalculate_successor_levels( node_data& node );
 
-    void schedule_successors( reactive_node& node );
+    void schedule_successors( node_data& node );
+
+    slot_map<node_data> m_node_data;
 
     topological_queue m_scheduled_nodes;
 
     int m_transaction_level = 0;
 
-    std::vector<reactive_node*> m_changed_inputs;
+    std::vector<node_id> m_changed_inputs;
 };
+
+inline node_id react_graph::register_node( reactive_node_interface* nodePtr )
+{
+    return node_id{ m_node_data.insert( node_data{ nodePtr } ) };
+}
+
+inline void react_graph::unregister_node( node_id nodeId )
+{
+    m_node_data.erase( nodeId );
+}
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()
 {
@@ -382,9 +419,12 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     return !m_next_data.empty();
 }
 
-inline void react_graph::on_node_attach( reactive_node& node, reactive_node& parent )
+inline void react_graph::attach_node( node_id nodeId, node_id parentId )
 {
-    parent.successors.add( node );
+    auto& node = m_node_data[nodeId];
+    auto& parent = m_node_data[parentId];
+
+    parent.successors.push_back( nodeId );
 
     if( node.level <= parent.level )
     {
@@ -392,31 +432,38 @@ inline void react_graph::on_node_attach( reactive_node& node, reactive_node& par
     }
 }
 
-inline void react_graph::on_node_detach( reactive_node& node, reactive_node& parent )
+inline void react_graph::detach_node( node_id nodeId, node_id parentId )
 {
-    parent.successors.remove( node );
+    auto& parent = m_node_data[parentId];
+    auto& successors = parent.successors;
+
+    successors.erase( detail::find( successors.begin(), successors.end(), nodeId ) );
 }
 
-inline void react_graph::schedule_successors( reactive_node& node )
+inline void react_graph::schedule_successors( node_data& node )
 {
     // add children to queue
-    for( reactive_node* successor : node.successors )
+    for( node_id successorId : node.successors )
     {
-        if( !successor->queued )
+        auto& successor = m_node_data[successorId];
+
+        if( !successor.queued )
         {
-            successor->queued = true;
-            m_scheduled_nodes.push( successor, successor->level );
+            successor.queued = true;
+            m_scheduled_nodes.push( successorId, successor.level );
         }
     }
 }
 
-inline void react_graph::recalculate_successor_levels( reactive_node& node )
+inline void react_graph::recalculate_successor_levels( node_data& node )
 {
-    for( reactive_node* successor : node.successors )
+    for( node_id successorId : node.successors )
     {
-        if( successor->new_level <= node.level )
+        auto& successor = m_node_data[successorId];
+
+        if( successor.new_level <= node.level )
         {
-            successor->new_level = node.level + 1;
+            successor.new_level = node.level + 1;
         }
     }
 }
@@ -444,13 +491,24 @@ private:
     std::unique_ptr<react_graph> m_graph = std::make_unique<react_graph>();
 };
 
-class node_base : public reactive_node
+class node_base : public reactive_node_interface
 {
 public:
     explicit node_base( context& context )
         : m_context( context )
     {
         assert( !get_graph().is_locked() && "Can't create node from callback" );
+        m_id = get_graph().register_node( this );
+    }
+
+    ~node_base() override
+    {
+        get_graph().unregister_node( m_id );
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        return m_id;
     }
 
     UREACT_WARN_UNUSED_RESULT context& get_context() const
@@ -469,20 +527,22 @@ public:
     }
 
 protected:
-    void attach_to( reactive_node& parent )
+    void attach_to( node_id parentId )
     {
-        get_graph().on_node_attach( *this, parent );
+        get_graph().attach_node( m_id, parentId );
     }
 
-    void detach_from( reactive_node& parent )
+    void detach_from( node_id parentId )
     {
-        get_graph().on_node_detach( *this, parent );
+        get_graph().detach_node( m_id, parentId );
     }
 
 private:
     UREACT_MAKE_NONCOPYABLE( node_base );
 
     context& m_context;
+
+    node_id m_id;
 };
 
 class observer_node

@@ -32,13 +32,15 @@ public:
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
-        ( this->attach_to( *sources ), ... );
+        ( this->attach_to( sources->get_node_id() ), ... );
     }
 
     ~event_zip_node() override
     {
         std::apply(
-            [this]( slot<Values>&... slots ) { ( this->detach_from( *slots.source ), ... ); },
+            [this]( slot<Values>&... slots ) {
+                ( this->detach_from( slots.source->get_node_id() ), ... );
+            },
             m_slots );
     }
 

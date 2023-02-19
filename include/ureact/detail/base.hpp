@@ -20,11 +20,8 @@
 #include <utility>
 #include <vector>
 
+#include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
-
-#ifdef UREACT_USE_STD_ALGORITHM
-#    include <algorithm>
-#endif
 
 UREACT_BEGIN_NAMESPACE
 
@@ -42,79 +39,6 @@ UREACT_WARN_UNUSED_RESULT detail::context_internals& _get_internals( context& ct
 
 namespace detail
 {
-
-#if defined( UREACT_USE_STD_ALGORITHM )
-
-using std::find;
-using std::partition;
-
-#else
-
-// Partial alternative to <algorithm> is provided and used by default because library requires
-// only a few algorithms while standard <algorithm> is quite bloated
-
-// Code based on possible implementation at
-// https://en.cppreference.com/w/cpp/algorithm/find
-template <typename ForwardIt, typename Value>
-inline ForwardIt find( ForwardIt first, ForwardIt last, const Value& val )
-{
-    for( auto it = first, ite = last; it != ite; ++it )
-    {
-        if( *it == val )
-        {
-            return it;
-        }
-    }
-    return last;
-}
-
-// Code based on possible implementation at
-// https://en.cppreference.com/w/cpp/algorithm/find
-template <typename ForwardIt, typename Pred>
-ForwardIt find_if_not( ForwardIt first, ForwardIt last, Pred pred )
-{
-    for( ; first != last; ++first )
-    {
-        if( !pred( *first ) )
-        {
-            return first;
-        }
-    }
-    return last;
-}
-
-// Code based on possible implementation at
-// https://en.cppreference.com/w/cpp/algorithm/iter_swap
-template <typename LhsForwardIt, typename RhsForwardIt>
-void iter_swap( LhsForwardIt a, RhsForwardIt b )
-{
-    using std::swap;
-    swap( *a, *b );
-}
-
-// Code based on possible implementation at
-// https://en.cppreference.com/w/cpp/algorithm/partition
-template <typename ForwardIt, typename Pred>
-ForwardIt partition( ForwardIt first, ForwardIt last, Pred pred )
-{
-    first = detail::find_if_not( first, last, pred );
-    if( first == last )
-    {
-        return first;
-    }
-
-    for( ForwardIt i = std::next( first ); i != last; ++i )
-    {
-        if( pred( *i ) )
-        {
-            detail::iter_swap( i, first );
-            ++first;
-        }
-    }
-    return first;
-}
-
-#endif
 
 template <typename Node>
 class node_vector

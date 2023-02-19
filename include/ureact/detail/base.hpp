@@ -22,6 +22,7 @@
 
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
+#include <ureact/detail/graph_interface.hpp>
 #include <ureact/detail/slot_map.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -40,67 +41,6 @@ UREACT_WARN_UNUSED_RESULT detail::context_internals& _get_internals( context& ct
 
 namespace detail
 {
-
-class node_id
-{
-public:
-    using value_type = size_t;
-
-    node_id() = default;
-
-    explicit node_id( value_type id )
-        : m_id( id )
-    {}
-
-    operator value_type() // NOLINT
-    {
-        return m_id;
-    }
-
-    bool operator==( node_id other ) const noexcept
-    {
-        return m_id == other.m_id;
-    }
-
-    bool operator!=( node_id other ) const noexcept
-    {
-        return m_id != other.m_id;
-    }
-
-private:
-    value_type m_id = -1;
-};
-
-enum class update_result
-{
-    unchanged,
-    changed,
-    shifted
-};
-
-struct reactive_node_interface
-{
-    virtual ~reactive_node_interface() = default;
-
-    UREACT_WARN_UNUSED_RESULT virtual update_result update() = 0;
-
-    /// Called after change propagation on changed nodes
-    virtual void finalize()
-    {}
-};
-
-class observer_interface
-{
-public:
-    virtual ~observer_interface() = default;
-
-    virtual void unregister_self() = 0;
-
-private:
-    virtual void detach_observer() = 0;
-
-    friend class observable;
-};
 
 /// Utility class to defer self detach of observers
 class deferred_observer_detacher

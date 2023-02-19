@@ -10,6 +10,7 @@
 #ifndef UREACT_DETAIL_OBSERVABLE_NODE_HPP
 #define UREACT_DETAIL_OBSERVABLE_NODE_HPP
 
+#include <ureact/detail/graph_interface.hpp>
 #include <ureact/detail/node_base.hpp>
 
 UREACT_BEGIN_NAMESPACE

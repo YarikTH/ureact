@@ -11,6 +11,7 @@
 #define UREACT_CONTEXT_HPP
 
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/node_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

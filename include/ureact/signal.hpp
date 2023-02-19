@@ -12,6 +12,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/observable_node.hpp>
 #include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
 

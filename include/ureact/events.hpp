@@ -14,6 +14,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/observable_node.hpp>
 #include <ureact/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/unit.hpp>
 

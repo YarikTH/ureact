@@ -102,43 +102,6 @@ private:
     friend class observable;
 };
 
-class observable
-{
-public:
-    observable() = default;
-
-    UREACT_MAKE_NONCOPYABLE( observable );
-    UREACT_MAKE_NONMOVABLE( observable );
-
-    ~observable()
-    {
-        for( const auto& p : m_observers )
-            if( p != nullptr )
-                p->detach_observer();
-    }
-
-    void register_observer( std::unique_ptr<observer_interface>&& obs_ptr )
-    {
-        m_observers.push_back( std::move( obs_ptr ) );
-    }
-
-    void unregister_observer( observer_interface* raw_obs_ptr )
-    {
-        for( auto it = m_observers.begin(); it != m_observers.end(); ++it )
-        {
-            if( it->get() == raw_obs_ptr )
-            {
-                it->get()->detach_observer();
-                m_observers.erase( it );
-                break;
-            }
-        }
-    }
-
-private:
-    std::vector<std::unique_ptr<observer_interface>> m_observers;
-};
-
 /// Utility class to defer self detach of observers
 class deferred_observer_detacher
 {
@@ -489,80 +452,6 @@ private:
     UREACT_MAKE_NONMOVABLE( context_internals );
 
     std::unique_ptr<react_graph> m_graph = std::make_unique<react_graph>();
-};
-
-class node_base : public reactive_node_interface
-{
-public:
-    explicit node_base( context& context )
-        : m_context( context )
-    {
-        assert( !get_graph().is_locked() && "Can't create node from callback" );
-        m_id = get_graph().register_node( this );
-    }
-
-    ~node_base() override
-    {
-        get_graph().unregister_node( m_id );
-    }
-
-    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
-    {
-        return m_id;
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_context;
-    }
-
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
-    {
-        return _get_internals( m_context ).get_graph();
-    }
-
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
-    {
-        return _get_internals( m_context ).get_graph();
-    }
-
-protected:
-    void attach_to( node_id parentId )
-    {
-        get_graph().attach_node( m_id, parentId );
-    }
-
-    void detach_from( node_id parentId )
-    {
-        get_graph().detach_node( m_id, parentId );
-    }
-
-private:
-    UREACT_MAKE_NONCOPYABLE( node_base );
-
-    context& m_context;
-
-    node_id m_id;
-};
-
-class observer_node
-    : public node_base
-    , public observer_interface
-{
-public:
-    explicit observer_node( context& context )
-        : node_base( context )
-    {}
-};
-
-class observable_node
-    : public node_base
-    , public observable
-{
-public:
-    explicit observable_node( context& context )
-        : node_base( context )
-    {}
 };
 
 } // namespace detail

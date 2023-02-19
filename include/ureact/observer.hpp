@@ -11,6 +11,8 @@
 #define UREACT_OBSERVER_HPP
 
 #include <ureact/detail/base.hpp>
+#include <ureact/detail/observable_node.hpp>
+#include <ureact/detail/observer_node.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

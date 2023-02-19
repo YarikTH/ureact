@@ -6,7 +6,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "doctest_extra.h"
-#include "ureact/detail/base.hpp"
+#include "ureact/detail/node_base.hpp"
 
 // non-copyable and non-movable
 static_assert( !std::is_copy_constructible_v<ureact::detail::node_base> );

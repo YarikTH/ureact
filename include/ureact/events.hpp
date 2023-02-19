@@ -73,67 +73,6 @@ public:
     }
 };
 
-template <typename E, typename Op>
-class event_op_node final : public event_stream_node<E>
-{
-public:
-    template <typename... Args>
-    explicit event_op_node( context& context, Args&&... args )
-        : event_op_node::event_stream_node( context )
-        , m_op( std::forward<Args>( args )... )
-    {
-        m_op.attach( *this );
-    }
-
-    ~event_op_node() override
-    {
-        if( !m_was_op_stolen )
-        {
-            m_op.detach( *this );
-        }
-    }
-
-    UREACT_WARN_UNUSED_RESULT update_result update() override
-    {
-        m_op.collect( event_collector( this->events() ) );
-
-        return !this->events().empty() ? update_result::changed : update_result::unchanged;
-    }
-
-    UREACT_WARN_UNUSED_RESULT Op steal_op()
-    {
-        assert( !m_was_op_stolen && "Op was already stolen" );
-        m_was_op_stolen = true;
-        m_op.detach( *this );
-        return std::move( m_op );
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
-    {
-        return m_was_op_stolen;
-    }
-
-private:
-    struct event_collector
-    {
-        using data_t = typename event_op_node::event_value_list;
-
-        explicit event_collector( data_t& events )
-            : m_events( events )
-        {}
-
-        void operator()( const E& e ) const
-        {
-            m_events.push_back( e );
-        }
-
-        data_t& m_events;
-    };
-
-    Op m_op;
-    bool m_was_op_stolen = false;
-};
-
 template <typename E>
 class event_stream_base : public reactive_base<event_stream_node<E>>
 {

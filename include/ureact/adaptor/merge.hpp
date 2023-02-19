@@ -12,76 +12,57 @@
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/base.hpp>
-#include <ureact/detail/reactive_op_base.hpp>
+#include <ureact/events.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-template <typename E, typename... Deps>
-class event_merge_op : public reactive_op_base<Deps...>
+template <typename E>
+using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
+
+template <typename E, typename... Sources>
+class event_merge_node final : public event_stream_node<E>
 {
 public:
-    template <typename... Args>
-    explicit event_merge_op( Args&&... args )
-        : event_merge_op::reactive_op_base( dont_move(), std::forward<Args>( args )... )
-    {}
-
-    UREACT_MAKE_MOVABLE( event_merge_op );
-
-    template <typename Collector>
-    void collect( const Collector& collector ) const
+    explicit event_merge_node(
+        context& context, const std::shared_ptr<event_stream_node<Sources>>&... sources )
+        : event_merge_node::event_stream_node( context )
+        , m_sources( sources... )
     {
-        std::apply( collect_functor<Collector>( collector ), this->m_deps );
+        ( this->attach_to( *sources ), ... );
     }
 
-    template <typename Collector, typename Functor>
-    void collect_rec( const Functor& functor ) const
+    ~event_merge_node() override
     {
-        std::apply( reinterpret_cast<const collect_functor<Collector>&>( functor ), this->m_deps );
+        std::apply(
+            [this]( const event_stream_node_ptr_t<Sources>&... sources ) {
+                ( this->detach_from( *sources ), ... );
+            },
+            m_sources );
+    }
+
+    UREACT_WARN_UNUSED_RESULT update_result update() override
+    {
+        std::apply(
+            [this]( const event_stream_node_ptr_t<Sources>&... sources ) {
+                ( this->copy_events_from( *sources ), ... );
+            },
+            m_sources );
+
+        return !this->events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
-    template <typename Collector>
-    struct collect_functor
+    template <typename V>
+    void copy_events_from( const event_stream_node<V>& src )
     {
-        collect_functor( const Collector& collector )
-            : m_collector( collector )
-        {}
+        this->events().insert( this->events().end(), src.events().begin(), src.events().end() );
+    }
 
-        void operator()( const Deps&... deps ) const
-        {
-            ( collect( deps ), ... );
-        }
-
-        template <typename T>
-        void collect( const T& op ) const
-        {
-            op.template collect_rec<Collector>( *this );
-        }
-
-        template <typename T>
-        void collect( const std::shared_ptr<T>& dep_ptr ) const
-        {
-            for( const auto& v : dep_ptr->events() )
-            {
-                m_collector( v );
-            }
-        }
-
-        const Collector& m_collector;
-    };
+    std::tuple<event_stream_node_ptr_t<Sources>...> m_sources;
 };
-
-template <typename E>
-class event_stream_node;
-
-template <typename E, typename Op>
-class event_op_node;
-
-template <typename E>
-using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
 
 struct MergeAdaptor : Adaptor
 {
@@ -96,12 +77,8 @@ struct MergeAdaptor : Adaptor
     {
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-        using Op = event_merge_op<E,
-            event_stream_node_ptr_t<Source>,
-            event_stream_node_ptr_t<Sources>...>;
-
         context& context = source1.get_context();
-        return events<E>( std::make_shared<event_op_node<E, Op>>(
+        return events<E>( std::make_shared<event_merge_node<E, Source, Sources...>>(
             context, source1.get_node(), sources.get_node()... ) );
     }
 };

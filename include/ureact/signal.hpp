@@ -209,9 +209,6 @@ private:
 template <typename S>
 class signal : public detail::signal_base<S>
 {
-protected:
-    using Node = detail::signal_node<S>;
-
 public:
     /*!
      * @brief Alias to value type to use in metaprogramming
@@ -224,13 +221,6 @@ public:
      * Default constructed @ref signal is not attached to node, so it is not valid
      */
     signal() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit signal( std::shared_ptr<Node>&& node )
-        : signal::signal_base( std::move( node ) )
-    {}
 
     /*!
      * @brief Return value of linked node
@@ -249,6 +239,19 @@ public:
         assert( this->is_valid() && "Can't get value of signal not attached to a node" );
         return this->get_value();
     }
+
+protected:
+    using Node = detail::signal_node<S>;
+
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit signal( std::shared_ptr<Node>&& node )
+        : signal::signal_base( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -261,9 +264,6 @@ public:
 template <typename S>
 class var_signal : public signal<S>
 {
-private:
-    using Node = detail::var_node<S>;
-
 public:
     /*!
      * @brief Default construct @ref var_signal
@@ -271,13 +271,6 @@ public:
      * Default constructed @ref var_signal is not attached to node, so it is not valid.
      */
     var_signal() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit var_signal( std::shared_ptr<Node>&& node )
-        : var_signal::signal( std::move( node ) )
-    {}
 
     /*!
      * @brief Set new signal value
@@ -389,6 +382,19 @@ public:
         assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
         this->set_value( std::move( new_value ) );
     }
+
+protected:
+    using Node = detail::var_node<S>;
+
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit var_signal( std::shared_ptr<Node>&& node )
+        : var_signal::signal( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -484,12 +490,6 @@ class member_signal_user
 namespace detail
 {
 
-template <typename S, typename V>
-UREACT_WARN_UNUSED_RESULT auto make_var_signal( context& context, V&& v )
-{
-    return var_signal<S>{ std::make_shared<var_node<S>>( context, std::forward<V>( v ) ) };
-}
-
 template <typename V, typename S = std::decay_t<V>>
 UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
 {
@@ -508,11 +508,13 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
                 S>;
         // clang-format on
 
-        return make_var_signal<S2>( context, std::forward<V>( v ) );
+        return detail::create_wrapped_node<var_signal<S2>, var_node<S2>>(
+            context, std::forward<V>( v ) );
     }
     else
     {
-        return make_var_signal<S>( context, std::forward<V>( v ) );
+        return detail::create_wrapped_node<var_signal<S>, var_node<S>>(
+            context, std::forward<V>( v ) );
     }
 }
 

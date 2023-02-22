@@ -206,11 +206,11 @@ struct FoldAdaptor : Adaptor
         context& context = events.get_context();
 
         auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
-            return signal<S>( std::make_shared<Node>( context,
+            return detail::create_wrapped_node<signal<S>, Node>( context,
                 std::forward<V>( init ),
                 events.get_node(),
                 std::forward<InF>( func ),
-                deps.get_node()... ) );
+                deps.get_node()... );
         };
 
         return std::apply( node_builder, dep_pack.data );

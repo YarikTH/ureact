@@ -140,9 +140,6 @@ protected:
 template <typename E = unit>
 class events : public detail::event_stream_base<E>
 {
-private:
-    using Node = detail::event_stream_node<E>;
-
 public:
     /*!
      * @brief Alias to value type to use in metaprogramming
@@ -156,12 +153,18 @@ public:
      */
     events() = default;
 
+protected:
+    using Node = detail::event_stream_node<E>;
+
     /*!
      * @brief Construct from the given node
      */
     explicit events( std::shared_ptr<Node>&& node )
         : events::event_stream_base( std::move( node ) )
     {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -172,9 +175,6 @@ public:
 template <typename E = unit>
 class event_source : public events<E>
 {
-private:
-    using Node = detail::event_source_node<E>;
-
 public:
     class iterator;
 
@@ -184,13 +184,6 @@ public:
      * Default constructed @ref event_source is not attached to node, so it is not valid
      */
     event_source() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit event_source( std::shared_ptr<Node>&& node )
-        : event_source::events( std::move( node ) )
-    {}
 
     /*!
      * @brief Adds e to the queue of outgoing events of the linked event source node
@@ -302,6 +295,19 @@ public:
         assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         return iterator{ *this };
     }
+
+protected:
+    using Node = detail::event_source_node<E>;
+
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit event_source( std::shared_ptr<Node>&& node )
+        : event_source::events( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -441,17 +447,6 @@ class member_events_user
     template <class E>                                                                             \
     using member_event_source = ::ureact::member_event_source<Owner, E>
 
-namespace detail
-{
-
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context )
-{
-    return event_source<E>{ std::make_shared<event_source_node<E>>( context ) };
-}
-
-} // namespace detail
-
 /*!
  * @brief Create a new event source node and links it to the returned event_source instance
  *
@@ -462,7 +457,7 @@ UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E
 {
     assert(
         !_get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
-    return detail::make_event_source<E>( context );
+    return detail::create_wrapped_node<event_source<E>, detail::event_source_node<E>>( context );
 }
 
 /*!
@@ -479,7 +474,7 @@ UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
 {
     assert(
         !_get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
-    return detail::make_event_source<E>( context );
+    return detail::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
 }
 
 UREACT_END_NAMESPACE

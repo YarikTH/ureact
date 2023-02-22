@@ -59,7 +59,8 @@ struct MonitorClosure : AdaptorClosure
         -> events<S>
     {
         context& context = target.get_context();
-        return events<S>( std::make_shared<monitor_node<S>>( context, target.get_node() ) );
+        return detail::create_wrapped_node<events<S>, monitor_node<S>>(
+            context, target.get_node() );
     }
 };
 

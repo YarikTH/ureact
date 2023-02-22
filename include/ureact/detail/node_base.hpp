@@ -17,6 +17,12 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename Ret, typename Node, typename... Args>
+Ret create_wrapped_node( Args&&... args )
+{
+    return Ret{ std::make_shared<Node>( std::forward<Args>( args )... ) };
+}
+
 class node_base : public reactive_node_interface
 {
 public:

@@ -88,8 +88,9 @@ UREACT_WARN_UNUSED_RESULT auto process_impl(
     context& context = source.get_context();
 
     auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
-        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, Deps...>>(
-            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
+        return detail::create_wrapped_node<events<OutE>,
+            event_processing_node<InE, OutE, F, Deps...>>(
+            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... );
     };
 
     return std::apply( node_builder, dep_pack.data );

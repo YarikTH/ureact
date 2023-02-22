@@ -26,6 +26,9 @@ class signal_node;
 template <typename E>
 class event_stream_node;
 
+template <typename Ret, typename Node, typename... Args>
+Ret create_wrapped_node( Args&&... args );
+
 template <typename OuterS, typename InnerS>
 class signal_flatten_node final : public signal_node<InnerS>
 {
@@ -144,8 +147,8 @@ struct FlattenClosure : AdaptorClosure
         static_assert( !std::is_same_v<Node, signature_mismatches>,
             "flatten: Passed signal does not match any of the supported signatures" );
 
-        return InnerS{
-            std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
+        return detail::create_wrapped_node<InnerS, Node>(
+            context, outer.get_node(), outer.get().get_node() );
     }
 };
 

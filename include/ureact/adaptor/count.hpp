@@ -23,14 +23,14 @@ UREACT_BEGIN_NAMESPACE
  *  @warning Not to be confused with std::count(from, to, value)
  */
 template <typename S>
-inline constexpr auto count_ = fold( S{}, []( const auto&, S& accum ) { ++accum; } );
+inline constexpr auto count_as = fold( S{}, []( const auto&, S& accum ) { ++accum; } );
 
 /*!
  * @brief Counts amount of received events into signal<size_t>
  *
  *  @warning Not to be confused with std::count(from, to, value)
  */
-inline constexpr auto count = count_<size_t>;
+inline constexpr auto count = count_as<size_t>;
 
 UREACT_END_NAMESPACE
 

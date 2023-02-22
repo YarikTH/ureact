@@ -297,7 +297,7 @@ struct LiftAdaptor : Adaptor
  *  Type of resulting signal should be explicitly specified.
  */
 template <typename SIn = void>
-inline constexpr detail::LiftAdaptor<SIn> lift_;
+inline constexpr detail::LiftAdaptor<SIn> lift_as;
 
 /*!
  * @brief Create a new signal applying function to given signals

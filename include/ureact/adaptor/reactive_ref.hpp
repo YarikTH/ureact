@@ -67,7 +67,7 @@ struct ReactiveRefAdaptor : Adaptor
         using R = std::invoke_result_t<F, S>;
         using DecayedR = decay_input_t<std::decay_t<R>>;
         return flatten(
-            lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
+            lift_as<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
     }
 
     template <typename InF>

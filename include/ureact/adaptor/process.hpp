@@ -79,23 +79,6 @@ private:
     dep_holder_t m_deps;
 };
 
-template <typename OutE, typename InE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process_impl(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
-{
-    using F = std::decay_t<Op>;
-
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
-        return detail::create_wrapped_node<events<OutE>,
-            event_processing_node<InE, OutE, F, Deps...>>(
-            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... );
-    };
-
-    return std::apply( node_builder, dep_pack.data );
-}
-
 template <typename OutE>
 struct ProcessAdaptor : Adaptor
 {
@@ -116,7 +99,17 @@ struct ProcessAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
     {
-        return process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+        using F = std::decay_t<Op>;
+
+        context& context = source.get_context();
+
+        auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
+            return detail::create_wrapped_node<events<OutE>,
+                event_processing_node<InE, OutE, F, Deps...>>(
+                context, source.get_node(), std::forward<Op>( op ), deps.get_node()... );
+        };
+
+        return std::apply( node_builder, dep_pack.data );
     }
 
     /*!

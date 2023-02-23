@@ -272,6 +272,7 @@ inline node_id react_graph::register_node( reactive_node_interface* nodePtr )
 
 inline void react_graph::unregister_node( node_id nodeId )
 {
+    assert( m_node_data[nodeId].successors.empty() );
     m_node_data.erase( nodeId );
 }
 

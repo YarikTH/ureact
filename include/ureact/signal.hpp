@@ -270,6 +270,17 @@ public:
     }
 
     /*!
+     * @brief Pointer access value of linked node
+     * 
+     * TODO: check it in tests
+     */
+    UREACT_WARN_UNUSED_RESULT const S* operator->() const
+    {
+        assert( this->is_valid() && "Can't access value of signal not attached to a node" );
+        return &this->get_value();
+    }
+
+    /*!
      * @brief Return internals. Not intended to use in user code
      */
     UREACT_WARN_UNUSED_RESULT friend detail::signal_internals<S>& get_internals( signal<S>& s )

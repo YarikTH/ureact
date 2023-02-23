@@ -129,7 +129,7 @@ public:
 
     void push_input( node_id nodeId )
     {
-        m_changed_inputs.push_back( nodeId );
+        m_changed_inputs.add( nodeId );
 
         if( m_transaction_level == 0 )
         {
@@ -223,7 +223,7 @@ private:
 
         reactive_node_interface* node_ptr = nullptr;
 
-        std::vector<node_id> successors;
+        node_id_vector successors;
     };
 
     class topological_queue
@@ -262,7 +262,7 @@ private:
 
     int m_transaction_level = 0;
 
-    std::vector<node_id> m_changed_inputs;
+    node_id_vector m_changed_inputs;
 };
 
 inline node_id react_graph::register_node( reactive_node_interface* nodePtr )
@@ -317,7 +317,7 @@ inline void react_graph::attach_node( node_id nodeId, node_id parentId )
     auto& node = m_node_data[nodeId];
     auto& parent = m_node_data[parentId];
 
-    parent.successors.push_back( nodeId );
+    parent.successors.add( nodeId );
 
     if( node.level <= parent.level )
     {
@@ -330,7 +330,7 @@ inline void react_graph::detach_node( node_id nodeId, node_id parentId )
     auto& parent = m_node_data[parentId];
     auto& successors = parent.successors;
 
-    successors.erase( detail::find( successors.begin(), successors.end(), nodeId ) );
+    successors.remove( nodeId );
 }
 
 inline void react_graph::schedule_successors( node_data& node )

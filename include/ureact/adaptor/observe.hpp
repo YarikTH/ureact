@@ -97,6 +97,7 @@ public:
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
     {
+        m_subject_node_id = subject->get_node_id();
         this->attach_to( subject->get_node_id() );
     }
 
@@ -131,14 +132,19 @@ public:
 private:
     void detach_observer() override
     {
-        if( auto p = m_subject.lock() )
+        if( !m_detached )
         {
-            detach_from( p->get_node_id() );
+            m_detached = true;
+
+            detach_from( m_subject_node_id );
+
             m_subject.reset();
         }
     }
 
     std::weak_ptr<signal_node<S>> m_subject;
+    node_id m_subject_node_id;
+    bool m_detached = false;
     F m_func;
 };
 
@@ -156,6 +162,7 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
+        m_subject_node_id = subject->get_node_id();
         this->attach_to( subject->get_node_id() );
         ( this->attach_to( deps->get_node_id() ), ... );
     }
@@ -196,15 +203,18 @@ private:
     using DepHolder = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
 
     std::weak_ptr<event_stream_node<E>> m_subject;
-
+    node_id m_subject_node_id;
+    bool m_detached = false;
     F m_func;
     DepHolder m_deps;
 
     void detach_observer() override
     {
-        if( auto p = m_subject.lock() )
+        if( !m_detached )
         {
-            detach_from( p->get_node_id() );
+            m_detached = true;
+
+            detach_from( m_subject_node_id );
 
             std::apply( detach_functor<events_observer_node>( *this ), m_deps );
 

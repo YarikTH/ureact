@@ -11,7 +11,6 @@
 #define UREACT_ADAPTOR_LIFT_HPP
 
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/signal_pack.hpp>
@@ -114,10 +113,11 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, Values...>;
         using Op = function_op<S, F, signal_node_ptr_t<Values>...>;
 
-        context& context = std::get<0>( arg_pack.data ).get_context();
+        const context& context = std::get<0>( arg_pack.data ).get_context();
 
         auto node_builder = [&context, &func]( const signal<Values>&... args ) {
-            return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
+            return temp_signal<S, Op>{
+                context, std::forward<InF>( func ), get_internals( args ).get_node_ptr()... };
         };
 
         return std::apply( node_builder, arg_pack.data );
@@ -135,7 +135,8 @@ struct LiftAdaptor : Adaptor
         using F = std::decay_t<InF>;
         using S = deduce_s<SIn, F, Value>;
         using Op = function_op<S, F, signal_node_ptr_t<Value>>;
-        return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
+        return temp_signal<S, Op>{
+            arg.get_context(), std::forward<InF>( func ), get_internals( arg ).get_node_ptr() };
     }
 
     /*!
@@ -229,7 +230,7 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, RightOp>;
 
-        context& context = lhs.get_context();
+        const context& context = lhs.get_context();
         assert( context == rhs.get_context() );
 
         return temp_signal<S, Op>{ context,
@@ -256,11 +257,13 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
-        context& context = lhs.get_context();
+        const context& context = lhs.get_context();
         assert( context == rhs.get_context() );
 
-        return temp_signal<S, Op>{
-            context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
+        return temp_signal<S, Op>{ context,
+            std::forward<InF>( func ),
+            std::move( lhs ).steal_op(),
+            get_internals( rhs ).get_node_ptr() };
     }
 
     /*!
@@ -281,11 +284,13 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
-        context& context = lhs.get_context();
+        const context& context = lhs.get_context();
         assert( context == rhs.get_context() );
 
-        return temp_signal<S, Op>{
-            context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
+        return temp_signal<S, Op>{ context,
+            std::forward<InF>( func ),
+            get_internals( lhs ).get_node_ptr(),
+            std::move( rhs ).steal_op() };
     }
 };
 

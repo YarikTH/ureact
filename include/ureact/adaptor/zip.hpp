@@ -13,7 +13,6 @@
 #include <deque>
 
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/events.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -26,7 +25,7 @@ class event_zip_node final : public event_stream_node<std::tuple<Values...>>
 {
 public:
     explicit event_zip_node(
-        context& context, const std::shared_ptr<event_stream_node<Values>>&... sources )
+        const context& context, const std::shared_ptr<event_stream_node<Values>>&... sources )
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
@@ -123,10 +122,11 @@ struct ZipAdaptor : Adaptor
     {
         static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
 
-        context& context = source1.get_context();
+        const context& context = source1.get_context();
         return detail::create_wrapped_node<events<std::tuple<Source, Sources...>>,
-            event_zip_node<Source, Sources...>>(
-            context, source1.get_node(), sources.get_node()... );
+            event_zip_node<Source, Sources...>>( context,
+            get_internals( source1 ).get_node_ptr(),
+            get_internals( sources ).get_node_ptr()... );
     }
 };
 

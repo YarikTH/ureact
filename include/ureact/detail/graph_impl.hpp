@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_BASE_HPP
-#define UREACT_DETAIL_BASE_HPP
+#ifndef UREACT_DETAIL_GRAPH_IMPL_HPP
+#define UREACT_DETAIL_GRAPH_IMPL_HPP
 
 #include <cassert>
 #include <cstddef>
@@ -27,17 +27,7 @@
 
 UREACT_BEGIN_NAMESPACE
 
-class context;
-
 class transaction;
-
-namespace detail
-{
-class context_internals;
-}
-
-/// TODO: looks ugly. Replace context_internals with more proper feature
-UREACT_WARN_UNUSED_RESULT detail::context_internals& _get_internals( context& ctx );
 
 namespace detail
 {
@@ -378,24 +368,20 @@ public:
 
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
-        return *m_graph;
+        return *m_graph_ptr;
     }
 
     UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
     {
-        return *m_graph;
+        return *m_graph_ptr;
     }
 
 private:
-    // context_internals and context should be non-movable because
-    // node_base contains reference to context, and it will break if context lose its graph
-    UREACT_MAKE_NONMOVABLE( context_internals );
-
-    std::unique_ptr<react_graph> m_graph = std::make_unique<react_graph>();
+    std::shared_ptr<react_graph> m_graph_ptr = std::make_shared<react_graph>();
 };
 
 } // namespace detail
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_BASE_HPP
+#endif // UREACT_DETAIL_GRAPH_IMPL_HPP

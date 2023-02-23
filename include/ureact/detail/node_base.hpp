@@ -10,7 +10,12 @@
 #ifndef UREACT_DETAIL_NODE_BASE_HPP
 #define UREACT_DETAIL_NODE_BASE_HPP
 
-#include <ureact/detail/base.hpp>
+#include <memory>
+#include <utility>
+
+#include <ureact/context.hpp>
+#include <ureact/detail/graph_impl.hpp>
+#include <ureact/detail/graph_interface.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -26,8 +31,8 @@ Ret create_wrapped_node( Args&&... args )
 class node_base : public reactive_node_interface
 {
 public:
-    explicit node_base( context& context )
-        : m_context( context )
+    explicit node_base( context context )
+        : m_context( std::move( context ) )
     {
         assert( !get_graph().is_locked() && "Can't create node from callback" );
         m_id = get_graph().register_node( this );
@@ -43,19 +48,25 @@ public:
         return m_id;
     }
 
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
+    UREACT_WARN_UNUSED_RESULT context& get_context()
     {
         return m_context;
     }
 
+    UREACT_WARN_UNUSED_RESULT const context& get_context() const
+    {
+        return m_context;
+    }
+
+    // TODO protected:
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
-        return _get_internals( m_context ).get_graph();
+        return get_internals( m_context ).get_graph();
     }
 
     UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
     {
-        return _get_internals( m_context ).get_graph();
+        return get_internals( m_context ).get_graph();
     }
 
 protected:
@@ -72,7 +83,7 @@ protected:
 private:
     UREACT_MAKE_NONCOPYABLE( node_base );
 
-    context& m_context;
+    context m_context{};
 
     node_id m_id;
 };

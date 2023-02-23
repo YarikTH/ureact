@@ -32,7 +32,7 @@ class event_processing_node final : public event_stream_node<OutE>
 {
 public:
     template <typename F>
-    event_processing_node( context& context,
+    event_processing_node( const context& context,
         const std::shared_ptr<event_stream_node<InE>>& source,
         F&& func,
         const std::shared_ptr<signal_node<Deps>>&... deps )
@@ -101,12 +101,14 @@ struct ProcessAdaptor : Adaptor
     {
         using F = std::decay_t<Op>;
 
-        context& context = source.get_context();
+        const context& context = source.get_context();
 
         auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
             return detail::create_wrapped_node<events<OutE>,
-                event_processing_node<InE, OutE, F, Deps...>>(
-                context, source.get_node(), std::forward<Op>( op ), deps.get_node()... );
+                event_processing_node<InE, OutE, F, Deps...>>( context,
+                get_internals( source ).get_node_ptr(),
+                std::forward<Op>( op ),
+                get_internals( deps ).get_node_ptr()... );
         };
 
         return std::apply( node_builder, dep_pack.data );

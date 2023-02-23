@@ -13,7 +13,9 @@
 #include <functional>
 #include <type_traits>
 
-#include <ureact/detail/base.hpp>
+#include <ureact/context.hpp>
+#include <ureact/detail/defines.hpp>
+#include <ureact/detail/graph_impl.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -25,7 +27,7 @@ class UREACT_WARN_UNUSED_RESULT transaction
 {
 public:
     explicit transaction( context& ctx )
-        : self( _get_internals( ctx ).get_graph() )
+        : self( get_internals( ctx ).get_graph() )
     {
         ++self.m_transaction_level;
     }

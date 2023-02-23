@@ -10,8 +10,8 @@
 #ifndef UREACT_CONTEXT_HPP
 #define UREACT_CONTEXT_HPP
 
-#include <ureact/detail/base.hpp>
-#include <ureact/detail/node_base.hpp>
+#include <ureact/detail/defines.hpp>
+#include <ureact/detail/graph_impl.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -24,21 +24,42 @@ UREACT_BEGIN_NAMESPACE
 class context final : protected detail::context_internals
 {
 public:
-    UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
+    /*!
+     * @brief Default construct @ref context
+     */
+    context() = default;
+
+    UREACT_MAKE_COPYABLE( context );
+    UREACT_MAKE_MOVABLE( context );
+
+    /*!
+     * @brief Equally compare with other @ref context
+     */
+    UREACT_WARN_UNUSED_RESULT friend bool operator==( const context& lhs, const context& rhs )
     {
-        return this == &rsh;
+        return &lhs.get_graph() == &rhs.get_graph();
     }
 
-    UREACT_WARN_UNUSED_RESULT bool operator!=( const context& rsh ) const
+    /*!
+     * @brief Equally compare with other @ref context
+     */
+    UREACT_WARN_UNUSED_RESULT friend bool operator!=( const context& lhs, const context& rhs )
     {
-        return !( *this == rsh );
+        return !( lhs == rhs );
     }
 
-private:
-    friend class detail::node_base;
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend context_internals& get_internals( context& ctx )
+    {
+        return ctx;
+    }
 
-    /// Returns internals. Not intended to use in user code
-    UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const context_internals& get_internals( const context& ctx )
     {
         return ctx;
     }

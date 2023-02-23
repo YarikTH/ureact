@@ -11,7 +11,6 @@
 #define UREACT_ADAPTOR_MONITOR_HPP
 
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/events.hpp>
 #include <ureact/signal.hpp>
 
@@ -24,7 +23,7 @@ template <typename E>
 class monitor_node final : public event_stream_node<E>
 {
 public:
-    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
+    monitor_node( const context& context, const std::shared_ptr<signal_node<E>>& target )
         : monitor_node::event_stream_node( context )
         , m_target( target )
     {
@@ -58,9 +57,9 @@ struct MonitorClosure : AdaptorClosure
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
         -> events<S>
     {
-        context& context = target.get_context();
+        const context& context = target.get_context();
         return detail::create_wrapped_node<events<S>, monitor_node<S>>(
-            context, target.get_node() );
+            context, get_internals( target ).get_node_ptr() );
     }
 };
 

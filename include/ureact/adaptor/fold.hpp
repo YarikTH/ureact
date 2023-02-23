@@ -77,7 +77,7 @@ class fold_node final : public signal_node<S>
 {
 public:
     template <typename InS, typename InF>
-    fold_node( context& context,
+    fold_node( const context& context,
         InS&& init,
         const std::shared_ptr<event_stream_node<E>>& events,
         InF&& func,
@@ -203,14 +203,14 @@ struct FoldAdaptor : Adaptor
         static_assert( !std::is_same_v<Node, signature_mismatches>,
             "fold: Passed function does not match any of the supported signatures" );
 
-        context& context = events.get_context();
+        const context& context = events.get_context();
 
         auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
             return detail::create_wrapped_node<signal<S>, Node>( context,
                 std::forward<V>( init ),
-                events.get_node(),
+                get_internals( events ).get_node_ptr(),
                 std::forward<InF>( func ),
-                deps.get_node()... );
+                get_internals( deps ).get_node_ptr()... );
         };
 
         return std::apply( node_builder, dep_pack.data );

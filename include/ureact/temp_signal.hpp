@@ -22,7 +22,7 @@ class signal_op_node final : public signal_node<S>
 {
 public:
     template <typename... Args>
-    explicit signal_op_node( context& context, Args&&... args )
+    explicit signal_op_node( const context& context, Args&&... args )
         : signal_op_node::signal_node( context )
         , m_op( std::forward<Args>( args )... )
     {
@@ -91,7 +91,7 @@ public:
      * @brief Construct a fully functional temp signal
      */
     template <typename... Args>
-    explicit temp_signal( context& context, Args&&... args )
+    explicit temp_signal( const context& context, Args&&... args )
         : temp_signal::signal( std::make_shared<Node>( context, std::forward<Args>( args )... ) )
     {}
 
@@ -100,9 +100,9 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT Op steal_op() &&
     {
-        assert( this->m_node.use_count() == 1
+        assert( this->get_node_ptr().use_count() == 1
                 && "temp_signal's node should be uniquely owned, otherwise it is misused" );
-        auto* node_ptr = static_cast<Node*>( this->m_node.get() );
+        auto* node_ptr = static_cast<Node*>( this->get_node_ptr().get() );
         return node_ptr->steal_op();
     }
 
@@ -111,7 +111,7 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
-        auto* node_ptr = static_cast<Node*>( this->m_node.get() );
+        auto* node_ptr = static_cast<Node*>( this->get_node_ptr().get() );
         return node_ptr->was_op_stolen();
     }
 };

@@ -11,7 +11,6 @@
 #define UREACT_ADAPTOR_MERGE_HPP
 
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/events.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -27,7 +26,7 @@ class event_merge_node final : public event_stream_node<E>
 {
 public:
     explicit event_merge_node(
-        context& context, const std::shared_ptr<event_stream_node<Sources>>&... sources )
+        const context& context, const std::shared_ptr<event_stream_node<Sources>>&... sources )
         : event_merge_node::event_stream_node( context )
         , m_sources( sources... )
     {
@@ -77,9 +76,11 @@ struct MergeAdaptor : Adaptor
     {
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-        context& context = source1.get_context();
+        const context& context = source1.get_context();
         return detail::create_wrapped_node<events<E>, event_merge_node<E, Source, Sources...>>(
-            context, source1.get_node(), sources.get_node()... );
+            context,
+            get_internals( source1 ).get_node_ptr(),
+            get_internals( sources ).get_node_ptr()... );
     }
 };
 

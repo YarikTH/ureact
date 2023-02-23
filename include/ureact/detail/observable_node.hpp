@@ -60,7 +60,7 @@ class observable_node
     , public observable
 {
 public:
-    explicit observable_node( context& context )
+    explicit observable_node( const context& context )
         : node_base( context )
     {}
 };

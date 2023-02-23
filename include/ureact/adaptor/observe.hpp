@@ -92,7 +92,7 @@ class signal_observer_node final : public observer_node
 public:
     template <typename InF>
     signal_observer_node(
-        context& context, const std::shared_ptr<signal_node<S>>& subject, InF&& func )
+        const context& context, const std::shared_ptr<signal_node<S>>& subject, InF&& func )
         : signal_observer_node::observer_node( context )
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
@@ -147,7 +147,7 @@ class events_observer_node final : public observer_node
 {
 public:
     template <typename InF>
-    events_observer_node( context& context,
+    events_observer_node( const context& context,
         const std::shared_ptr<event_stream_node<E>>& subject,
         InF&& func,
         const std::shared_ptr<signal_node<Deps>>&... deps )
@@ -228,7 +228,7 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
         signal_observer_node<S, add_observer_action_next_ret<F>>,
         signal_observer_node<S, F>>;
 
-    const auto& subject_ptr = subject.get_node();
+    const auto& subject_ptr = get_internals( subject ).get_node_ptr();
 
     std::unique_ptr<observer_node> node(
         new Node( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
@@ -268,14 +268,16 @@ auto observe_events_impl(
 
     using Node = events_observer_node<E, wrapper_t, Deps...>;
 
-    context& context = subject.get_context();
+    const context& context = subject.get_context();
 
     auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
-        return new Node(
-            context, subject.get_node(), std::forward<InF>( func ), deps.get_node()... );
+        return new Node( context,
+            get_internals( subject ).get_node_ptr(),
+            std::forward<InF>( func ),
+            get_internals( deps ).get_node_ptr()... );
     };
 
-    const auto& subject_node = subject.get_node();
+    const auto& subject_node = get_internals( subject ).get_node_ptr();
 
     std::unique_ptr<observer_node> node( std::apply( node_builder, dep_pack.data ) );
 

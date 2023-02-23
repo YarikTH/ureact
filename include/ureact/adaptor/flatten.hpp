@@ -10,8 +10,10 @@
 #ifndef UREACT_ADAPTOR_FLATTEN_HPP
 #define UREACT_ADAPTOR_FLATTEN_HPP
 
+#include <memory>
+
+#include <ureact/context.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -33,7 +35,7 @@ template <typename OuterS, typename InnerS>
 class signal_flatten_node final : public signal_node<InnerS>
 {
 public:
-    signal_flatten_node( context& context,
+    signal_flatten_node( const context& context,
         std::shared_ptr<signal_node<OuterS>> outer,
         std::shared_ptr<signal_node<InnerS>> inner )
         : signal_flatten_node::signal_node( context, inner->value_ref() )
@@ -53,7 +55,7 @@ public:
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         {
-            const auto& new_inner = m_outer->value_ref().get_node();
+            const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
             if( !equal_to( new_inner, m_inner ) )
             {
                 // Topology has been changed
@@ -79,7 +81,7 @@ template <typename OuterS, typename InnerE>
 class event_flatten_node final : public event_stream_node<InnerE>
 {
 public:
-    event_flatten_node( context& context,
+    event_flatten_node( const context& context,
         std::shared_ptr<signal_node<OuterS>> outer,
         std::shared_ptr<event_stream_node<InnerE>> inner )
         : event_flatten_node::event_stream_node( context )
@@ -98,7 +100,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        const auto& new_inner = m_outer->value_ref().get_node();
+        const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
         if( !equal_to( new_inner, m_inner ) )
         {
             // Topology has been changed
@@ -130,7 +132,7 @@ struct FlattenClosure : AdaptorClosure
     template <typename InnerS>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<InnerS>& outer ) const
     {
-        context& context = outer.get_context();
+        const context& context = outer.get_context();
 
         using value_t = typename InnerS::value_t;
 
@@ -147,8 +149,9 @@ struct FlattenClosure : AdaptorClosure
         static_assert( !std::is_same_v<Node, signature_mismatches>,
             "flatten: Passed signal does not match any of the supported signatures" );
 
-        return detail::create_wrapped_node<InnerS, Node>(
-            context, outer.get_node(), outer.get().get_node() );
+        return detail::create_wrapped_node<InnerS, Node>( context,
+            get_internals( outer ).get_node_ptr(),
+            get_internals( outer.get() ).get_node_ptr() );
     }
 };
 

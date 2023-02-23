@@ -13,7 +13,6 @@
 #include <type_traits>
 
 #include <ureact/context.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/detail/observable_node.hpp>
 #include <ureact/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/unit.hpp>
@@ -29,7 +28,7 @@ class event_stream_node : public observable_node
 public:
     using event_value_list = std::vector<E>;
 
-    explicit event_stream_node( context& context )
+    explicit event_stream_node( const context& context )
         : observable_node( context )
     {}
 
@@ -56,7 +55,7 @@ template <typename E>
 class event_source_node final : public event_stream_node<E>
 {
 public:
-    explicit event_source_node( context& context )
+    explicit event_source_node( const context& context )
         : event_source_node::event_stream_node( context )
     {}
 
@@ -75,37 +74,39 @@ public:
 };
 
 template <typename E>
-class event_stream_base
+class events_internals
 {
 public:
-    event_stream_base() = default;
-
-    UREACT_MAKE_COPYABLE( event_stream_base );
-    UREACT_MAKE_MOVABLE( event_stream_base );
+    events_internals() = default;
 
     template <typename Node>
-    explicit event_stream_base( std::shared_ptr<Node>&& node )
+    explicit events_internals( std::shared_ptr<Node>&& node )
         : m_node( std::move( node ) )
     {}
 
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_node != nullptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool equal_to( const event_stream_base& other ) const
-    {
-        return this->m_node == other.m_node;
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_node->get_context();
-    }
-
-    UREACT_WARN_UNUSED_RESULT const auto& get_node() const
+    UREACT_WARN_UNUSED_RESULT std::shared_ptr<event_stream_node<E>>& get_node_ptr()
     {
         return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<event_stream_node<E>>& get_node_ptr() const
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        return m_node->get_node_id();
+    }
+
+    std::vector<E>& events()
+    {
+        return m_node->events();
+    }
+
+    const std::vector<E>& events() const
+    {
+        return m_node->events();
     }
 
 private:
@@ -138,7 +139,7 @@ protected:
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
  */
 template <typename E = unit>
-class events : public detail::event_stream_base<E>
+class events : protected detail::events_internals<E>
 {
 public:
     /*!
@@ -153,6 +154,57 @@ public:
      */
     events() = default;
 
+    /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT context& get_context()
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT const context& get_context() const
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return this->get_node_ptr() != nullptr;
+    }
+
+    /*!
+     * @brief Equally compare with other @ref events
+     * 
+     * Semantic equivalent of operator==
+     */
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const events& other ) const
+    {
+        return this->get_node_ptr() == other.get_node_ptr();
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend detail::events_internals<E>& get_internals( events<E>& e )
+    {
+        return e;
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const detail::events_internals<E>& get_internals(
+        const events<E>& e )
+    {
+        return e;
+    }
+
 protected:
     using Node = detail::event_stream_node<E>;
 
@@ -160,7 +212,7 @@ protected:
      * @brief Construct from the given node
      */
     explicit events( std::shared_ptr<Node>&& node )
-        : events::event_stream_base( std::move( node ) )
+        : events::events_internals( std::move( node ) )
     {}
 
     template <typename Ret, typename Node, typename... Args>
@@ -453,10 +505,10 @@ class member_events_user
  *  Event value type E has to be specified explicitly. It would be unit if it is omitted.
  */
 template <typename E = unit>
-UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
+UREACT_WARN_UNUSED_RESULT auto make_source( const context& context ) -> event_source<E>
 {
     assert(
-        !_get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
+        !get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
     return detail::create_wrapped_node<event_source<E>, detail::event_source_node<E>>( context );
 }
 
@@ -470,10 +522,9 @@ UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E
  *  but it can be optimized in future.
  */
 template <typename E = unit>
-UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
+UREACT_WARN_UNUSED_RESULT auto make_never( const context& context ) -> events<E>
 {
-    assert(
-        !_get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
+    assert( !get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
     return detail::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
 }
 

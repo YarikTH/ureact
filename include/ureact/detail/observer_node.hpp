@@ -23,7 +23,7 @@ class observer_node
     , public observer_interface
 {
 public:
-    explicit observer_node( context& context )
+    explicit observer_node( const context& context )
         : node_base( context )
     {}
 };

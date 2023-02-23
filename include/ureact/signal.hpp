@@ -11,7 +11,6 @@
 #define UREACT_SIGNAL_HPP
 
 #include <ureact/context.hpp>
-#include <ureact/detail/base.hpp>
 #include <ureact/detail/observable_node.hpp>
 #include <ureact/equal_to.hpp>
 #include <ureact/type_traits.hpp>
@@ -25,12 +24,12 @@ template <typename S>
 class signal_node : public observable_node
 {
 public:
-    explicit signal_node( context& context )
+    explicit signal_node( const context& context )
         : observable_node( context )
     {}
 
     template <typename T>
-    signal_node( context& context, T&& value )
+    signal_node( const context& context, T&& value )
         : observable_node( context )
         , m_value( std::forward<T>( value ) )
     {}
@@ -61,7 +60,7 @@ class var_node final : public signal_node<S>
 {
 public:
     template <typename T>
-    explicit var_node( context& context, T&& value )
+    explicit var_node( const context& context, T&& value )
         : var_node::signal_node( context, std::forward<T>( value ) )
         , m_new_value( value )
     {}
@@ -127,43 +126,38 @@ private:
 };
 
 template <typename S>
-class signal_base
+class signal_internals
 {
 public:
-    signal_base() = default;
+    signal_internals() = default;
 
     template <typename Node>
-    explicit signal_base( std::shared_ptr<Node>&& node )
+    explicit signal_internals( std::shared_ptr<Node>&& node )
         : m_node( std::move( node ) )
     {}
 
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_node != nullptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool equal_to( const signal_base& other ) const
-    {
-        return this->m_node == other.m_node;
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_node->get_context();
-    }
-
-    UREACT_WARN_UNUSED_RESULT const auto& get_node() const
+    UREACT_WARN_UNUSED_RESULT std::shared_ptr<signal_node<S>>& get_node_ptr()
     {
         return m_node;
     }
 
-protected:
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<signal_node<S>>& get_node_ptr() const
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        return m_node->get_node_id();
+    }
+
     UREACT_WARN_UNUSED_RESULT const S& get_value() const
     {
         assert( !this->m_node->get_graph().is_locked() && "Can't read signal value from callback" );
         return this->m_node->value_ref();
     }
 
+protected:
     template <typename T>
     void set_value( T&& new_value ) const
     {
@@ -184,13 +178,13 @@ protected:
         graph_ref.push_input( node_ptr->get_node_id() );
     }
 
-    std::shared_ptr<signal_node<S>> m_node;
-
 private:
     UREACT_WARN_UNUSED_RESULT auto get_var_node() const
     {
         return static_cast<var_node<S>*>( this->m_node.get() );
     }
+
+    std::shared_ptr<signal_node<S>> m_node;
 };
 
 } // namespace detail
@@ -207,7 +201,7 @@ private:
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
  */
 template <typename S>
-class signal : public detail::signal_base<S>
+class signal : protected detail::signal_internals<S>
 {
 public:
     /*!
@@ -221,6 +215,41 @@ public:
      * Default constructed @ref signal is not attached to node, so it is not valid
      */
     signal() = default;
+
+    /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT context& get_context()
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT const context& get_context() const
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return this->get_node_ptr() != nullptr;
+    }
+
+    /*!
+     * @brief Equally compare with other signal
+     * 
+     * Semantic equivalent of operator==
+     * It is intended to allow overload of operator== to make new signal
+     */
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const signal& other ) const
+    {
+        return this->get_node_ptr() == other.get_node_ptr();
+    }
 
     /*!
      * @brief Return value of linked node
@@ -240,6 +269,23 @@ public:
         return this->get_value();
     }
 
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend detail::signal_internals<S>& get_internals( signal<S>& s )
+    {
+        return s;
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const detail::signal_internals<S>& get_internals(
+        const signal<S>& s )
+    {
+        return s;
+    }
+
 protected:
     using Node = detail::signal_node<S>;
 
@@ -247,7 +293,7 @@ protected:
      * @brief Construct from the given node
      */
     explicit signal( std::shared_ptr<Node>&& node )
-        : signal::signal_base( std::move( node ) )
+        : signal::signal_internals( std::move( node ) )
     {}
 
     template <typename Ret, typename Node, typename... Args>
@@ -491,7 +537,7 @@ namespace detail
 {
 
 template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
+UREACT_WARN_UNUSED_RESULT auto make_var_impl( const context& context, V&& v )
 {
     // TODO: detect var_signal type and then construct it once
     //       unfortunately it is not directly possible with select_t and std::condition
@@ -524,9 +570,9 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
  * @brief Create a new input signal node and links it to the returned var_signal instance
  */
 template <typename V>
-UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
+UREACT_WARN_UNUSED_RESULT auto make_var( const context& context, V&& value )
 {
-    assert( !_get_internals( context ).get_graph().is_locked() && "Can't make var from callback" );
+    assert( !get_internals( context ).get_graph().is_locked() && "Can't make var from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
@@ -538,10 +584,9 @@ UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
  *  but it can be optimized in future.
  */
 template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto make_const( context& context, V&& value ) -> signal<S>
+UREACT_WARN_UNUSED_RESULT auto make_const( const context& context, V&& value ) -> signal<S>
 {
-    assert(
-        !_get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
+    assert( !get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
 

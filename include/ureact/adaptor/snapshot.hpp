@@ -12,7 +12,6 @@
 
 #include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

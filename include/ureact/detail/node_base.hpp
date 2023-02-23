@@ -40,6 +40,7 @@ public:
 
     ~node_base() override
     {
+        detach_from_all();
         get_graph().unregister_node( m_id );
     }
 
@@ -72,13 +73,30 @@ public:
 protected:
     void attach_to( node_id parentId )
     {
+        m_parents.add( parentId );
         get_graph().attach_node( m_id, parentId );
     }
 
     void detach_from( node_id parentId )
     {
         get_graph().detach_node( m_id, parentId );
+        m_parents.remove( parentId );
     }
+
+    void detach_from_all()
+    {
+        for( node_id parentId : m_parents )
+        {
+            get_graph().detach_node( m_id, parentId );
+        }
+        m_parents.clear();
+    }
+
+    template <typename Node>
+    friend class attach_functor;
+
+    template <typename Node>
+    friend class detach_functor;
 
 private:
     UREACT_MAKE_NONCOPYABLE( node_base );
@@ -86,6 +104,8 @@ private:
     context m_context{};
 
     node_id m_id;
+
+    node_id_vector m_parents;
 };
 
 } // namespace detail

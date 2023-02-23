@@ -93,9 +93,7 @@ public:
 
     ~fold_node() override
     {
-        this->detach_from( m_events->get_node_id() );
-
-        std::apply( detach_functor<fold_node>( *this ), m_deps );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

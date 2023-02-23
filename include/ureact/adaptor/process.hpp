@@ -47,9 +47,7 @@ public:
 
     ~event_processing_node() override
     {
-        this->detach_from( m_source->get_node_id() );
-
-        std::apply( detach_functor<event_processing_node>( *this ), m_deps );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

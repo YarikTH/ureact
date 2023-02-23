@@ -33,11 +33,7 @@ public:
 
     ~event_zip_node() override
     {
-        std::apply(
-            [this]( slot<Values>&... slots ) {
-                ( this->detach_from( get_internals( slots.source ).get_node_id() ), ... );
-            },
-            m_slots );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

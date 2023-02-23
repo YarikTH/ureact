@@ -31,11 +31,7 @@ public:
 
     ~event_merge_node() override
     {
-        std::apply(
-            [this]( const events<Values>&... sources ) {
-                ( this->detach_from( get_internals( sources ).get_node_id() ), ... );
-            },
-            m_sources );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

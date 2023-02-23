@@ -48,8 +48,7 @@ public:
 
     ~signal_flatten_node() override
     {
-        this->detach_from( m_inner->get_node_id() );
-        this->detach_from( m_outer->get_node_id() );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
@@ -94,8 +93,7 @@ public:
 
     ~event_flatten_node() override
     {
-        this->detach_from( m_inner->get_node_id() );
-        this->detach_from( m_outer->get_node_id() );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

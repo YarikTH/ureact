@@ -32,7 +32,7 @@ public:
 
     ~monitor_node() override
     {
-        this->detach_from( get_internals( m_target ).get_node_id() );
+        this->detach_from_all();
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override

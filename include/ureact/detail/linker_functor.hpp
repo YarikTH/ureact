@@ -27,11 +27,9 @@ class linker_functor_base
 protected:
     explicit linker_functor_base( Node& node )
         : m_node( node )
-        , m_graph( m_node.get_graph() )
     {}
 
     Node& m_node;
-    react_graph& m_graph;
 };
 
 template <typename Node>
@@ -58,7 +56,7 @@ private:
     template <typename T>
     void attach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        this->m_graph.attach_node( this->m_node.get_node_id(), dep_ptr->get_node_id() );
+        this->m_node.attach_to( dep_ptr->get_node_id() );
     }
 };
 
@@ -86,7 +84,7 @@ private:
     template <typename T>
     void detach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        this->m_graph.detach_node( this->m_node.get_node_id(), dep_ptr->get_node_id() );
+        this->m_node.detach_from( dep_ptr->get_node_id() );
     }
 };
 

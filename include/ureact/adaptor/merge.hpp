@@ -18,26 +18,22 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename E>
-using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
-
-template <typename E, typename... Sources>
+template <typename E, typename... Values>
 class event_merge_node final : public event_stream_node<E>
 {
 public:
-    explicit event_merge_node(
-        const context& context, const std::shared_ptr<event_stream_node<Sources>>&... sources )
+    explicit event_merge_node( const context& context, const events<Values>&... sources )
         : event_merge_node::event_stream_node( context )
         , m_sources( sources... )
     {
-        ( this->attach_to( sources->get_node_id() ), ... );
+        ( this->attach_to( get_internals( sources ).get_node_id() ), ... );
     }
 
     ~event_merge_node() override
     {
         std::apply(
-            [this]( const event_stream_node_ptr_t<Sources>&... sources ) {
-                ( this->detach_from( sources->get_node_id() ), ... );
+            [this]( const events<Values>&... sources ) {
+                ( this->detach_from( get_internals( sources ).get_node_id() ), ... );
             },
             m_sources );
     }
@@ -45,9 +41,8 @@ public:
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         std::apply(
-            [this]( const event_stream_node_ptr_t<Sources>&... sources ) {
-                ( this->copy_events_from( *sources ), ... );
-            },
+            [this](
+                const events<Values>&... sources ) { ( this->copy_events_from( sources ), ... ); },
             m_sources );
 
         return !this->events().empty() ? update_result::changed : update_result::unchanged;
@@ -55,12 +50,13 @@ public:
 
 private:
     template <typename V>
-    void copy_events_from( const event_stream_node<V>& src )
+    void copy_events_from( const events<V>& src )
     {
-        this->events().insert( this->events().end(), src.events().begin(), src.events().end() );
+        const auto& src_events = get_internals( src ).events();
+        this->events().insert( this->events().end(), src_events.begin(), src_events.end() );
     }
 
-    std::tuple<event_stream_node_ptr_t<Sources>...> m_sources;
+    std::tuple<events<Values>...> m_sources;
 };
 
 struct MergeAdaptor : Adaptor
@@ -78,9 +74,7 @@ struct MergeAdaptor : Adaptor
 
         const context& context = source1.get_context();
         return detail::create_wrapped_node<events<E>, event_merge_node<E, Source, Sources...>>(
-            context,
-            get_internals( source1 ).get_node_ptr(),
-            get_internals( sources ).get_node_ptr()... );
+            context, source1, sources... );
     }
 };
 

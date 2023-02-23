@@ -19,31 +19,31 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename E>
-class monitor_node final : public event_stream_node<E>
+template <typename S>
+class monitor_node final : public event_stream_node<S>
 {
 public:
-    monitor_node( const context& context, const std::shared_ptr<signal_node<E>>& target )
+    monitor_node( const context& context, const signal<S>& target )
         : monitor_node::event_stream_node( context )
         , m_target( target )
     {
-        this->attach_to( m_target->get_node_id() );
+        this->attach_to( get_internals( m_target ).get_node_id() );
     }
 
     ~monitor_node() override
     {
-        this->detach_from( m_target->get_node_id() );
+        this->detach_from( get_internals( m_target ).get_node_id() );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->events().push_back( m_target->value_ref() );
+        this->events().push_back( get_internals( m_target ).get_value() );
 
         return update_result::changed;
     }
 
 private:
-    const std::shared_ptr<signal_node<E>> m_target;
+    signal<S> m_target;
 };
 
 struct MonitorClosure : AdaptorClosure
@@ -58,8 +58,7 @@ struct MonitorClosure : AdaptorClosure
         -> events<S>
     {
         const context& context = target.get_context();
-        return detail::create_wrapped_node<events<S>, monitor_node<S>>(
-            context, get_internals( target ).get_node_ptr() );
+        return detail::create_wrapped_node<events<S>, monitor_node<S>>( context, target );
     }
 };
 

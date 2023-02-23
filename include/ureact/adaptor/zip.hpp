@@ -24,19 +24,18 @@ template <typename... Values>
 class event_zip_node final : public event_stream_node<std::tuple<Values...>>
 {
 public:
-    explicit event_zip_node(
-        const context& context, const std::shared_ptr<event_stream_node<Values>>&... sources )
+    explicit event_zip_node( const context& context, const events<Values>&... sources )
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
-        ( this->attach_to( sources->get_node_id() ), ... );
+        ( this->attach_to( get_internals( sources ).get_node_id() ), ... );
     }
 
     ~event_zip_node() override
     {
         std::apply(
             [this]( slot<Values>&... slots ) {
-                ( this->detach_from( slots.source->get_node_id() ), ... );
+                ( this->detach_from( get_internals( slots.source ).get_node_id() ), ... );
             },
             m_slots );
     }
@@ -81,19 +80,20 @@ private:
     template <typename T>
     struct slot
     {
-        explicit slot( const std::shared_ptr<event_stream_node<T>>& source )
+        explicit slot( const events<T>& source )
             : source( source )
         {}
 
-        std::shared_ptr<event_stream_node<T>> source;
+        events<T> source;
         std::deque<T> buffer;
     };
 
     template <typename T>
     static void fetch_buffer( slot<T>& slot )
     {
-        slot.buffer.insert(
-            slot.buffer.end(), slot.source->events().begin(), slot.source->events().end() );
+        const auto& src_events = get_internals( slot.source ).events();
+
+        slot.buffer.insert( slot.buffer.end(), src_events.begin(), src_events.end() );
     }
 
     template <typename T>
@@ -124,9 +124,7 @@ struct ZipAdaptor : Adaptor
 
         const context& context = source1.get_context();
         return detail::create_wrapped_node<events<std::tuple<Source, Sources...>>,
-            event_zip_node<Source, Sources...>>( context,
-            get_internals( source1 ).get_node_ptr(),
-            get_internals( sources ).get_node_ptr()... );
+            event_zip_node<Source, Sources...>>( context, source1, sources... );
     }
 };
 

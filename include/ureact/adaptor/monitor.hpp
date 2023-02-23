@@ -37,7 +37,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->events().push_back( get_internals( m_target ).get_value() );
+        this->get_events().push_back( get_internals( m_target ).get_value() );
 
         return update_result::changed;
     }

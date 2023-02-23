@@ -52,20 +52,20 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        if( !m_source->events().empty() )
+        if( !m_source->get_events().empty() )
         {
             std::apply(
                 [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
-                        event_range<InE>( m_source->events() ),
-                        event_emitter( this->events() ),
+                        event_range<InE>( m_source->get_events() ),
+                        event_emitter( this->get_events() ),
                         args->value_ref()... );
                 },
                 m_deps );
         }
 
-        return !this->events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

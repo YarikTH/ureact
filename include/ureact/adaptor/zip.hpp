@@ -62,14 +62,14 @@ public:
                 // Pop values from buffers and emit tuple
                 std::apply(
                     [this]( slot<Values>&... slots ) {
-                        this->events().emplace_back( slots.buffer.front()... );
+                        this->get_events().emplace_back( slots.buffer.front()... );
                         ( slots.buffer.pop_front(), ... );
                     },
                     m_slots );
             }
         }
 
-        return !this->events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
@@ -87,7 +87,7 @@ private:
     template <typename T>
     static void fetch_buffer( slot<T>& slot )
     {
-        const auto& src_events = get_internals( slot.source ).events();
+        const auto& src_events = get_internals( slot.source ).get_events();
 
         slot.buffer.insert( slot.buffer.end(), src_events.begin(), src_events.end() );
     }

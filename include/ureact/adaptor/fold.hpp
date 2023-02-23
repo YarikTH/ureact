@@ -98,7 +98,7 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        if( m_events->events().empty() )
+        if( m_events->get_events().empty() )
             return update_result::unchanged;
 
         if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
@@ -107,7 +107,7 @@ public:
                 [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
-                        event_range<E>( m_events->events() ),
+                        event_range<E>( m_events->get_events() ),
                         this->m_value,
                         args->value_ref()... );
                 },
@@ -119,7 +119,7 @@ public:
                 [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
-                        event_range<E>( m_events->events() ),
+                        event_range<E>( m_events->get_events() ),
                         this->m_value,
                         args->value_ref()... );
                 },

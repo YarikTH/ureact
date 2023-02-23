@@ -41,15 +41,15 @@ public:
                 const events<Values>&... sources ) { ( this->copy_events_from( sources ), ... ); },
             m_sources );
 
-        return !this->events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
     template <typename V>
     void copy_events_from( const events<V>& src )
     {
-        const auto& src_events = get_internals( src ).events();
-        this->events().insert( this->events().end(), src_events.begin(), src_events.end() );
+        const auto& src_events = get_internals( src ).get_events();
+        this->get_events().insert( this->get_events().end(), src_events.begin(), src_events.end() );
     }
 
     std::tuple<events<Values>...> m_sources;

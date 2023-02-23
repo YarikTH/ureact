@@ -168,7 +168,7 @@ public:
                 = std::apply(
                       [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
                           return std::invoke(
-                              m_func, event_range<E>( p->events() ), args->value_ref()... );
+                              m_func, event_range<E>( p->get_events() ), args->value_ref()... );
                       },
                       m_deps )
                == observer_action::stop_and_detach;

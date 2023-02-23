@@ -32,19 +32,19 @@ public:
         : observable_node( context )
     {}
 
-    event_value_list& events()
+    event_value_list& get_events()
     {
         return m_events;
     }
 
-    const event_value_list& events() const
+    const event_value_list& get_events() const
     {
         return m_events;
     }
 
     void finalize() override
     {
-        events().clear();
+        m_events.clear();
     }
 
 private:
@@ -64,12 +64,12 @@ public:
     template <typename V>
     void emit_value( V&& v )
     {
-        this->events().push_back( std::forward<V>( v ) );
+        this->get_events().push_back( std::forward<V>( v ) );
     }
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        return !this->events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 };
 
@@ -99,14 +99,14 @@ public:
         return m_node->get_node_id();
     }
 
-    std::vector<E>& events()
+    std::vector<E>& get_events()
     {
-        return m_node->events();
+        return m_node->get_events();
     }
 
-    const std::vector<E>& events() const
+    const std::vector<E>& get_events() const
     {
-        return m_node->events();
+        return m_node->get_events();
     }
 
 private:

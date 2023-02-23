@@ -111,10 +111,10 @@ public:
             return update_result::shifted;
         }
 
-        this->events().insert(
-            this->events().end(), m_inner->events().begin(), m_inner->events().end() );
+        this->get_events().insert(
+            this->get_events().end(), m_inner->get_events().begin(), m_inner->get_events().end() );
 
-        return !this->events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:

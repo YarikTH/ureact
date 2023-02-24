@@ -55,17 +55,33 @@ private:
     std::tuple<events<Values>...> m_sources;
 };
 
+template <typename EIn = void>
 struct MergeAdaptor : Adaptor
 {
+    /// TODO: rewrite to something more sane. Unfortunately conditional_t doesn't work
+    template <typename... Sources>
+    static auto result_type_detector()
+    {
+        if constexpr( std::is_same_v<EIn, void> )
+        {
+            return std::common_type_t<Sources...>{};
+        }
+        else
+        {
+            return EIn{};
+        }
+    }
+
     /*!
 	 * @brief Emit all events in source1, ... sources
 	 *
 	 *  @warning Not to be confused with std::merge() or ranges::merge()
 	 */
-    template <typename Source, typename... Sources, typename E = Source>
+    template <typename Source, typename... Sources>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<Source>& source1, const events<Sources>&... sources ) const
     {
+        using E = decltype( result_type_detector<Source, Sources...>() );
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
         const context& context = source1.get_context();
@@ -76,7 +92,10 @@ struct MergeAdaptor : Adaptor
 
 } // namespace detail
 
-inline constexpr detail::MergeAdaptor merge;
+inline constexpr detail::MergeAdaptor<> merge;
+
+template <typename EIn>
+inline constexpr detail::MergeAdaptor<EIn> merge_as;
 
 UREACT_END_NAMESPACE
 

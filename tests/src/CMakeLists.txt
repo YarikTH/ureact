@@ -28,6 +28,7 @@ target_sources(
         lift.cpp
         merge.cpp
         monitor.cpp
+        monitor_change.cpp
         observer.cpp
         process.cpp
         propagation.cpp

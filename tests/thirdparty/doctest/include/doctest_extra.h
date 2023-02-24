@@ -8,13 +8,15 @@
 #ifndef UREACT_DOCTEST_EXTRA_H
 #define UREACT_DOCTEST_EXTRA_H
 
-#include <doctest.h>
-#include <tuple>
-#include <sstream>
-#include <vector>
 #include <deque>
 #include <list>
 #include <set>
+#include <sstream>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+#include <doctest.h>
 
 namespace std // NOLINT
 {
@@ -50,6 +52,13 @@ std::ostream& operator<<( std::ostream& os, const std::pair<T, Y>& pair )
     os << ", ";
     os << pair.second;
     return os << "]";
+}
+
+template <typename ...T>
+std::ostream& operator<<( std::ostream& os, const std::variant<T...>& variant )
+{
+    std::visit( [&os]( auto&& arg ) { os << arg; }, variant );
+    return os;
 }
 
 template <class T>

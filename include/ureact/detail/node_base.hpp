@@ -59,7 +59,7 @@ public:
         return m_context;
     }
 
-    // TODO protected:
+protected:
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
         return get_internals( m_context ).get_graph();
@@ -70,7 +70,6 @@ public:
         return get_internals( m_context ).get_graph();
     }
 
-protected:
     void attach_to( node_id parentId )
     {
         m_parents.add( parentId );

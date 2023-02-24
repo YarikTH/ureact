@@ -112,16 +112,23 @@ public:
 private:
     UREACT_WARN_UNUSED_RESULT auto get_event_source_node() const -> event_source_node<E>*
     {
-        return static_cast<event_source_node<E>*>( this->m_node.get() );
+        return dynamic_cast<event_source_node<E>*>( this->m_node.get() );
     }
 
 protected:
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return get_internals( m_node->get_context() ).get_graph();
+    }
+
     template <typename T>
     void emit_event( T&& e ) const
     {
-        auto node_ptr = get_event_source_node();
-        auto& graph_ref = node_ptr->get_graph();
+        react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't emit event from callback" );
+
+        event_source_node<E>* node_ptr = get_event_source_node();
         node_ptr->emit_value( std::forward<T>( e ) );
         graph_ref.push_input( node_ptr->get_node_id() );
     }

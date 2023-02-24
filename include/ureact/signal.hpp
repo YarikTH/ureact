@@ -145,22 +145,31 @@ public:
 
     UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
     {
+        assert( m_node != nullptr && "Should be attached to a node" );
         return m_node->get_node_id();
     }
 
     UREACT_WARN_UNUSED_RESULT const S& get_value() const
     {
-        assert( !this->m_node->get_graph().is_locked() && "Can't read signal value from callback" );
+        assert( !get_graph().is_locked() && "Can't read signal value from callback" );
+        assert( m_node != nullptr && "Should be attached to a node" );
         return this->m_node->value_ref();
     }
 
 protected:
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return get_internals( m_node->get_context() ).get_graph();
+    }
+
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        auto node_ptr = get_var_node();
-        auto& graph_ref = node_ptr->get_graph();
+        react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't set signal value from callback" );
+
+        var_node<S>* node_ptr = get_var_node();
         node_ptr->set_value( std::forward<T>( new_value ) );
         graph_ref.push_input( node_ptr->get_node_id() );
     }
@@ -168,9 +177,10 @@ protected:
     template <typename F>
     void modify_value( const F& func ) const
     {
-        auto node_ptr = get_var_node();
-        auto& graph_ref = node_ptr->get_graph();
+        react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't modify signal value from callback" );
+
+        var_node<S>* node_ptr = get_var_node();
         node_ptr->modify_value( func );
         graph_ref.push_input( node_ptr->get_node_id() );
     }
@@ -178,7 +188,8 @@ protected:
 private:
     UREACT_WARN_UNUSED_RESULT auto get_var_node() const
     {
-        return static_cast<var_node<S>*>( this->m_node.get() );
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return dynamic_cast<var_node<S>*>( this->m_node.get() );
     }
 
     std::shared_ptr<signal_node<S>> m_node;

@@ -14,6 +14,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/adaptor.hpp>
+#include <ureact/detail/node_base.hpp>
 #include <ureact/has_changed.hpp>
 #include <ureact/type_traits.hpp>
 
@@ -27,9 +28,6 @@ class signal_node;
 
 template <typename E>
 class event_stream_node;
-
-template <typename Ret, typename Node, typename... Args>
-Ret create_wrapped_node( Args&&... args );
 
 template <typename OuterS, typename InnerS>
 class signal_flatten_node final : public signal_node<InnerS>

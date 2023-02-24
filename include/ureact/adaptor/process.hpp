@@ -24,25 +24,28 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename S>
-class signal_node;
-
 template <typename InE, typename OutE, typename Func, typename... Deps>
 class event_processing_node final : public event_stream_node<OutE>
 {
 public:
     template <typename F>
     event_processing_node( const context& context,
-        const std::shared_ptr<event_stream_node<InE>>& source,
+        const events<InE>& source,
         F&& func,
-        const std::shared_ptr<signal_node<Deps>>&... deps )
+        const signal_pack<Deps...>& deps )
         : event_processing_node::event_stream_node( context )
         , m_source( source )
         , m_func( std::forward<F>( func ) )
-        , m_deps( deps... )
+        , m_deps( deps )
     {
-        this->attach_to( source->get_node_id() );
-        ( this->attach_to( deps->get_node_id() ), ... );
+        this->attach_to( get_internals( source ).get_node_id() );
+
+        std::apply(
+            [this]( const signal<Deps>&... deps ) {
+                std::ignore = this; // suppress lambda capture 'this' is not used
+                ( this->attach_to( get_internals( deps ).get_node_id() ), ... );
+            },
+            deps.data );
     }
 
     ~event_processing_node() override
@@ -52,29 +55,27 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        if( !m_source->get_events().empty() )
+        const auto& src_events = get_internals( m_source ).get_events();
+        if( !src_events.empty() )
         {
             std::apply(
-                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                [this, &src_events]( const signal<Deps>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
-                        event_range<InE>( m_source->get_events() ),
+                        event_range<InE>( src_events ),
                         event_emitter( this->get_events() ),
-                        args->value_ref()... );
+                        get_internals( args ).value_ref()... );
                 },
-                m_deps );
+                m_deps.data );
         }
 
         return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
-
-    std::shared_ptr<event_stream_node<InE>> m_source;
-
+    events<InE> m_source;
     Func m_func;
-    dep_holder_t m_deps;
+    signal_pack<Deps...> m_deps;
 };
 
 template <typename OutE>
@@ -101,15 +102,9 @@ struct ProcessAdaptor : Adaptor
 
         const context& context = source.get_context();
 
-        auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
-            return detail::create_wrapped_node<events<OutE>,
-                event_processing_node<InE, OutE, F, Deps...>>( context,
-                get_internals( source ).get_node_ptr(),
-                std::forward<Op>( op ),
-                get_internals( deps ).get_node_ptr()... );
-        };
-
-        return std::apply( node_builder, dep_pack.data );
+        return detail::create_wrapped_node<events<OutE>,
+            event_processing_node<InE, OutE, F, Deps...>>(
+            context, source, std::forward<Op>( op ), dep_pack );
     }
 
     /*!

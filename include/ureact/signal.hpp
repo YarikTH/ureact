@@ -156,6 +156,12 @@ public:
         return this->m_node->value_ref();
     }
 
+    UREACT_WARN_UNUSED_RESULT const S& value_ref() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return this->m_node->value_ref();
+    }
+
 protected:
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
     {

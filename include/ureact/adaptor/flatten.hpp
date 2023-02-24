@@ -53,19 +53,17 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
+        const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
+        if( !equal_to( new_inner, m_inner ) )
         {
-            const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
-            if( !equal_to( new_inner, m_inner ) )
-            {
-                // Topology has been changed
-                auto old_inner = m_inner;
-                m_inner = new_inner;
+            // Topology has been changed
+            auto old_inner = m_inner;
+            m_inner = new_inner;
 
-                this->detach_from( old_inner->get_node_id() );
-                this->attach_to( new_inner->get_node_id() );
+            this->detach_from( old_inner->get_node_id() );
+            this->attach_to( new_inner->get_node_id() );
 
-                return update_result::shifted;
-            }
+            return update_result::shifted;
         }
 
         return this->try_change_value( m_inner->value_ref() );

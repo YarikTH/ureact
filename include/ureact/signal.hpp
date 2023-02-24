@@ -103,19 +103,16 @@ public:
         {
             m_is_input_added = false;
 
-            if( !equal_to( this->m_value, m_new_value ) )
-            {
-                this->m_value = std::move( m_new_value );
-                return update_result::changed;
-            }
-            return update_result::unchanged;
+            return this->try_change_value( std::move( m_new_value ) );
         }
+
         if( m_is_input_modified )
         {
             m_is_input_modified = false;
 
             return update_result::changed;
         }
+
         return update_result::unchanged;
     }
 

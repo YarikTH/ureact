@@ -22,9 +22,6 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename E>
-class event_stream_node;
-
 template <typename E, typename S, typename F, typename... Args>
 class add_fold_range_wrapper
 {
@@ -79,16 +76,22 @@ public:
     template <typename InS, typename InF>
     fold_node( const context& context,
         InS&& init,
-        const std::shared_ptr<event_stream_node<E>>& events,
+        const events<E>& source,
         InF&& func,
-        const std::shared_ptr<signal_node<Deps>>&... deps )
+        const signal_pack<Deps...>& deps )
         : fold_node::signal_node( context, std::forward<InS>( init ) )
-        , m_events( events )
+        , m_source( source )
         , m_func( std::forward<InF>( func ) )
-        , m_deps( deps... )
+        , m_deps( deps )
     {
-        this->attach_to( events->get_node_id() );
-        ( this->attach_to( deps->get_node_id() ), ... );
+        this->attach_to( get_internals( source ).get_node_id() );
+
+        std::apply(
+            [this]( const signal<Deps>&... deps ) {
+                std::ignore = this; // suppress lambda capture 'this' is not used
+                ( this->attach_to( get_internals( deps ).get_node_id() ), ... );
+            },
+            deps.data );
     }
 
     ~fold_node() override
@@ -98,32 +101,34 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        if( m_events->get_events().empty() )
+        const auto& src_events = get_internals( m_source ).get_events();
+
+        if( src_events.empty() )
             return update_result::unchanged;
 
         if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
         {
             return this->try_change_value( std::apply(
-                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                [this, &src_events]( const signal<Deps>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
-                        event_range<E>( m_events->get_events() ),
+                        event_range<E>( src_events ),
                         this->m_value,
-                        args->value_ref()... );
+                        get_internals( args ).value_ref()... );
                 },
-                m_deps ) );
+                m_deps.data ) );
         }
         else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, Deps...> )
         {
             std::apply(
-                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                [this, &src_events]( const signal<Deps>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
-                        event_range<E>( m_events->get_events() ),
+                        event_range<E>( src_events ),
                         this->m_value,
-                        args->value_ref()... );
+                        get_internals( args ).value_ref()... );
                 },
-                m_deps );
+                m_deps.data );
 
             // Always assume change
             return update_result::changed;
@@ -135,12 +140,9 @@ public:
     }
 
 private:
-    using DepHolder = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
-
-    std::shared_ptr<event_stream_node<E>> m_events;
-
+    events<E> m_source;
     F m_func;
-    DepHolder m_deps;
+    signal_pack<Deps...> m_deps;
 };
 
 struct FoldAdaptor : Adaptor
@@ -203,15 +205,8 @@ struct FoldAdaptor : Adaptor
 
         const context& context = events.get_context();
 
-        auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
-            return detail::create_wrapped_node<signal<S>, Node>( context,
-                std::forward<V>( init ),
-                get_internals( events ).get_node_ptr(),
-                std::forward<InF>( func ),
-                get_internals( deps ).get_node_ptr()... );
-        };
-
-        return std::apply( node_builder, dep_pack.data );
+        return detail::create_wrapped_node<signal<S>, Node>(
+            context, std::forward<V>( init ), events, std::forward<InF>( func ), dep_pack );
     }
 
     /*!

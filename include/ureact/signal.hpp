@@ -12,7 +12,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/observable_node.hpp>
-#include <ureact/equal_to.hpp>
+#include <ureact/has_changed.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -43,7 +43,7 @@ public:
     template <class T>
     UREACT_WARN_UNUSED_RESULT update_result try_change_value( T&& new_value )
     {
-        if( !equal_to( this->m_value, new_value ) )
+        if( has_changed( this->m_value, new_value ) )
         {
             this->m_value = std::forward<T>( new_value );
             return update_result::changed;

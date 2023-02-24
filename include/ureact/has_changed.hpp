@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_EQUAL_TO_HPP
-#define UREACT_EQUAL_TO_HPP
+#ifndef UREACT_HAS_CHANGED_HPP
+#define UREACT_HAS_CHANGED_HPP
 
 #include <functional>
 #include <type_traits>
@@ -49,45 +49,45 @@ inline constexpr bool equality_comparable_v = equality_comparable<T>::value;
 #endif
 
 /*!
- * @brief std::equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
+ * @brief std::not_equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
  *
  *  Additionally:
  *  * it equally compares signal<S> and events<E> even if their operator== is overloaded
  *  * it equally compares reference wrappers because they can be used as S for signal<S> and their operator== does unexpected compare
- *  * it returns false if types are not equally comparable otherwise
+ *  * it returns true if types are not equally comparable otherwise
  */
 template <typename T>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const T& lhs, const T& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const T& lhs, const T& rhs )
 {
     if constexpr( detail::equality_comparable_v<T> )
     {
-        return lhs == rhs;
+        return !( lhs == rhs );
     }
     else
     {
-        return false;
+        return true;
     }
 }
 
 // TODO: check if lhs.equal_to( rhs ) can be called instead of checking for specific types
 template <typename S>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const signal<S>& lhs, const signal<S>& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const signal<S>& lhs, const signal<S>& rhs )
 {
-    return lhs.equal_to( rhs );
+    return !lhs.equal_to( rhs );
 }
 
 template <typename E>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const events<E>& lhs, const events<E>& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const events<E>& lhs, const events<E>& rhs )
 {
-    return lhs.equal_to( rhs );
+    return !lhs.equal_to( rhs );
 }
 
 template <typename T>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( //
-    const std::reference_wrapper<T>& lhs,          //
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( //
+    const std::reference_wrapper<T>& lhs,             //
     const std::reference_wrapper<T>& rhs )
 {
-    return equal_to( lhs.get(), rhs.get() );
+    return has_changed( lhs.get(), rhs.get() );
 }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
@@ -96,4 +96,4 @@ UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( //
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_EQUAL_TO_HPP
+#endif //UREACT_HAS_CHANGED_HPP

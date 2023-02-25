@@ -36,6 +36,7 @@ target_sources(
         scoped_observer.cpp
         signal.cpp
         snapshot.cpp
+        stride.cpp
         take_drop.cpp
         take_drop_while.cpp
         tap.cpp

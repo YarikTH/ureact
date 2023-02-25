@@ -71,6 +71,7 @@ struct TakeDropAdaptorBase : Adaptor
     template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const
     {
+        assert( count >= 0 );
         return make_partial<Derived>( count );
     }
 };

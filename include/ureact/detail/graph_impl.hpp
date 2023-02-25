@@ -142,8 +142,6 @@ private:
 
     void propagate()
     {
-        std::vector<reactive_node_interface*> changed_nodes;
-
         // Fill update queue with successors of changed inputs
         for( node_id nodeId : m_changed_inputs )
         {
@@ -154,7 +152,7 @@ private:
 
             if( result == update_result::changed )
             {
-                changed_nodes.push_back( nodePtr );
+                m_changed_nodes.push_back( nodePtr );
                 schedule_successors( node );
             }
         }
@@ -192,7 +190,7 @@ private:
 
                 if( result == update_result::changed )
                 {
-                    changed_nodes.push_back( nodePtr );
+                    m_changed_nodes.push_back( nodePtr );
                     schedule_successors( node );
                 }
 
@@ -201,9 +199,9 @@ private:
         }
 
         // Cleanup buffers in changed nodes etc
-        for( reactive_node_interface* nodePtr : changed_nodes )
+        for( reactive_node_interface* nodePtr : m_changed_nodes )
             nodePtr->finalize();
-        changed_nodes.clear();
+        m_changed_nodes.clear();
 
         detach_queued_observers();
     }
@@ -263,6 +261,9 @@ private:
     int m_transaction_level = 0;
 
     node_id_vector m_changed_inputs;
+
+    // local to propagate. Moved here to not reallocate
+    std::vector<reactive_node_interface*> m_changed_nodes;
 };
 
 inline node_id react_graph::register_node( reactive_node_interface* nodePtr )

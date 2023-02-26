@@ -89,3 +89,16 @@ TEST_CASE( "ComplexTransaction" )
     CHECK( result.is_valid() );
     CHECK( result.get() == 5 );
 }
+
+TEST_CASE( "ContextDeathInsideTransaction" )
+{
+    auto contextPtr = std::make_unique<ureact::context>();
+
+    {
+        ureact::transaction _( *contextPtr );
+
+        contextPtr.reset();
+    }
+
+    CHECK( true ); // test should not fail under asan
+}

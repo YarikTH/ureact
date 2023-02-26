@@ -27,18 +27,19 @@ class UREACT_WARN_UNUSED_RESULT transaction
 {
 public:
     explicit transaction( context& ctx )
-        : self( get_internals( ctx ).get_graph() )
+        : m_context( ctx )
+        , m_self( get_internals( ctx ).get_graph() )
     {
-        ++self.m_transaction_level;
+        ++m_self.m_transaction_level;
     }
 
     ~transaction()
     {
-        --self.m_transaction_level;
+        --m_self.m_transaction_level;
 
-        if( self.m_transaction_level == 0 )
+        if( m_self.m_transaction_level == 0 )
         {
-            self.propagate();
+            m_self.propagate();
         }
     }
 
@@ -46,7 +47,8 @@ private:
     UREACT_MAKE_NONCOPYABLE( transaction );
     UREACT_MAKE_NONMOVABLE( transaction );
 
-    detail::react_graph& self;
+    context m_context;
+    detail::react_graph& m_self;
 };
 
 /*!

@@ -116,7 +116,7 @@ struct dont_move
 template <typename L, typename R>
 using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
-// TODO: make macro to eliminate duplication hereA
+// TODO: make macro to eliminate duplication here
 #if defined( __cpp_lib_remove_cvref ) && __cpp_lib_remove_cvref >= 201711L
 
 template <class T>
@@ -139,6 +139,38 @@ template <class T>
 using remove_cvref_t = typename remove_cvref<T>::type;
 
 #endif
+
+// TODO: make macro to eliminate duplication here
+#if defined( __cpp_lib_type_identity ) && __cpp_lib_type_identity >= 201806L
+
+template <class T>
+using type_identity = std::type_identity<T>;
+
+template <class T>
+using type_identity_t = std::type_identity_t<T>;
+
+#else
+
+// Based on Possible implementation from
+// https://en.cppreference.com/w/cpp/types/type_identity
+template <class T>
+struct type_identity
+{
+    using type = T;
+};
+
+template <class T>
+using type_identity_t = typename type_identity<T>::type;
+
+#endif
+
+/*!
+ * @brief Helper to disable type deduction
+ * 
+ * See https://artificial-mind.net/blog/2020/09/26/dont-deduce
+ */
+template <typename T>
+using dont_deduce = detail::type_identity_t<T>;
 
 } // namespace detail
 

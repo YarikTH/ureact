@@ -38,35 +38,33 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
+        // Move events into buffers
+        // TODO: move to method
+        std::apply(
+            []( slot<Values>&... slots ) {
+                ( fetch_buffer( slots ), ... ); //
+            },
+            m_slots );
+
+        // TODO: move to method
+        const auto is_ready = [this]() {
+            return std::apply(
+                []( const slot<Values>&... slots ) {
+                    return ( !slots.buffer.empty() && ... ); //
+                },
+                m_slots );
+        };
+
+        while( is_ready() )
         {
-            // Move events into buffers
-            std::apply( []( slot<Values>&... slots ) { ( fetch_buffer( slots ), ... ); }, m_slots );
-
-            while( true )
-            {
-                bool is_ready = true;
-
-                // All slots ready?
-                std::apply(
-                    [&is_ready]( slot<Values>&... slots ) {
-                        // Todo: combine return values instead
-                        ( check_slot( slots, is_ready ), ... );
-                    },
-                    m_slots );
-
-                if( !is_ready )
-                {
-                    break;
-                }
-
-                // Pop values from buffers and emit tuple
-                std::apply(
-                    [this]( slot<Values>&... slots ) {
-                        this->get_events().emplace_back( slots.buffer.front()... );
-                        ( slots.buffer.pop_front(), ... );
-                    },
-                    m_slots );
-            }
+            // Pop values from buffers and emit tuple
+            // TODO: move to method
+            std::apply(
+                [this]( slot<Values>&... slots ) {
+                    this->get_events().emplace_back( slots.buffer.front()... );
+                    ( slots.buffer.pop_front(), ... );
+                },
+                m_slots );
         }
 
         return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
@@ -90,13 +88,6 @@ private:
         const auto& src_events = get_internals( slot.source ).get_events();
 
         slot.buffer.insert( slot.buffer.end(), src_events.begin(), src_events.end() );
-    }
-
-    template <typename T>
-    static void check_slot( slot<T>& slot, bool& is_ready )
-    {
-        auto t = is_ready && !slot.buffer.empty();
-        is_ready = t;
     }
 
     std::tuple<slot<Values>...> m_slots;

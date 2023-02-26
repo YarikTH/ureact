@@ -91,6 +91,22 @@ protected:
         m_parents.clear();
     }
 
+    template <class... Deps>
+    void attach_to( const Deps&... deps )
+    {
+        ( attach_to( get_internals( deps ).get_node_id() ), ... );
+    }
+
+    template <class... Deps>
+    void attach_to( const std::tuple<Deps...>& tp )
+    {
+        std::apply(
+            [this]( const auto&... deps ) { //
+                this->attach_to( deps... );
+            },
+            tp );
+    }
+
     template <typename Node>
     friend class attach_functor;
 

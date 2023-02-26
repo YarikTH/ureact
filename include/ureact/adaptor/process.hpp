@@ -38,14 +38,8 @@ public:
         , m_func( std::forward<F>( func ) )
         , m_deps( deps )
     {
-        this->attach_to( get_internals( source ).get_node_id() );
-
-        std::apply(
-            [this]( const signal<Deps>&... deps ) {
-                std::ignore = this; // suppress lambda capture 'this' is not used
-                ( this->attach_to( get_internals( deps ).get_node_id() ), ... );
-            },
-            deps.data );
+        this->attach_to( source );
+        this->attach_to( deps.data );
     }
 
     ~event_processing_node() override

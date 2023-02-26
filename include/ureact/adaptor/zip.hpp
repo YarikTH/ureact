@@ -28,7 +28,7 @@ public:
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
-        ( this->attach_to( get_internals( sources ).get_node_id() ), ... );
+        this->attach_to( sources... );
     }
 
     ~event_zip_node() override

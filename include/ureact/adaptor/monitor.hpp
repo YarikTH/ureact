@@ -27,7 +27,7 @@ public:
         : monitor_node::event_stream_node( context )
         , m_target( target )
     {
-        this->attach_to( get_internals( m_target ).get_node_id() );
+        this->attach_to( m_target );
     }
 
     ~monitor_node() override

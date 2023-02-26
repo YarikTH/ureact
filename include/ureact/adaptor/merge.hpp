@@ -26,7 +26,7 @@ public:
         : event_merge_node::event_stream_node( context )
         , m_sources( sources... )
     {
-        ( this->attach_to( get_internals( sources ).get_node_id() ), ... );
+        this->attach_to( sources... );
     }
 
     ~event_merge_node() override

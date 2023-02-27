@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.10.0](https://github.com/YarikTH/ureact/releases/tag/0.10.0) (2023-02-27)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.9.0...0.10.0)
+
+Adapting `context` ownership scheme from master branch of cpp.react
+
+- BREAKING! `context` is no longer a thing that user should guarantee to die last
+  after each ureact nodes using this `context` are destroyed.
+  Instead, now it has shared pointer semantic and each ureact node has a copy of it.
+  So `context` dies only after all its owners diy.
+- BREAKING! `count_` and `lift_` are renamed to `count_as` and `lift_as` respectively.
+- BREAKING! `merge` adaptor is no longer selecting result type based on the type of
+  the first source event stream, but tries to determine result type using `std::common_type`.
+  Additionally `merge_as` version is added to manually select the result type.
+- BREAKING! `equal_to` is replaced with the opposite `has_changed`.
+  All user overloads of `equal_to` are impacted.
+- New adaptor `monitor_change` is added. It emits (old value, new value) pairs on
+  monitored signal changes.
+- New adaptor `elements` and its specializations `keys` and `values` are added.
+  They do exactly the same that analogs from `std::ranges` do.
+  https://en.cppreference.com/w/cpp/ranges/elements_view
+- New adaptor `stride` is added.
+  It does exactly the same that analog from `std::ranges` does.
+  https://en.cppreference.com/w/cpp/ranges/stride_view
+- New adaptor `slice` is added.
+  `ureact::slice(M, N)` is equivalent to `ureact::drop(M) | ureact::take(N - M)`.
+
 ## [0.9.0](https://github.com/YarikTH/ureact/releases/tag/0.9.0) (2023-02-12)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.8.1...0.9.0)

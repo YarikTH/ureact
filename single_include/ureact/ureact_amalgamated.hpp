@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.9.0
-// Generated: 2023-02-12 20:13:30.109790
+// Ureact v0.10.0
+// Generated: 2023-02-27 06:13:05.493693
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -32,9 +32,9 @@
 #define UREACT_VERSION_HPP
 
 #define UREACT_VERSION_MAJOR 0
-#define UREACT_VERSION_MINOR 9
+#define UREACT_VERSION_MINOR 10
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.9.0"
+#define UREACT_VERSION_STR "0.10.0"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
@@ -299,7 +299,7 @@ struct dont_move
 template <typename L, typename R>
 using disable_if_same_t = std::enable_if_t<!std::is_same_v<std::decay_t<L>, std::decay_t<R>>>;
 
-// TODO: make macro to eliminate duplication hereA
+// TODO: make macro to eliminate duplication here
 #if defined( __cpp_lib_remove_cvref ) && __cpp_lib_remove_cvref >= 201711L
 
 template <class T>
@@ -322,6 +322,38 @@ template <class T>
 using remove_cvref_t = typename remove_cvref<T>::type;
 
 #endif
+
+// TODO: make macro to eliminate duplication here
+#if defined( __cpp_lib_type_identity ) && __cpp_lib_type_identity >= 201806L
+
+template <class T>
+using type_identity = std::type_identity<T>;
+
+template <class T>
+using type_identity_t = std::type_identity_t<T>;
+
+#else
+
+// Based on Possible implementation from
+// https://en.cppreference.com/w/cpp/types/type_identity
+template <class T>
+struct type_identity
+{
+    using type = T;
+};
+
+template <class T>
+using type_identity_t = typename type_identity<T>::type;
+
+#endif
+
+/*!
+ * @brief Helper to disable type deduction
+ * 
+ * See https://artificial-mind.net/blog/2020/09/26/dont-deduce
+ */
+template <typename T>
+using dont_deduce = detail::type_identity_t<T>;
 
 } // namespace detail
 
@@ -660,11 +692,9 @@ class linker_functor_base
 protected:
     explicit linker_functor_base( Node& node )
         : m_node( node )
-        , m_graph( m_node.get_graph() )
     {}
 
     Node& m_node;
-    react_graph& m_graph;
 };
 
 template <typename Node>
@@ -691,7 +721,7 @@ private:
     template <typename T>
     void attach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        this->m_graph.on_node_attach( this->m_node, *dep_ptr );
+        this->m_node.attach_to( dep_ptr->get_node_id() );
     }
 };
 
@@ -719,7 +749,7 @@ private:
     template <typename T>
     void detach( const std::shared_ptr<T>& dep_ptr ) const
     {
-        this->m_graph.on_node_detach( this->m_node, *dep_ptr );
+        this->m_node.detach_from( dep_ptr->get_node_id() );
     }
 };
 
@@ -950,8 +980,8 @@ UREACT_END_NAMESPACE
 #define UREACT_CONTEXT_HPP
 
 
-#ifndef UREACT_DETAIL_BASE_HPP
-#define UREACT_DETAIL_BASE_HPP
+#ifndef UREACT_DETAIL_GRAPH_IMPL_HPP
+#define UREACT_DETAIL_GRAPH_IMPL_HPP
 
 #include <cassert>
 #include <cstddef>
@@ -964,24 +994,20 @@ UREACT_END_NAMESPACE
 #include <vector>
 
 
+#ifndef UREACT_DETAIL_ALGORITHM_HPP
+#define UREACT_DETAIL_ALGORITHM_HPP
+
+#include <iterator>
+
+
 #ifdef UREACT_USE_STD_ALGORITHM
 #    include <algorithm>
 #endif
 
 UREACT_BEGIN_NAMESPACE
 
-class context;
-
-class transaction;
-
-namespace detail
-{
-class context_internals;
-}
-
-/// TODO: looks ugly. Replace context_internals with more proper feature
-UREACT_WARN_UNUSED_RESULT detail::context_internals& _get_internals( context& ctx );
-
+// Partial alternative to <algorithm> is provided and used by default because library requires
+// only a few algorithms while standard <algorithm> is quite bloated
 namespace detail
 {
 
@@ -989,16 +1015,14 @@ namespace detail
 
 using std::find;
 using std::partition;
+using std::sort;
 
 #else
-
-// Partial alternative to <algorithm> is provided and used by default because library requires
-// only a few algorithms while standard <algorithm> is quite bloated
 
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/find
 template <typename ForwardIt, typename Value>
-inline ForwardIt find( ForwardIt first, ForwardIt last, const Value& val )
+ForwardIt find( ForwardIt first, ForwardIt last, const Value& val )
 {
     for( auto it = first, ite = last; it != ite; ++it )
     {
@@ -1056,58 +1080,137 @@ ForwardIt partition( ForwardIt first, ForwardIt last, Pred pred )
     return first;
 }
 
+// Code based on quicksort example from
+// https://en.cppreference.com/w/cpp/algorithm/partition
+template <class ForwardIt>
+void sort( ForwardIt first, ForwardIt last )
+{
+    if( first == last )
+        return;
+    const auto pivot = *std::next( first, std::distance( first, last ) / 2 );
+    const auto middle1
+        = detail::partition( first, last, [pivot]( const auto& em ) { return em < pivot; } );
+    const auto middle2
+        = detail::partition( middle1, last, [pivot]( const auto& em ) { return !( pivot < em ); } );
+    detail::sort( first, middle1 );
+    detail::sort( middle2, last );
+}
+
 #endif
 
-template <typename Node>
-class node_vector
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_ALGORITHM_HPP
+
+#ifndef UREACT_DETAIL_GRAPH_INTERFACE_HPP
+#define UREACT_DETAIL_GRAPH_INTERFACE_HPP
+
+#include <cassert>
+#include <cstddef>
+#include <vector>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+class node_id
 {
 public:
-    void add( Node& node )
+    using value_type = size_t;
+
+    node_id() = default;
+
+    explicit node_id( value_type id )
+        : m_id( id )
+    {}
+
+    operator value_type() // NOLINT
     {
-        m_data.push_back( &node );
+        return m_id;
     }
 
-    void remove( const Node& node )
+    bool operator==( node_id other ) const noexcept
     {
-        const auto it = detail::find( m_data.begin(), m_data.end(), &node );
-        m_data.erase( it );
+        return m_id == other.m_id;
     }
 
-    auto begin()
+    bool operator!=( node_id other ) const noexcept
+    {
+        return m_id != other.m_id;
+    }
+
+private:
+    value_type m_id = -1;
+};
+
+class node_id_vector
+{
+public:
+    void add( node_id id )
+    {
+        m_data.push_back( id );
+    }
+
+    void remove( node_id id )
+    {
+        const auto it = detail::find( m_data.begin(), m_data.end(), id );
+        assert( it != m_data.end() );
+
+        // Unstable erase algorithm
+        // If we remove not the last element, then copy last element on erased position and remove last element
+        const auto last_it = m_data.begin() + m_data.size() - 1;
+        if( it != last_it )
+        {
+            *it = *last_it;
+        }
+
+        m_data.resize( m_data.size() - 1 );
+    }
+
+    UREACT_WARN_UNUSED_RESULT auto begin()
     {
         return m_data.begin();
     }
 
-    auto end()
+    UREACT_WARN_UNUSED_RESULT auto end()
     {
         return m_data.end();
     }
 
+    void clear()
+    {
+        m_data.clear();
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool empty() const
+    {
+        return m_data.empty();
+    }
+
 private:
-    std::vector<Node*> m_data;
+    std::vector<node_id> m_data;
 };
 
-using turn_type = unsigned;
-
-class reactive_node
+enum class update_result
 {
-public:
-    int level{ 0 };
-    int new_level{ 0 };
-    bool queued{ false };
-
-    node_vector<reactive_node> successors;
-
-    virtual ~reactive_node() = default;
-
-    virtual void tick( turn_type& turn ) = 0;
+    unchanged,
+    changed,
+    shifted
 };
 
-struct input_node_interface
+struct reactive_node_interface
 {
-    virtual ~input_node_interface() = default;
+    virtual ~reactive_node_interface() = default;
 
-    virtual bool apply_input( turn_type& turn ) = 0;
+    UREACT_WARN_UNUSED_RESULT virtual update_result update() = 0;
+
+    /// Called after change propagation on changed nodes
+    virtual void finalize()
+    {}
 };
 
 class observer_interface
@@ -1123,42 +1226,262 @@ private:
     friend class observable;
 };
 
-class observable
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_DETAIL_GRAPH_INTERFACE_HPP
+
+#ifndef UREACT_DETAIL_SLOT_MAP_HPP
+#define UREACT_DETAIL_SLOT_MAP_HPP
+
+#include <cstddef>
+#include <memory>
+#include <type_traits>
+#include <utility>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+/// A simple slot map
+/// insert returns the slot index, which stays valid until the element is erased
+/// TODO: test it thoroughly
+/// TODO: there is a lot of places where placement new and placement delete are performed
+///       need to use std::construct_at and std::destroy_at or their backports instead
+/// TODO: maybe std::launder should be used instead of just reinterpret_cast
+template <typename T>
+class slot_map
 {
 public:
-    observable() = default;
+    using value_type = T;
+    using size_type = size_t;
+    using reference = value_type&;
+    using const_reference = const value_type&;
 
-    UREACT_MAKE_NONCOPYABLE( observable );
-    UREACT_MAKE_NONMOVABLE( observable );
+    /// Constructs the slot_map
+    slot_map() = default;
 
-    ~observable()
+    /// Destructs the slot_map
+    ~slot_map()
     {
-        for( const auto& p : m_observers )
-            if( p != nullptr )
-                p->detach_observer();
+        reset();
     }
 
-    void register_observer( std::unique_ptr<observer_interface>&& obs_ptr )
+    UREACT_MAKE_NONCOPYABLE( slot_map );
+    UREACT_MAKE_MOVABLE( slot_map );
+
+    /// Returns a reference to the element at specified slot index. No bounds checking is performed.
+    reference operator[]( size_type index )
     {
-        m_observers.push_back( std::move( obs_ptr ) );
+        assert( has_index( index ) );
+        return reinterpret_cast<reference>( m_data[index] );
     }
 
-    void unregister_observer( observer_interface* raw_obs_ptr )
+    /// Returns a reference to the element at specified slot index. No bounds checking is performed.
+    const_reference operator[]( size_type index ) const
     {
-        for( auto it = m_observers.begin(); it != m_observers.end(); ++it )
+        assert( has_index( index ) );
+        return reinterpret_cast<const_reference>( m_data[index] );
+    }
+
+    /// Insert new object, return its index
+    UREACT_WARN_UNUSED_RESULT size_type insert( value_type value )
+    {
+        if( is_at_full_capacity() )
         {
-            if( it->get() == raw_obs_ptr )
-            {
-                it->get()->detach_observer();
-                m_observers.erase( it );
-                break;
-            }
+            grow();
+            return insert_at_back( std::move( value ) );
+        }
+        else if( has_free_indices() )
+        {
+            return insert_at_freed_slot( std::move( value ) );
+        }
+        else
+        {
+            return insert_at_back( std::move( value ) );
         }
     }
 
+    /// Destroy object by given index
+    void erase( const size_type index )
+    {
+        assert( has_index( index ) );
+
+        // If we erased something other than the last element, save in free index list.
+        if( index != ( total_size() - 1 ) )
+        {
+            m_free_indices[m_free_size++] = index;
+        }
+
+        reinterpret_cast<reference>( m_data[index] ).~value_type();
+        --m_size;
+
+        // If free indices appeared at the end of allocated range, remove them from list
+        shake_free_indices();
+    }
+
+    /// Clear the data, leave capacity intact
+    void clear()
+    {
+        const size_type size = total_size();
+        size_type index = 0;
+
+        // Skip over free indices.
+        for( size_type j = 0; j < m_free_size; ++j )
+        {
+            size_type free_index = m_free_indices[j];
+
+            for( ; index < size; ++index )
+            {
+                if( index == free_index )
+                {
+                    ++index;
+                    break;
+                }
+                else
+                {
+                    reinterpret_cast<reference>( m_data[index] ).~value_type();
+                }
+            }
+        }
+
+        // Rest
+        for( ; index < size; ++index )
+            reinterpret_cast<reference>( m_data[index] ).~value_type();
+
+        m_size = 0;
+        m_free_size = 0;
+    }
+
+    /// Clear the data and return container to its initial state with 0 capacity
+    void reset()
+    {
+        clear();
+
+        m_data.reset();
+        m_free_indices.reset();
+
+        m_capacity = 0;
+    }
+
 private:
-    std::vector<std::unique_ptr<observer_interface>> m_observers;
+    static inline constexpr size_t initial_capacity = 8;
+    static inline constexpr size_t grow_factor = 2;
+
+    using storage_type =
+        typename std::aligned_storage<sizeof( value_type ), alignof( value_type )>::type;
+
+    UREACT_WARN_UNUSED_RESULT bool is_at_full_capacity() const
+    {
+        return m_capacity == m_size;
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool has_free_indices() const
+    {
+        return m_free_size > 0;
+    }
+
+    UREACT_WARN_UNUSED_RESULT size_type calculate_next_capacity() const
+    {
+        return m_capacity == 0 ? initial_capacity : m_capacity * grow_factor;
+    }
+
+    UREACT_WARN_UNUSED_RESULT size_type total_size() const
+    {
+        return m_size + m_free_size;
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool is_free_index( const size_type index ) const
+    {
+        const auto begin_ = &m_free_indices[0];
+        const auto end_ = &m_free_indices[m_free_size];
+
+        const auto it = detail::find( begin_, end_, index );
+        return it != end_;
+    }
+
+    UREACT_WARN_UNUSED_RESULT bool has_index( const size_type index ) const
+    {
+        return index < total_size() && !is_free_index( index );
+    }
+
+    void shake_free_indices()
+    {
+        if( m_free_size == 0 )
+        {
+            return;
+        }
+
+        detail::sort( &m_free_indices[0], &m_free_indices[m_free_size] );
+
+        while( m_free_size > 0 && m_free_indices[m_free_size - 1] == total_size() - 1 )
+        {
+            --m_free_size;
+        }
+    }
+
+    void grow()
+    {
+        // Allocate new storage
+        const size_type new_capacity = calculate_next_capacity();
+
+        std::unique_ptr<storage_type[]> new_data{ new storage_type[new_capacity] };
+        std::unique_ptr<size_type[]> new_free_indices{ new size_type[new_capacity] };
+
+        // Move data to new storage
+        for( size_type i = 0; i < m_capacity; ++i )
+        {
+            new( reinterpret_cast<value_type*>( &new_data[i] ) )
+                value_type{ std::move( reinterpret_cast<reference>( m_data[i] ) ) };
+            reinterpret_cast<reference>( m_data[i] ).~value_type();
+        }
+
+        // Free list is empty if we are at max capacity anyway
+
+        // Use new storage
+        m_data = std::move( new_data );
+        m_free_indices = std::move( new_free_indices );
+        m_capacity = new_capacity;
+    }
+
+    size_type insert_at_back( value_type&& value )
+    {
+        new( &m_data[m_size] ) value_type( std::move( value ) );
+        return m_size++;
+    }
+
+    size_type insert_at_freed_slot( value_type&& value )
+    {
+        const size_type next_free_index = m_free_indices[--m_free_size];
+        new( &m_data[next_free_index] ) value_type( std::move( value ) );
+        ++m_size;
+
+        return next_free_index;
+    }
+
+    std::unique_ptr<storage_type[]> m_data;
+    std::unique_ptr<size_type[]> m_free_indices;
+
+    size_type m_size = 0;
+    size_type m_free_size = 0;
+    size_type m_capacity = 0;
 };
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_SLOT_MAP_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+class transaction;
+
+namespace detail
+{
 
 /// Utility class to defer self detach of observers
 class deferred_observer_detacher
@@ -1249,62 +1572,113 @@ class react_graph
 public:
     react_graph() = default;
 
-    template <typename F>
-    void push_input( input_node_interface* node, F&& inputCallback )
-    {
-        m_changed_inputs.push_back( node );
+    node_id register_node( reactive_node_interface* nodePtr );
+    void unregister_node( node_id nodeId );
 
-        // This writes to the input buffer of the respective node.
-        std::forward<F>( inputCallback )();
+    void attach_node( node_id nodeId, node_id parentId );
+    void detach_node( node_id nodeId, node_id parentId );
+
+    void push_input( node_id nodeId )
+    {
+        m_changed_inputs.add( nodeId );
 
         if( m_transaction_level == 0 )
         {
-            finalize_transaction();
+            propagate();
         }
     }
-
-    void propagate( turn_type& turn );
-
-    void on_node_attach( reactive_node& node, reactive_node& parent );
-    void on_node_detach( reactive_node& node, reactive_node& parent );
-
-    void on_input_change( reactive_node& node );
-    void on_node_pulse( reactive_node& node );
-
-    void on_dynamic_node_attach( reactive_node& node, reactive_node& parent );
-    void on_dynamic_node_detach( reactive_node& node, reactive_node& parent );
 
 private:
     friend class ureact::transaction;
 
-    void finalize_transaction()
+    void propagate()
     {
-        turn_type turn( next_turn_id() );
-
-        // apply input node changes
-        bool should_propagate = false;
-        for( input_node_interface* p : m_changed_inputs )
+        // Fill update queue with successors of changed inputs
+        for( node_id nodeId : m_changed_inputs )
         {
-            if( p->apply_input( turn ) )
+            auto& node = m_node_data[nodeId];
+            auto* nodePtr = node.node_ptr;
+
+            const update_result result = nodePtr->update();
+
+            if( result == update_result::changed )
             {
-                should_propagate = true;
+                m_changed_nodes.push_back( nodePtr );
+                schedule_successors( node );
             }
         }
         m_changed_inputs.clear();
 
-        // propagate changes
-        if( should_propagate )
+        // Propagate changes
+        while( m_scheduled_nodes.fetch_next() )
         {
-            propagate( turn );
+            for( node_id nodeId : m_scheduled_nodes.next_values() )
+            {
+                auto& node = m_node_data[nodeId];
+                auto* nodePtr = node.node_ptr;
+
+                // A predecessor of this node has shifted to a lower level?
+                if( node.level < node.new_level )
+                {
+                    // Re-schedule this node
+                    node.level = node.new_level;
+
+                    recalculate_successor_levels( node );
+                    m_scheduled_nodes.push( nodeId, node.level );
+                    continue;
+                }
+
+                const update_result result = nodePtr->update();
+
+                // Topology changed?
+                if( result == update_result::shifted )
+                {
+                    // Re-schedule this node
+                    recalculate_successor_levels( node );
+                    m_scheduled_nodes.push( nodeId, node.level );
+                    continue;
+                }
+
+                if( result == update_result::changed )
+                {
+                    m_changed_nodes.push_back( nodePtr );
+                    schedule_successors( node );
+                }
+
+                node.queued = false;
+            }
         }
+
+        // Cleanup buffers in changed nodes etc
+        for( reactive_node_interface* nodePtr : m_changed_nodes )
+            nodePtr->finalize();
+        m_changed_nodes.clear();
 
         detach_queued_observers();
     }
 
+    struct node_data
+    {
+        UREACT_MAKE_NONCOPYABLE( node_data );
+        UREACT_MAKE_MOVABLE( node_data );
+
+        explicit node_data( reactive_node_interface* node_ptr )
+            : node_ptr( node_ptr )
+        {}
+
+        int level = 0;
+        int new_level = 0;
+        bool queued = false;
+
+        reactive_node_interface* node_ptr = nullptr;
+
+        node_id_vector successors;
+    };
+
     class topological_queue
     {
     public:
-        using value_type = reactive_node*;
+        using value_type = node_id;
 
         topological_queue() = default;
 
@@ -1327,23 +1701,32 @@ private:
         std::vector<entry> m_queue_data;
     };
 
-    static void recalculate_successor_levels( reactive_node& node );
+    void recalculate_successor_levels( node_data& node );
 
-    void process_children( reactive_node& node );
+    void schedule_successors( node_data& node );
 
-    turn_type next_turn_id()
-    {
-        return m_next_turn_id++;
-    }
+    slot_map<node_data> m_node_data;
 
     topological_queue m_scheduled_nodes;
 
-    turn_type m_next_turn_id{ 0 };
-
     int m_transaction_level = 0;
 
-    std::vector<input_node_interface*> m_changed_inputs;
+    node_id_vector m_changed_inputs;
+
+    // local to propagate. Moved here to not reallocate
+    std::vector<reactive_node_interface*> m_changed_nodes;
 };
+
+inline node_id react_graph::register_node( reactive_node_interface* nodePtr )
+{
+    return node_id{ m_node_data.insert( node_data{ nodePtr } ) };
+}
+
+inline void react_graph::unregister_node( node_id nodeId )
+{
+    assert( m_node_data[nodeId].successors.empty() );
+    m_node_data.erase( nodeId );
+}
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()
 {
@@ -1382,9 +1765,12 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     return !m_next_data.empty();
 }
 
-inline void react_graph::on_node_attach( reactive_node& node, reactive_node& parent )
+inline void react_graph::attach_node( node_id nodeId, node_id parentId )
 {
-    parent.successors.add( node );
+    auto& node = m_node_data[nodeId];
+    auto& parent = m_node_data[parentId];
+
+    parent.successors.add( nodeId );
 
     if( node.level <= parent.level )
     {
@@ -1392,77 +1778,38 @@ inline void react_graph::on_node_attach( reactive_node& node, reactive_node& par
     }
 }
 
-inline void react_graph::on_node_detach( reactive_node& node, reactive_node& parent )
+inline void react_graph::detach_node( node_id nodeId, node_id parentId )
 {
-    parent.successors.remove( node );
+    auto& parent = m_node_data[parentId];
+    auto& successors = parent.successors;
+
+    successors.remove( nodeId );
 }
 
-inline void react_graph::on_input_change( reactive_node& node )
-{
-    process_children( node );
-}
-
-inline void react_graph::on_node_pulse( reactive_node& node )
-{
-    process_children( node );
-}
-
-inline void react_graph::propagate( turn_type& turn )
-{
-    while( m_scheduled_nodes.fetch_next() )
-    {
-        for( reactive_node* cur_node : m_scheduled_nodes.next_values() )
-        {
-            if( cur_node->level < cur_node->new_level )
-            {
-                cur_node->level = cur_node->new_level;
-                recalculate_successor_levels( *cur_node );
-                m_scheduled_nodes.push( cur_node, cur_node->level );
-                continue;
-            }
-
-            cur_node->queued = false;
-            cur_node->tick( turn );
-        }
-    }
-}
-
-inline void react_graph::on_dynamic_node_attach( reactive_node& node, reactive_node& parent )
-{
-    on_node_attach( node, parent );
-
-    recalculate_successor_levels( node );
-
-    // Re-schedule this node
-    node.queued = true;
-    m_scheduled_nodes.push( &node, node.level );
-}
-
-inline void react_graph::on_dynamic_node_detach( reactive_node& node, reactive_node& parent )
-{
-    on_node_detach( node, parent );
-}
-
-inline void react_graph::process_children( reactive_node& node )
+inline void react_graph::schedule_successors( node_data& node )
 {
     // add children to queue
-    for( reactive_node* successor : node.successors )
+    for( node_id successorId : node.successors )
     {
-        if( !successor->queued )
+        auto& successor = m_node_data[successorId];
+
+        if( !successor.queued )
         {
-            successor->queued = true;
-            m_scheduled_nodes.push( successor, successor->level );
+            successor.queued = true;
+            m_scheduled_nodes.push( successorId, successor.level );
         }
     }
 }
 
-inline void react_graph::recalculate_successor_levels( reactive_node& node )
+inline void react_graph::recalculate_successor_levels( node_data& node )
 {
-    for( reactive_node* successor : node.successors )
+    for( node_id successorId : node.successors )
     {
-        if( successor->new_level <= node.level )
+        auto& successor = m_node_data[successorId];
+
+        if( successor.new_level <= node.level )
         {
-            successor->new_level = node.level + 1;
+            successor.new_level = node.level + 1;
         }
     }
 }
@@ -1474,132 +1821,23 @@ public:
 
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
-        return *m_graph;
+        return *m_graph_ptr;
     }
 
     UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
     {
-        return *m_graph;
+        return *m_graph_ptr;
     }
 
 private:
-    // context_internals and context should be non-movable because
-    // node_base contains reference to context, and it will break if context lose its graph
-    UREACT_MAKE_NONMOVABLE( context_internals );
-
-    std::unique_ptr<react_graph> m_graph = std::make_unique<react_graph>();
-};
-
-class node_base : public reactive_node
-{
-public:
-    explicit node_base( context& context )
-        : m_context( context )
-    {
-        assert( !get_graph().is_locked() && "Can't create node from callback" );
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_context;
-    }
-
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
-    {
-        return _get_internals( m_context ).get_graph();
-    }
-
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
-    {
-        return _get_internals( m_context ).get_graph();
-    }
-
-protected:
-    void attach_to( reactive_node& parent )
-    {
-        get_graph().on_node_attach( *this, parent );
-    }
-
-    void detach_from( reactive_node& parent )
-    {
-        get_graph().on_node_detach( *this, parent );
-    }
-
-    void dynamic_attach_to( reactive_node& parent )
-    {
-        get_graph().on_dynamic_node_attach( *this, parent );
-    }
-
-    void dynamic_detach_from( reactive_node& parent )
-    {
-        get_graph().on_dynamic_node_detach( *this, parent );
-    }
-
-private:
-    UREACT_MAKE_NONCOPYABLE( node_base );
-
-    context& m_context;
-};
-
-class observer_node
-    : public node_base
-    , public observer_interface
-{
-public:
-    explicit observer_node( context& context )
-        : node_base( context )
-    {}
-};
-
-class observable_node
-    : public node_base
-    , public observable
-{
-public:
-    explicit observable_node( context& context )
-        : node_base( context )
-    {}
-};
-
-template <typename Node>
-class reactive_base
-{
-public:
-    reactive_base() = default;
-
-    explicit reactive_base( std::shared_ptr<Node>&& node )
-        : m_node( std::move( node ) )
-    {}
-
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return m_node != nullptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool equal_to( const reactive_base& other ) const
-    {
-        return this->m_node == other.m_node;
-    }
-
-    UREACT_WARN_UNUSED_RESULT context& get_context() const
-    {
-        return m_node->get_context();
-    }
-
-    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<Node>& get_node() const
-    {
-        return m_node;
-    }
-
-protected:
-    std::shared_ptr<Node> m_node;
+    std::shared_ptr<react_graph> m_graph_ptr = std::make_shared<react_graph>();
 };
 
 } // namespace detail
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_BASE_HPP
+#endif // UREACT_DETAIL_GRAPH_IMPL_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -1612,21 +1850,42 @@ UREACT_BEGIN_NAMESPACE
 class context final : protected detail::context_internals
 {
 public:
-    UREACT_WARN_UNUSED_RESULT bool operator==( const context& rsh ) const
+    /*!
+     * @brief Default construct @ref context
+     */
+    context() = default;
+
+    UREACT_MAKE_COPYABLE( context );
+    UREACT_MAKE_MOVABLE( context );
+
+    /*!
+     * @brief Equally compare with other @ref context
+     */
+    UREACT_WARN_UNUSED_RESULT friend bool operator==( const context& lhs, const context& rhs )
     {
-        return this == &rsh;
+        return &lhs.get_graph() == &rhs.get_graph();
     }
 
-    UREACT_WARN_UNUSED_RESULT bool operator!=( const context& rsh ) const
+    /*!
+     * @brief Equally compare with other @ref context
+     */
+    UREACT_WARN_UNUSED_RESULT friend bool operator!=( const context& lhs, const context& rhs )
     {
-        return !( *this == rsh );
+        return !( lhs == rhs );
     }
 
-private:
-    friend class detail::node_base;
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend context_internals& get_internals( context& ctx )
+    {
+        return ctx;
+    }
 
-    /// Returns internals. Not intended to use in user code
-    UREACT_WARN_UNUSED_RESULT friend context_internals& _get_internals( context& ctx )
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const context_internals& get_internals( const context& ctx )
     {
         return ctx;
     }
@@ -1635,6 +1894,187 @@ private:
 UREACT_END_NAMESPACE
 
 #endif //UREACT_CONTEXT_HPP
+
+#ifndef UREACT_DETAIL_OBSERVABLE_NODE_HPP
+#define UREACT_DETAIL_OBSERVABLE_NODE_HPP
+
+
+#ifndef UREACT_DETAIL_NODE_BASE_HPP
+#define UREACT_DETAIL_NODE_BASE_HPP
+
+#include <memory>
+#include <utility>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <typename Ret, typename Node, typename... Args>
+Ret create_wrapped_node( Args&&... args )
+{
+    return Ret{ std::make_shared<Node>( std::forward<Args>( args )... ) };
+}
+
+class node_base : public reactive_node_interface
+{
+public:
+    explicit node_base( context context )
+        : m_context( std::move( context ) )
+    {
+        assert( !get_graph().is_locked() && "Can't create node from callback" );
+        m_id = get_graph().register_node( this );
+    }
+
+    ~node_base() override
+    {
+        detach_from_all();
+        get_graph().unregister_node( m_id );
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        return m_id;
+    }
+
+    UREACT_WARN_UNUSED_RESULT context& get_context()
+    {
+        return m_context;
+    }
+
+    UREACT_WARN_UNUSED_RESULT const context& get_context() const
+    {
+        return m_context;
+    }
+
+protected:
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
+    {
+        return get_internals( m_context ).get_graph();
+    }
+
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
+    {
+        return get_internals( m_context ).get_graph();
+    }
+
+    void attach_to( node_id parentId )
+    {
+        m_parents.add( parentId );
+        get_graph().attach_node( m_id, parentId );
+    }
+
+    void detach_from( node_id parentId )
+    {
+        get_graph().detach_node( m_id, parentId );
+        m_parents.remove( parentId );
+    }
+
+    void detach_from_all()
+    {
+        for( node_id parentId : m_parents )
+        {
+            get_graph().detach_node( m_id, parentId );
+        }
+        m_parents.clear();
+    }
+
+    template <class... Deps>
+    void attach_to( const Deps&... deps )
+    {
+        ( attach_to( get_internals( deps ).get_node_id() ), ... );
+    }
+
+    template <class... Deps>
+    void attach_to( const std::tuple<Deps...>& tp )
+    {
+        std::apply(
+            [this]( const auto&... deps ) { //
+                this->attach_to( deps... );
+            },
+            tp );
+    }
+
+    template <typename Node>
+    friend class attach_functor;
+
+    template <typename Node>
+    friend class detach_functor;
+
+private:
+    UREACT_MAKE_NONCOPYABLE( node_base );
+
+    context m_context{};
+
+    node_id m_id;
+
+    node_id_vector m_parents;
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_NODE_BASE_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+class observable
+{
+public:
+    observable() = default;
+
+    UREACT_MAKE_NONCOPYABLE( observable );
+    UREACT_MAKE_NONMOVABLE( observable );
+
+    ~observable()
+    {
+        for( const auto& p : m_observers )
+            if( p != nullptr )
+                p->detach_observer();
+    }
+
+    void register_observer( std::unique_ptr<observer_interface>&& obs_ptr )
+    {
+        m_observers.push_back( std::move( obs_ptr ) );
+    }
+
+    void unregister_observer( observer_interface* raw_obs_ptr )
+    {
+        for( auto it = m_observers.begin(); it != m_observers.end(); ++it )
+        {
+            if( it->get() == raw_obs_ptr )
+            {
+                it->get()->detach_observer();
+                m_observers.erase( it );
+                break;
+            }
+        }
+    }
+
+private:
+    std::vector<std::unique_ptr<observer_interface>> m_observers;
+};
+
+class observable_node
+    : public node_base
+    , public observable
+{
+public:
+    explicit observable_node( const context& context )
+        : node_base( context )
+    {}
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_OBSERVABLE_NODE_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -1645,197 +2085,114 @@ template <typename E>
 class event_stream_node : public observable_node
 {
 public:
-    using data_t = std::vector<E>;
+    using event_value_list = std::vector<E>;
 
-    explicit event_stream_node( context& context )
+    explicit event_stream_node( const context& context )
         : observable_node( context )
     {}
 
-    void set_current_turn( const turn_type& turn )
-    {
-        if( m_cur_turn_id != turn )
-        {
-            m_cur_turn_id = turn;
-            m_events.clear();
-        }
-    }
-
-    void set_current_turn_force_update( const turn_type& turn )
-    {
-        m_cur_turn_id = turn;
-        m_events.clear();
-    }
-
-    void set_current_turn_force_update_no_clear( const turn_type& turn )
-    {
-        m_cur_turn_id = turn;
-    }
-
-    data_t& events()
+    event_value_list& get_events()
     {
         return m_events;
     }
 
-    void pulse_if_has_events()
+    const event_value_list& get_events() const
     {
-        if( !m_events.empty() )
-        {
-            this->get_graph().on_node_pulse( *this );
-        }
+        return m_events;
     }
 
-protected:
-    data_t m_events;
+    void finalize() override
+    {
+        m_events.clear();
+    }
 
 private:
-    unsigned m_cur_turn_id{ std::numeric_limits<unsigned>::max() };
+    event_value_list m_events;
 };
 
 template <typename E>
-class event_source_node final
-    : public event_stream_node<E>
-    , public input_node_interface
+class event_source_node final : public event_stream_node<E>
 {
 public:
-    explicit event_source_node( context& context )
+    explicit event_source_node( const context& context )
         : event_source_node::event_stream_node( context )
     {}
 
     ~event_source_node() override = default;
 
-    // LCOV_EXCL_START
-    void tick( turn_type& ) override
-    {
-        assert( false && "Ticked event_source_node" );
-    }
-    // LCOV_EXCL_STOP
-
     template <typename V>
     void emit_value( V&& v )
     {
-        // Clear input from previous turn
-        if( m_changed_flag )
-        {
-            m_changed_flag = false;
-            this->m_events.clear();
-        }
-
-        this->m_events.push_back( std::forward<V>( v ) );
+        this->get_events().push_back( std::forward<V>( v ) );
     }
 
-    bool apply_input( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        if( this->m_events.size() > 0 && !m_changed_flag )
-        {
-            this->set_current_turn_force_update_no_clear( turn );
-            m_changed_flag = true;
-            this->get_graph().on_input_change( *this );
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
-
-private:
-    bool m_changed_flag = false;
-};
-
-template <typename E, typename Op>
-class event_op_node final : public event_stream_node<E>
-{
-public:
-    template <typename... Args>
-    explicit event_op_node( context& context, Args&&... args )
-        : event_op_node::event_stream_node( context )
-        , m_op( std::forward<Args>( args )... )
-    {
-        m_op.attach( *this );
-    }
-
-    ~event_op_node() override
-    {
-        if( !m_was_op_stolen )
-        {
-            m_op.detach( *this );
-        }
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-
-        m_op.collect( turn, event_collector( this->m_events ) );
-
-        this->pulse_if_has_events();
-    }
-
-    UREACT_WARN_UNUSED_RESULT Op steal_op()
-    {
-        assert( !m_was_op_stolen && "Op was already stolen" );
-        m_was_op_stolen = true;
-        m_op.detach( *this );
-        return std::move( m_op );
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
-    {
-        return m_was_op_stolen;
-    }
-
-private:
-    struct event_collector
-    {
-        using data_t = typename event_op_node::data_t;
-
-        explicit event_collector( data_t& events )
-            : m_events( events )
-        {}
-
-        void operator()( const E& e ) const
-        {
-            m_events.push_back( e );
-        }
-
-        data_t& m_events;
-    };
-
-    Op m_op;
-    bool m_was_op_stolen = false;
 };
 
 template <typename E>
-class event_stream_base : public reactive_base<event_stream_node<E>>
+class events_internals
 {
 public:
-    event_stream_base() = default;
-
-    UREACT_MAKE_COPYABLE( event_stream_base );
-    UREACT_MAKE_MOVABLE( event_stream_base );
+    events_internals() = default;
 
     template <typename Node>
-    explicit event_stream_base( std::shared_ptr<Node>&& node )
-        : event_stream_base::reactive_base( std::move( node ) )
+    explicit events_internals( std::shared_ptr<Node>&& node )
+        : m_node( std::move( node ) )
     {}
+
+    UREACT_WARN_UNUSED_RESULT std::shared_ptr<event_stream_node<E>>& get_node_ptr()
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<event_stream_node<E>>& get_node_ptr() const
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        return m_node->get_node_id();
+    }
+
+    std::vector<E>& get_events()
+    {
+        return m_node->get_events();
+    }
+
+    const std::vector<E>& get_events() const
+    {
+        return m_node->get_events();
+    }
 
 private:
     UREACT_WARN_UNUSED_RESULT auto get_event_source_node() const -> event_source_node<E>*
     {
-        return static_cast<event_source_node<E>*>( this->m_node.get() );
+        return dynamic_cast<event_source_node<E>*>( this->m_node.get() );
     }
 
 protected:
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return get_internals( m_node->get_context() ).get_graph();
+    }
+
     template <typename T>
     void emit_event( T&& e ) const
     {
-        auto node_ptr = get_event_source_node();
-        auto& graph_ref = node_ptr->get_graph();
+        react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't emit event from callback" );
 
-        graph_ref.push_input(
-            node_ptr, [node_ptr, &e] { node_ptr->emit_value( std::forward<T>( e ) ); } );
+        event_source_node<E>* node_ptr = get_event_source_node();
+        node_ptr->emit_value( std::forward<T>( e ) );
+        graph_ref.push_input( node_ptr->get_node_id() );
     }
+
+    std::shared_ptr<event_stream_node<E>> m_node;
 };
 
 } // namespace detail
@@ -1848,11 +2205,8 @@ protected:
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
  */
 template <typename E = unit>
-class events : public detail::event_stream_base<E>
+class events : protected detail::events_internals<E>
 {
-private:
-    using Node = detail::event_stream_node<E>;
-
 public:
     /*!
      * @brief Alias to value type to use in metaprogramming
@@ -1867,11 +2221,68 @@ public:
     events() = default;
 
     /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT context& get_context()
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT const context& get_context() const
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return this->get_node_ptr() != nullptr;
+    }
+
+    /*!
+     * @brief Equally compare with other @ref events
+     * 
+     * Semantic equivalent of operator==
+     */
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const events& other ) const
+    {
+        return this->get_node_ptr() == other.get_node_ptr();
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend detail::events_internals<E>& get_internals( events<E>& e )
+    {
+        return e;
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const detail::events_internals<E>& get_internals(
+        const events<E>& e )
+    {
+        return e;
+    }
+
+protected:
+    using Node = detail::event_stream_node<E>;
+
+    /*!
      * @brief Construct from the given node
      */
     explicit events( std::shared_ptr<Node>&& node )
-        : events::event_stream_base( std::move( node ) )
+        : events::events_internals( std::move( node ) )
     {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -1882,9 +2293,6 @@ public:
 template <typename E = unit>
 class event_source : public events<E>
 {
-private:
-    using Node = detail::event_source_node<E>;
-
 public:
     class iterator;
 
@@ -1894,13 +2302,6 @@ public:
      * Default constructed @ref event_source is not attached to node, so it is not valid
      */
     event_source() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit event_source( std::shared_ptr<Node>&& node )
-        : event_source::events( std::move( node ) )
-    {}
 
     /*!
      * @brief Adds e to the queue of outgoing events of the linked event source node
@@ -2012,6 +2413,19 @@ public:
         assert( this->is_valid() && "Can't emit from event_source not attached to a node" );
         return iterator{ *this };
     }
+
+protected:
+    using Node = detail::event_source_node<E>;
+
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit event_source( std::shared_ptr<Node>&& node )
+        : event_source::events( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -2151,28 +2565,17 @@ class member_events_user
     template <class E>                                                                             \
     using member_event_source = ::ureact::member_event_source<Owner, E>
 
-namespace detail
-{
-
-template <typename E>
-UREACT_WARN_UNUSED_RESULT auto make_event_source( context& context )
-{
-    return event_source<E>{ std::make_shared<event_source_node<E>>( context ) };
-}
-
-} // namespace detail
-
 /*!
  * @brief Create a new event source node and links it to the returned event_source instance
  *
  *  Event value type E has to be specified explicitly. It would be unit if it is omitted.
  */
 template <typename E = unit>
-UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E>
+UREACT_WARN_UNUSED_RESULT auto make_source( const context& context ) -> event_source<E>
 {
     assert(
-        !_get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
-    return detail::make_event_source<E>( context );
+        !get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
+    return detail::create_wrapped_node<event_source<E>, detail::event_source_node<E>>( context );
 }
 
 /*!
@@ -2185,11 +2588,10 @@ UREACT_WARN_UNUSED_RESULT auto make_source( context& context ) -> event_source<E
  *  but it can be optimized in future.
  */
 template <typename E = unit>
-UREACT_WARN_UNUSED_RESULT auto make_never( context& context ) -> events<E>
+UREACT_WARN_UNUSED_RESULT auto make_never( const context& context ) -> events<E>
 {
-    assert(
-        !_get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
-    return detail::make_event_source<E>( context );
+    assert( !get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
+    return detail::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
 }
 
 UREACT_END_NAMESPACE
@@ -2254,81 +2656,53 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename S>
-class signal_node;
-
 template <typename InE, typename OutE, typename Func, typename... Deps>
 class event_processing_node final : public event_stream_node<OutE>
 {
 public:
     template <typename F>
-    event_processing_node( context& context,
-        const std::shared_ptr<event_stream_node<InE>>& source,
+    event_processing_node( const context& context,
+        const events<InE>& source,
         F&& func,
-        const std::shared_ptr<signal_node<Deps>>&... deps )
+        const signal_pack<Deps...>& deps )
         : event_processing_node::event_stream_node( context )
         , m_source( source )
         , m_func( std::forward<F>( func ) )
-        , m_deps( deps... )
+        , m_deps( deps )
     {
-        this->attach_to( *source );
-        ( this->attach_to( *deps ), ... );
+        this->attach_to( source );
+        this->attach_to( deps.data );
     }
 
     ~event_processing_node() override
     {
-        this->detach_from( *m_source );
-
-        std::apply( detach_functor<event_processing_node>( *this ), m_deps );
+        this->detach_from_all();
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->set_current_turn_force_update( turn );
-        // Update of this node could be triggered from deps,
-        // so make sure source doesn't contain events from last turn
-        m_source->set_current_turn( turn );
-
-        if( !m_source->events().empty() )
+        const auto& src_events = get_internals( m_source ).get_events();
+        if( !src_events.empty() )
         {
             std::apply(
-                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                [this, &src_events]( const signal<Deps>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
-                        event_range<InE>( m_source->events() ),
-                        event_emitter( this->m_events ),
-                        args->value_ref()... );
+                        event_range<InE>( src_events ),
+                        event_emitter( this->get_events() ),
+                        get_internals( args ).value_ref()... );
                 },
-                m_deps );
+                m_deps.data );
         }
 
-        this->pulse_if_has_events();
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
-    using dep_holder_t = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
-
-    std::shared_ptr<event_stream_node<InE>> m_source;
-
+    events<InE> m_source;
     Func m_func;
-    dep_holder_t m_deps;
+    signal_pack<Deps...> m_deps;
 };
-
-template <typename OutE, typename InE, typename Op, typename... Deps>
-UREACT_WARN_UNUSED_RESULT auto process_impl(
-    const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) -> events<OutE>
-{
-    using F = std::decay_t<Op>;
-
-    context& context = source.get_context();
-
-    auto node_builder = [&context, &source, &op]( const signal<Deps>&... deps ) {
-        return events<OutE>( std::make_shared<event_processing_node<InE, OutE, F, Deps...>>(
-            context, source.get_node(), std::forward<Op>( op ), deps.get_node()... ) );
-    };
-
-    return std::apply( node_builder, dep_pack.data );
-}
 
 template <typename OutE>
 struct ProcessAdaptor : Adaptor
@@ -2350,7 +2724,13 @@ struct ProcessAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<InE>& source, const signal_pack<Deps...>& dep_pack, Op&& op ) const
     {
-        return process_impl<OutE>( source, dep_pack, std::forward<Op>( op ) );
+        using F = std::decay_t<Op>;
+
+        const context& context = source.get_context();
+
+        return detail::create_wrapped_node<events<OutE>,
+            event_processing_node<InE, OutE, F, Deps...>>(
+            context, source, std::forward<Op>( op ), dep_pack );
     }
 
     /*!
@@ -2553,139 +2933,12 @@ UREACT_END_NAMESPACE
 #define UREACT_ADAPTOR_MONITOR_HPP
 
 
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-template <typename S>
-class signal_node;
-
-template <typename E>
-class monitor_node final : public event_stream_node<E>
-{
-public:
-    monitor_node( context& context, const std::shared_ptr<signal_node<E>>& target )
-        : monitor_node::event_stream_node( context )
-        , m_target( target )
-    {
-        this->attach_to( *m_target );
-    }
-
-    ~monitor_node() override
-    {
-        this->detach_from( *m_target );
-    }
-
-    void tick( turn_type& turn ) override
-    {
-        this->set_current_turn_force_update( turn );
-
-        this->m_events.push_back( m_target->value_ref() );
-
-        this->pulse_if_has_events();
-    }
-
-private:
-    const std::shared_ptr<signal_node<E>> m_target;
-};
-
-struct MonitorClosure : AdaptorClosure
-{
-    /*!
-	 * @brief Emits value changes of signal as events
-	 *
-	 *  When target changes, emit the new value 'e = target.get()'.
-	 */
-    template <typename S>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
-        -> events<S>
-    {
-        context& context = target.get_context();
-        return events<S>( std::make_shared<monitor_node<S>>( context, target.get_node() ) );
-    }
-};
-
-} // namespace detail
-
-
-inline constexpr detail::MonitorClosure monitor;
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_ADAPTOR_MONITOR_HPP
-
-#ifndef UREACT_ADAPTOR_UNIFY_HPP
-#define UREACT_ADAPTOR_UNIFY_HPP
-
-
-UREACT_BEGIN_NAMESPACE
-
-/*!
- * @brief Utility function to transform any event stream into a unit stream
- *
- *  Emits a unit for any event that passes source
- */
-inline constexpr auto unify = cast<unit>;
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_ADAPTOR_UNIFY_HPP
-
-UREACT_BEGIN_NAMESPACE
-
-namespace detail
-{
-
-struct ChangedToAdaptor : Adaptor
-{
-    template <typename V, typename S = std::decay_t<V>>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target, V&& value ) const
-    {
-        return target | monitor | filter( [=]( const S& v ) { return v == value; } ) | unify;
-    }
-
-    template <typename V>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& value ) const
-    {
-        return make_partial<ChangedToAdaptor>( std::forward<V>( value ) );
-    }
-};
-
-} // namespace detail
-
-/*!
- * @brief Emits unit when target signal was changed
- *
- *  Creates a unit stream that emits when target is changed.
- */
-inline constexpr auto changed = monitor | unify;
-
-/*!
- * @brief Emits unit when target signal was changed to value
- *  Creates a unit stream that emits when target is changed and 'target.get() == value'.
- *  V and S should be comparable with ==.
- */
-inline constexpr detail::ChangedToAdaptor changed_to;
-
-UREACT_END_NAMESPACE
-
-#endif // UREACT_ADAPTOR_CHANGED_HPP
-
-#ifndef UREACT_ADAPTOR_COLLECT_HPP
-#define UREACT_ADAPTOR_COLLECT_HPP
-
-
-#ifndef UREACT_ADAPTOR_FOLD_HPP
-#define UREACT_ADAPTOR_FOLD_HPP
-
-
 #ifndef UREACT_SIGNAL_HPP
 #define UREACT_SIGNAL_HPP
 
 
-#ifndef UREACT_EQUAL_TO_HPP
-#define UREACT_EQUAL_TO_HPP
+#ifndef UREACT_HAS_CHANGED_HPP
+#define UREACT_HAS_CHANGED_HPP
 
 #include <functional>
 #include <type_traits>
@@ -2701,9 +2954,6 @@ class events;
 
 namespace detail
 {
-
-template <typename Node>
-class reactive_base;
 
 /// c++17 analog of equality_comparable concept from c++20
 /// https://en.cppreference.com/w/cpp/concepts/equality_comparable
@@ -2728,45 +2978,45 @@ inline constexpr bool equality_comparable_v = equality_comparable<T>::value;
 #endif
 
 /*!
- * @brief std::equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
+ * @brief std::not_equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
  *
  *  Additionally:
  *  * it equally compares signal<S> and events<E> even if their operator== is overloaded
  *  * it equally compares reference wrappers because they can be used as S for signal<S> and their operator== does unexpected compare
- *  * it returns false if types are not equally comparable otherwise
+ *  * it returns true if types are not equally comparable otherwise
  */
 template <typename T>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const T& lhs, const T& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const T& lhs, const T& rhs )
 {
     if constexpr( detail::equality_comparable_v<T> )
     {
-        return lhs == rhs;
+        return !( lhs == rhs );
     }
     else
     {
-        return false;
+        return true;
     }
 }
 
 // TODO: check if lhs.equal_to( rhs ) can be called instead of checking for specific types
 template <typename S>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const signal<S>& lhs, const signal<S>& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const signal<S>& lhs, const signal<S>& rhs )
 {
-    return lhs.equal_to( rhs );
+    return !lhs.equal_to( rhs );
 }
 
 template <typename E>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( const events<E>& lhs, const events<E>& rhs )
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const events<E>& lhs, const events<E>& rhs )
 {
-    return lhs.equal_to( rhs );
+    return !lhs.equal_to( rhs );
 }
 
 template <typename T>
-UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( //
-    const std::reference_wrapper<T>& lhs,          //
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( //
+    const std::reference_wrapper<T>& lhs,             //
     const std::reference_wrapper<T>& rhs )
 {
-    return equal_to( lhs.get(), rhs.get() );
+    return has_changed( lhs.get(), rhs.get() );
 }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
@@ -2775,7 +3025,7 @@ UREACT_WARN_UNUSED_RESULT constexpr bool equal_to( //
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_EQUAL_TO_HPP
+#endif //UREACT_HAS_CHANGED_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -2786,12 +3036,12 @@ template <typename S>
 class signal_node : public observable_node
 {
 public:
-    explicit signal_node( context& context )
+    explicit signal_node( const context& context )
         : observable_node( context )
     {}
 
     template <typename T>
-    signal_node( context& context, T&& value )
+    signal_node( const context& context, T&& value )
         : observable_node( context )
         , m_value( std::forward<T>( value ) )
     {}
@@ -2801,21 +3051,16 @@ public:
         return m_value;
     }
 
-    // Assign a new value and do pulse only if new value is different from the current one
+    // Assign a new value if is differed and return if updated
     template <class T>
-    void pulse_if_value_changed( T&& new_value )
+    UREACT_WARN_UNUSED_RESULT update_result try_change_value( T&& new_value )
     {
-        if( !equal_to( this->m_value, new_value ) )
+        if( has_changed( this->m_value, new_value ) )
         {
             this->m_value = std::forward<T>( new_value );
-            this->get_graph().on_node_pulse( *this );
+            return update_result::changed;
         }
-    }
-
-    // Perform pulse after value modification was performed
-    void pulse_after_modify()
-    {
-        this->get_graph().on_node_pulse( *this );
+        return update_result::unchanged;
     }
 
 protected:
@@ -2823,23 +3068,14 @@ protected:
 };
 
 template <typename S>
-class var_node final
-    : public signal_node<S>
-    , public input_node_interface
+class var_node final : public signal_node<S>
 {
 public:
     template <typename T>
-    explicit var_node( context& context, T&& value )
+    explicit var_node( const context& context, T&& value )
         : var_node::signal_node( context, std::forward<T>( value ) )
         , m_new_value( value )
     {}
-
-    // LCOV_EXCL_START
-    void tick( turn_type& ) override
-    {
-        assert( false && "Ticked var_node" );
-    }
-    // LCOV_EXCL_STOP
 
     template <typename V>
     void set_value( V&& new_value )
@@ -2873,28 +3109,23 @@ public:
         }
     }
 
-    bool apply_input( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         if( m_is_input_added )
         {
             m_is_input_added = false;
 
-            if( !equal_to( this->m_value, m_new_value ) )
-            {
-                this->m_value = std::move( m_new_value );
-                this->get_graph().on_input_change( *this );
-                return true;
-            }
-            return false;
+            return this->try_change_value( std::move( m_new_value ) );
         }
+
         if( m_is_input_modified )
         {
             m_is_input_modified = false;
 
-            this->get_graph().on_input_change( *this );
-            return true;
+            return update_result::changed;
         }
-        return false;
+
+        return update_result::unchanged;
     }
 
 private:
@@ -2904,49 +3135,82 @@ private:
 };
 
 template <typename S>
-class signal_base : public reactive_base<signal_node<S>>
+class signal_internals
 {
 public:
-    signal_base() = default;
+    signal_internals() = default;
 
     template <typename Node>
-    explicit signal_base( std::shared_ptr<Node>&& node )
-        : signal_base::reactive_base( std::move( node ) )
+    explicit signal_internals( std::shared_ptr<Node>&& node )
+        : m_node( std::move( node ) )
     {}
 
-protected:
+    UREACT_WARN_UNUSED_RESULT std::shared_ptr<signal_node<S>>& get_node_ptr()
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<signal_node<S>>& get_node_ptr() const
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return m_node->get_node_id();
+    }
+
     UREACT_WARN_UNUSED_RESULT const S& get_value() const
     {
-        assert( !this->m_node->get_graph().is_locked() && "Can't read signal value from callback" );
+        assert( !get_graph().is_locked() && "Can't read signal value from callback" );
+        assert( m_node != nullptr && "Should be attached to a node" );
         return this->m_node->value_ref();
+    }
+
+    UREACT_WARN_UNUSED_RESULT const S& value_ref() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return this->m_node->value_ref();
+    }
+
+protected:
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return get_internals( m_node->get_context() ).get_graph();
     }
 
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        auto node_ptr = get_var_node();
-        auto& graph_ref = node_ptr->get_graph();
+        react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't set signal value from callback" );
 
-        graph_ref.push_input( node_ptr,
-            [node_ptr, &new_value] { node_ptr->set_value( std::forward<T>( new_value ) ); } );
+        var_node<S>* node_ptr = get_var_node();
+        node_ptr->set_value( std::forward<T>( new_value ) );
+        graph_ref.push_input( node_ptr->get_node_id() );
     }
 
     template <typename F>
     void modify_value( const F& func ) const
     {
-        auto node_ptr = get_var_node();
-        auto& graph_ref = node_ptr->get_graph();
+        react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't modify signal value from callback" );
 
-        graph_ref.push_input( node_ptr, [node_ptr, &func] { node_ptr->modify_value( func ); } );
+        var_node<S>* node_ptr = get_var_node();
+        node_ptr->modify_value( func );
+        graph_ref.push_input( node_ptr->get_node_id() );
     }
 
 private:
     UREACT_WARN_UNUSED_RESULT auto get_var_node() const
     {
-        return static_cast<var_node<S>*>( this->m_node.get() );
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return dynamic_cast<var_node<S>*>( this->m_node.get() );
     }
+
+    std::shared_ptr<signal_node<S>> m_node;
 };
 
 } // namespace detail
@@ -2963,11 +3227,8 @@ private:
  *  Copy, move and assignment semantics are similar to std::shared_ptr.
  */
 template <typename S>
-class signal : public detail::signal_base<S>
+class signal : protected detail::signal_internals<S>
 {
-protected:
-    using Node = detail::signal_node<S>;
-
 public:
     /*!
      * @brief Alias to value type to use in metaprogramming
@@ -2982,11 +3243,39 @@ public:
     signal() = default;
 
     /*!
-     * @brief Construct from the given node
+     * @brief Return @ref context used by attached node
      */
-    explicit signal( std::shared_ptr<Node>&& node )
-        : signal::signal_base( std::move( node ) )
-    {}
+    UREACT_WARN_UNUSED_RESULT context& get_context()
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Return @ref context used by attached node
+     */
+    UREACT_WARN_UNUSED_RESULT const context& get_context() const
+    {
+        return this->get_node_ptr()->get_context();
+    }
+
+    /*!
+     * @brief Tests if this instance is linked to a node
+     */
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const
+    {
+        return this->get_node_ptr() != nullptr;
+    }
+
+    /*!
+     * @brief Equally compare with other signal
+     * 
+     * Semantic equivalent of operator==
+     * It is intended to allow overload of operator== to make new signal
+     */
+    UREACT_WARN_UNUSED_RESULT bool equal_to( const signal& other ) const
+    {
+        return this->get_node_ptr() == other.get_node_ptr();
+    }
 
     /*!
      * @brief Return value of linked node
@@ -3005,6 +3294,47 @@ public:
         assert( this->is_valid() && "Can't get value of signal not attached to a node" );
         return this->get_value();
     }
+
+    /*!
+     * @brief Pointer access value of linked node
+     * 
+     * TODO: check it in tests
+     */
+    UREACT_WARN_UNUSED_RESULT const S* operator->() const
+    {
+        assert( this->is_valid() && "Can't access value of signal not attached to a node" );
+        return &this->get_value();
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend detail::signal_internals<S>& get_internals( signal<S>& s )
+    {
+        return s;
+    }
+
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const detail::signal_internals<S>& get_internals(
+        const signal<S>& s )
+    {
+        return s;
+    }
+
+protected:
+    using Node = detail::signal_node<S>;
+
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit signal( std::shared_ptr<Node>&& node )
+        : signal::signal_internals( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -3017,9 +3347,6 @@ public:
 template <typename S>
 class var_signal : public signal<S>
 {
-private:
-    using Node = detail::var_node<S>;
-
 public:
     /*!
      * @brief Default construct @ref var_signal
@@ -3027,13 +3354,6 @@ public:
      * Default constructed @ref var_signal is not attached to node, so it is not valid.
      */
     var_signal() = default;
-
-    /*!
-     * @brief Construct from the given node
-     */
-    explicit var_signal( std::shared_ptr<Node>&& node )
-        : var_signal::signal( std::move( node ) )
-    {}
 
     /*!
      * @brief Set new signal value
@@ -3145,6 +3465,19 @@ public:
         assert( this->is_valid() && "Can't set new value for var_signal not attached to a node" );
         this->set_value( std::move( new_value ) );
     }
+
+protected:
+    using Node = detail::var_node<S>;
+
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit var_signal( std::shared_ptr<Node>&& node )
+        : var_signal::signal( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -3240,14 +3573,8 @@ class member_signal_user
 namespace detail
 {
 
-template <typename S, typename V>
-UREACT_WARN_UNUSED_RESULT auto make_var_signal( context& context, V&& v )
-{
-    return var_signal<S>{ std::make_shared<var_node<S>>( context, std::forward<V>( v ) ) };
-}
-
 template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
+UREACT_WARN_UNUSED_RESULT auto make_var_impl( const context& context, V&& v )
 {
     // TODO: detect var_signal type and then construct it once
     //       unfortunately it is not directly possible with select_t and std::condition
@@ -3264,11 +3591,13 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
                 S>;
         // clang-format on
 
-        return make_var_signal<S2>( context, std::forward<V>( v ) );
+        return detail::create_wrapped_node<var_signal<S2>, var_node<S2>>(
+            context, std::forward<V>( v ) );
     }
     else
     {
-        return make_var_signal<S>( context, std::forward<V>( v ) );
+        return detail::create_wrapped_node<var_signal<S>, var_node<S>>(
+            context, std::forward<V>( v ) );
     }
 }
 
@@ -3278,9 +3607,9 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( context& context, V&& v )
  * @brief Create a new input signal node and links it to the returned var_signal instance
  */
 template <typename V>
-UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
+UREACT_WARN_UNUSED_RESULT auto make_var( const context& context, V&& value )
 {
-    assert( !_get_internals( context ).get_graph().is_locked() && "Can't make var from callback" );
+    assert( !get_internals( context ).get_graph().is_locked() && "Can't make var from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
@@ -3292,10 +3621,9 @@ UREACT_WARN_UNUSED_RESULT auto make_var( context& context, V&& value )
  *  but it can be optimized in future.
  */
 template <typename V, typename S = std::decay_t<V>>
-UREACT_WARN_UNUSED_RESULT auto make_const( context& context, V&& value ) -> signal<S>
+UREACT_WARN_UNUSED_RESULT auto make_const( const context& context, V&& value ) -> signal<S>
 {
-    assert(
-        !_get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
+    assert( !get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
 
@@ -3308,8 +3636,127 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename E>
-class event_stream_node;
+template <typename S>
+class monitor_node final : public event_stream_node<S>
+{
+public:
+    monitor_node( const context& context, const signal<S>& target )
+        : monitor_node::event_stream_node( context )
+        , m_target( target )
+    {
+        this->attach_to( m_target );
+    }
+
+    ~monitor_node() override
+    {
+        this->detach_from_all();
+    }
+
+    UREACT_WARN_UNUSED_RESULT update_result update() override
+    {
+        this->get_events().push_back( get_internals( m_target ).get_value() );
+
+        return update_result::changed;
+    }
+
+private:
+    signal<S> m_target;
+};
+
+struct MonitorClosure : AdaptorClosure
+{
+    /*!
+	 * @brief Emits value changes of signal as events
+	 *
+	 *  When target changes, emit the new value 'e = target.get()'.
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+        -> events<S>
+    {
+        const context& context = target.get_context();
+        return detail::create_wrapped_node<events<S>, monitor_node<S>>( context, target );
+    }
+};
+
+} // namespace detail
+
+
+inline constexpr detail::MonitorClosure monitor;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_MONITOR_HPP
+
+#ifndef UREACT_ADAPTOR_UNIFY_HPP
+#define UREACT_ADAPTOR_UNIFY_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Utility function to transform any event stream into a unit stream
+ *
+ *  Emits a unit for any event that passes source
+ */
+inline constexpr auto unify = cast<unit>;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_UNIFY_HPP
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct ChangedToAdaptor : Adaptor
+{
+    template <typename V, typename S = std::decay_t<V>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target, V&& value ) const
+    {
+        return target | monitor | filter( [=]( const S& v ) { return v == value; } ) | unify;
+    }
+
+    template <typename V>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( V&& value ) const
+    {
+        return make_partial<ChangedToAdaptor>( std::forward<V>( value ) );
+    }
+};
+
+} // namespace detail
+
+/*!
+ * @brief Emits unit when target signal was changed
+ *
+ *  Creates a unit stream that emits when target is changed.
+ */
+inline constexpr auto changed = monitor | unify;
+
+/*!
+ * @brief Emits unit when target signal was changed to value
+ *  Creates a unit stream that emits when target is changed and 'target.get() == value'.
+ *  V and S should be comparable with ==.
+ */
+inline constexpr detail::ChangedToAdaptor changed_to;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_CHANGED_HPP
+
+#ifndef UREACT_ADAPTOR_COLLECT_HPP
+#define UREACT_ADAPTOR_COLLECT_HPP
+
+
+#ifndef UREACT_ADAPTOR_FOLD_HPP
+#define UREACT_ADAPTOR_FOLD_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
 
 template <typename E, typename S, typename F, typename... Args>
 class add_fold_range_wrapper
@@ -3363,60 +3810,58 @@ class fold_node final : public signal_node<S>
 {
 public:
     template <typename InS, typename InF>
-    fold_node( context& context,
+    fold_node( const context& context,
         InS&& init,
-        const std::shared_ptr<event_stream_node<E>>& events,
+        const events<E>& source,
         InF&& func,
-        const std::shared_ptr<signal_node<Deps>>&... deps )
+        const signal_pack<Deps...>& deps )
         : fold_node::signal_node( context, std::forward<InS>( init ) )
-        , m_events( events )
+        , m_source( source )
         , m_func( std::forward<InF>( func ) )
-        , m_deps( deps... )
+        , m_deps( deps )
     {
-        this->attach_to( *events );
-        ( this->attach_to( *deps ), ... );
+        this->attach_to( source );
+        this->attach_to( deps.data );
     }
 
     ~fold_node() override
     {
-        this->detach_from( *m_events );
-
-        std::apply( detach_functor<fold_node>( *this ), m_deps );
+        this->detach_from_all();
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        m_events->set_current_turn( turn );
+        const auto& src_events = get_internals( m_source ).get_events();
 
-        if( m_events->events().empty() )
-            return;
+        if( src_events.empty() )
+            return update_result::unchanged;
 
         if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
         {
-            this->pulse_if_value_changed( std::apply(
-                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+            return this->try_change_value( std::apply(
+                [this, &src_events]( const signal<Deps>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     return std::invoke( m_func,
-                        event_range<E>( m_events->events() ),
+                        event_range<E>( src_events ),
                         this->m_value,
-                        args->value_ref()... );
+                        get_internals( args ).value_ref()... );
                 },
-                m_deps ) );
+                m_deps.data ) );
         }
         else if constexpr( std::is_invocable_r_v<void, F, event_range<E>, S&, Deps...> )
         {
             std::apply(
-                [this]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                [this, &src_events]( const signal<Deps>&... args ) {
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
-                        event_range<E>( m_events->events() ),
+                        event_range<E>( src_events ),
                         this->m_value,
-                        args->value_ref()... );
+                        get_internals( args ).value_ref()... );
                 },
-                m_deps );
+                m_deps.data );
 
             // Always assume change
-            this->pulse_after_modify();
+            return update_result::changed;
         }
         else
         {
@@ -3425,12 +3870,9 @@ public:
     }
 
 private:
-    using DepHolder = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
-
-    std::shared_ptr<event_stream_node<E>> m_events;
-
+    events<E> m_source;
     F m_func;
-    DepHolder m_deps;
+    signal_pack<Deps...> m_deps;
 };
 
 struct FoldAdaptor : Adaptor
@@ -3491,17 +3933,10 @@ struct FoldAdaptor : Adaptor
         static_assert( !std::is_same_v<Node, signature_mismatches>,
             "fold: Passed function does not match any of the supported signatures" );
 
-        context& context = events.get_context();
+        const context& context = events.get_context();
 
-        auto node_builder = [&context, &events, &init, &func]( const signal<Deps>&... deps ) {
-            return signal<S>( std::make_shared<Node>( context,
-                std::forward<V>( init ),
-                events.get_node(),
-                std::forward<InF>( func ),
-                deps.get_node()... ) );
-        };
-
-        return std::apply( node_builder, dep_pack.data );
+        return detail::create_wrapped_node<signal<S>, Node>(
+            context, std::forward<V>( init ), events, std::forward<InF>( func ), dep_pack );
     }
 
     /*!
@@ -3592,7 +4027,7 @@ struct CollectClosure : AdaptorClosure
 	 *
 	 *  Semantically equivalent of ranges::to
 	 *
-	 *  @warning Use with caution, because there is no way to clear its value, or to ensure it destroyed
+	 *  @warning Use with caution, because there is no way to finalize its value, or to ensure it destroyed
 	 *           because any observer or signal/events node will prolong its lifetime.
 	 */
     template <class E, class Cont = ContT<E>>
@@ -3636,14 +4071,14 @@ UREACT_BEGIN_NAMESPACE
  *  @warning Not to be confused with std::count(from, to, value)
  */
 template <typename S>
-inline constexpr auto count_ = fold( S{}, []( const auto&, S& accum ) { ++accum; } );
+inline constexpr auto count_as = fold( S{}, []( const auto&, S& accum ) { ++accum; } );
 
 /*!
  * @brief Counts amount of received events into signal<size_t>
  *
  *  @warning Not to be confused with std::count(from, to, value)
  */
-inline constexpr auto count = count_<size_t>;
+inline constexpr auto count = count_as<size_t>;
 
 UREACT_END_NAMESPACE
 
@@ -3717,6 +4152,7 @@ struct TakeDropAdaptorBase : Adaptor
     template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const
     {
+        assert( count >= 0 );
         return make_partial<Derived>( count );
     }
 };
@@ -3819,8 +4255,44 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_DROP_WHILE_HPP
 
+#ifndef UREACT_ADAPTOR_ELEMENTS_HPP
+#define UREACT_ADAPTOR_ELEMENTS_HPP
+
+#include <tuple>
+
+
+UREACT_BEGIN_NAMESPACE
+
+/*!
+ * @brief Takes event stream of tuple-like values and creates a new event stream with a value-type of the N-th element of received value-type
+ * 
+ *  For every event e in source, emit t = std::get<N>(e).
+ */
+template <size_t N>
+inline constexpr auto elements = transform( []( const auto& e ) { return std::get<N>( e ); } );
+
+/*!
+ * @brief Takes event stream of tuple-like values and creates a new event stream with a value-type of the first element of received value-type
+ * 
+ *  For every event e in source, emit t = std::get<0>(e).
+ */
+inline constexpr auto keys = elements<0>;
+
+/*!
+ * @brief Takes event stream of tuple-like values and creates a new event stream with a value-type of the second element of received value-type
+ * 
+ *  For every event e in source, emit t = std::get<1>(e).
+ */
+inline constexpr auto values = elements<1>;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_ELEMENTS_HPP
+
 #ifndef UREACT_ADAPTOR_FLATTEN_HPP
 #define UREACT_ADAPTOR_FLATTEN_HPP
+
+#include <memory>
 
 
 UREACT_BEGIN_NAMESPACE
@@ -3838,41 +4310,38 @@ template <typename OuterS, typename InnerS>
 class signal_flatten_node final : public signal_node<InnerS>
 {
 public:
-    signal_flatten_node( context& context,
+    signal_flatten_node( const context& context,
         std::shared_ptr<signal_node<OuterS>> outer,
         std::shared_ptr<signal_node<InnerS>> inner )
         : signal_flatten_node::signal_node( context, inner->value_ref() )
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->attach_to( *m_outer );
-        this->attach_to( *m_inner );
+        this->attach_to( m_outer->get_node_id() );
+        this->attach_to( m_inner->get_node_id() );
     }
 
     ~signal_flatten_node() override
     {
-        this->detach_from( *m_inner );
-        this->detach_from( *m_outer );
+        this->detach_from_all();
     }
 
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
+        const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
+        if( has_changed( new_inner, m_inner ) )
         {
-            const auto& new_inner = m_outer->value_ref().get_node();
-            if( !equal_to( new_inner, m_inner ) )
-            {
-                // Topology has been changed
-                auto old_inner = m_inner;
-                m_inner = new_inner;
+            // Topology has been changed
+            auto old_inner = m_inner;
+            m_inner = new_inner;
 
-                this->dynamic_detach_from( *old_inner );
-                this->dynamic_attach_to( *new_inner );
+            this->detach_from( old_inner->get_node_id() );
+            this->attach_to( new_inner->get_node_id() );
 
-                return;
-            }
+            return update_result::shifted;
         }
 
-        this->pulse_if_value_changed( m_inner->value_ref() );
+        return this->try_change_value( m_inner->value_ref() );
     }
 
 private:
@@ -3884,49 +4353,41 @@ template <typename OuterS, typename InnerE>
 class event_flatten_node final : public event_stream_node<InnerE>
 {
 public:
-    event_flatten_node( context& context,
+    event_flatten_node( const context& context,
         std::shared_ptr<signal_node<OuterS>> outer,
         std::shared_ptr<event_stream_node<InnerE>> inner )
         : event_flatten_node::event_stream_node( context )
         , m_outer( std::move( outer ) )
         , m_inner( std::move( inner ) )
     {
-        this->attach_to( *m_outer );
-        this->attach_to( *m_inner );
+        this->attach_to( m_outer->get_node_id() );
+        this->attach_to( m_inner->get_node_id() );
     }
 
     ~event_flatten_node() override
     {
-        this->detach_from( *m_inner );
-        this->detach_from( *m_outer );
+        this->detach_from_all();
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->set_current_turn_force_update( turn );
-        m_inner->set_current_turn( turn );
-
+        const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
+        if( has_changed( new_inner, m_inner ) )
         {
-            const auto& new_inner = m_outer->value_ref().get_node();
-            if( !equal_to( new_inner, m_inner ) )
-            {
-                new_inner->set_current_turn( turn ); // events specific
+            // Topology has been changed
+            auto old_inner = m_inner;
+            m_inner = new_inner;
 
-                // Topology has been changed
-                auto old_inner = m_inner;
-                m_inner = new_inner;
+            this->detach_from( old_inner->get_node_id() );
+            this->attach_to( new_inner->get_node_id() );
 
-                this->dynamic_detach_from( *old_inner );
-                this->dynamic_attach_to( *new_inner );
-
-                return;
-            }
+            return update_result::shifted;
         }
 
-        this->m_events.insert(
-            this->m_events.end(), m_inner->events().begin(), m_inner->events().end() );
+        this->get_events().insert(
+            this->get_events().end(), m_inner->get_events().begin(), m_inner->get_events().end() );
 
-        this->pulse_if_has_events();
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
@@ -3942,7 +4403,7 @@ struct FlattenClosure : AdaptorClosure
     template <typename InnerS>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<InnerS>& outer ) const
     {
-        context& context = outer.get_context();
+        const context& context = outer.get_context();
 
         using value_t = typename InnerS::value_t;
 
@@ -3959,8 +4420,9 @@ struct FlattenClosure : AdaptorClosure
         static_assert( !std::is_same_v<Node, signature_mismatches>,
             "flatten: Passed signal does not match any of the supported signatures" );
 
-        return InnerS{
-            std::make_shared<Node>( context, outer.get_node(), outer.get().get_node() ) };
+        return detail::create_wrapped_node<InnerS, Node>( context,
+            get_internals( outer ).get_node_ptr(),
+            get_internals( outer.get() ).get_node_ptr() );
     }
 };
 
@@ -4093,7 +4555,7 @@ class signal_op_node final : public signal_node<S>
 {
 public:
     template <typename... Args>
-    explicit signal_op_node( context& context, Args&&... args )
+    explicit signal_op_node( const context& context, Args&&... args )
         : signal_op_node::signal_node( context )
         , m_op( std::forward<Args>( args )... )
     {
@@ -4110,9 +4572,9 @@ public:
         }
     }
 
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->pulse_if_value_changed( evaluate() );
+        return this->try_change_value( evaluate() );
     }
 
     UREACT_WARN_UNUSED_RESULT Op steal_op()
@@ -4162,7 +4624,7 @@ public:
      * @brief Construct a fully functional temp signal
      */
     template <typename... Args>
-    explicit temp_signal( context& context, Args&&... args )
+    explicit temp_signal( const context& context, Args&&... args )
         : temp_signal::signal( std::make_shared<Node>( context, std::forward<Args>( args )... ) )
     {}
 
@@ -4171,9 +4633,9 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT Op steal_op() &&
     {
-        assert( this->m_node.use_count() == 1
+        assert( this->get_node_ptr().use_count() == 1
                 && "temp_signal's node should be uniquely owned, otherwise it is misused" );
-        auto* node_ptr = static_cast<Node*>( this->m_node.get() );
+        auto* node_ptr = static_cast<Node*>( this->get_node_ptr().get() );
         return node_ptr->steal_op();
     }
 
@@ -4182,7 +4644,7 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT bool was_op_stolen() const
     {
-        auto* node_ptr = static_cast<Node*>( this->m_node.get() );
+        auto* node_ptr = static_cast<Node*>( this->get_node_ptr().get() );
         return node_ptr->was_op_stolen();
     }
 };
@@ -4287,10 +4749,11 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, Values...>;
         using Op = function_op<S, F, signal_node_ptr_t<Values>...>;
 
-        context& context = std::get<0>( arg_pack.data ).get_context();
+        const context& context = std::get<0>( arg_pack.data ).get_context();
 
         auto node_builder = [&context, &func]( const signal<Values>&... args ) {
-            return temp_signal<S, Op>{ context, std::forward<InF>( func ), args.get_node()... };
+            return temp_signal<S, Op>{
+                context, std::forward<InF>( func ), get_internals( args ).get_node_ptr()... };
         };
 
         return std::apply( node_builder, arg_pack.data );
@@ -4308,7 +4771,8 @@ struct LiftAdaptor : Adaptor
         using F = std::decay_t<InF>;
         using S = deduce_s<SIn, F, Value>;
         using Op = function_op<S, F, signal_node_ptr_t<Value>>;
-        return temp_signal<S, Op>{ arg.get_context(), std::forward<InF>( func ), arg.get_node() };
+        return temp_signal<S, Op>{
+            arg.get_context(), std::forward<InF>( func ), get_internals( arg ).get_node_ptr() };
     }
 
     /*!
@@ -4402,7 +4866,7 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, RightOp>;
 
-        context& context = lhs.get_context();
+        const context& context = lhs.get_context();
         assert( context == rhs.get_context() );
 
         return temp_signal<S, Op>{ context,
@@ -4429,11 +4893,13 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
-        context& context = lhs.get_context();
+        const context& context = lhs.get_context();
         assert( context == rhs.get_context() );
 
-        return temp_signal<S, Op>{
-            context, std::forward<InF>( func ), std::move( lhs ).steal_op(), rhs.get_node() };
+        return temp_signal<S, Op>{ context,
+            std::forward<InF>( func ),
+            std::move( lhs ).steal_op(),
+            get_internals( rhs ).get_node_ptr() };
     }
 
     /*!
@@ -4454,11 +4920,13 @@ struct LiftAdaptor : Adaptor
         using S = deduce_s<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
-        context& context = lhs.get_context();
+        const context& context = lhs.get_context();
         assert( context == rhs.get_context() );
 
-        return temp_signal<S, Op>{
-            context, std::forward<InF>( func ), lhs.get_node(), std::move( rhs ).steal_op() };
+        return temp_signal<S, Op>{ context,
+            std::forward<InF>( func ),
+            get_internals( lhs ).get_node_ptr(),
+            std::move( rhs ).steal_op() };
     }
 };
 
@@ -4470,7 +4938,7 @@ struct LiftAdaptor : Adaptor
  *  Type of resulting signal should be explicitly specified.
  */
 template <typename SIn = void>
-inline constexpr detail::LiftAdaptor<SIn> lift_;
+inline constexpr detail::LiftAdaptor<SIn> lift_as;
 
 /*!
  * @brief Create a new signal applying function to given signals
@@ -4537,110 +5005,159 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename E, typename... Deps>
-class event_merge_op : public reactive_op_base<Deps...>
+template <typename E, typename... Values>
+class event_merge_node final : public event_stream_node<E>
 {
 public:
-    template <typename... Args>
-    explicit event_merge_op( Args&&... args )
-        : event_merge_op::reactive_op_base( dont_move(), std::forward<Args>( args )... )
-    {}
-
-    UREACT_MAKE_MOVABLE( event_merge_op );
-
-    template <typename Collector>
-    void collect( const turn_type& turn, const Collector& collector ) const
+    explicit event_merge_node( const context& context, const events<Values>&... sources )
+        : event_merge_node::event_stream_node( context )
+        , m_sources( sources... )
     {
-        std::apply( collect_functor<Collector>( turn, collector ), this->m_deps );
+        this->attach_to( sources... );
     }
 
-    template <typename Collector, typename Functor>
-    void collect_rec( const Functor& functor ) const
+    ~event_merge_node() override
     {
-        std::apply( reinterpret_cast<const collect_functor<Collector>&>( functor ), this->m_deps );
+        this->detach_from_all();
+    }
+
+    UREACT_WARN_UNUSED_RESULT update_result update() override
+    {
+        std::apply(
+            [this](
+                const events<Values>&... sources ) { ( this->copy_events_from( sources ), ... ); },
+            m_sources );
+
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
-    template <typename Collector>
-    struct collect_functor
+    template <typename V>
+    void copy_events_from( const events<V>& src )
     {
-        collect_functor( const turn_type& turn, const Collector& collector )
-            : m_turn( turn )
-            , m_collector( collector )
-        {}
+        const auto& src_events = get_internals( src ).get_events();
+        this->get_events().insert( this->get_events().end(), src_events.begin(), src_events.end() );
+    }
 
-        void operator()( const Deps&... deps ) const
-        {
-            ( collect( deps ), ... );
-        }
-
-        template <typename T>
-        void collect( const T& op ) const
-        {
-            op.template collect_rec<Collector>( *this );
-        }
-
-        template <typename T>
-        void collect( const std::shared_ptr<T>& dep_ptr ) const
-        {
-            dep_ptr->set_current_turn( m_turn );
-
-            for( const auto& v : dep_ptr->events() )
-            {
-                m_collector( v );
-            }
-        }
-
-        const turn_type& m_turn;
-        const Collector& m_collector;
-    };
+    std::tuple<events<Values>...> m_sources;
 };
 
-template <typename E>
-class event_stream_node;
-
-template <typename E, typename Op>
-class event_op_node;
-
-template <typename E>
-using event_stream_node_ptr_t = std::shared_ptr<event_stream_node<E>>;
-
+template <typename EIn = void>
 struct MergeAdaptor : Adaptor
 {
+    /// TODO: rewrite to something more sane. Unfortunately conditional_t doesn't work
+    template <typename... Sources>
+    static auto result_type_detector()
+    {
+        if constexpr( std::is_same_v<EIn, void> )
+        {
+            return std::common_type_t<Sources...>{};
+        }
+        else
+        {
+            return EIn{};
+        }
+    }
+
     /*!
 	 * @brief Emit all events in source1, ... sources
 	 *
 	 *  @warning Not to be confused with std::merge() or ranges::merge()
 	 */
-    template <typename Source, typename... Sources, typename E = Source>
+    template <typename Source, typename... Sources>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<Source>& source1, const events<Sources>&... sources ) const
     {
+        using E = decltype( result_type_detector<Source, Sources...>() );
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
-        using Op = event_merge_op<E,
-            event_stream_node_ptr_t<Source>,
-            event_stream_node_ptr_t<Sources>...>;
-
-        context& context = source1.get_context();
-        return events<E>( std::make_shared<event_op_node<E, Op>>(
-            context, source1.get_node(), sources.get_node()... ) );
+        const context& context = source1.get_context();
+        return detail::create_wrapped_node<events<E>, event_merge_node<E, Source, Sources...>>(
+            context, source1, sources... );
     }
 };
 
 } // namespace detail
 
-inline constexpr detail::MergeAdaptor merge;
+inline constexpr detail::MergeAdaptor<> merge;
+
+template <typename EIn>
+inline constexpr detail::MergeAdaptor<EIn> merge_as;
 
 UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_MERGE_HPP
+
+#ifndef UREACT_ADAPTOR_MONITOR_CHANGE_HPP
+#define UREACT_ADAPTOR_MONITOR_CHANGE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct MonitorChangeClosure : AdaptorClosure
+{
+    /*!
+	 * @brief Emits pairs of value changes of signal as events
+	 *
+	 *  When target changes, emit the new value 'e = std::pair(old_value, target.get())'.
+	 */
+    template <typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target ) const
+    {
+        return target //
+             | monitor
+             | transform(
+                 [memento = get_internals( target ).value_ref()]( const S& new_value ) mutable //
+                 {
+                     S old_value = memento;
+                     memento = new_value;
+                     return std::make_pair( std::move( old_value ), new_value );
+                 } );
+    }
+};
+
+} // namespace detail
+
+
+inline constexpr detail::MonitorChangeClosure monitor_change;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_MONITOR_CHANGE_HPP
 
 #ifndef UREACT_ADAPTOR_OBSERVE_HPP
 #define UREACT_ADAPTOR_OBSERVE_HPP
 
 #include <functional>
 
+
+#ifndef UREACT_DETAIL_OBSERVER_NODE_HPP
+#define UREACT_DETAIL_OBSERVER_NODE_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+class observer_node
+    : public node_base
+    , public observer_interface
+{
+public:
+    explicit observer_node( const context& context )
+        : node_base( context )
+    {}
+};
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_OBSERVER_NODE_HPP
 
 #ifndef UREACT_OBSERVER_HPP
 #define UREACT_OBSERVER_HPP
@@ -4795,15 +5312,15 @@ class signal_observer_node final : public observer_node
 public:
     template <typename InF>
     signal_observer_node(
-        context& context, const std::shared_ptr<signal_node<S>>& subject, InF&& func )
+        const context& context, const std::shared_ptr<signal_node<S>>& subject, InF&& func )
         : signal_observer_node::observer_node( context )
         , m_subject( subject )
         , m_func( std::forward<InF>( func ) )
     {
-        this->attach_to( *subject );
+        this->attach_to( subject->get_node_id() );
     }
 
-    void tick( turn_type& ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         bool should_detach = false;
 
@@ -4819,6 +5336,8 @@ public:
         {
             get_graph().queue_observer_for_detach( *this );
         }
+
+        return update_result::unchanged;
     }
 
     void unregister_self() override
@@ -4832,11 +5351,9 @@ public:
 private:
     void detach_observer() override
     {
-        if( auto p = m_subject.lock() )
-        {
-            detach_from( *p );
-            m_subject.reset();
-        }
+        detach_from_all();
+
+        m_subject.reset();
     }
 
     std::weak_ptr<signal_node<S>> m_subject;
@@ -4848,7 +5365,7 @@ class events_observer_node final : public observer_node
 {
 public:
     template <typename InF>
-    events_observer_node( context& context,
+    events_observer_node( const context& context,
         const std::shared_ptr<event_stream_node<E>>& subject,
         InF&& func,
         const std::shared_ptr<signal_node<Deps>>&... deps )
@@ -4857,36 +5374,32 @@ public:
         , m_func( std::forward<InF>( func ) )
         , m_deps( deps... )
     {
-        this->attach_to( *subject );
-        ( this->attach_to( *deps ), ... );
+        this->attach_to( subject->get_node_id() );
+        ( this->attach_to( deps->get_node_id() ), ... );
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         bool should_detach = false;
 
         if( auto p = m_subject.lock() )
         {
-            // Update of this node could be triggered from deps,
-            // so make sure source doesn't contain events from last turn
-            p->set_current_turn( turn );
-
-            {
-                should_detach
-                    = std::apply(
-                          [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
-                              return std::invoke(
-                                  m_func, event_range<E>( p->events() ), args->value_ref()... );
-                          },
-                          m_deps )
-                   == observer_action::stop_and_detach;
-            }
+            should_detach
+                = std::apply(
+                      [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                          return std::invoke(
+                              m_func, event_range<E>( p->get_events() ), args->value_ref()... );
+                      },
+                      m_deps )
+               == observer_action::stop_and_detach;
         }
 
         if( should_detach )
         {
             get_graph().queue_observer_for_detach( *this );
         }
+
+        return update_result::unchanged;
     }
 
     void unregister_self() override
@@ -4901,20 +5414,14 @@ private:
     using DepHolder = std::tuple<std::shared_ptr<signal_node<Deps>>...>;
 
     std::weak_ptr<event_stream_node<E>> m_subject;
-
     F m_func;
     DepHolder m_deps;
 
     void detach_observer() override
     {
-        if( auto p = m_subject.lock() )
-        {
-            detach_from( *p );
+        detach_from_all();
 
-            std::apply( detach_functor<events_observer_node>( *this ), m_deps );
-
-            m_subject.reset();
-        }
+        m_subject.reset();
     }
 };
 
@@ -4933,7 +5440,7 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
         signal_observer_node<S, add_observer_action_next_ret<F>>,
         signal_observer_node<S, F>>;
 
-    const auto& subject_ptr = subject.get_node();
+    const auto& subject_ptr = get_internals( subject ).get_node_ptr();
 
     std::unique_ptr<observer_node> node(
         new Node( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
@@ -4973,14 +5480,16 @@ auto observe_events_impl(
 
     using Node = events_observer_node<E, wrapper_t, Deps...>;
 
-    context& context = subject.get_context();
+    const context& context = subject.get_context();
 
     auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
-        return new Node(
-            context, subject.get_node(), std::forward<InF>( func ), deps.get_node()... );
+        return new Node( context,
+            get_internals( subject ).get_node_ptr(),
+            std::forward<InF>( func ),
+            get_internals( deps ).get_node_ptr()... );
     };
 
-    const auto& subject_node = subject.get_node();
+    const auto& subject_node = get_internals( subject ).get_node_ptr();
 
     std::unique_ptr<observer_node> node( std::apply( node_builder, dep_pack.data ) );
 
@@ -5289,7 +5798,7 @@ struct ReactiveRefAdaptor : Adaptor
         using R = std::invoke_result_t<F, S>;
         using DecayedR = decay_input_t<std::decay_t<R>>;
         return flatten(
-            lift_<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
+            lift_as<DecayedR>( std::forward<Signal>( outer ), std::forward<InF>( func ) ) );
     }
 
     template <typename InF>
@@ -5306,6 +5815,60 @@ inline constexpr detail::ReactiveRefAdaptor reactive_ref;
 UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_REACTIVE_REF_HPP
+
+#ifndef UREACT_ADAPTOR_SLICE_HPP
+#define UREACT_ADAPTOR_SLICE_HPP
+
+#include <type_traits>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct SliceAdaptor : Adaptor
+{
+    /*!
+	 * @brief Keeps first N elements from the source stream
+	 *
+	 *  Semantically equivalent of std::ranges::views::take
+	 */
+    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<E>& source, const N begin, const dont_deduce<N> end ) const
+    {
+        assert( begin >= 0 );
+        assert( end >= begin );
+        return filter( source,                                   //
+            [begin = countdown( begin ), end = countdown( end )] //
+            ( const auto& ) mutable {                            //
+                return end-- && !begin--; // take "end" elements, but skip "begin" of them
+            } );
+    }
+
+    template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const N begin, const dont_deduce<N> end ) const
+    {
+        assert( begin >= 0 );
+        assert( end >= begin );
+        return make_partial<SliceAdaptor>( begin, end );
+    }
+};
+
+} // namespace detail
+
+/*!
+ * @brief Keeps given range of elements from the source stream
+ *
+ *  Semantically equivalent of std::ranges::views::slice
+ */
+inline constexpr detail::SliceAdaptor slice;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_SLICE_HPP
 
 #ifndef UREACT_ADAPTOR_SNAPSHOT_HPP
 #define UREACT_ADAPTOR_SNAPSHOT_HPP
@@ -5353,6 +5916,57 @@ inline constexpr detail::SnapshotAdaptor snapshot;
 UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_SNAPSHOT_HPP
+
+#ifndef UREACT_ADAPTOR_STRIDE_HPP
+#define UREACT_ADAPTOR_STRIDE_HPP
+
+#include <type_traits>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+struct StrideAdaptor : Adaptor
+{
+    /*!
+	 * @brief Advances N elements from the source stream at a time
+	 *
+	 *  Semantically equivalent of std::ranges::views::stride
+	 */
+    template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, const N n ) const
+    {
+        // based on https://stackoverflow.com/a/66839875/9323999
+        assert( n >= 1 );
+        return filter( source,                   //
+            [i = -1, n]( const auto& ) mutable { //
+                i = ( i + 1 ) % n;
+                return !i;
+            } );
+    }
+
+    template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N n ) const
+    {
+        assert( n >= 1 );
+        return make_partial<StrideAdaptor>( n );
+    }
+};
+
+} // namespace detail
+
+/*!
+ * @brief Advances N elements from the source stream at a time
+ *
+ *  Semantically equivalent of std::ranges::views::stride
+ */
+inline constexpr detail::StrideAdaptor stride;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_STRIDE_HPP
 
 #ifndef UREACT_ADAPTOR_TAKE_WHILE_HPP
 #define UREACT_ADAPTOR_TAKE_WHILE_HPP
@@ -5565,93 +6179,74 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename E>
-class event_stream_node;
-
 template <typename... Values>
 class event_zip_node final : public event_stream_node<std::tuple<Values...>>
 {
 public:
-    explicit event_zip_node(
-        context& context, const std::shared_ptr<event_stream_node<Values>>&... sources )
+    explicit event_zip_node( const context& context, const events<Values>&... sources )
         : event_zip_node::event_stream_node( context )
         , m_slots( sources... )
     {
-        ( this->attach_to( *sources ), ... );
+        this->attach_to( sources... );
     }
 
     ~event_zip_node() override
     {
-        std::apply(
-            [this]( slot<Values>&... slots ) { ( this->detach_from( *slots.source ), ... ); },
-            m_slots );
+        this->detach_from_all();
     }
 
-    void tick( turn_type& turn ) override
+    UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        this->set_current_turn_force_update( turn );
+        // Move events into buffers
+        // TODO: move to method
+        std::apply(
+            []( slot<Values>&... slots ) {
+                ( fetch_buffer( slots ), ... ); //
+            },
+            m_slots );
 
-        {
-            // Move events into buffers
-            std::apply( [&turn]( slot<Values>&... slots ) { ( fetch_buffer( turn, slots ), ... ); },
+        // TODO: move to method
+        const auto is_ready = [this]() {
+            return std::apply(
+                []( const slot<Values>&... slots ) {
+                    return ( !slots.buffer.empty() && ... ); //
+                },
                 m_slots );
+        };
 
-            while( true )
-            {
-                bool is_ready = true;
-
-                // All slots ready?
-                std::apply(
-                    [&is_ready]( slot<Values>&... slots ) {
-                        // Todo: combine return values instead
-                        ( check_slot( slots, is_ready ), ... );
-                    },
-                    m_slots );
-
-                if( !is_ready )
-                {
-                    break;
-                }
-
-                // Pop values from buffers and emit tuple
-                std::apply(
-                    [this]( slot<Values>&... slots ) {
-                        this->m_events.emplace_back( slots.buffer.front()... );
-                        ( slots.buffer.pop_front(), ... );
-                    },
-                    m_slots );
-            }
+        while( is_ready() )
+        {
+            // Pop values from buffers and emit tuple
+            // TODO: move to method
+            std::apply(
+                [this]( slot<Values>&... slots ) {
+                    this->get_events().emplace_back( slots.buffer.front()... );
+                    ( slots.buffer.pop_front(), ... );
+                },
+                m_slots );
         }
 
-        this->pulse_if_has_events();
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
     template <typename T>
     struct slot
     {
-        explicit slot( const std::shared_ptr<event_stream_node<T>>& source )
+        explicit slot( const events<T>& source )
             : source( source )
         {}
 
-        std::shared_ptr<event_stream_node<T>> source;
+        events<T> source;
         std::deque<T> buffer;
     };
 
     template <typename T>
-    static void fetch_buffer( turn_type& turn, slot<T>& slot )
+    static void fetch_buffer( slot<T>& slot )
     {
-        slot.source->set_current_turn( turn );
+        const auto& src_events = get_internals( slot.source ).get_events();
 
-        slot.buffer.insert(
-            slot.buffer.end(), slot.source->events().begin(), slot.source->events().end() );
-    }
-
-    template <typename T>
-    static void check_slot( slot<T>& slot, bool& is_ready )
-    {
-        auto t = is_ready && !slot.buffer.empty();
-        is_ready = t;
+        slot.buffer.insert( slot.buffer.end(), src_events.begin(), src_events.end() );
     }
 
     std::tuple<slot<Values>...> m_slots;
@@ -5673,10 +6268,9 @@ struct ZipAdaptor : Adaptor
     {
         static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
 
-        context& context = source1.get_context();
-        return events<std::tuple<Source, Sources...>>(
-            std::make_shared<event_zip_node<Source, Sources...>>(
-                context, source1.get_node(), sources.get_node()... ) );
+        const context& context = source1.get_context();
+        return detail::create_wrapped_node<events<std::tuple<Source, Sources...>>,
+            event_zip_node<Source, Sources...>>( context, source1, sources... );
     }
 };
 
@@ -5756,18 +6350,19 @@ class UREACT_WARN_UNUSED_RESULT transaction
 {
 public:
     explicit transaction( context& ctx )
-        : self( _get_internals( ctx ).get_graph() )
+        : m_context( ctx )
+        , m_self( get_internals( ctx ).get_graph() )
     {
-        ++self.m_transaction_level;
+        ++m_self.m_transaction_level;
     }
 
     ~transaction()
     {
-        --self.m_transaction_level;
+        --m_self.m_transaction_level;
 
-        if( self.m_transaction_level == 0 )
+        if( m_self.m_transaction_level == 0 )
         {
-            self.finalize_transaction();
+            m_self.propagate();
         }
     }
 
@@ -5775,7 +6370,8 @@ private:
     UREACT_MAKE_NONCOPYABLE( transaction );
     UREACT_MAKE_NONMOVABLE( transaction );
 
-    detail::react_graph& self;
+    context m_context;
+    detail::react_graph& m_self;
 };
 
 /*!

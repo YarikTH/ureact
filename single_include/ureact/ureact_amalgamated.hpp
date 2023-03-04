@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.11.0 wip
-// Generated: 2023-03-04 13:09:10.925444
+// Generated: 2023-03-04 14:18:06.546610
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -181,8 +181,8 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     ClassName& operator=( const ClassName& ) = Action
 
 #define UREACT_SETUP_MOVE( ClassName, Action )                                                     \
-    ClassName( ClassName&& ) noexcept = Action;                                                    \
-    ClassName& operator=( ClassName&& ) noexcept = Action
+    ClassName( ClassName&& ) = Action;                                                             \
+    ClassName& operator=( ClassName&& ) = Action
 
 #define UREACT_MAKE_NONCOPYABLE( ClassName ) UREACT_SETUP_COPY( ClassName, delete )
 #define UREACT_MAKE_COPYABLE( ClassName ) UREACT_SETUP_COPY( ClassName, default )
@@ -1911,10 +1911,18 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename Node, typename... Args>
+auto create_node( Args&&... args )
+{
+    auto result = std::make_shared<Node>( std::forward<Args>( args )... );
+    // result->register_self();
+    return result;
+}
+
 template <typename Ret, typename Node, typename... Args>
 Ret create_wrapped_node( Args&&... args )
 {
-    return Ret{ std::make_shared<Node>( std::forward<Args>( args )... ) };
+    return Ret{ create_node<Node>( std::forward<Args>( args )... ) };
 }
 
 class node_base : public reactive_node_interface
@@ -4503,8 +4511,7 @@ public:
         : m_deps( std::forward<Args>( args )... )
     {}
 
-    reactive_op_base( reactive_op_base&& ) noexcept = default;
-    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
+    UREACT_MAKE_MOVABLE( reactive_op_base );
 
     template <typename Node>
     void attach( Node& node ) const
@@ -4625,7 +4632,7 @@ public:
      */
     template <typename... Args>
     explicit temp_signal( const context& context, Args&&... args )
-        : temp_signal::signal( std::make_shared<Node>( context, std::forward<Args>( args )... ) )
+        : temp_signal::signal( detail::create_node<Node>( context, std::forward<Args>( args )... ) )
     {}
 
     /*!
@@ -4671,8 +4678,7 @@ public:
         , m_func( std::forward<InF>( func ) )
     {}
 
-    function_op( function_op&& ) noexcept = default;
-    function_op& operator=( function_op&& ) noexcept = default;
+    UREACT_MAKE_MOVABLE( function_op );
 
     UREACT_WARN_UNUSED_RESULT S evaluate()
     {

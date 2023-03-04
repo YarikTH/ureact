@@ -126,8 +126,8 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
     ClassName& operator=( const ClassName& ) = Action
 
 #define UREACT_SETUP_MOVE( ClassName, Action )                                                     \
-    ClassName( ClassName&& ) noexcept = Action;                                                    \
-    ClassName& operator=( ClassName&& ) noexcept = Action
+    ClassName( ClassName&& ) = Action;                                                             \
+    ClassName& operator=( ClassName&& ) = Action
 
 #define UREACT_MAKE_NONCOPYABLE( ClassName ) UREACT_SETUP_COPY( ClassName, delete )
 #define UREACT_MAKE_COPYABLE( ClassName ) UREACT_SETUP_COPY( ClassName, default )

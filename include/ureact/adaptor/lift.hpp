@@ -35,8 +35,7 @@ public:
         , m_func( std::forward<InF>( func ) )
     {}
 
-    function_op( function_op&& ) noexcept = default;
-    function_op& operator=( function_op&& ) noexcept = default;
+    UREACT_MAKE_MOVABLE( function_op );
 
     UREACT_WARN_UNUSED_RESULT S evaluate()
     {

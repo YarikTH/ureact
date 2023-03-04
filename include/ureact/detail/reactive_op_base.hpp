@@ -29,8 +29,7 @@ public:
         : m_deps( std::forward<Args>( args )... )
     {}
 
-    reactive_op_base( reactive_op_base&& ) noexcept = default;
-    reactive_op_base& operator=( reactive_op_base&& ) noexcept = default;
+    UREACT_MAKE_MOVABLE( reactive_op_base );
 
     template <typename Node>
     void attach( Node& node ) const

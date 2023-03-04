@@ -13,7 +13,7 @@ jobs:
         std: [17]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Create Build Environment
       run: |
@@ -46,7 +46,7 @@ jobs:
         std: [17]
         cxxflags: [-stdlib=libstdc++, -stdlib=libc++]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Create Build Environment
         run: |
@@ -74,7 +74,7 @@ jobs:
   sanitizers:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Create Build Environment
         run: cmake -E make_directory ${{runner.workspace}}/build
@@ -100,7 +100,7 @@ jobs:
   valgrind-memcheck:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Create Build Environment
         run: |

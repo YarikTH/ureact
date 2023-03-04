@@ -225,10 +225,8 @@ function(set_clang_warning_flags result_var_name)
 
     list(APPEND CLANG_WARNING_OPTIONS "-Wdeprecated")
     list(APPEND CLANG_WARNING_OPTIONS "-Wduplicate-enum")
-    list(APPEND CLANG_WARNING_OPTIONS "-Wempty-init-stmt")
     list(APPEND CLANG_WARNING_OPTIONS "-Wexplicit-initialize-call")
     #    list(APPEND CLANG_WARNING_OPTIONS "-Wextra-semi")
-    list(APPEND CLANG_WARNING_OPTIONS "-Wextra-semi-stmt")
     list(APPEND CLANG_WARNING_OPTIONS "-Wfloat-equal")
     list(APPEND CLANG_WARNING_OPTIONS "-Wformat-pedantic")
     list(APPEND CLANG_WARNING_OPTIONS "-Wfour-char-constants")
@@ -255,12 +253,28 @@ function(set_clang_warning_flags result_var_name)
     list(APPEND CLANG_WARNING_OPTIONS "-Wunreachable-code-aggressive")
     list(APPEND CLANG_WARNING_OPTIONS "-Wvariadic-macros")
     list(APPEND CLANG_WARNING_OPTIONS "-Wvector-conversion")
+    if(
+        CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 8.0
+        OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0
+    )
+        list(APPEND CLANG_WARNING_OPTIONS "-Wempty-init-stmt")
+        list(APPEND CLANG_WARNING_OPTIONS "-Wextra-semi-stmt")
+    endif()
 
     list(APPEND CLANG_WARNING_OPTIONS "-Wno-error=float-equal")
     list(APPEND CLANG_WARNING_OPTIONS "-Wno-error=float-conversion")
-    list(APPEND CLANG_WARNING_OPTIONS "-Wno-error=implicit-float-conversion")
     list(APPEND CLANG_WARNING_OPTIONS "-Wno-error=unused-private-field")
     list(APPEND CLANG_WARNING_OPTIONS "-Wno-error=undefined-func-template")
+    if(
+        CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 8.0
+        OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0
+    )
+        list(
+            APPEND
+            CLANG_WARNING_OPTIONS
+            "-Wno-error=implicit-float-conversion"
+        )
+    endif()
 
     set(${result_var_name} "${CLANG_WARNING_OPTIONS}" PARENT_SCOPE)
 endfunction()

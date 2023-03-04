@@ -222,8 +222,7 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
 
     const auto& subject_ptr = get_internals( subject ).get_node_ptr();
 
-    std::unique_ptr<observer_node> node(
-        new Node( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
+    auto node( create_node<Node>( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
     observer_node* raw_node_ptr = node.get();
 
     subject_ptr->register_observer( std::move( node ) );
@@ -263,7 +262,7 @@ auto observe_events_impl(
     const context& context = subject.get_context();
 
     auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
-        return new Node( context,
+        return create_node<Node>( context,
             get_internals( subject ).get_node_ptr(),
             std::forward<InF>( func ),
             get_internals( deps ).get_node_ptr()... );
@@ -271,7 +270,7 @@ auto observe_events_impl(
 
     const auto& subject_node = get_internals( subject ).get_node_ptr();
 
-    std::unique_ptr<observer_node> node( std::apply( node_builder, dep_pack.data ) );
+    auto node( std::apply( node_builder, dep_pack.data ) );
 
     observer_node* raw_node = node.get();
 

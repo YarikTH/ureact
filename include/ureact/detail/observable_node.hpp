@@ -33,7 +33,7 @@ public:
                 p->detach_observer();
     }
 
-    void register_observer( std::unique_ptr<observer_interface>&& obs_ptr )
+    void register_observer( std::shared_ptr<observer_interface>&& obs_ptr )
     {
         m_observers.push_back( std::move( obs_ptr ) );
     }
@@ -52,7 +52,7 @@ public:
     }
 
 private:
-    std::vector<std::unique_ptr<observer_interface>> m_observers;
+    std::vector<std::shared_ptr<observer_interface>> m_observers;
 };
 
 class observable_node

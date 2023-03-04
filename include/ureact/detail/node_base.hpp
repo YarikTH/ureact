@@ -22,10 +22,18 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+template <typename Node, typename... Args>
+auto create_node( Args&&... args )
+{
+    auto result = std::make_shared<Node>( std::forward<Args>( args )... );
+    // result->register_self();
+    return result;
+}
+
 template <typename Ret, typename Node, typename... Args>
 Ret create_wrapped_node( Args&&... args )
 {
-    return Ret{ std::make_shared<Node>( std::forward<Args>( args )... ) };
+    return Ret{ create_node<Node>( std::forward<Args>( args )... ) };
 }
 
 class node_base : public reactive_node_interface

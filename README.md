@@ -2,7 +2,7 @@
 
 <p align="center"><img src="support/data/logo/logo_1.svg"></p>
 
-[![Ubuntu](https://github.com/YarikTH/ureact/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/ubuntu.yml)
+[![Linux](https://github.com/YarikTH/ureact/actions/workflows/linux.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/linux.yml)
 [![Windows](https://github.com/YarikTH/ureact/actions/workflows/windows.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/windows.yml)
 [![MacOS](https://github.com/YarikTH/ureact/actions/workflows/macos.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/macos.yml)
 [![CodeQL](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml)

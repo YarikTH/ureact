@@ -1,50 +1,22 @@
 name: "Ubuntu"
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
-  gcc-10:
+  build:
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
-        cxx: [g++-10]
-        build_type: [Release]
-        std: [17]
+        cxx: [ g++-10, clang++-9 ]
+        build_type: [ Debug, Release ]
+        std: [ 17 ]
+        include:
+          - cxx: clang++-9
+            build_type: Debug
+            cxxflags: -stdlib=libc++
+            install: sudo apt install clang-9 libc++-9-dev libc++abi-9-dev
 
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Create Build Environment
-      run: |
-        ${{matrix.install}}
-        cmake -E make_directory ${{runner.workspace}}/build
-    - name: Configure
-      working-directory: ${{runner.workspace}}/build
-      env:
-        CXX: ${{matrix.cxx}}
-      run: |
-        cmake --warn-uninitialized \
-              -D CMAKE_BUILD_TYPE=${{matrix.build_type}} \
-              -D CMAKE_CXX_STANDARD=${{matrix.std}} \
-              -D UREACT_PEDANTIC:BOOL=y \
-              -D UREACT_WERROR:BOOL=y \
-              $GITHUB_WORKSPACE
-    - name: Build
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config ${{matrix.build_type}}
-    - name: Test
-      working-directory: ${{runner.workspace}}/build
-      run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure
-
-  clang-9:
-    runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        cxx: [clang++-9]
-        build_type: [Release]
-        std: [17]
-        cxxflags: [-stdlib=libstdc++, -stdlib=libc++]
     steps:
       - uses: actions/checkout@v3
 
@@ -52,6 +24,7 @@ jobs:
         run: |
           ${{matrix.install}}
           cmake -E make_directory ${{runner.workspace}}/build
+
       - name: Configure
         working-directory: ${{runner.workspace}}/build
         env:
@@ -64,9 +37,11 @@ jobs:
                 -D UREACT_PEDANTIC:BOOL=y \
                 -D UREACT_WERROR:BOOL=y \
                 $GITHUB_WORKSPACE
+
       - name: Build
         working-directory: ${{runner.workspace}}/build
         run: cmake --build . --config ${{matrix.build_type}}
+
       - name: Test
         working-directory: ${{runner.workspace}}/build
         run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure

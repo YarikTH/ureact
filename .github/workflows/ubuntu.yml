@@ -9,19 +9,51 @@ jobs:
       fail-fast: false
       matrix:
         label: [ "" ]
-        cxx: [ g++-10, clang++-9 ]
+        cxx: [ g++-10, clang++-10 ]
         build_type: [ Debug, Release ]
         std: [ 17 ]
         include:
-          - cxx: clang++-9
+          - cxx: g++-7
             build_type: Debug
+            std: 17
+            install: sudo apt-get install g++-7
+          - cxx: g++-11
+            build_type: Debug
+            std: 20
+            install: sudo apt-get install g++-11
+
+          - cxx: clang++-6.0
+            build_type: Debug
+            std: 17
+            install: sudo apt-get install clang-6.0
+          - cxx: clang++-7
+            build_type: Debug
+            std: 17
             cxxflags: -stdlib=libc++
-            install: sudo apt-get install clang-9 libc++-9-dev libc++abi-9-dev
+            install: sudo apt-get install clang-7 libc++-7-dev libc++abi-7-dev
+          - cxx: clang++-7
+            build_type: Release
+            std: 17
+            install: sudo apt-get install clang-7
+          - cxx: clang++-10
+            cxxflags: -stdlib=libc++
+            install: sudo apt-get install clang-10 libc++-10-dev libc++abi-10-dev
+          - cxx: clang++-11
+            build_type: Debug
+            std: 20
+            cxxflags: -stdlib=libc++
+            install: sudo apt-get install clang-11 libc++-11-dev libc++abi-11-dev
+          - cxx: clang++-11
+            build_type: Release
+            std: 20
+            install: sudo apt-get install clang-11
+
           - label: sanitizers
             cxx: clang++-12
             build_type: Debug
             std: 20
             cxxflags: -O1 -g -fsanitize=address,undefined,leak,integer -fno-omit-frame-pointer -fno-optimize-sibling-calls
+
           - label: valgrind-memcheck
             cxx: g++-10
             build_type: Debug

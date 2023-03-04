@@ -7,7 +7,16 @@
 //
 #include "ureact/adaptor/merge.hpp"
 
-#include <variant>
+// clang-6 is supported by ureact, but it doesn't have working version of std::variant
+#if !defined( __clang__ ) || __clang_major__ >= 7
+#    define HAS_WORKING_VARIANT true
+#else
+#    define HAS_WORKING_VARIANT false
+#endif
+
+#if HAS_WORKING_VARIANT
+#    include <variant>
+#endif
 
 #include "doctest_extra.h"
 #include "ureact/adaptor/collect.hpp"
@@ -58,6 +67,7 @@ TEST_CASE( "MergeSeveralTypes" )
     CHECK( result.get() == expected );
 }
 
+#if HAS_WORKING_VARIANT
 TEST_CASE( "MergeAs" )
 {
     ureact::context ctx;
@@ -77,3 +87,4 @@ TEST_CASE( "MergeAs" )
     const std::vector<merged_type> expected = { 1, 5, "wtf?" };
     CHECK( result.get() == expected );
 }
+#endif

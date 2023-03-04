@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.10.1](https://github.com/YarikTH/ureact/releases/tag/0.10.1) (2023-03-04)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.10.0...0.10.1)
+
+Upgrade CI scripts and fix code to work with old gcc-7 and clang-6 compilers.
+
+- Improve CI scripts for Linux.
+  Move to Ubuntu 22.04 because 20.04 image will be removed soon.
+  Add linux build configurations in `[gcc-7; gcc-11]` and `[clang-6; clang-11]`
+  ranges.
+- Fix build for older compilators. In particular by removing explicit `noexcept`
+  specifications for move constructors.
+  Older compilators don't mark all used std classes as nothrow movable, so it
+  conflicts with explicit `noexcept` specification from ureact.
+
 ## [0.10.0](https://github.com/YarikTH/ureact/releases/tag/0.10.0) (2023-02-27)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.9.0...0.10.0)

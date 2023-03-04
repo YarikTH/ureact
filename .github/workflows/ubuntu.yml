@@ -4,19 +4,24 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         cxx: [ g++-10, clang++-9 ]
         build_type: [ Debug, Release ]
         std: [ 17 ]
+        os: [ ubuntu-18.04 ]
         include:
           - cxx: clang++-9
             build_type: Debug
             cxxflags: -stdlib=libc++
             install: sudo apt install clang-9 libc++-9-dev libc++abi-9-dev
-
+          - cxx: clang++-12
+            build_type: Debug
+            std: 20
+            cxxflags: -O1 -g -fsanitize=address,undefined,leak,integer -fno-omit-frame-pointer -fno-optimize-sibling-calls
+            os: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
 
@@ -40,37 +45,11 @@ jobs:
 
       - name: Build
         working-directory: ${{runner.workspace}}/build
-        run: cmake --build . --config ${{matrix.build_type}}
+        run: cmake --build . --config ${{matrix.build_type}} -- -j `nproc`
 
       - name: Test
         working-directory: ${{runner.workspace}}/build
-        run: ctest -j 10 -C ${{matrix.build_type}} --output-on-failure
-
-  sanitizers:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Create Build Environment
-        run: cmake -E make_directory ${{runner.workspace}}/build
-      - name: Configure
-        working-directory: ${{runner.workspace}}/build
-        env:
-          CXX: clang++-12
-          CXXFLAGS: -O1 -g -fsanitize=address,undefined,leak,integer -fno-omit-frame-pointer -fno-optimize-sibling-calls
-        run: |
-          cmake --warn-uninitialized \
-                -D CMAKE_BUILD_TYPE=Debug \
-                -D CMAKE_CXX_STANDARD=20 \
-                -D UREACT_PEDANTIC:BOOL=y \
-                -D UREACT_WERROR:BOOL=y \
-                $GITHUB_WORKSPACE
-      - name: Build
-        working-directory: ${{runner.workspace}}/build
-        run: cmake --build . --config Debug -- -j `nproc`
-      - name: Test
-        working-directory: ${{runner.workspace}}/build
-        run: ctest -C Debug --output-on-failure
+        run: ctest -C ${{matrix.build_type}} --output-on-failure
 
   valgrind-memcheck:
     runs-on: ubuntu-20.04

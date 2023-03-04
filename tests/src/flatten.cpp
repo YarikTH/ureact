@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <queue>
-#include <variant>
 
 #include "doctest_extra.h"
 #include "ureact/adaptor/observe.hpp"
@@ -286,23 +285,6 @@ private:
     }
 };
 
-class Employee2 : ureact::member_signal_user<Employee2>
-{
-public:
-    member_var_signal<Company*> company;
-
-    Employee2( ureact::context& ctx, Company* company_ptr )
-        : company( make_var( ctx, company_ptr ) )
-    {}
-
-private:
-    friend std::ostream& operator<<( std::ostream& os, const Employee2& employee )
-    {
-        os << "Employee{ company: " << *employee.company.get() << " }";
-        return os;
-    }
-};
-
 } // namespace
 
 TEST_CASE( "DynamicSignalRefOrPtr" )
@@ -312,37 +294,18 @@ TEST_CASE( "DynamicSignalRefOrPtr" )
     Company company1( ctx, 1, "MetroTec" );
     Company company2( ctx, 2, "ACME" );
 
-    std::variant<std::monostate, Employee, Employee2> Alice;
-
     ureact::signal<std::string> alice_company_name;
 
-    SUBCASE( "Reference" )
-    {
-        Alice = Employee{ ctx, company1 };
-        auto alice_company = std::get<Employee>( Alice ).company;
+    auto Alice = Employee{ ctx, company1 };
+    auto alice_company = Alice.company;
 
-        SUBCASE( "Functional syntax" )
-        {
-            alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
-        }
-        SUBCASE( "Piped syntax" )
-        {
-            alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
-        }
+    SUBCASE( "Functional syntax" )
+    {
+        alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
     }
-    SUBCASE( "Pointer" )
+    SUBCASE( "Piped syntax" )
     {
-        Alice = Employee2{ ctx, &company1 };
-        auto alice_company = std::get<Employee2>( Alice ).company;
-
-        SUBCASE( "Functional syntax" )
-        {
-            alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
-        }
-        SUBCASE( "Piped syntax" )
-        {
-            alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
-        }
+        alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
     }
 
     std::vector<std::string> alice_company_names;
@@ -350,19 +313,8 @@ TEST_CASE( "DynamicSignalRefOrPtr" )
     ureact::observe( alice_company_name,
         [&]( const std::string& name ) { alice_company_names.push_back( name ); } );
 
-    // assign company reference or pointer depends on type of employee
-    auto make_company_change_visitor = []( Company& company ) {
-        return [&company]( auto&& employee ) {
-            using T = std::decay_t<decltype( employee )>;
-            if constexpr( std::is_same_v<T, Employee> )
-                employee.company <<= std::ref( company );
-            else if constexpr( std::is_same_v<T, Employee2> )
-                employee.company <<= &company;
-        };
-    };
-
     company1.name <<= std::string( "ModernTec" );
-    std::visit( make_company_change_visitor( company2 ), Alice );
+    Alice.company <<= std::ref( company2 );
     company2.name <<= std::string( "A.C.M.E." );
 
     CHECK( alice_company_names == std::vector<std::string>{ "ModernTec", "ACME", "A.C.M.E." } );

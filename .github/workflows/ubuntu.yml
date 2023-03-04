@@ -8,6 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        label: [ "" ]
         cxx: [ g++-10, clang++-9 ]
         build_type: [ Debug, Release ]
         std: [ 17 ]
@@ -17,12 +18,14 @@ jobs:
             build_type: Debug
             cxxflags: -stdlib=libc++
             install: sudo apt-get install clang-9 libc++-9-dev libc++abi-9-dev
-          - cxx: clang++-12
+          - label: sanitizers
+            cxx: clang++-12
             build_type: Debug
             std: 20
             cxxflags: -O1 -g -fsanitize=address,undefined,leak,integer -fno-omit-frame-pointer -fno-optimize-sibling-calls
             os: ubuntu-20.04
-          - cxx: g++-10
+          - label: valgrind-memcheck
+            cxx: g++-10
             build_type: Debug
             std: 17
             cxxflags: -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls

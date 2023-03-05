@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.11.0 wip
-// Generated: 2023-03-04 20:54:35.757662
+// Generated: 2023-03-05 22:42:47.130344
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -1218,8 +1218,6 @@ class observer_interface
 public:
     virtual ~observer_interface() = default;
 
-    virtual void unregister_self() = 0;
-
 private:
     virtual void detach_observer() = 0;
 
@@ -1321,6 +1319,12 @@ public:
 
         // If free indices appeared at the end of allocated range, remove them from list
         shake_free_indices();
+    }
+
+    /// Return if there is any element inside
+    UREACT_WARN_UNUSED_RESULT bool empty() const
+    {
+        return !total_size();
     }
 
     /// Clear the data, leave capacity intact
@@ -1483,28 +1487,6 @@ class transaction;
 namespace detail
 {
 
-/// Utility class to defer self detach of observers
-class deferred_observer_detacher
-{
-public:
-    void queue_observer_for_detach( observer_interface& obs )
-    {
-        m_detached_observers.push_back( &obs );
-    }
-
-protected:
-    void detach_queued_observers()
-    {
-        for( observer_interface* o : m_detached_observers )
-        {
-            o->unregister_self();
-        }
-        m_detached_observers.clear();
-    }
-
-    std::vector<observer_interface*> m_detached_observers;
-};
-
 #if !defined( NDEBUG )
 /// Utility class to check if callbacks passed in lift(), process() etc
 /// are used properly
@@ -1564,59 +1546,203 @@ private:
 #endif
 
 class react_graph
-    : public deferred_observer_detacher
 #if !defined( NDEBUG )
-    , public callback_sanitizer
+    : public callback_sanitizer
 #endif
 {
 public:
     react_graph() = default;
+    ~react_graph();
 
-    node_id register_node( reactive_node_interface* nodePtr );
+    node_id register_node();
+    void register_node_ptr( node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr );
     void unregister_node( node_id nodeId );
 
     void attach_node( node_id nodeId, node_id parentId );
     void detach_node( node_id nodeId, node_id parentId );
 
-    void push_input( node_id nodeId )
-    {
-        m_changed_inputs.add( nodeId );
-
-        if( m_transaction_level == 0 )
-        {
-            propagate();
-        }
-    }
+    void push_input( node_id nodeId );
 
 private:
     friend class ureact::transaction;
 
-    void propagate()
+    struct node_data
     {
-        // Fill update queue with successors of changed inputs
-        for( node_id nodeId : m_changed_inputs )
-        {
-            auto& node = m_node_data[nodeId];
-            auto* nodePtr = node.node_ptr;
+        UREACT_MAKE_NONCOPYABLE( node_data );
+        UREACT_MAKE_MOVABLE( node_data );
 
+        node_data() = default;
+
+        int level = 0;
+        int new_level = 0;
+        bool queued = false;
+
+        std::weak_ptr<reactive_node_interface> node_ptr;
+
+        node_id_vector successors;
+    };
+
+    class topological_queue
+    {
+    public:
+        using value_type = node_id;
+
+        topological_queue() = default;
+
+        void push( const value_type& value, const int level )
+        {
+            m_queue_data.emplace_back( value, level );
+        }
+
+        bool fetch_next();
+
+        UREACT_WARN_UNUSED_RESULT const std::vector<value_type>& next_values() const
+        {
+            return m_next_data;
+        }
+
+        UREACT_WARN_UNUSED_RESULT bool empty() const
+        {
+            return m_queue_data.empty() && m_next_data.empty();
+        }
+
+    private:
+        using entry = std::pair<value_type, int>;
+
+        std::vector<value_type> m_next_data;
+        std::vector<entry> m_queue_data;
+    };
+
+    UREACT_WARN_UNUSED_RESULT bool can_unregister_node() const;
+
+    void propagate();
+
+    void recalculate_successor_levels( node_data& node );
+
+    void schedule_successors( node_data& node );
+
+    void unregister_queued_nodes();
+
+    slot_map<node_data> m_node_data;
+
+    topological_queue m_scheduled_nodes;
+
+    int m_transaction_level = 0;
+
+    bool m_propagation_is_in_progress = false;
+
+    node_id_vector m_changed_inputs;
+
+    // local to propagate. Moved here to not reallocate
+    node_id_vector m_changed_nodes;
+
+    node_id_vector m_nodes_queued_for_unregister;
+};
+
+inline react_graph::~react_graph()
+{
+    assert( m_node_data.empty() );
+    assert( m_scheduled_nodes.empty() );
+    assert( m_transaction_level == 0 );
+    assert( m_propagation_is_in_progress == false );
+    assert( m_changed_inputs.empty() );
+    assert( m_changed_nodes.empty() );
+    assert( m_nodes_queued_for_unregister.empty() );
+}
+
+inline node_id react_graph::register_node()
+{
+    return node_id{ m_node_data.insert( {} ) };
+}
+
+inline void react_graph::register_node_ptr(
+    node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr )
+{
+    auto& node = m_node_data[nodeId];
+    assert( nodePtr.use_count() > 0 );
+    node.node_ptr = nodePtr;
+}
+
+inline void react_graph::unregister_node( node_id nodeId )
+{
+    assert( m_node_data[nodeId].successors.empty() );
+    if( can_unregister_node() )
+        m_node_data.erase( nodeId );
+    else
+        m_nodes_queued_for_unregister.add( nodeId );
+}
+
+inline void react_graph::attach_node( node_id nodeId, node_id parentId )
+{
+    auto& node = m_node_data[nodeId];
+    auto& parent = m_node_data[parentId];
+
+    parent.successors.add( nodeId );
+
+    if( node.level <= parent.level )
+    {
+        node.level = parent.level + 1;
+    }
+}
+
+inline void react_graph::detach_node( node_id nodeId, node_id parentId )
+{
+    auto& parent = m_node_data[parentId];
+    auto& successors = parent.successors;
+
+    successors.remove( nodeId );
+}
+
+inline void react_graph::push_input( node_id nodeId )
+{
+    assert( !m_propagation_is_in_progress );
+
+    m_changed_inputs.add( nodeId );
+
+    if( m_transaction_level == 0 )
+    {
+        propagate();
+    }
+}
+
+UREACT_WARN_UNUSED_RESULT inline bool react_graph::can_unregister_node() const
+{
+    return m_transaction_level == 0 && !m_propagation_is_in_progress;
+}
+
+inline void react_graph::propagate()
+{
+    m_propagation_is_in_progress = true;
+
+    // Fill update queue with successors of changed inputs
+    for( node_id nodeId : m_changed_inputs )
+    {
+        auto& node = m_node_data[nodeId];
+        if( auto nodePtr = node.node_ptr.lock() )
+        {
             const update_result result = nodePtr->update();
 
             if( result == update_result::changed )
             {
-                m_changed_nodes.push_back( nodePtr );
+                m_changed_nodes.add( nodeId );
                 schedule_successors( node );
             }
-        }
-        m_changed_inputs.clear();
-
-        // Propagate changes
-        while( m_scheduled_nodes.fetch_next() )
-        {
-            for( node_id nodeId : m_scheduled_nodes.next_values() )
+            else
             {
-                auto& node = m_node_data[nodeId];
-                auto* nodePtr = node.node_ptr;
+                assert( result == update_result::unchanged );
+            }
+        }
+    }
+    m_changed_inputs.clear();
 
+    // Propagate changes
+    while( m_scheduled_nodes.fetch_next() )
+    {
+        for( node_id nodeId : m_scheduled_nodes.next_values() )
+        {
+            auto& node = m_node_data[nodeId];
+            if( auto nodePtr = node.node_ptr.lock() )
+            {
                 // A predecessor of this node has shifted to a lower level?
                 if( node.level < node.new_level )
                 {
@@ -1641,91 +1767,69 @@ private:
 
                 if( result == update_result::changed )
                 {
-                    m_changed_nodes.push_back( nodePtr );
+                    m_changed_nodes.add( nodeId );
                     schedule_successors( node );
                 }
-
-                node.queued = false;
             }
+
+            node.queued = false;
         }
-
-        // Cleanup buffers in changed nodes etc
-        for( reactive_node_interface* nodePtr : m_changed_nodes )
-            nodePtr->finalize();
-        m_changed_nodes.clear();
-
-        detach_queued_observers();
     }
 
-    struct node_data
+    // Cleanup buffers in changed nodes etc
+    for( node_id nodeId : m_changed_nodes )
     {
-        UREACT_MAKE_NONCOPYABLE( node_data );
-        UREACT_MAKE_MOVABLE( node_data );
-
-        explicit node_data( reactive_node_interface* node_ptr )
-            : node_ptr( node_ptr )
-        {}
-
-        int level = 0;
-        int new_level = 0;
-        bool queued = false;
-
-        reactive_node_interface* node_ptr = nullptr;
-
-        node_id_vector successors;
-    };
-
-    class topological_queue
-    {
-    public:
-        using value_type = node_id;
-
-        topological_queue() = default;
-
-        void push( const value_type& value, const int level )
+        auto& node = m_node_data[nodeId];
+        if( auto nodePtr = node.node_ptr.lock() )
         {
-            m_queue_data.emplace_back( value, level );
+            nodePtr->finalize();
         }
+    }
+    m_changed_nodes.clear();
 
-        bool fetch_next();
+    // TODO: think about allowing adding new inputs and looping for them
+    assert( m_changed_inputs.empty() );
 
-        UREACT_WARN_UNUSED_RESULT const std::vector<value_type>& next_values() const
-        {
-            return m_next_data;
-        }
+    m_propagation_is_in_progress = false;
 
-    private:
-        using entry = std::pair<value_type, int>;
-
-        std::vector<value_type> m_next_data;
-        std::vector<entry> m_queue_data;
-    };
-
-    void recalculate_successor_levels( node_data& node );
-
-    void schedule_successors( node_data& node );
-
-    slot_map<node_data> m_node_data;
-
-    topological_queue m_scheduled_nodes;
-
-    int m_transaction_level = 0;
-
-    node_id_vector m_changed_inputs;
-
-    // local to propagate. Moved here to not reallocate
-    std::vector<reactive_node_interface*> m_changed_nodes;
-};
-
-inline node_id react_graph::register_node( reactive_node_interface* nodePtr )
-{
-    return node_id{ m_node_data.insert( node_data{ nodePtr } ) };
+    unregister_queued_nodes();
 }
 
-inline void react_graph::unregister_node( node_id nodeId )
+inline void react_graph::recalculate_successor_levels( node_data& node )
 {
-    assert( m_node_data[nodeId].successors.empty() );
-    m_node_data.erase( nodeId );
+    for( node_id successorId : node.successors )
+    {
+        auto& successor = m_node_data[successorId];
+
+        if( successor.new_level <= node.level )
+        {
+            successor.new_level = node.level + 1;
+        }
+    }
+}
+
+inline void react_graph::schedule_successors( node_data& node )
+{
+    // add children to queue
+    for( node_id successorId : node.successors )
+    {
+        auto& successor = m_node_data[successorId];
+
+        if( !successor.queued )
+        {
+            successor.queued = true;
+            m_scheduled_nodes.push( successorId, successor.level );
+        }
+    }
+}
+
+inline void react_graph::unregister_queued_nodes()
+{
+    assert( !m_propagation_is_in_progress );
+
+    for( node_id nodeId : m_nodes_queued_for_unregister )
+        unregister_node( nodeId );
+    m_nodes_queued_for_unregister.clear();
 }
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()
@@ -1765,59 +1869,13 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     return !m_next_data.empty();
 }
 
-inline void react_graph::attach_node( node_id nodeId, node_id parentId )
-{
-    auto& node = m_node_data[nodeId];
-    auto& parent = m_node_data[parentId];
-
-    parent.successors.add( nodeId );
-
-    if( node.level <= parent.level )
-    {
-        node.level = parent.level + 1;
-    }
-}
-
-inline void react_graph::detach_node( node_id nodeId, node_id parentId )
-{
-    auto& parent = m_node_data[parentId];
-    auto& successors = parent.successors;
-
-    successors.remove( nodeId );
-}
-
-inline void react_graph::schedule_successors( node_data& node )
-{
-    // add children to queue
-    for( node_id successorId : node.successors )
-    {
-        auto& successor = m_node_data[successorId];
-
-        if( !successor.queued )
-        {
-            successor.queued = true;
-            m_scheduled_nodes.push( successorId, successor.level );
-        }
-    }
-}
-
-inline void react_graph::recalculate_successor_levels( node_data& node )
-{
-    for( node_id successorId : node.successors )
-    {
-        auto& successor = m_node_data[successorId];
-
-        if( successor.new_level <= node.level )
-        {
-            successor.new_level = node.level + 1;
-        }
-    }
-}
-
 class context_internals
 {
 public:
-    context_internals() = default;
+    explicit context_internals(
+        std::shared_ptr<detail::react_graph> graph = std::make_shared<react_graph>() )
+        : m_graph_ptr( std::move( graph ) )
+    {}
 
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
     {
@@ -1830,7 +1888,7 @@ public:
     }
 
 private:
-    std::shared_ptr<react_graph> m_graph_ptr = std::make_shared<react_graph>();
+    std::shared_ptr<react_graph> m_graph_ptr;
 };
 
 } // namespace detail
@@ -1840,6 +1898,13 @@ UREACT_END_NAMESPACE
 #endif // UREACT_DETAIL_GRAPH_IMPL_HPP
 
 UREACT_BEGIN_NAMESPACE
+
+class context;
+
+namespace default_context
+{
+context get();
+}
 
 /*!
  * @brief Core class that connects all reactive nodes together.
@@ -1889,11 +1954,54 @@ public:
     {
         return ctx;
     }
+
+private:
+    friend context default_context::get();
+
+    /*!
+     * @brief Construct @ref context from given react_graph
+     */
+    explicit context( std::shared_ptr<detail::react_graph> graph )
+        : detail::context_internals( std::move( graph ) )
+    {}
 };
 
 UREACT_END_NAMESPACE
 
 #endif //UREACT_CONTEXT_HPP
+
+#ifndef UREACT_DEFAULT_CONTEXT_HPP
+#define UREACT_DEFAULT_CONTEXT_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace default_context
+{
+
+/**
+ * @brief Return default context
+ * Default contexts are thread_local
+ */
+inline context get()
+{
+    thread_local static std::weak_ptr<detail::react_graph> s_instance;
+
+    auto graphPtr = s_instance.lock();
+
+    if( !graphPtr )
+    {
+        s_instance = graphPtr = std::make_shared<detail::react_graph>();
+    }
+
+    return context{ std::move( graphPtr ) };
+}
+
+} // namespace default_context
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_DEFAULT_CONTEXT_HPP
 
 #ifndef UREACT_DETAIL_OBSERVABLE_NODE_HPP
 #define UREACT_DETAIL_OBSERVABLE_NODE_HPP
@@ -1915,7 +2023,9 @@ template <typename Node, typename... Args>
 auto create_node( Args&&... args )
 {
     auto result = std::make_shared<Node>( std::forward<Args>( args )... );
-    // result->register_self();
+    node_id id = result->get_node_id();
+    react_graph& graph = get_internals( result->get_context() ).get_graph();
+    graph.register_node_ptr( id, result );
     return result;
 }
 
@@ -1932,7 +2042,7 @@ public:
         : m_context( std::move( context ) )
     {
         assert( !get_graph().is_locked() && "Can't create node from callback" );
-        m_id = get_graph().register_node( this );
+        m_id = get_graph().register_node();
     }
 
     ~node_base() override
@@ -2046,7 +2156,7 @@ public:
                 p->detach_observer();
     }
 
-    void register_observer( std::unique_ptr<observer_interface>&& obs_ptr )
+    void register_observer( std::shared_ptr<observer_interface>&& obs_ptr )
     {
         m_observers.push_back( std::move( obs_ptr ) );
     }
@@ -2065,7 +2175,7 @@ public:
     }
 
 private:
-    std::vector<std::unique_ptr<observer_interface>> m_observers;
+    std::vector<std::shared_ptr<observer_interface>> m_observers;
 };
 
 class observable_node
@@ -2601,6 +2711,29 @@ UREACT_WARN_UNUSED_RESULT auto make_never( const context& context ) -> events<E>
     assert( !get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
     return detail::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
 }
+
+namespace default_context
+{
+
+/*!
+ * @brief Create a new event source node and links it to the returned event_source instance
+ */
+template <typename E = unit>
+UREACT_WARN_UNUSED_RESULT auto make_source() -> event_source<E>
+{
+    return make_source<E>( default_context::get() );
+}
+
+/*!
+ * @brief Create a new events node and links it to the returned events instance
+ */
+template <typename E = unit>
+UREACT_WARN_UNUSED_RESULT auto make_never() -> events<E>
+{
+    return make_never<E>( default_context::get() );
+}
+
+} // namespace default_context
 
 UREACT_END_NAMESPACE
 
@@ -3634,6 +3767,29 @@ UREACT_WARN_UNUSED_RESULT auto make_const( const context& context, V&& value ) -
     assert( !get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
+
+namespace default_context
+{
+
+/*!
+ * @brief Create a new input signal node and links it to the returned var_signal instance
+ */
+template <typename V>
+UREACT_WARN_UNUSED_RESULT auto make_var( V&& value )
+{
+    return make_var( default_context::get(), std::forward<V>( value ) );
+}
+
+/*!
+ * @brief Create a new signal node and links it to the returned signal instance
+ */
+template <typename V>
+UREACT_WARN_UNUSED_RESULT auto make_const( V&& value )
+{
+    return make_const( default_context::get(), std::forward<V>( value ) );
+}
+
+} // namespace default_context
 
 UREACT_END_NAMESPACE
 
@@ -5328,30 +5484,15 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        bool should_detach = false;
-
-        if( auto p = m_subject.lock() )
+        if( auto subject = m_subject.lock() )
         {
-            if( std::invoke( m_func, p->value_ref() ) == observer_action::stop_and_detach )
-            {
-                should_detach = true;
-            }
-        }
+            const observer_action action = std::invoke( m_func, subject->value_ref() );
 
-        if( should_detach )
-        {
-            get_graph().queue_observer_for_detach( *this );
+            if( action == observer_action::stop_and_detach )
+                subject->unregister_observer( this );
         }
 
         return update_result::unchanged;
-    }
-
-    void unregister_self() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            p->unregister_observer( this );
-        }
     }
 
 private:
@@ -5386,34 +5527,24 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        bool should_detach = false;
-
-        if( auto p = m_subject.lock() )
+        if( auto subject = m_subject.lock() )
         {
-            should_detach
-                = std::apply(
-                      [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
-                          return std::invoke(
-                              m_func, event_range<E>( p->get_events() ), args->value_ref()... );
-                      },
-                      m_deps )
-               == observer_action::stop_and_detach;
-        }
+            const event_range<E> subject_events{ subject->get_events() };
 
-        if( should_detach )
-        {
-            get_graph().queue_observer_for_detach( *this );
+            if( !subject_events.empty() )
+            {
+                const observer_action action = std::apply(
+                    [this, &subject_events]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                        return std::invoke( m_func, subject_events, args->value_ref()... );
+                    },
+                    m_deps );
+
+                if( action == observer_action::stop_and_detach )
+                    subject->unregister_observer( this );
+            }
         }
 
         return update_result::unchanged;
-    }
-
-    void unregister_self() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            p->unregister_observer( this );
-        }
     }
 
 private:
@@ -5448,8 +5579,7 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
 
     const auto& subject_ptr = get_internals( subject ).get_node_ptr();
 
-    std::unique_ptr<observer_node> node(
-        new Node( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
+    auto node( create_node<Node>( subject.get_context(), subject_ptr, std::forward<InF>( func ) ) );
     observer_node* raw_node_ptr = node.get();
 
     subject_ptr->register_observer( std::move( node ) );
@@ -5489,7 +5619,7 @@ auto observe_events_impl(
     const context& context = subject.get_context();
 
     auto node_builder = [&context, &subject, &func]( const signal<Deps>&... deps ) {
-        return new Node( context,
+        return create_node<Node>( context,
             get_internals( subject ).get_node_ptr(),
             std::forward<InF>( func ),
             get_internals( deps ).get_node_ptr()... );
@@ -5497,7 +5627,7 @@ auto observe_events_impl(
 
     const auto& subject_node = get_internals( subject ).get_node_ptr();
 
-    std::unique_ptr<observer_node> node( std::apply( node_builder, dep_pack.data ) );
+    auto node( std::apply( node_builder, dep_pack.data ) );
 
     observer_node* raw_node = node.get();
 

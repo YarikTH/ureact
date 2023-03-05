@@ -147,15 +147,19 @@ public:
     {
         if( auto subject = m_subject.lock() )
         {
-            const observer_action action = std::apply(
-                [this, &subject]( const std::shared_ptr<signal_node<Deps>>&... args ) {
-                    return std::invoke(
-                        m_func, event_range<E>( subject->get_events() ), args->value_ref()... );
-                },
-                m_deps );
+            const event_range<E> subject_events{ subject->get_events() };
 
-            if( action == observer_action::stop_and_detach )
-                subject->unregister_observer( this );
+            if( !subject_events.empty() )
+            {
+                const observer_action action = std::apply(
+                    [this, &subject_events]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                        return std::invoke( m_func, subject_events, args->value_ref()... );
+                    },
+                    m_deps );
+
+                if( action == observer_action::stop_and_detach )
+                    subject->unregister_observer( this );
+            }
         }
 
         return update_result::unchanged;

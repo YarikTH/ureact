@@ -121,6 +121,15 @@ class react_graph
 public:
     react_graph() = default;
 
+    ~react_graph()
+    {
+        assert( m_node_data.empty() );
+        assert( m_scheduled_nodes.empty() );
+        assert( m_transaction_level == 0 );
+        assert( m_changed_inputs.empty() );
+        assert( m_changed_nodes.empty() );
+    }
+
     node_id register_node( reactive_node_interface* nodePtr );
     void unregister_node( node_id nodeId );
 

@@ -100,6 +100,12 @@ public:
         shake_free_indices();
     }
 
+    /// Return if there is any element inside
+    UREACT_WARN_UNUSED_RESULT bool empty() const
+    {
+        return !total_size();
+    }
+
     /// Clear the data, leave capacity intact
     void clear()
     {

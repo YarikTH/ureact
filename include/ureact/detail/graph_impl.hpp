@@ -122,7 +122,8 @@ public:
     react_graph() = default;
     ~react_graph();
 
-    node_id register_node( reactive_node_interface* nodePtr );
+    node_id register_node();
+    void register_node_ptr( node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr );
     void unregister_node( node_id nodeId );
 
     void attach_node( node_id nodeId, node_id parentId );
@@ -138,15 +139,13 @@ private:
         UREACT_MAKE_NONCOPYABLE( node_data );
         UREACT_MAKE_MOVABLE( node_data );
 
-        explicit node_data( reactive_node_interface* node_ptr )
-            : node_ptr( node_ptr )
-        {}
+        node_data() = default;
 
         int level = 0;
         int new_level = 0;
         bool queued = false;
 
-        reactive_node_interface* node_ptr = nullptr;
+        std::weak_ptr<reactive_node_interface> node_ptr;
 
         node_id_vector successors;
     };
@@ -182,11 +181,15 @@ private:
         std::vector<entry> m_queue_data;
     };
 
+    UREACT_WARN_UNUSED_RESULT bool can_unregister_node() const;
+
     void propagate();
 
     void recalculate_successor_levels( node_data& node );
 
     void schedule_successors( node_data& node );
+
+    void unregister_queued_nodes();
 
     slot_map<node_data> m_node_data;
 
@@ -199,7 +202,9 @@ private:
     node_id_vector m_changed_inputs;
 
     // local to propagate. Moved here to not reallocate
-    std::vector<reactive_node_interface*> m_changed_nodes;
+    node_id_vector m_changed_nodes;
+
+    node_id_vector m_nodes_queued_for_unregister;
 };
 
 inline react_graph::~react_graph()
@@ -210,17 +215,29 @@ inline react_graph::~react_graph()
     assert( m_propagation_is_in_progress == false );
     assert( m_changed_inputs.empty() );
     assert( m_changed_nodes.empty() );
+    assert( m_nodes_queued_for_unregister.empty() );
 }
 
-inline node_id react_graph::register_node( reactive_node_interface* nodePtr )
+inline node_id react_graph::register_node()
 {
-    return node_id{ m_node_data.insert( node_data{ nodePtr } ) };
+    return node_id{ m_node_data.insert( {} ) };
+}
+
+inline void react_graph::register_node_ptr(
+    node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr )
+{
+    auto& node = m_node_data[nodeId];
+    assert( nodePtr.use_count() > 0 );
+    node.node_ptr = nodePtr;
 }
 
 inline void react_graph::unregister_node( node_id nodeId )
 {
     assert( m_node_data[nodeId].successors.empty() );
-    m_node_data.erase( nodeId );
+    if( can_unregister_node() )
+        m_node_data.erase( nodeId );
+    else
+        m_nodes_queued_for_unregister.add( nodeId );
 }
 
 inline void react_graph::attach_node( node_id nodeId, node_id parentId )
@@ -256,6 +273,11 @@ inline void react_graph::push_input( node_id nodeId )
     }
 }
 
+UREACT_WARN_UNUSED_RESULT inline bool react_graph::can_unregister_node() const
+{
+    return m_transaction_level == 0 && !m_propagation_is_in_progress;
+}
+
 inline void react_graph::propagate()
 {
     m_propagation_is_in_progress = true;
@@ -264,14 +286,19 @@ inline void react_graph::propagate()
     for( node_id nodeId : m_changed_inputs )
     {
         auto& node = m_node_data[nodeId];
-        auto* nodePtr = node.node_ptr;
-
-        const update_result result = nodePtr->update();
-
-        if( result == update_result::changed )
+        if( auto nodePtr = node.node_ptr.lock() )
         {
-            m_changed_nodes.push_back( nodePtr );
-            schedule_successors( node );
+            const update_result result = nodePtr->update();
+
+            if( result == update_result::changed )
+            {
+                m_changed_nodes.add( nodeId );
+                schedule_successors( node );
+            }
+            else
+            {
+                assert( result == update_result::unchanged );
+            }
         }
     }
     m_changed_inputs.clear();
@@ -282,34 +309,35 @@ inline void react_graph::propagate()
         for( node_id nodeId : m_scheduled_nodes.next_values() )
         {
             auto& node = m_node_data[nodeId];
-            auto* nodePtr = node.node_ptr;
-
-            // A predecessor of this node has shifted to a lower level?
-            if( node.level < node.new_level )
+            if( auto nodePtr = node.node_ptr.lock() )
             {
-                // Re-schedule this node
-                node.level = node.new_level;
+                // A predecessor of this node has shifted to a lower level?
+                if( node.level < node.new_level )
+                {
+                    // Re-schedule this node
+                    node.level = node.new_level;
 
-                recalculate_successor_levels( node );
-                m_scheduled_nodes.push( nodeId, node.level );
-                continue;
-            }
+                    recalculate_successor_levels( node );
+                    m_scheduled_nodes.push( nodeId, node.level );
+                    continue;
+                }
 
-            const update_result result = nodePtr->update();
+                const update_result result = nodePtr->update();
 
-            // Topology changed?
-            if( result == update_result::shifted )
-            {
-                // Re-schedule this node
-                recalculate_successor_levels( node );
-                m_scheduled_nodes.push( nodeId, node.level );
-                continue;
-            }
+                // Topology changed?
+                if( result == update_result::shifted )
+                {
+                    // Re-schedule this node
+                    recalculate_successor_levels( node );
+                    m_scheduled_nodes.push( nodeId, node.level );
+                    continue;
+                }
 
-            if( result == update_result::changed )
-            {
-                m_changed_nodes.push_back( nodePtr );
-                schedule_successors( node );
+                if( result == update_result::changed )
+                {
+                    m_changed_nodes.add( nodeId );
+                    schedule_successors( node );
+                }
             }
 
             node.queued = false;
@@ -317,13 +345,23 @@ inline void react_graph::propagate()
     }
 
     // Cleanup buffers in changed nodes etc
-    for( reactive_node_interface* nodePtr : m_changed_nodes )
-        nodePtr->finalize();
+    for( node_id nodeId : m_changed_nodes )
+    {
+        auto& node = m_node_data[nodeId];
+        if( auto nodePtr = node.node_ptr.lock() )
+        {
+            nodePtr->finalize();
+        }
+    }
     m_changed_nodes.clear();
+
+    // TODO: think about allowing adding new inputs and looping for them
+    assert( m_changed_inputs.empty() );
 
     m_propagation_is_in_progress = false;
 
     detach_queued_observers();
+    unregister_queued_nodes();
 }
 
 inline void react_graph::recalculate_successor_levels( node_data& node )
@@ -352,6 +390,15 @@ inline void react_graph::schedule_successors( node_data& node )
             m_scheduled_nodes.push( successorId, successor.level );
         }
     }
+}
+
+inline void react_graph::unregister_queued_nodes()
+{
+    assert( !m_propagation_is_in_progress );
+
+    for( node_id nodeId : m_nodes_queued_for_unregister )
+        unregister_node( nodeId );
+    m_nodes_queued_for_unregister.clear();
 }
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()

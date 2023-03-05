@@ -26,7 +26,9 @@ template <typename Node, typename... Args>
 auto create_node( Args&&... args )
 {
     auto result = std::make_shared<Node>( std::forward<Args>( args )... );
-    // result->register_self();
+    node_id id = result->get_node_id();
+    react_graph& graph = get_internals( result->get_context() ).get_graph();
+    graph.register_node_ptr( id, result );
     return result;
 }
 
@@ -43,7 +45,7 @@ public:
         : m_context( std::move( context ) )
     {
         assert( !get_graph().is_locked() && "Can't create node from callback" );
-        m_id = get_graph().register_node( this );
+        m_id = get_graph().register_node();
     }
 
     ~node_base() override

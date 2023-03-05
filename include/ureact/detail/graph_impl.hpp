@@ -194,6 +194,8 @@ private:
 
     int m_transaction_level = 0;
 
+    bool m_propagation_is_in_progress = false;
+
     node_id_vector m_changed_inputs;
 
     // local to propagate. Moved here to not reallocate
@@ -205,6 +207,7 @@ inline react_graph::~react_graph()
     assert( m_node_data.empty() );
     assert( m_scheduled_nodes.empty() );
     assert( m_transaction_level == 0 );
+    assert( m_propagation_is_in_progress == false );
     assert( m_changed_inputs.empty() );
     assert( m_changed_nodes.empty() );
 }
@@ -243,6 +246,8 @@ inline void react_graph::detach_node( node_id nodeId, node_id parentId )
 
 inline void react_graph::push_input( node_id nodeId )
 {
+    assert( !m_propagation_is_in_progress );
+
     m_changed_inputs.add( nodeId );
 
     if( m_transaction_level == 0 )
@@ -253,6 +258,8 @@ inline void react_graph::push_input( node_id nodeId )
 
 inline void react_graph::propagate()
 {
+    m_propagation_is_in_progress = true;
+
     // Fill update queue with successors of changed inputs
     for( node_id nodeId : m_changed_inputs )
     {
@@ -313,6 +320,8 @@ inline void react_graph::propagate()
     for( reactive_node_interface* nodePtr : m_changed_nodes )
         nodePtr->finalize();
     m_changed_nodes.clear();
+
+    m_propagation_is_in_progress = false;
 
     detach_queued_observers();
 }

@@ -13,6 +13,7 @@
 #include <type_traits>
 
 #include <ureact/context.hpp>
+#include <ureact/default_context.hpp>
 #include <ureact/detail/observable_node.hpp>
 #include <ureact/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/unit.hpp>
@@ -534,6 +535,29 @@ UREACT_WARN_UNUSED_RESULT auto make_never( const context& context ) -> events<E>
     assert( !get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
     return detail::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
 }
+
+namespace default_context
+{
+
+/*!
+ * @brief Create a new event source node and links it to the returned event_source instance
+ */
+template <typename E = unit>
+UREACT_WARN_UNUSED_RESULT auto make_source() -> event_source<E>
+{
+    return make_source<E>( default_context::get() );
+}
+
+/*!
+ * @brief Create a new events node and links it to the returned events instance
+ */
+template <typename E = unit>
+UREACT_WARN_UNUSED_RESULT auto make_never() -> events<E>
+{
+    return make_never<E>( default_context::get() );
+}
+
+} // namespace default_context
 
 UREACT_END_NAMESPACE
 

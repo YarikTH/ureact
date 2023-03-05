@@ -11,6 +11,7 @@
 #define UREACT_SIGNAL_HPP
 
 #include <ureact/context.hpp>
+#include <ureact/default_context.hpp>
 #include <ureact/detail/observable_node.hpp>
 #include <ureact/has_changed.hpp>
 #include <ureact/type_traits.hpp>
@@ -614,6 +615,29 @@ UREACT_WARN_UNUSED_RESULT auto make_const( const context& context, V&& value ) -
     assert( !get_internals( context ).get_graph().is_locked() && "Can't make const from callback" );
     return make_var_impl( context, std::forward<V>( value ) );
 }
+
+namespace default_context
+{
+
+/*!
+ * @brief Create a new input signal node and links it to the returned var_signal instance
+ */
+template <typename V>
+UREACT_WARN_UNUSED_RESULT auto make_var( V&& value )
+{
+    return make_var( default_context::get(), std::forward<V>( value ) );
+}
+
+/*!
+ * @brief Create a new signal node and links it to the returned signal instance
+ */
+template <typename V>
+UREACT_WARN_UNUSED_RESULT auto make_const( V&& value )
+{
+    return make_const( default_context::get(), std::forward<V>( value ) );
+}
+
+} // namespace default_context
 
 UREACT_END_NAMESPACE
 

@@ -15,6 +15,13 @@
 
 UREACT_BEGIN_NAMESPACE
 
+class context;
+
+namespace default_context
+{
+context get();
+}
+
 /*!
  * @brief Core class that connects all reactive nodes together.
  *
@@ -63,6 +70,16 @@ public:
     {
         return ctx;
     }
+
+private:
+    friend context default_context::get();
+
+    /*!
+     * @brief Construct @ref context from given react_graph
+     */
+    explicit context( std::shared_ptr<detail::react_graph> graph )
+        : detail::context_internals( std::move( graph ) )
+    {}
 };
 
 UREACT_END_NAMESPACE

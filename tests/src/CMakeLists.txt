@@ -16,6 +16,7 @@ target_sources(
         collect.cpp
         context.cpp
         count.cpp
+        default_context.cpp
         detail.cpp
         elements.cpp
         event_emitter.cpp

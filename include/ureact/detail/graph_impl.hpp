@@ -32,28 +32,6 @@ class transaction;
 namespace detail
 {
 
-/// Utility class to defer self detach of observers
-class deferred_observer_detacher
-{
-public:
-    void queue_observer_for_detach( observer_interface& obs )
-    {
-        m_detached_observers.push_back( &obs );
-    }
-
-protected:
-    void detach_queued_observers()
-    {
-        for( observer_interface* o : m_detached_observers )
-        {
-            o->unregister_self();
-        }
-        m_detached_observers.clear();
-    }
-
-    std::vector<observer_interface*> m_detached_observers;
-};
-
 #if !defined( NDEBUG )
 /// Utility class to check if callbacks passed in lift(), process() etc
 /// are used properly
@@ -113,9 +91,8 @@ private:
 #endif
 
 class react_graph
-    : public deferred_observer_detacher
 #if !defined( NDEBUG )
-    , public callback_sanitizer
+    : public callback_sanitizer
 #endif
 {
 public:
@@ -360,7 +337,6 @@ inline void react_graph::propagate()
 
     m_propagation_is_in_progress = false;
 
-    detach_queued_observers();
     unregister_queued_nodes();
 }
 

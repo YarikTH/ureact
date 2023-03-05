@@ -102,30 +102,15 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        bool should_detach = false;
-
-        if( auto p = m_subject.lock() )
+        if( auto subject = m_subject.lock() )
         {
-            if( std::invoke( m_func, p->value_ref() ) == observer_action::stop_and_detach )
-            {
-                should_detach = true;
-            }
-        }
+            const observer_action action = std::invoke( m_func, subject->value_ref() );
 
-        if( should_detach )
-        {
-            get_graph().queue_observer_for_detach( *this );
+            if( action == observer_action::stop_and_detach )
+                subject->unregister_observer( this );
         }
 
         return update_result::unchanged;
-    }
-
-    void unregister_self() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            p->unregister_observer( this );
-        }
     }
 
 private:
@@ -160,34 +145,20 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        bool should_detach = false;
-
-        if( auto p = m_subject.lock() )
+        if( auto subject = m_subject.lock() )
         {
-            should_detach
-                = std::apply(
-                      [this, &p]( const std::shared_ptr<signal_node<Deps>>&... args ) {
-                          return std::invoke(
-                              m_func, event_range<E>( p->get_events() ), args->value_ref()... );
-                      },
-                      m_deps )
-               == observer_action::stop_and_detach;
-        }
+            const observer_action action = std::apply(
+                [this, &subject]( const std::shared_ptr<signal_node<Deps>>&... args ) {
+                    return std::invoke(
+                        m_func, event_range<E>( subject->get_events() ), args->value_ref()... );
+                },
+                m_deps );
 
-        if( should_detach )
-        {
-            get_graph().queue_observer_for_detach( *this );
+            if( action == observer_action::stop_and_detach )
+                subject->unregister_observer( this );
         }
 
         return update_result::unchanged;
-    }
-
-    void unregister_self() override
-    {
-        if( auto p = m_subject.lock() )
-        {
-            p->unregister_observer( this );
-        }
     }
 
 private:

@@ -123,8 +123,6 @@ class observer_interface
 public:
     virtual ~observer_interface() = default;
 
-    virtual void unregister_self() = 0;
-
 private:
     virtual void detach_observer() = 0;
 

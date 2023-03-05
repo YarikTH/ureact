@@ -243,6 +243,11 @@ private:
             return m_next_data;
         }
 
+        UREACT_WARN_UNUSED_RESULT bool empty() const
+        {
+            return m_queue_data.empty() && m_next_data.empty();
+        }
+
     private:
         using entry = std::pair<value_type, int>;
 

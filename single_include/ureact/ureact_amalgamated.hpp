@@ -10,7 +10,7 @@
 //
 // ----------------------------------------------------------------
 // Ureact v0.11.0 wip
-// Generated: 2023-03-05 22:42:47.130344
+// Generated: 2023-03-08 16:33:11.240554
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -1120,13 +1120,20 @@ namespace detail
 class node_id
 {
 public:
+    using context_id_type = size_t;
     using value_type = size_t;
 
     node_id() = default;
 
-    explicit node_id( value_type id )
-        : m_id( id )
+    node_id( context_id_type context_id, value_type id )
+        : m_context_id( context_id )
+        , m_id( id )
     {}
+
+    context_id_type context_id() const
+    {
+        return m_context_id;
+    }
 
     operator value_type() // NOLINT
     {
@@ -1135,15 +1142,16 @@ public:
 
     bool operator==( node_id other ) const noexcept
     {
-        return m_id == other.m_id;
+        return m_context_id == other.m_context_id && m_id == other.m_id;
     }
 
     bool operator!=( node_id other ) const noexcept
     {
-        return m_id != other.m_id;
+        return !operator==( other );
     }
 
 private:
+    context_id_type m_context_id = -1;
     value_type m_id = -1;
 };
 
@@ -1613,6 +1621,8 @@ private:
         std::vector<entry> m_queue_data;
     };
 
+    UREACT_WARN_UNUSED_RESULT static node_id::context_id_type create_context_id();
+
     UREACT_WARN_UNUSED_RESULT bool can_unregister_node() const;
 
     void propagate();
@@ -1622,6 +1632,8 @@ private:
     void schedule_successors( node_data& node );
 
     void unregister_queued_nodes();
+
+    node_id::context_id_type m_id = create_context_id();
 
     slot_map<node_data> m_node_data;
 
@@ -1652,20 +1664,24 @@ inline react_graph::~react_graph()
 
 inline node_id react_graph::register_node()
 {
-    return node_id{ m_node_data.insert( {} ) };
+    return node_id{ m_id, m_node_data.insert( {} ) };
 }
 
 inline void react_graph::register_node_ptr(
     node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr )
 {
-    auto& node = m_node_data[nodeId];
+    assert( nodeId.context_id() == m_id );
     assert( nodePtr.use_count() > 0 );
+
+    auto& node = m_node_data[nodeId];
     node.node_ptr = nodePtr;
 }
 
 inline void react_graph::unregister_node( node_id nodeId )
 {
+    assert( nodeId.context_id() == m_id );
     assert( m_node_data[nodeId].successors.empty() );
+
     if( can_unregister_node() )
         m_node_data.erase( nodeId );
     else
@@ -1674,6 +1690,9 @@ inline void react_graph::unregister_node( node_id nodeId )
 
 inline void react_graph::attach_node( node_id nodeId, node_id parentId )
 {
+    assert( nodeId.context_id() == m_id );
+    assert( parentId.context_id() == m_id );
+
     auto& node = m_node_data[nodeId];
     auto& parent = m_node_data[parentId];
 
@@ -1687,6 +1706,9 @@ inline void react_graph::attach_node( node_id nodeId, node_id parentId )
 
 inline void react_graph::detach_node( node_id nodeId, node_id parentId )
 {
+    assert( nodeId.context_id() == m_id );
+    assert( parentId.context_id() == m_id );
+
     auto& parent = m_node_data[parentId];
     auto& successors = parent.successors;
 
@@ -1703,6 +1725,12 @@ inline void react_graph::push_input( node_id nodeId )
     {
         propagate();
     }
+}
+
+inline node_id::context_id_type react_graph::create_context_id()
+{
+    static node_id::context_id_type s_next_id = 1u;
+    return s_next_id++;
 }
 
 UREACT_WARN_UNUSED_RESULT inline bool react_graph::can_unregister_node() const

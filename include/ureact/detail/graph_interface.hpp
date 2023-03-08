@@ -25,13 +25,20 @@ namespace detail
 class node_id
 {
 public:
+    using context_id_type = size_t;
     using value_type = size_t;
 
     node_id() = default;
 
-    explicit node_id( value_type id )
-        : m_id( id )
+    node_id( context_id_type context_id, value_type id )
+        : m_context_id( context_id )
+        , m_id( id )
     {}
+
+    context_id_type context_id() const
+    {
+        return m_context_id;
+    }
 
     operator value_type() // NOLINT
     {
@@ -40,15 +47,16 @@ public:
 
     bool operator==( node_id other ) const noexcept
     {
-        return m_id == other.m_id;
+        return m_context_id == other.m_context_id && m_id == other.m_id;
     }
 
     bool operator!=( node_id other ) const noexcept
     {
-        return m_id != other.m_id;
+        return !operator==( other );
     }
 
 private:
+    context_id_type m_context_id = -1;
     value_type m_id = -1;
 };
 

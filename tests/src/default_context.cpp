@@ -9,33 +9,61 @@
 
 #include "doctest_extra.h"
 #include "ureact/adaptor/collect.hpp"
+#include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/merge.hpp"
+#include "ureact/adaptor/monitor.hpp"
 #include "ureact/events.hpp"
 #include "ureact/signal.hpp"
+#include "ureact/transaction.hpp"
 
-TEST_CASE( "DefaultContext" )
+TEST_CASE( "DefaultContextSignal" )
 {
     using namespace ureact::default_context;
 
+    ureact::var_signal src1 = make_var( 1 );
+    ureact::signal src2 = make_const( 2 );
+    ureact::signal result = src1 + src2;
+
+    CHECK( result.get() == 3 );
+    src1 <<= 2;
+    CHECK( result.get() == 4 );
+}
+
+TEST_CASE( "DefaultContextEvents" )
+{
+    using namespace ureact::default_context;
+
+    ureact::event_source src = make_source<int>();
+    ureact::events nev = make_never<int>();
+    ureact::events events = ureact::merge( src, nev );
+    ureact::signal result = ureact::collect<std::vector>( events );
+
+    src << 1 << 2 << 3;
+    CHECK( result.get() == std::vector{ 1, 2, 3 } );
+}
+
+TEST_CASE( "DefaultContextTransaction" )
+{
+    using namespace ureact::default_context;
+
+    ureact::var_signal src = make_var( 1 );
+    ureact::signal src_values = ureact::monitor( src ) | ureact::collect<std::vector>;
+
+    SUBCASE( "transaction" )
     {
-        ureact::var_signal var = make_var( 1 );
-        CHECK( var.get() == 1 );
-        var <<= 2;
-        CHECK( var.get() == 2 );
+        transaction _;
+        src <<= 2;
+        src <<= 1;
+        src <<= 4;
+    }
+    SUBCASE( "do_transaction" )
+    {
+        do_transaction( [&]() { //
+            src <<= 2;
+            src <<= 1;
+            src <<= 4;
+        } );
     }
 
-    {
-        auto cnst = make_const( 2 );
-        CHECK( cnst.get() == 2 );
-    }
-
-    {
-        auto src = make_source<int>();
-        auto nev = make_never<int>();
-        auto events = ureact::merge( src, nev );
-        auto result = ureact::collect<std::vector>( events );
-
-        src << 1 << 2 << 3;
-        CHECK( result.get() == std::vector{ 1, 2, 3 } );
-    }
+    CHECK( src_values.get() == std::vector{ 4 } );
 }

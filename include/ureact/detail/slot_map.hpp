@@ -17,6 +17,7 @@
 
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
+#include <ureact/detail/memory.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -26,9 +27,6 @@ namespace detail
 /// A simple slot map
 /// insert returns the slot index, which stays valid until the element is erased
 /// TODO: test it thoroughly
-/// TODO: there is a lot of places where placement new and placement delete are performed
-///       need to use std::construct_at and std::destroy_at or their backports instead
-/// TODO: maybe std::launder should be used instead of just reinterpret_cast
 template <typename T>
 class slot_map
 {
@@ -54,14 +52,14 @@ public:
     reference operator[]( size_type index )
     {
         assert( has_index( index ) );
-        return reinterpret_cast<reference>( m_data[index] );
+        return *at( index );
     }
 
     /// Returns a reference to the element at specified slot index. No bounds checking is performed.
     const_reference operator[]( size_type index ) const
     {
         assert( has_index( index ) );
-        return reinterpret_cast<const_reference>( m_data[index] );
+        return *at( index );
     }
 
     /// Insert new object, return its index
@@ -93,7 +91,7 @@ public:
             m_free_indices[m_free_size++] = index;
         }
 
-        reinterpret_cast<reference>( m_data[index] ).~value_type();
+        destroy_at( index );
         --m_size;
 
         // If free indices appeared at the end of allocated range, remove them from list
@@ -112,7 +110,7 @@ public:
         const size_type size = total_size();
         size_type index = 0;
 
-        // Skip over free indices.
+        // Skip over sorted free indices.
         for( size_type j = 0; j < m_free_size; ++j )
         {
             size_type free_index = m_free_indices[j];
@@ -126,14 +124,16 @@ public:
                 }
                 else
                 {
-                    reinterpret_cast<reference>( m_data[index] ).~value_type();
+                    destroy_at( index );
                 }
             }
         }
 
         // Rest
         for( ; index < size; ++index )
-            reinterpret_cast<reference>( m_data[index] ).~value_type();
+        {
+            destroy_at( index );
+        }
 
         m_size = 0;
         m_free_size = 0;
@@ -154,8 +154,7 @@ private:
     static inline constexpr size_t initial_capacity = 8;
     static inline constexpr size_t grow_factor = 2;
 
-    using storage_type =
-        typename std::aligned_storage<sizeof( value_type ), alignof( value_type )>::type;
+    using storage_type = std::aligned_storage_t<sizeof( value_type ), alignof( value_type )>;
 
     UREACT_WARN_UNUSED_RESULT bool is_at_full_capacity() const
     {
@@ -211,15 +210,15 @@ private:
         // Allocate new storage
         const size_type new_capacity = calculate_next_capacity();
 
-        std::unique_ptr<storage_type[]> new_data{ new storage_type[new_capacity] };
-        std::unique_ptr<size_type[]> new_free_indices{ new size_type[new_capacity] };
+        auto new_data = std::make_unique<storage_type[]>( new_capacity );
+        auto new_free_indices = std::make_unique<size_type[]>( new_capacity );
 
         // Move data to new storage
         for( size_type i = 0; i < m_capacity; ++i )
         {
-            new( reinterpret_cast<value_type*>( &new_data[i] ) )
-                value_type{ std::move( reinterpret_cast<reference>( m_data[i] ) ) };
-            reinterpret_cast<reference>( m_data[i] ).~value_type();
+            detail::construct_at(
+                reinterpret_cast<value_type*>( &new_data[i] ), std::move( *at( i ) ) );
+            destroy_at( i );
         }
 
         // Free list is empty if we are at max capacity anyway
@@ -232,17 +231,33 @@ private:
 
     size_type insert_at_back( value_type&& value )
     {
-        new( &m_data[m_size] ) value_type( std::move( value ) );
+        construct_at( m_size, std::move( value ) );
         return m_size++;
     }
 
     size_type insert_at_freed_slot( value_type&& value )
     {
         const size_type next_free_index = m_free_indices[--m_free_size];
-        new( &m_data[next_free_index] ) value_type( std::move( value ) );
+        construct_at( next_free_index, std::move( value ) );
         ++m_size;
 
         return next_free_index;
+    }
+
+    value_type* at( size_type index )
+    {
+        return detail::launder( reinterpret_cast<value_type*>( &m_data[index] ) );
+    }
+
+    template <class... Args>
+    void construct_at( const size_type index, Args&&... args )
+    {
+        detail::construct_at( at( index ), std::forward<Args>( args )... );
+    }
+
+    void destroy_at( const size_type index )
+    {
+        detail::destroy_at( at( index ) );
     }
 
     std::unique_ptr<storage_type[]> m_data;

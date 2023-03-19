@@ -146,7 +146,7 @@ public:
     {
         clear();
 
-        m_data.reset();
+        m_storage.reset();
         m_free_indices.reset();
 
         m_capacity = 0;
@@ -246,7 +246,16 @@ private:
     static inline constexpr size_t initial_capacity = 8;
     static inline constexpr size_t grow_factor = 2;
 
-    using storage_type = std::aligned_storage_t<sizeof( value_type ), alignof( value_type )>;
+    union storage_type
+    {
+        value_type data;
+
+        storage_type()
+        {}
+
+        ~storage_type()
+        {}
+    };
 
     UREACT_WARN_UNUSED_RESULT size_type calculate_next_capacity() const
     {
@@ -271,28 +280,29 @@ private:
         // Allocate new storage
         const size_type new_capacity = calculate_next_capacity();
 
-        auto new_data = std::make_unique<storage_type[]>( new_capacity );
+        auto new_storage = std::make_unique<storage_type[]>( new_capacity );
 
         // Move data to new storage
         // TODO: maybe should be replaced with std::uninitialized_move_n?
         for( size_type i = 0; i < m_capacity; ++i )
         {
-            detail::construct_at(
-                reinterpret_cast<value_type*>( &new_data[i] ), std::move( *at( i ) ) );
-            destroy_at( i );
+            value_type* dst = std::addressof( new_storage[i].data );
+            value_type* src = std::addressof( m_storage[i].data );
+            detail::construct_at( dst, std::move( *src ) );
+            detail::destroy_at( src );
         }
 
         // Free list is empty if we are at max capacity anyway
 
         // Use new storage
-        m_data = std::move( new_data );
+        m_storage = std::move( new_storage );
         m_free_indices = free_indices{ new_capacity };
         m_capacity = new_capacity;
     }
 
     value_type* at( size_type index )
     {
-        return detail::launder( reinterpret_cast<value_type*>( &m_data[index] ) );
+        return std::addressof( m_storage[index].data );
     }
 
     template <class... Args>
@@ -306,7 +316,7 @@ private:
         detail::destroy_at( at( index ) );
     }
 
-    std::unique_ptr<storage_type[]> m_data;
+    std::unique_ptr<storage_type[]> m_storage;
     free_indices m_free_indices;
 
     size_type m_size = 0;

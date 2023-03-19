@@ -201,7 +201,7 @@ inline react_graph::~react_graph()
 
 inline node_id react_graph::register_node()
 {
-    return node_id{ m_id, m_node_data.insert( {} ) };
+    return node_id{ m_id, m_node_data.emplace() };
 }
 
 inline void react_graph::register_node_ptr(

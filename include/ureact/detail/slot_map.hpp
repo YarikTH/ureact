@@ -10,6 +10,7 @@
 #ifndef UREACT_DETAIL_SLOT_MAP_HPP
 #define UREACT_DETAIL_SLOT_MAP_HPP
 
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <type_traits>
@@ -62,22 +63,25 @@ public:
         return *at( index );
     }
 
-    /// Insert new object, return its index
-    UREACT_WARN_UNUSED_RESULT size_type insert( value_type value )
+    /// Emplace new object, return its index
+    template <class... Args>
+    UREACT_WARN_UNUSED_RESULT size_type emplace( Args&&... args )
     {
-        if( is_at_full_capacity() )
-        {
-            grow();
-            return insert_at_back( std::move( value ) );
-        }
-        else if( has_free_indices() )
-        {
-            return insert_at_freed_slot( std::move( value ) );
-        }
-        else
-        {
-            return insert_at_back( std::move( value ) );
-        }
+        const size_type new_index = [&]() {
+            if( !m_free_indices.empty() )
+            {
+                return m_free_indices.pop();
+            }
+            if( m_size == m_capacity )
+            {
+                grow();
+            }
+            return m_size;
+        }();
+
+        construct_at( new_index, std::forward<Args>( args )... );
+        ++m_size;
+        return new_index;
     }
 
     /// Destroy object by given index
@@ -186,6 +190,10 @@ private:
 
         UREACT_WARN_UNUSED_RESULT size_type pop()
         {
+            // TODO: It should take lowest free index instead to increase probability of successful shake.
+            //       To keep it O(1) sorting order of m_data should be reversed.
+            //       Or it should become pipebuffer to make adding/removing of new values O(1) from the both sides.
+            //       Sounds too complicated to worth it.
             return m_data[--m_size];
         }
 
@@ -240,16 +248,6 @@ private:
 
     using storage_type = std::aligned_storage_t<sizeof( value_type ), alignof( value_type )>;
 
-    UREACT_WARN_UNUSED_RESULT bool is_at_full_capacity() const
-    {
-        return m_capacity == m_size;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool has_free_indices() const
-    {
-        return !m_free_indices.empty();
-    }
-
     UREACT_WARN_UNUSED_RESULT size_type calculate_next_capacity() const
     {
         return m_capacity == 0 ? initial_capacity : m_capacity * grow_factor;
@@ -267,12 +265,16 @@ private:
 
     void grow()
     {
+        assert( m_size == m_capacity );
+        assert( m_free_indices.empty() );
+
         // Allocate new storage
         const size_type new_capacity = calculate_next_capacity();
 
         auto new_data = std::make_unique<storage_type[]>( new_capacity );
 
         // Move data to new storage
+        // TODO: maybe should be replaced with std::uninitialized_move_n?
         for( size_type i = 0; i < m_capacity; ++i )
         {
             detail::construct_at(
@@ -286,21 +288,6 @@ private:
         m_data = std::move( new_data );
         m_free_indices = free_indices{ new_capacity };
         m_capacity = new_capacity;
-    }
-
-    size_type insert_at_back( value_type&& value )
-    {
-        construct_at( m_size, std::move( value ) );
-        return m_size++;
-    }
-
-    size_type insert_at_freed_slot( value_type&& value )
-    {
-        const size_type next_free_index = m_free_indices.pop();
-        construct_at( next_free_index, std::move( value ) );
-        ++m_size;
-
-        return next_free_index;
     }
 
     value_type* at( size_type index )

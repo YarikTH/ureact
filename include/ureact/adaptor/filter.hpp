@@ -40,7 +40,7 @@ struct FilterAdaptor : SyncedAdaptorBase<FilterAdaptor>
         return process<E>( source,
             dep_pack, //
             [pred = std::forward<Pred>( pred )](
-                event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
+                event_range<E> range, const Deps... deps, event_emitter<E> out ) mutable {
                 for( const auto& e : range )
                     if( std::invoke( pred, e, deps... ) )
                         out << e;

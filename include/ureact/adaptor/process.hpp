@@ -57,8 +57,8 @@ public:
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<InE>( src_events ),
-                        event_emitter( this->get_events() ),
-                        get_internals( args ).value_ref()... );
+                        get_internals( args ).value_ref()...,
+                        event_emitter( this->get_events() ) );
                 },
                 m_deps.data );
         }

@@ -43,7 +43,7 @@ struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
         return process<OutE>( source,
             dep_pack, //
             [func = std::forward<F>( func )](
-                event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
+                event_range<InE> range, const Deps... deps, event_emitter<OutE> out ) mutable {
                 for( const auto& e : range )
                     out << std::invoke( func, e, deps... );
             } );

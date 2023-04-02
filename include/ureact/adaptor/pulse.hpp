@@ -32,7 +32,7 @@ struct PulseAdaptor : Adaptor
     {
         return process<S>( trigger,
             with( target ),
-            []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
+            []( event_range<E> range, const S& target_value, event_emitter<S> out ) {
                 for( size_t i = 0, ie = range.size(); i < ie; ++i )
                     out << target_value;
             } );

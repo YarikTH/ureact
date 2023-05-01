@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.11.0
-// Generated: 2023-05-01 18:27:22.649959
+// Ureact v0.12.0 wip
+// Generated: 2023-05-01 19:48:00.253156
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -32,9 +32,9 @@
 #define UREACT_VERSION_HPP
 
 #define UREACT_VERSION_MAJOR 0
-#define UREACT_VERSION_MINOR 11
+#define UREACT_VERSION_MINOR 12
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.11.0"
+#define UREACT_VERSION_STR "0.12.0 wip"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )

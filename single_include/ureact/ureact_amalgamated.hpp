@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.11.0 wip
-// Generated: 2023-03-09 04:35:24.813102
+// Ureact v0.11.0
+// Generated: 2023-05-01 18:27:22.649959
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -34,7 +34,7 @@
 #define UREACT_VERSION_MAJOR 0
 #define UREACT_VERSION_MINOR 11
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.11.0 wip"
+#define UREACT_VERSION_STR "0.11.0"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
@@ -1241,11 +1241,66 @@ UREACT_END_NAMESPACE
 #ifndef UREACT_DETAIL_SLOT_MAP_HPP
 #define UREACT_DETAIL_SLOT_MAP_HPP
 
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <type_traits>
 #include <utility>
 
+
+#ifndef UREACT_DETAIL_MEMORY_HPP
+#define UREACT_DETAIL_MEMORY_HPP
+
+#include <memory>
+#include <new>
+
+
+UREACT_BEGIN_NAMESPACE
+
+// Partial alternative to <memory>, including backported functions
+namespace detail
+{
+
+// TODO: make macro to eliminate duplication here
+#if defined( __cpp_lib_launder ) && __cpp_lib_launder >= 201606L
+
+using std::launder;
+
+#else
+
+template <typename T>
+[[nodiscard]] constexpr T* launder( T* p ) noexcept
+{
+    return p;
+}
+
+#endif
+
+// -stdlib=libc++ doesn't have std::construct_at till v12.0.0
+#if __cplusplus >= 202002L && ( !defined( _LIBCPP_VERSION ) || _LIBCPP_VERSION >= 12000 )
+
+using std::construct_at;
+
+#else
+
+// Backport from https://en.cppreference.com/w/cpp/memory/construct_at
+template <class T, class... Args>
+constexpr T* construct_at( T* p, Args&&... args )
+{
+    return ::new( const_cast<void*>( static_cast<const volatile void*>( p ) ) )
+        T( std::forward<Args>( args )... );
+}
+
+#endif
+
+// It is added in C++17, assume all major compilers have it
+using std::destroy_at;
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_DETAIL_MEMORY_HPP
 
 UREACT_BEGIN_NAMESPACE
 
@@ -1255,9 +1310,6 @@ namespace detail
 /// A simple slot map
 /// insert returns the slot index, which stays valid until the element is erased
 /// TODO: test it thoroughly
-/// TODO: there is a lot of places where placement new and placement delete are performed
-///       need to use std::construct_at and std::destroy_at or their backports instead
-/// TODO: maybe std::launder should be used instead of just reinterpret_cast
 template <typename T>
 class slot_map
 {
@@ -1283,32 +1335,35 @@ public:
     reference operator[]( size_type index )
     {
         assert( has_index( index ) );
-        return reinterpret_cast<reference>( m_data[index] );
+        return *at( index );
     }
 
     /// Returns a reference to the element at specified slot index. No bounds checking is performed.
     const_reference operator[]( size_type index ) const
     {
         assert( has_index( index ) );
-        return reinterpret_cast<const_reference>( m_data[index] );
+        return *at( index );
     }
 
-    /// Insert new object, return its index
-    UREACT_WARN_UNUSED_RESULT size_type insert( value_type value )
+    /// Emplace new object, return its index
+    template <class... Args>
+    UREACT_WARN_UNUSED_RESULT size_type emplace( Args&&... args )
     {
-        if( is_at_full_capacity() )
-        {
-            grow();
-            return insert_at_back( std::move( value ) );
-        }
-        else if( has_free_indices() )
-        {
-            return insert_at_freed_slot( std::move( value ) );
-        }
-        else
-        {
-            return insert_at_back( std::move( value ) );
-        }
+        const size_type new_index = [&]() {
+            if( !m_free_indices.empty() )
+            {
+                return m_free_indices.pop();
+            }
+            if( m_size == m_capacity )
+            {
+                grow();
+            }
+            return m_size;
+        }();
+
+        construct_at( new_index, std::forward<Args>( args )... );
+        ++m_size;
+        return new_index;
     }
 
     /// Destroy object by given index
@@ -1319,14 +1374,14 @@ public:
         // If we erased something other than the last element, save in free index list.
         if( index != ( total_size() - 1 ) )
         {
-            m_free_indices[m_free_size++] = index;
+            m_free_indices.push( index );
         }
 
-        reinterpret_cast<reference>( m_data[index] ).~value_type();
+        destroy_at( index );
         --m_size;
 
         // If free indices appeared at the end of allocated range, remove them from list
-        shake_free_indices();
+        m_free_indices.shake( m_size );
     }
 
     /// Return if there is any element inside
@@ -1341,11 +1396,9 @@ public:
         const size_type size = total_size();
         size_type index = 0;
 
-        // Skip over free indices.
-        for( size_type j = 0; j < m_free_size; ++j )
+        // Skip over sorted free indices.
+        for( size_type free_index : m_free_indices )
         {
-            size_type free_index = m_free_indices[j];
-
             for( ; index < size; ++index )
             {
                 if( index == free_index )
@@ -1355,17 +1408,19 @@ public:
                 }
                 else
                 {
-                    reinterpret_cast<reference>( m_data[index] ).~value_type();
+                    destroy_at( index );
                 }
             }
         }
 
         // Rest
         for( ; index < size; ++index )
-            reinterpret_cast<reference>( m_data[index] ).~value_type();
+        {
+            destroy_at( index );
+        }
 
         m_size = 0;
-        m_free_size = 0;
+        m_free_indices.clear();
     }
 
     /// Clear the data and return container to its initial state with 0 capacity
@@ -1373,28 +1428,116 @@ public:
     {
         clear();
 
-        m_data.reset();
+        m_storage.reset();
         m_free_indices.reset();
 
         m_capacity = 0;
     }
 
 private:
+    class free_indices
+    {
+    public:
+        free_indices() = default;
+
+        explicit free_indices( const size_type amount )
+            : m_data{ std::make_unique<size_type[]>( amount ) }
+        {}
+
+        void reset()
+        {
+            m_data.reset();
+        }
+
+        UREACT_WARN_UNUSED_RESULT size_type amount() const
+        {
+            return m_size;
+        }
+
+        UREACT_WARN_UNUSED_RESULT bool empty() const
+        {
+            return m_size == 0;
+        }
+
+        void clear()
+        {
+            m_size = 0;
+        }
+
+        void push( const size_type index )
+        {
+            m_data[m_size++] = index;
+            detail::sort( begin_(), end_() );
+        }
+
+        UREACT_WARN_UNUSED_RESULT size_type pop()
+        {
+            // TODO: It should take lowest free index instead to increase probability of successful shake.
+            //       To keep it O(1) sorting order of m_data should be reversed.
+            //       Or it should become pipebuffer to make adding/removing of new values O(1) from the both sides.
+            //       Sounds too complicated to worth it.
+            return m_data[--m_size];
+        }
+
+        void shake( const size_type elements )
+        {
+            const auto total_size = [&]() { return elements + m_size; };
+
+            while( m_size > 0 && back_() == total_size() - 1 )
+            {
+                --m_size;
+            }
+        }
+
+        UREACT_WARN_UNUSED_RESULT bool have( const size_type index ) const
+        {
+            const auto it = detail::find( begin(), end(), index );
+            return it != end();
+        }
+
+        UREACT_WARN_UNUSED_RESULT const size_type* begin() const
+        {
+            return &m_data[0];
+        }
+
+        UREACT_WARN_UNUSED_RESULT const size_type* end() const
+        {
+            return &m_data[m_size];
+        }
+
+    private:
+        UREACT_WARN_UNUSED_RESULT const size_type& back_() const
+        {
+            return m_data[m_size - 1];
+        }
+
+        UREACT_WARN_UNUSED_RESULT size_type* begin_()
+        {
+            return &m_data[0];
+        }
+
+        UREACT_WARN_UNUSED_RESULT size_type* end_()
+        {
+            return &m_data[m_size];
+        }
+
+        std::unique_ptr<size_type[]> m_data;
+        size_type m_size = 0u;
+    };
+
     static inline constexpr size_t initial_capacity = 8;
     static inline constexpr size_t grow_factor = 2;
 
-    using storage_type =
-        typename std::aligned_storage<sizeof( value_type ), alignof( value_type )>::type;
-
-    UREACT_WARN_UNUSED_RESULT bool is_at_full_capacity() const
+    union storage_type
     {
-        return m_capacity == m_size;
-    }
+        value_type data;
 
-    UREACT_WARN_UNUSED_RESULT bool has_free_indices() const
-    {
-        return m_free_size > 0;
-    }
+        storage_type()
+        {}
+
+        ~storage_type()
+        {}
+    };
 
     UREACT_WARN_UNUSED_RESULT size_type calculate_next_capacity() const
     {
@@ -1403,82 +1546,62 @@ private:
 
     UREACT_WARN_UNUSED_RESULT size_type total_size() const
     {
-        return m_size + m_free_size;
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool is_free_index( const size_type index ) const
-    {
-        const auto begin_ = &m_free_indices[0];
-        const auto end_ = &m_free_indices[m_free_size];
-
-        const auto it = detail::find( begin_, end_, index );
-        return it != end_;
+        return m_size + m_free_indices.amount();
     }
 
     UREACT_WARN_UNUSED_RESULT bool has_index( const size_type index ) const
     {
-        return index < total_size() && !is_free_index( index );
-    }
-
-    void shake_free_indices()
-    {
-        if( m_free_size == 0 )
-        {
-            return;
-        }
-
-        detail::sort( &m_free_indices[0], &m_free_indices[m_free_size] );
-
-        while( m_free_size > 0 && m_free_indices[m_free_size - 1] == total_size() - 1 )
-        {
-            --m_free_size;
-        }
+        return index < total_size() && !m_free_indices.have( index );
     }
 
     void grow()
     {
+        assert( m_size == m_capacity );
+        assert( m_free_indices.empty() );
+
         // Allocate new storage
         const size_type new_capacity = calculate_next_capacity();
 
-        std::unique_ptr<storage_type[]> new_data{ new storage_type[new_capacity] };
-        std::unique_ptr<size_type[]> new_free_indices{ new size_type[new_capacity] };
+        auto new_storage = std::make_unique<storage_type[]>( new_capacity );
 
         // Move data to new storage
+        // TODO: maybe should be replaced with std::uninitialized_move_n?
         for( size_type i = 0; i < m_capacity; ++i )
         {
-            new( reinterpret_cast<value_type*>( &new_data[i] ) )
-                value_type{ std::move( reinterpret_cast<reference>( m_data[i] ) ) };
-            reinterpret_cast<reference>( m_data[i] ).~value_type();
+            value_type* dst = std::addressof( new_storage[i].data );
+            value_type* src = std::addressof( m_storage[i].data );
+            detail::construct_at( dst, std::move( *src ) );
+            detail::destroy_at( src );
         }
 
         // Free list is empty if we are at max capacity anyway
 
         // Use new storage
-        m_data = std::move( new_data );
-        m_free_indices = std::move( new_free_indices );
+        m_storage = std::move( new_storage );
+        m_free_indices = free_indices{ new_capacity };
         m_capacity = new_capacity;
     }
 
-    size_type insert_at_back( value_type&& value )
+    value_type* at( size_type index )
     {
-        new( &m_data[m_size] ) value_type( std::move( value ) );
-        return m_size++;
+        return std::addressof( m_storage[index].data );
     }
 
-    size_type insert_at_freed_slot( value_type&& value )
+    template <class... Args>
+    void construct_at( const size_type index, Args&&... args )
     {
-        const size_type next_free_index = m_free_indices[--m_free_size];
-        new( &m_data[next_free_index] ) value_type( std::move( value ) );
-        ++m_size;
-
-        return next_free_index;
+        detail::construct_at( at( index ), std::forward<Args>( args )... );
     }
 
-    std::unique_ptr<storage_type[]> m_data;
-    std::unique_ptr<size_type[]> m_free_indices;
+    void destroy_at( const size_type index )
+    {
+        detail::destroy_at( at( index ) );
+    }
+
+    std::unique_ptr<storage_type[]> m_storage;
+    free_indices m_free_indices;
 
     size_type m_size = 0;
-    size_type m_free_size = 0;
     size_type m_capacity = 0;
 };
 
@@ -1664,7 +1787,7 @@ inline react_graph::~react_graph()
 
 inline node_id react_graph::register_node()
 {
-    return node_id{ m_id, m_node_data.insert( {} ) };
+    return node_id{ m_id, m_node_data.emplace() };
 }
 
 inline void react_graph::register_node_ptr(
@@ -2858,8 +2981,8 @@ public:
                     UREACT_CALLBACK_GUARD( this->get_graph() );
                     std::invoke( m_func,
                         event_range<InE>( src_events ),
-                        event_emitter( this->get_events() ),
-                        get_internals( args ).value_ref()... );
+                        get_internals( args ).value_ref()...,
+                        event_emitter( this->get_events() ) );
                 },
                 m_deps.data );
         }
@@ -3012,7 +3135,7 @@ struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
         return process<OutE>( source,
             dep_pack, //
             [func = std::forward<F>( func )](
-                event_range<InE> range, event_emitter<OutE> out, const auto... deps ) mutable {
+                event_range<InE> range, const Deps... deps, event_emitter<OutE> out ) mutable {
                 for( const auto& e : range )
                     out << std::invoke( func, e, deps... );
             } );
@@ -3080,7 +3203,7 @@ struct FilterAdaptor : SyncedAdaptorBase<FilterAdaptor>
         return process<E>( source,
             dep_pack, //
             [pred = std::forward<Pred>( pred )](
-                event_range<E> range, event_emitter<E> out, const auto... deps ) mutable {
+                event_range<E> range, const Deps... deps, event_emitter<E> out ) mutable {
                 for( const auto& e : range )
                     if( std::invoke( pred, e, deps... ) )
                         out << e;
@@ -4671,6 +4794,99 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_HOLD_HPP
 
+#ifndef UREACT_ADAPTOR_JOIN_HPP
+#define UREACT_ADAPTOR_JOIN_HPP
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+template <class ContainerT>
+struct container_value
+{
+    using type = std::decay_t<decltype( *std::begin( std::declval<ContainerT>() ) )>;
+};
+
+template <class ContainerT>
+using container_value_t = typename container_value<ContainerT>::type;
+
+struct JoinClosure : AdaptorClosure
+{
+    /*!
+	 * @brief Emits the sequence obtained from flattening received event value
+	 */
+    template <typename InE>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<InE>& source ) const
+    {
+        using E = container_value_t<InE>;
+        return process<E>( source, //
+            []( event_range<InE> range, event_emitter<E> out ) {
+                for( const auto& e : range )
+                    for( const auto& i : e )
+                        out << i;
+            } );
+    }
+};
+
+struct JoinWithAdaptor : Adaptor
+{
+    /*!
+	 * @brief Emits the sequence obtained from flattening received event value, with the delimiter in between elements
+     * 
+     * The delimiter can be a single element or an iterable container of elements.
+	 */
+    template <typename InE, typename Pattern>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
+        const events<InE>& source, Pattern&& pattern ) const
+    {
+        using E = container_value_t<InE>;
+        return process<E>( source,                                     //
+            [first = true, pattern = std::forward<Pattern>( pattern )] //
+            ( event_range<InE> range, event_emitter<E> out ) mutable {
+                if( !first )
+                {
+                    if constexpr( std::is_convertible_v<decltype( pattern ), E> )
+                    {
+                        out << pattern;
+                    }
+                    else if constexpr( std::is_convertible_v<container_value_t<decltype( pattern )>,
+                                           E> )
+                    {
+                        for( const auto& i : pattern )
+                            out << i;
+                    }
+                    else
+                    {
+                        static_assert( always_false<Pattern>, "Unsupported separator type" );
+                    }
+                }
+                first = false;
+
+                for( const auto& e : range )
+                    for( const auto& i : e )
+                        out << i;
+            } );
+    }
+
+    template <typename Pattern>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Pattern&& pattern ) const
+    {
+        return make_partial<JoinWithAdaptor>( std::forward<Pattern>( pattern ) );
+    }
+};
+
+} // namespace detail
+
+inline constexpr detail::JoinClosure join;
+
+inline constexpr detail::JoinWithAdaptor join_with;
+
+UREACT_END_NAMESPACE
+
+#endif // UREACT_ADAPTOR_JOIN_HPP
+
 #ifndef UREACT_ADAPTOR_LIFT_HPP
 #define UREACT_ADAPTOR_LIFT_HPP
 
@@ -5882,7 +6098,7 @@ struct PulseAdaptor : Adaptor
     {
         return process<S>( trigger,
             with( target ),
-            []( event_range<E> range, event_emitter<S> out, const S& target_value ) {
+            []( event_range<E> range, const S& target_value, event_emitter<S> out ) {
                 for( size_t i = 0, ie = range.size(); i < ie; ++i )
                     out << target_value;
             } );

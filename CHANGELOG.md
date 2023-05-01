@@ -3,6 +3,102 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.0](https://github.com/YarikTH/ureact/releases/tag/0.11.0) (2023-05-01)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.10.1...0.11.0)
+
+Make library usage more safe to use and add `default_context` feature
+
+- Rework internal objects' lifetime safety
+- Add protection against using nodes from different contexts
+- Fix bug where synced `event_range` based observer callbacks were called
+  without events
+  if any of signals in dep_pack are changed. It contradicts to a note:
+  "Changes of signals in dep_pack do not trigger an update - only received
+  events do"
+- BREAKING! Change order of dep_pack... args passed in functor passed in process
+  adaptor
+  ```C++
+  ureact::context ctx;
+  
+  using record_t = std::pair<std::string, int>;
+  
+  auto src = make_source<int>( ctx );
+  auto n = make_var<unsigned>( ctx, {} );
+  auto timestamp = make_var<std::string>( ctx, {} );
+  ureact::events<record_t> processed;
+  
+  // Before. Arguments corresponding to dep_pack are placed in the end of argument list
+  const auto repeater = []( ureact::event_range<int> range,          // src
+                            ureact::event_emitter<record_t> out,
+                            unsigned n, const std::string& timestamp // with( n, timestamp )
+                          ) {
+  };
+  
+  // After. Arguments corresponding to dep_pack are placed just after event_range,
+  // that corresponds to the order of arguments passed to "ureact::process"
+  // and matches approach of "synced" versions of other adaptors
+  const auto repeater = []( ureact::event_range<int> range,           // src
+                            unsigned n, const std::string& timestamp, // with( n, timestamp )
+                            ureact::event_emitter<record_t> out
+                          ) {
+      ...
+  };
+  
+  processed = ureact::process<record_t>( src, with( n, timestamp ), repeater );
+  ```
+- Add default context feature. It is more example friendly and maybe more
+  user-friendly in general.
+  This feature adds a new namespace `ureact::default_context` and several new
+  functions and classes there:
+    * function `default_context::get()` in `ureact/default_context.hpp`
+    * functions `default_context::make_var()`
+      and `default_context::make_const()` in `ureact/signal.hpp`
+    * functions `default_context::make_source()`
+      and `default_context::make_never()` in `ureact/events.hpp`
+    * class `default_context::transaction` and
+      function `default_context::do_transaction()` in `ureact/transaction.hpp`
+
+  `default_context::get()` returns thread_local copy of default context if it
+  exists or makes a new one.
+  It is mostly intended to be used by other functions and classes
+  of `default_context` instead of direct usage.
+
+  All other functions and classes are just strait up analogs of entities
+  outside `default_context`,
+  the only difference - they don't have `context` arguments, instead they
+  use `context` received from `default_context::get()`.
+
+  Without `default_context` feature:
+  ```C++
+  ureact::context ctx;
+  
+  auto var = ureact::make_var( ctx, 1 );
+  auto cst = ureact::make_const( ctx, 2 );
+  auto src = ureact::make_source<int>( ctx );
+  auto nvr = ureact::make_never<int>( ctx );
+  
+  do_transaction( ctx, [&](){
+      ureact::transaction _( ctx );
+      ...
+  });
+  ```
+
+  With `default_context` feature:
+  ```C++
+  using namespace ureact::default_context;
+  
+  auto var = make_var( 1 );
+  auto cst = make_const( 2 );
+  auto src = make_source<int>();
+  auto nvr = make_never<int>();
+  
+  do_transaction( [&](){
+      transaction _;
+      ...
+  });
+  ```
+
 ## [0.10.1](https://github.com/YarikTH/ureact/releases/tag/0.10.1) (2023-03-04)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.10.0...0.10.1)

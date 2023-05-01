@@ -32,7 +32,7 @@ all:
 # Prettify
 ##########################################################################
 PRETTY_PY_COMMAND = /usr/bin/env python3 ./support/thirdparty/pretty.py/pretty.py
-PRETTY_PY_OPTIONS = --clang-format clang-format-11
+PRETTY_PY_OPTIONS = --clang-format clang-format-14
 PRETTY_PY_OPTIONS += --exclude='tests/thirdparty'
 PRETTY_PY_OPTIONS += --exclude='tests/integration'
 PRETTY_PY_OPTIONS += --exclude='support/thirdparty'

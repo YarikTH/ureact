@@ -324,6 +324,16 @@ protected:
 
     template <typename Ret, typename Node, typename... Args>
     friend Ret detail::create_wrapped_node( Args&&... args );
+
+private:
+    /*!
+     * @brief has_changed overload for @ref signal
+     */
+    UREACT_WARN_UNUSED_RESULT friend constexpr bool has_changed(
+        const signal& lhs, const signal& rhs ) noexcept
+    {
+        return !lhs.equal_to( rhs );
+    }
 };
 
 /*!

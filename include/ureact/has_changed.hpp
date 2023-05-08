@@ -38,7 +38,10 @@ UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const T lhs, const T rhs )
 #    pragma clang diagnostic pop
 #endif
 
-namespace detail
+// msvc finds ureact::detail::has_changed niebloid if it is not in the different namespace
+// as a result infinite recursion occurs.
+// to prevent this additional detail namespace is provided.
+namespace has_changed_detail
 {
 
 template <typename T, typename = void>
@@ -65,6 +68,11 @@ struct HasChangedCPO
     }
 };
 
+} // namespace has_changed_detail
+
+namespace detail
+{
+
 /*!
  * @brief std::not_equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
  * 
@@ -72,7 +80,7 @@ struct HasChangedCPO
  *       for the type in the same namespace the type is defined.
  *       Expected signature is "bool has_changed( const T& lhs, const T& rhs )"
  */
-inline constexpr detail::HasChangedCPO has_changed{};
+inline constexpr has_changed_detail::HasChangedCPO has_changed{};
 
 } // namespace detail
 

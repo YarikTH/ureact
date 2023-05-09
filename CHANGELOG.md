@@ -51,12 +51,12 @@ Make library usage more safe to use and add `default_context` feature
   user-friendly in general.
   This feature adds a new namespace `ureact::default_context` and several new
   functions and classes there:
-    * function `default_context::get()` in `ureact/default_context.hpp`
-    * functions `default_context::make_var()`
+    - function `default_context::get()` in `ureact/default_context.hpp`
+    - functions `default_context::make_var()`
       and `default_context::make_const()` in `ureact/signal.hpp`
-    * functions `default_context::make_source()`
+    - functions `default_context::make_source()`
       and `default_context::make_never()` in `ureact/events.hpp`
-    * class `default_context::transaction` and
+    - class `default_context::transaction` and
       function `default_context::do_transaction()` in `ureact/transaction.hpp`
 
   `default_context::get()` returns thread_local copy of default context if it
@@ -120,17 +120,23 @@ Upgrade CI scripts and fix code to work with old gcc-7 and clang-6 compilers.
 
 Adapting `context` ownership scheme from master branch of cpp.react
 
-- BREAKING! `context` is no longer a thing that user should guarantee to die last
+- BREAKING! `context` is no longer a thing that user should guarantee to die
+  last
   after each ureact nodes using this `context` are destroyed.
-  Instead, now it has shared pointer semantic and each ureact node has a copy of it.
+  Instead, now it has shared pointer semantic and each ureact node has a copy of
+  it.
   So `context` dies only after all its owners diy.
-- BREAKING! `count_` and `lift_` are renamed to `count_as` and `lift_as` respectively.
-- BREAKING! `merge` adaptor is no longer selecting result type based on the type of
-  the first source event stream, but tries to determine result type using `std::common_type`.
+- BREAKING! `count_` and `lift_` are renamed to `count_as` and `lift_as`
+  respectively.
+- BREAKING! `merge` adaptor is no longer selecting result type based on the type
+  of
+  the first source event stream, but tries to determine result type
+  using `std::common_type`.
   Additionally `merge_as` version is added to manually select the result type.
 - BREAKING! `equal_to` is replaced with the opposite `has_changed`.
   All user overloads of `equal_to` are impacted.
-- New adaptor `monitor_change` is added. It emits (old value, new value) pairs on
+- New adaptor `monitor_change` is added. It emits (old value, new value) pairs
+  on
   monitored signal changes.
 - New adaptor `elements` and its specializations `keys` and `values` are added.
   They do exactly the same that analogs from `std::ranges` do.
@@ -139,7 +145,8 @@ Adapting `context` ownership scheme from master branch of cpp.react
   It does exactly the same that analog from `std::ranges` does.
   https://en.cppreference.com/w/cpp/ranges/stride_view
 - New adaptor `slice` is added.
-  `ureact::slice(M, N)` is equivalent to `ureact::drop(M) | ureact::take(N - M)`.
+  `ureact::slice(M, N)` is equivalent
+  to `ureact::drop(M) | ureact::take(N - M)`.
 
 ## [0.9.0](https://github.com/YarikTH/ureact/releases/tag/0.9.0) (2023-02-12)
 
@@ -153,11 +160,13 @@ Great closure/adaptor rework
   library is not ready for such extension point yet
 - BREAKING! free functions that create new reactives (signals/events/observes)
   from existing ones also called "algorithms" are replaced with inline constexpr
-  instances of special functor-like classes inherited from Adaptor or AdaptorClosure.
+  instances of special functor-like classes inherited from Adaptor or
+  AdaptorClosure.
   This is the same approach as used in std::ranges and range-v3.
   There are some differences in usage compared with free functions:
     - [Argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl)
-      is not working with adaptors, so namespace is required, while before it was optional
+      is not working with adaptors, so namespace is required, while before it
+      was optional
     ```C++
     ureact::context ctx;
     ureact::var_signal<int> src = make_var( ctx, 1 );
@@ -196,12 +205,12 @@ Great closure/adaptor rework
     ureact::signal<float> changes_f = src | ureact::count_<float>;
     ```
 - BREAKING! yet another great headers rework:
-  - `ureact/take_drop.hpp` is separated into
-    `ureact/take.hpp` and `ureact/drop.hpp`
-  - `ureact/take_drop_while.hpp` is separated into
-    `ureact/take_while.hpp` and `ureact/drop_while.hpp`
-  - all adaptors are moved into `ureact/adaptor` subdirectory.
-    As a result library headers become easier to navigate.
+    - `ureact/take_drop.hpp` is separated into
+      `ureact/take.hpp` and `ureact/drop.hpp`
+    - `ureact/take_drop_while.hpp` is separated into
+      `ureact/take_while.hpp` and `ureact/drop_while.hpp`
+    - all adaptors are moved into `ureact/adaptor` subdirectory.
+      As a result library headers become easier to navigate.
 - New adaptor `ureact::once` is introduced.
   Or reintroduced, because it was added before and then removed in 0.6.0.
   It is merely a `ureact::take(1)` overload with more precise name.
@@ -272,7 +281,9 @@ int main()
   Interfaces `member_events_user`, `member_signal_user` and
   macro `UREACT_USE_MEMBER_SIGNALS`, `UREACT_USE_MEMBER_EVENTS` are added to
   make usage easier.
-- add `sink` algorithm that allows to assign value to reactive value in complex expressions
+- add `sink` algorithm that allows to assign value to reactive value in complex
+  expressions
+
 ```C++
 ureact::context ctx;
 
@@ -294,7 +305,10 @@ src <<= -2;
 assert( squared.get() == 4 );
 assert( minus_squared.get() == -4 );
 ```
-- add `fork` algorithm that allows to express multiple transformation of the same source
+
+- add `fork` algorithm that allows to express multiple transformation of the
+  same source
+
 ```C++
 ureact::context ctx;
 

@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/detail/node_base.hpp"
 
 // non-copyable and non-movable

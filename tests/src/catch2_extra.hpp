@@ -5,18 +5,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#ifndef UREACT_DOCTEST_EXTRA_H
-#define UREACT_DOCTEST_EXTRA_H
+#pragma once
 
-#include <deque>
-#include <list>
-#include <set>
-#include <sstream>
 #include <tuple>
+#include <utility>
 #include <variant>
-#include <vector>
 
-#include <doctest.h>
+#include <catch2/catch_test_macros.hpp>
 
 namespace std // NOLINT
 {
@@ -54,56 +49,11 @@ std::ostream& operator<<( std::ostream& os, const std::pair<T, Y>& pair )
     return os << "]";
 }
 
-template <typename ...T>
+template <typename... T>
 std::ostream& operator<<( std::ostream& os, const std::variant<T...>& variant )
 {
     std::visit( [&os]( auto&& arg ) { os << arg; }, variant );
     return os;
 }
 
-template <class T>
-doctest::String containerToString( const T& value )
-{
-    std::ostringstream ss;
-
-    ss << "[";
-    for( auto it = value.begin(), ite = value.end(); it != ite; ++it )
-    {
-        ss << *it;
-        if( std::next( it ) != ite )
-        {
-            ss << ", ";
-        }
-    }
-    ss << "]";
-
-    return ss.str().c_str();
-}
-
-template <class T, class Allocator>
-doctest::String toString( const std::vector<T, Allocator>& value )
-{
-    return containerToString( value );
-}
-
-template <class T, class Allocator>
-doctest::String toString( const std::deque<T, Allocator>& value )
-{
-    return containerToString( value );
-}
-
-template <class T, class Allocator>
-doctest::String toString( const std::list<T, Allocator>& value )
-{
-    return containerToString( value );
-}
-
-template <class Key, class Compare, class Allocator>
-doctest::String toString( const std::set<Key, Compare, Allocator>& value )
-{
-    return containerToString( value );
-}
-
 } // namespace std
-
-#endif //UREACT_DOCTEST_EXTRA_H

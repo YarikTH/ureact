@@ -9,7 +9,7 @@
 
 #include <numeric>
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/count.hpp"
 #include "ureact/adaptor/drop.hpp"
 #include "ureact/adaptor/monitor.hpp"
@@ -35,12 +35,12 @@ TEST_CASE( "FoldByValue" )
         return std::accumulate( values.begin(), values.end(), accum, std::multiplies<>() );
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         sum = ureact::fold( src, 0, plus );
         product = ureact::fold( src, 1, batch_multiplies );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         sum = src | ureact::fold( 0, plus );
         product = src | ureact::fold( 1, batch_multiplies );
@@ -80,13 +80,13 @@ TEST_CASE( "FoldByRef" )
         accum = std::accumulate( values.begin(), values.end(), accum, std::multiplies<>() );
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         sum_byval = ureact::fold( src, 0, std::plus<>() );
         sum_byref = ureact::fold( src, 0, plus_ref );
         product_byref = ureact::fold( src, 1, batch_multiplies_ref );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         sum_byval = src | ureact::fold( 0, std::plus<>() );
         sum_byref = src | ureact::fold( 0, plus_ref );
@@ -153,12 +153,12 @@ TEST_CASE( "FoldByValueSynced" )
         return accum + std::accumulate( values.begin(), values.end(), 0, std::plus<>() ) * mult;
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         sum = ureact::fold( src, 0, with( mult ), plus );
         batch_sum = ureact::fold( src, 0, with( mult ), batch_plus );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         sum = src | ureact::fold( 0, with( mult ), plus );
         batch_sum = src | ureact::fold( 0, with( mult ), batch_plus );
@@ -220,13 +220,13 @@ TEST_CASE( "FoldByRefSynced" )
         accum += std::accumulate( values.begin(), values.end(), accum, std::plus<>() ) * mult;
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         sum_byval = ureact::fold( src, 0, with( mult ), plus_val );
         sum_byref = ureact::fold( src, 0, with( mult ), plus_ref );
         batch_sum_byref = ureact::fold( src, 0, with( mult ), batch_plus_ref );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         sum_byval = src | ureact::fold( 0, with( mult ), plus_val );
         sum_byref = src | ureact::fold( 0, with( mult ), plus_ref );
@@ -290,11 +290,11 @@ TEST_CASE( "FoldVsAccumulate" )
             return dash_fold( std::move( accum ), i );
         };
 
-    int sum;
-    int product;
+    int sum = 0;
+    int product = 0;
     std::string dashed;
 
-    SUBCASE( "std::accumulate for example" )
+    SECTION( "std::accumulate for example" )
     {
         sum = std::accumulate( v.begin(), v.end(), 0, std::plus<>() );
 
@@ -305,7 +305,7 @@ TEST_CASE( "FoldVsAccumulate" )
             std::to_string( v[0] ), // start with first element
             dash_fold );
     }
-    SUBCASE( "ureact::fold" )
+    SECTION( "ureact::fold" )
     {
         ureact::context ctx;
 
@@ -314,7 +314,7 @@ TEST_CASE( "FoldVsAccumulate" )
         ureact::signal<int> product_s;
         ureact::signal<std::string> dashed_s;
 
-        SUBCASE( "Functional syntax" )
+        SECTION( "Functional syntax" )
         {
             sum_s = ureact::fold( src, 0, std::plus<>() );
             product_s = ureact::fold( src, 1, std::multiplies<>() );
@@ -322,7 +322,7 @@ TEST_CASE( "FoldVsAccumulate" )
                 std::to_string( v[0] ),
                 dash_fold_2 );
         }
-        SUBCASE( "Piped syntax" )
+        SECTION( "Piped syntax" )
         {
             sum_s = src | ureact::fold( 0, std::plus<>() );
             product_s = src | ureact::fold( 1, std::multiplies<>() );

@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "identity.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/observe.hpp"
@@ -52,7 +52,7 @@ TEST_CASE( "SelfObserverDetach" )
 
     std::vector input_values{ 1, 2, 3, -1, 4 };
 
-    SUBCASE( "signal" )
+    SECTION( "signal" )
     {
         auto src = ureact::make_var<int>( ctx, -1 );
 
@@ -61,7 +61,7 @@ TEST_CASE( "SelfObserverDetach" )
         for( int i : input_values )
             src <<= i;
     }
-    SUBCASE( "source" )
+    SECTION( "source" )
     {
         auto src = ureact::make_source<int>( ctx );
 
@@ -147,7 +147,7 @@ TEST_CASE( "SyncedObserveTest" )
     const auto prod = a * b;
     const auto diff = a - b;
 
-    SUBCASE( "unit source" )
+    SECTION( "unit source" )
     {
         const auto src = ureact::make_source( ctx );
         using result_t = std::vector<std::tuple<int, int, int>>;
@@ -171,7 +171,7 @@ TEST_CASE( "SyncedObserveTest" )
         CHECK( result == expected );
     }
 
-    SUBCASE( "string source" )
+    SECTION( "string source" )
     {
         const auto src = ureact::make_source<std::string>( ctx );
         using result_t = std::vector<std::tuple<std::string, int, int, int>>;
@@ -208,7 +208,7 @@ TEST_CASE( "Observers" )
 
     CHECK( x_values == std::vector<int>{} );
 
-    SUBCASE( "Subject-bound observers v1" )
+    SECTION( "Subject-bound observers v1" )
     {
         // Inner scope
         {
@@ -230,7 +230,7 @@ TEST_CASE( "Observers" )
         CHECK( x_values == std::vector<int>{ 1 } );
     }
 
-    SUBCASE( "Subject-bound observers v2" )
+    SECTION( "Subject-bound observers v2" )
     {
         // Outer scope
         {

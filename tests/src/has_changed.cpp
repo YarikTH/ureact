@@ -7,7 +7,7 @@
 //
 #include "ureact/has_changed.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/events.hpp"
 #include "ureact/signal.hpp"

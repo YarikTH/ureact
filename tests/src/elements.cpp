@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/elements.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
 
@@ -21,13 +21,13 @@ TEST_CASE( "Elements" )
     ureact::events<char> chars;
     ureact::events<std::string> strings;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         ints = ureact::keys( src );
         chars = ureact::values( src );
         strings = ureact::elements<2>( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         ints = src | ureact::keys;
         chars = src | ureact::values;

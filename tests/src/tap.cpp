@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/tap.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/events.hpp"
 #include "ureact/signal.hpp"
 
@@ -24,11 +24,11 @@ TEST_CASE( "TapSignal" )
         observed_src.push_back( x );
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         result = ureact::tap( src, collector );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         result = src | ureact::tap( collector );
     }
@@ -38,7 +38,7 @@ TEST_CASE( "TapSignal" )
     for( int i : { 0, 1, 2 } )
         src <<= i;
 
-    CHECK_EQ( observed_src, std::vector<int>{ 0, 1, 2 } );
+    CHECK( observed_src == std::vector<int>{ 0, 1, 2 } );
 }
 
 TEST_CASE( "TapEvents" )
@@ -54,11 +54,11 @@ TEST_CASE( "TapEvents" )
         observed_src.push_back( x );
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         result = ureact::tap( src, collector );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         result = src | ureact::tap( collector );
     }
@@ -68,7 +68,7 @@ TEST_CASE( "TapEvents" )
     for( int i : { 0, 1, 2 } )
         src << i;
 
-    CHECK_EQ( observed_src, std::vector<int>{ 0, 1, 2 } );
+    CHECK( observed_src == std::vector<int>{ 0, 1, 2 } );
 }
 
 TEST_CASE( "TapEventsSynced" )
@@ -86,11 +86,11 @@ TEST_CASE( "TapEventsSynced" )
         observed_src_mult.push_back( x * mult );
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         result = ureact::tap( src, with( _2 ), collector );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         result = src | ureact::tap( with( _2 ), collector );
     }
@@ -100,5 +100,5 @@ TEST_CASE( "TapEventsSynced" )
     for( int i : { 0, 1, 2 } )
         src << i;
 
-    CHECK_EQ( observed_src_mult, std::vector<int>{ 0, 2, 4 } );
+    CHECK( observed_src_mult == std::vector<int>{ 0, 2, 4 } );
 }

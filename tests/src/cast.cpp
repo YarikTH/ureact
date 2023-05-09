@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/cast.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
 
@@ -20,12 +20,12 @@ TEST_CASE( "Cast" )
     ureact::events<int> ints;
     ureact::events<float> floats;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         ints = ureact::cast<int>( src );
         floats = ureact::cast<float>( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         ints = src | ureact::cast<int>;
         floats = src | ureact::cast<float>;

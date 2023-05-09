@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/drop_while.hpp"
 #include "ureact/adaptor/lift.hpp"
@@ -22,12 +22,12 @@ TEST_CASE( "TakeOrDropWhile" )
 
     const auto is_not_negative = [&]( auto i ) { return i >= 0; };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         before_negative = ureact::take_while( src, is_not_negative );
         from_negative = ureact::drop_while( src, is_not_negative );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         before_negative = src | ureact::take_while( is_not_negative );
         from_negative = src | ureact::drop_while( is_not_negative );
@@ -67,17 +67,17 @@ TEST_CASE( "TakeOrDropWhileSynced" )
         = []( int /*e*/, int sum_value, int blackjack ) { return sum_value < blackjack; };
     const auto is_not_overflowed_2 = []( int /*e*/, bool overflowed ) { return !overflowed; };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         before_overflow = ureact::take_while( src, with( sum, blackjack ), is_not_overflowed );
         from_overflow = ureact::drop_while( src, with( sum, blackjack ), is_not_overflowed );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         before_overflow = src | ureact::take_while( with( sum, blackjack ), is_not_overflowed );
         from_overflow = src | ureact::drop_while( with( sum, blackjack ), is_not_overflowed );
     }
-    SUBCASE( "Calculated bool condition" )
+    SECTION( "Calculated bool condition" )
     {
         before_overflow = ureact::take_while( src, with( overflowed ), is_not_overflowed_2 );
         from_overflow = ureact::drop_while( src, with( overflowed ), is_not_overflowed_2 );

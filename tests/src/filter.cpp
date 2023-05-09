@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/filter.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/transaction.hpp"
 
@@ -21,11 +21,11 @@ TEST_CASE( "Filter" )
     ureact::events<int> filtered;
     const auto is_even = []( auto i ) { return i % 2 == 0; };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         filtered = ureact::filter( src, is_even );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         filtered = src | ureact::filter( is_even );
     }
@@ -53,11 +53,11 @@ TEST_CASE( "FilterSynced" )
     ureact::events<int> filtered;
     const auto in_range = []( auto i, int min, int max ) { return i >= min && i <= max; };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         filtered = ureact::filter( src, with( limit_min, limit_max ), in_range );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         filtered = src | ureact::filter( with( limit_min, limit_max ), in_range );
     }

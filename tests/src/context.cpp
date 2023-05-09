@@ -7,7 +7,7 @@
 //
 #include "ureact/context.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 
 // non-copyable and non-movable
 static_assert( std::is_default_constructible_v<ureact::context> );

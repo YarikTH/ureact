@@ -5,7 +5,7 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 #
-add_executable(ureact_test main.cpp)
+add_executable(ureact_test)
 
 target_sources(
     ureact_test
@@ -50,7 +50,7 @@ target_sources(
         zip.cpp
 )
 
-target_link_libraries(ureact_test PRIVATE ureact::ureact ureact::doctest)
+target_link_libraries(ureact_test PRIVATE ureact::ureact Catch2::Catch2WithMain)
 
 target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
 

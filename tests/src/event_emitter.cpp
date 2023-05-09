@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 
 TEST_CASE( "EventEmitter" )
 {
@@ -17,17 +17,17 @@ TEST_CASE( "EventEmitter" )
     ureact::event_emitter<int> emitter{ data };
     auto _2 = 2;
 
-    SUBCASE( "operator =" )
+    SECTION( "operator =" )
     {
         emitter = 1;  // R-value
         emitter = _2; // L-value
     }
-    SUBCASE( "stream" )
+    SECTION( "stream" )
     {
         emitter << 1   // R-value
                 << _2; // L-value
     }
-    SUBCASE( "stl iterator" )
+    SECTION( "stl iterator" )
     {
         std::generate_n( emitter, 1, [] { return 1; } );                   // R-value
         std::generate_n( emitter, 1, [&]() -> const int& { return _2; } ); // L-value

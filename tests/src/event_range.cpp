@@ -7,11 +7,11 @@
 //
 #include "ureact/event_range.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 
 TEST_CASE( "EventRange" )
 {
-    SUBCASE( "empty range" )
+    SECTION( "empty range" )
     {
         std::vector<int> data;
         ureact::event_range<int> range{ data };
@@ -24,7 +24,7 @@ TEST_CASE( "EventRange" )
         CHECK( are_rbegin_rend_equal );
     }
 
-    SUBCASE( "non-empty range" )
+    SECTION( "non-empty range" )
     {
         std::vector<int> data{ 0, 1, 2, 3, 4 };
         ureact::event_range<int> range{ data };

@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <queue>
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/observe.hpp"
 #include "ureact/adaptor/reactive_ref.hpp"
 #include "ureact/events.hpp"
@@ -233,7 +233,7 @@ TEST_CASE( "Member1" )
 
     auto flattened = ureact::flatten( inner );
 
-    ureact::observe( flattened, []( int v ) { CHECK_EQ( v, 30 ); } );
+    ureact::observe( flattened, []( int v ) { CHECK( v == 30 ); } );
 
     outer <<= 30;
 }
@@ -299,11 +299,11 @@ TEST_CASE( "DynamicSignalRefOrPtr" )
     auto Alice = Employee{ ctx, company1 };
     auto alice_company = Alice.company;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
     }
@@ -335,11 +335,11 @@ TEST_CASE( "Signal of events" )
 
     ureact::events<int> e;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         e = ureact::flatten( sig );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         e = sig | ureact::flatten;
     }

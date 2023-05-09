@@ -12,7 +12,7 @@
 #include <string>
 #include <string_view>
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/transform.hpp"
 #include "ureact/events.hpp"
@@ -25,11 +25,11 @@ TEST_CASE( "JoinStrings" )
     auto src = ureact::make_source<std::string_view>( ctx );
     ureact::events<char> chars;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         chars = ureact::join( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         chars = src | ureact::join;
     }
@@ -64,11 +64,11 @@ TEST_CASE( "JoinBits" )
     auto bitArrays = ureact::transform( src, byte2bits );
     ureact::events<bool> bits;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         bits = ureact::join( bitArrays );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         bits = bitArrays | ureact::join;
     }
@@ -91,12 +91,12 @@ TEST_CASE( "JoinWith" )
 
     using namespace std::literals;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         chars_1 = ureact::join_with( src, ' ' );
         chars_2 = ureact::join_with( src, ".."sv );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         chars_1 = src | ureact::join_with( ' ' );
         chars_2 = src | ureact::join_with( ".."sv );

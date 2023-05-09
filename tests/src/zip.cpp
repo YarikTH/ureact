@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/zip.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
 

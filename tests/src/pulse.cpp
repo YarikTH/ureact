@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/pulse.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/transform.hpp"
 #include "ureact/transaction.hpp"
@@ -21,16 +21,16 @@ TEST_CASE( "Pulse" )
     auto target = ureact::make_var<int>( ctx, -1 );
     ureact::events<int> beat;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         beat = ureact::pulse( trigger, target );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         beat = trigger | ureact::pulse( target );
     }
 
-    SUBCASE( "Trigger can be any type" )
+    SECTION( "Trigger can be any type" )
     {
         auto trigger_int = ureact::transform( trigger, []( ureact::unit ) { return 1; } );
         beat = ureact::pulse( trigger_int, target );

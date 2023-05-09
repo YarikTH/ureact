@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/monitor.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
 
@@ -19,11 +19,11 @@ TEST_CASE( "Monitor" )
     auto src = ureact::make_var<int>( ctx, -1 );
     ureact::events<int> monitored;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         monitored = ureact::monitor( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         monitored = src | ureact::monitor;
     }

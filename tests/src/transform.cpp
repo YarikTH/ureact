@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/transaction.hpp"
 
@@ -22,11 +22,11 @@ TEST_CASE( "Transform" )
     ureact::events<int> squared;
     const auto square = []( auto i ) { return i * i; };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         squared = ureact::transform( src, square );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         squared = src | ureact::transform( square );
     }
@@ -53,11 +53,11 @@ TEST_CASE( "TransformSynced" )
     ureact::events<int> clamped;
     const auto clamp = []( auto i, int min, int max ) { return std::clamp( i, min, max ); };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         clamped = ureact::transform( src, with( limit_min, limit_max ), clamp );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         clamped = src | ureact::transform( with( limit_min, limit_max ), clamp );
     }

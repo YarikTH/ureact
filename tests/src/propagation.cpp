@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/observe.hpp"
 #include "ureact/transaction.hpp"

@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/stride.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 
 TEST_CASE( "Stride" )
@@ -17,11 +17,11 @@ TEST_CASE( "Stride" )
     auto src = ureact::make_source<int>( ctx );
     ureact::events<int> every_third;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         every_third = ureact::stride( src, 3 );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         every_third = src | ureact::stride( 3 );
     }

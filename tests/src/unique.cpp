@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/unique.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 
 // demonstrate and test special filter function unique
@@ -18,11 +18,11 @@ TEST_CASE( "Unique" )
     auto src = ureact::make_source<int>( ctx );
     ureact::events<int> uniq;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         uniq = ureact::unique( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         uniq = src | ureact::unique;
     }

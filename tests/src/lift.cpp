@@ -9,8 +9,8 @@
 
 #include <functional>
 
+#include "catch2_extra.hpp"
 #include "copy_stats.hpp"
-#include "doctest_extra.h"
 #include "identity.hpp"
 #include "ureact/adaptor/observe.hpp"
 #include "ureact/transaction.hpp"
@@ -53,7 +53,7 @@ TEST_CASE( "LiftAsInvoke" )
 {
     ureact::context ctx;
 
-    SUBCASE( "invoke a free function" )
+    SECTION( "invoke a free function" )
     {
         ureact::var_signal<int> src = ureact::make_var( ctx, 4 );
 
@@ -64,7 +64,7 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( negated.get() == 8 );
     }
 
-    SUBCASE( "invoke a lambda" )
+    SECTION( "invoke a lambda" )
     {
         ureact::var_signal<int> src = ureact::make_var( ctx, 3 );
 
@@ -77,7 +77,7 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( negated.get() == 9 );
     }
 
-    SUBCASE( "invoke a function object" )
+    SECTION( "invoke a function object" )
     {
         ureact::var_signal<int> src = ureact::make_var( ctx, 1 );
 
@@ -88,7 +88,7 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( negated.get() == -1 );
     }
 
-    SUBCASE( "invoke a member function (value)" )
+    SECTION( "invoke a member function (value)" )
     {
         ureact::var_signal src = ureact::make_var<User>( ctx, 18 );
         auto _3 = ureact::make_const( ctx, 3 );
@@ -103,7 +103,7 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( sum.get() == 21 );
     }
 
-    SUBCASE( "access a data member (value)" )
+    SECTION( "access a data member (value)" )
     {
         ureact::var_signal src = ureact::make_var<User>( ctx, 32 );
 
@@ -115,7 +115,7 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( age.get() == 32 );
     }
 
-    SUBCASE( "invoke a member function (pointer)" )
+    SECTION( "invoke a member function (pointer)" )
     {
         User user{ 18 };
 
@@ -132,7 +132,7 @@ TEST_CASE( "LiftAsInvoke" )
         CHECK( sum.get() == 21 );
     }
 
-    SUBCASE( "access a data member (pointer)" )
+    SECTION( "access a data member (pointer)" )
     {
         User user{ 32 };
 
@@ -174,17 +174,17 @@ TEST_CASE( "LiftUnary" )
 
     CHECK_FALSE( tmp.was_op_stolen() );
 
-    SUBCASE( "Overloaded operator" )
+    SECTION( "Overloaded operator" )
     {
         result_1 = -src;
         result_2 = -std::move( tmp );
     }
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         result_1 = ureact::lift( src, std::negate<>{} );
         result_2 = ureact::lift( std::move( tmp ), std::negate<>{} );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         result_1 = src | ureact::lift( std::negate<>{} );
         result_2 = std::move( tmp ) | ureact::lift( std::negate<>{} );
@@ -231,7 +231,7 @@ TEST_CASE( "LiftBinary" )
     CHECK_FALSE( rhs_tmp_2.was_op_stolen() );
     CHECK_FALSE( rhs_tmp_3.was_op_stolen() );
 
-    SUBCASE( "Overloaded operator" )
+    SECTION( "Overloaded operator" )
     {
         // clang-format off
         const_op_signal  = 10                     - rhs;
@@ -244,7 +244,7 @@ TEST_CASE( "LiftBinary" )
         temp_op_temp     = std::move( lhs_tmp_3 ) - std::move( rhs_tmp_3 );
         // clang-format on
     }
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         // clang-format off
         const_op_signal  = ureact::lift( 10                    , std::minus<>{}, rhs );
@@ -413,17 +413,17 @@ TEST_CASE( "Hello World" )
     };
 
     // Several alternative variants that do exactly the same
-    SUBCASE( "using overloaded operators" )
+    SECTION( "using overloaded operators" )
     {
         bothWords = firstWord + " " + secondWord;
     }
 
-    SUBCASE( "using lift()" )
+    SECTION( "using lift()" )
     {
         bothWords = ureact::lift( with( firstWord, secondWord ), concatFunc );
     }
 
-    SUBCASE( "operators , and |" )
+    SECTION( "operators , and |" )
     {
         // operator "|" can be used instead of lift()
         bothWords = with( firstWord, secondWord ) | ureact::lift( concatFunc );

@@ -7,7 +7,7 @@
 //
 #include "ureact/transaction.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/count.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/monitor.hpp"
@@ -60,7 +60,7 @@ TEST_CASE( "ComplexTransaction" )
     ureact::var_signal src = ureact::make_var( ctx, 2 );
     ureact::signal<int> result;
 
-    SUBCASE( "lambda" )
+    SECTION( "lambda" )
     {
         result = do_transaction(
             ctx,
@@ -69,7 +69,7 @@ TEST_CASE( "ComplexTransaction" )
             },                  //
             3 );                // pass value to the transaction functor
     }
-    SUBCASE( "member" )
+    SECTION( "member" )
     {
         struct Foo
         {

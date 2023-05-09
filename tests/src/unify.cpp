@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/unify.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/count.hpp"
 
 // Transform values of event stream to ureact::unit
@@ -18,11 +18,11 @@ TEST_CASE( "Unify" )
     auto src = ureact::make_source<int>( ctx );
     ureact::events<> unified;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         unified = ureact::unify( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         unified = src | ureact::unify;
     }

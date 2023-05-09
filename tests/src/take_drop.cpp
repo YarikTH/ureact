@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/drop.hpp"
 #include "ureact/adaptor/once.hpp"
@@ -22,13 +22,13 @@ TEST_CASE( "TakeDropSlice" )
     ureact::events<int> without_first_n;
     ureact::events<int> middle;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         first_n = ureact::take( src, 5 );
         without_first_n = ureact::drop( src, 5 );
         middle = ureact::slice( src, 3, 7 );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         first_n = src | ureact::take( 5 );
         without_first_n = src | ureact::drop( 5 );
@@ -63,11 +63,11 @@ TEST_CASE( "Once" )
     auto src = ureact::make_source<int>( ctx );
     ureact::events<int> first;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         first = ureact::once( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         first = src | ureact::once;
     }

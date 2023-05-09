@@ -7,7 +7,11 @@
 //
 #include "ureact/adaptor/collect.hpp"
 
-#include "doctest_extra.h"
+#include <deque>
+#include <list>
+#include <set>
+
+#include "catch2_extra.hpp"
 #include "ureact/events.hpp"
 
 // Collects received events into signal<ContT<E>>
@@ -21,14 +25,14 @@ TEST_CASE( "Collect" )
     ureact::signal<std::list<int>> collected_lst;
     ureact::signal<std::set<int>> collected_set;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         collected_vec = ureact::collect<std::vector>( src );
         collected_deq = ureact::collect<std::deque>( src );
         collected_lst = ureact::collect<std::list>( src );
         collected_set = ureact::collect<std::set>( src );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         collected_vec = src | ureact::collect<std::vector>;
         collected_deq = src | ureact::collect<std::deque>;
@@ -39,8 +43,8 @@ TEST_CASE( "Collect" )
     for( int i : { 1, 2, 3 } )
         src << i;
 
-    CHECK_EQ( collected_vec.get(), std::vector{ 1, 2, 3 } );
-    CHECK_EQ( collected_deq.get(), std::deque{ 1, 2, 3 } );
-    CHECK_EQ( collected_lst.get(), std::list{ 1, 2, 3 } );
-    CHECK_EQ( collected_set.get(), std::set{ 1, 2, 3 } );
+    CHECK( collected_vec.get() == std::vector{ 1, 2, 3 } );
+    CHECK( collected_deq.get() == std::deque{ 1, 2, 3 } );
+    CHECK( collected_lst.get() == std::list{ 1, 2, 3 } );
+    CHECK( collected_set.get() == std::set{ 1, 2, 3 } );
 }

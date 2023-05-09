@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/lift.hpp"
 
 // TODO: check type traits for signals
@@ -20,14 +20,14 @@ TEST_CASE( "SignalConstruction" )
 
     // default constructed signal isn't linked to a reactive node, thus
     // can't be used for anything but for following assignment
-    SUBCASE( "default constructed" )
+    SECTION( "default constructed" )
     {
         ureact::signal<int> null_signal;
         CHECK_FALSE( null_signal.is_valid() );
     }
 
     // signal can be created via object slicing from var_signal object
-    SUBCASE( "slicing" )
+    SECTION( "slicing" )
     {
         auto var = ureact::make_var<int>( ctx, 5 );
         ureact::signal sig = var;
@@ -36,7 +36,7 @@ TEST_CASE( "SignalConstruction" )
     }
 
     // signal can be created via make_const call
-    SUBCASE( "make_const" )
+    SECTION( "make_const" )
     {
         ureact::signal sig = ureact::make_const<int>( ctx, 5 );
 
@@ -44,7 +44,7 @@ TEST_CASE( "SignalConstruction" )
     }
 
     // signal can be created using various algorithms (in particular using overloaded operator)
-    SUBCASE( "algorithm" )
+    SECTION( "algorithm" )
     {
         auto var = ureact::make_var<int>( ctx, 5 );
         ureact::signal sig = ureact::lift( var, []( int a ) { return a; } );
@@ -53,19 +53,19 @@ TEST_CASE( "SignalConstruction" )
     }
 
     // copy and move construction of signal
-    SUBCASE( "copy and move constructed" )
+    SECTION( "copy and move constructed" )
     {
         ureact::signal<int> sig = ureact::make_var<int>( ctx, 42 );
         CHECK( sig.is_valid() );
 
-        SUBCASE( "copy constructed" )
+        SECTION( "copy constructed" )
         {
             ureact::signal sig_copy = sig;
             CHECK( sig_copy.is_valid() );
             CHECK( sig.is_valid() );
         }
 
-        SUBCASE( "move constructed" )
+        SECTION( "move constructed" )
         {
             ureact::signal sig_move = std::move( sig );
             CHECK( sig_move.is_valid() );
@@ -81,7 +81,7 @@ TEST_CASE( "SignalAssignmentConstruction" )
     ureact::signal<int> src = ureact::make_var<int>( ctx, 42 );
     CHECK( src.is_valid() );
 
-    SUBCASE( "copy assignment" )
+    SECTION( "copy assignment" )
     {
         ureact::signal<int> src_copy;
         CHECK_FALSE( src_copy.is_valid() );
@@ -92,7 +92,7 @@ TEST_CASE( "SignalAssignmentConstruction" )
         CHECK( src_copy.equal_to( src ) );
     }
 
-    SUBCASE( "move assignment" )
+    SECTION( "move assignment" )
     {
         ureact::signal<int> src_move;
         CHECK_FALSE( src_move.is_valid() );
@@ -109,7 +109,7 @@ TEST_CASE( "VarSignalConstruction" )
 
     // default constructed var_signal isn't linked to a reactive node, thus
     // can't be used for anything but for following assignment
-    SUBCASE( "default constructed" )
+    SECTION( "default constructed" )
     {
         ureact::var_signal<int> null_var;
         CHECK_FALSE( null_var.is_valid() );
@@ -117,24 +117,24 @@ TEST_CASE( "VarSignalConstruction" )
 
     // var_signal can be created via free function semantically close to std::make_shared
     // Signal value type S can be specified explicitly, but doesn't have to.
-    SUBCASE( "make_var()" )
+    SECTION( "make_var()" )
     {
         auto var = ureact::make_var( ctx, 8 );
         CHECK( var.is_valid() );
     }
-    SUBCASE( "make_var<T>()" )
+    SECTION( "make_var<T>()" )
     {
         auto var = ureact::make_var<float>( ctx, 6 );
         CHECK( var.is_valid() );
     }
 
     // copy and move construction of var_signal
-    SUBCASE( "copy and move constructed" )
+    SECTION( "copy and move constructed" )
     {
         ureact::var_signal src = ureact::make_var( ctx, 0 );
         CHECK( src.is_valid() );
 
-        SUBCASE( "copy constructed" )
+        SECTION( "copy constructed" )
         {
             ureact::var_signal<int> src_copy = src;
             CHECK( src_copy.is_valid() );
@@ -142,7 +142,7 @@ TEST_CASE( "VarSignalConstruction" )
             CHECK( src_copy.equal_to( src ) );
         }
 
-        SUBCASE( "move constructed" )
+        SECTION( "move constructed" )
         {
             ureact::var_signal<int> src_move = std::move( src );
             CHECK( src_move.is_valid() );
@@ -158,7 +158,7 @@ TEST_CASE( "VarSignalAssignmentConstruction" )
     ureact::var_signal src = ureact::make_var( ctx, -1 );
     CHECK( src.is_valid() );
 
-    SUBCASE( "copy assignment" )
+    SECTION( "copy assignment" )
     {
         ureact::var_signal<int> src_copy;
         CHECK_FALSE( src_copy.is_valid() );
@@ -169,7 +169,7 @@ TEST_CASE( "VarSignalAssignmentConstruction" )
         CHECK( src_copy.equal_to( src ) );
     }
 
-    SUBCASE( "move assignment" )
+    SECTION( "move assignment" )
     {
         ureact::var_signal<int> src_move;
         CHECK_FALSE( src_move.is_valid() );
@@ -245,27 +245,27 @@ TEST_CASE( "VarSignalSetValue" )
 
     int new_value{ 5 };
 
-    SUBCASE( "set method L-value" )
+    SECTION( "set method L-value" )
     {
         src.set( new_value );
     }
-    SUBCASE( "set method R-value" )
+    SECTION( "set method R-value" )
     {
         src.set( 5 );
     }
-    SUBCASE( "set operator L-value" )
+    SECTION( "set operator L-value" )
     {
         src <<= new_value;
     }
-    SUBCASE( "set operator R-value" )
+    SECTION( "set operator R-value" )
     {
         src <<= 5;
     }
-    SUBCASE( "set function object L-value" )
+    SECTION( "set function object L-value" )
     {
         src( new_value );
     }
-    SUBCASE( "set function object R-value" )
+    SECTION( "set function object R-value" )
     {
         src( 5 );
     }
@@ -283,11 +283,11 @@ TEST_CASE( "VarSignalModifyValue" )
 
     auto change_int_to_5 = []( int& v ) { v = 5; };
 
-    SUBCASE( "modify method" )
+    SECTION( "modify method" )
     {
         src.modify( change_int_to_5 );
     }
-    SUBCASE( "modify operator" )
+    SECTION( "modify operator" )
     {
         src <<= change_int_to_5;
     }

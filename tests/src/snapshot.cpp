@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/snapshot.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/count.hpp"
 #include "ureact/adaptor/monitor.hpp"
 #include "ureact/adaptor/transform.hpp"
@@ -21,16 +21,16 @@ TEST_CASE( "Snapshot" )
     auto target = ureact::make_var<int>( ctx, -1 );
     ureact::signal<int> snap;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         snap = ureact::snapshot( trigger, target );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         snap = trigger | ureact::snapshot( target );
     }
 
-    SUBCASE( "Trigger can be any type" )
+    SECTION( "Trigger can be any type" )
     {
         auto trigger_int = ureact::transform( trigger, []( ureact::unit ) { return 1; } );
         snap = ureact::snapshot( trigger_int, target );

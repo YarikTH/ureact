@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/count.hpp"
 #include "ureact/adaptor/filter.hpp"
@@ -44,14 +44,14 @@ TEST_CASE( "EventsConstruction" )
 
     // default constructed events isn't linked to a reactive node, thus
     // can't be used for anything but for following assignment
-    SUBCASE( "default constructed" )
+    SECTION( "default constructed" )
     {
         ureact::events<> null_evt;
         CHECK_FALSE( null_evt.is_valid() );
     }
 
     // events can be created via object slicing from event_source object
-    SUBCASE( "slicing" )
+    SECTION( "slicing" )
     {
         auto src = ureact::make_source<>( ctx );
         ureact::events<> evt = src;
@@ -60,7 +60,7 @@ TEST_CASE( "EventsConstruction" )
     }
 
     // events can be created via make_never call
-    SUBCASE( "make_never" )
+    SECTION( "make_never" )
     {
         ureact::events evt = ureact::make_never<>( ctx );
 
@@ -68,7 +68,7 @@ TEST_CASE( "EventsConstruction" )
     }
 
     // events can be created using various algorithms
-    SUBCASE( "algorithm" )
+    SECTION( "algorithm" )
     {
         auto src1 = ureact::make_source<>( ctx );
         auto src2 = ureact::make_source<>( ctx );
@@ -78,26 +78,26 @@ TEST_CASE( "EventsConstruction" )
     }
 
     // copy and move construction of events
-    SUBCASE( "copy and move constructed" )
+    SECTION( "copy and move constructed" )
     {
         ureact::events<> src = ureact::make_source<>( ctx );
         CHECK( src.is_valid() );
 
-        SUBCASE( "copy constructed" )
+        SECTION( "copy constructed" )
         {
             ureact::events<> src_copy = src;
             CHECK( src_copy.is_valid() );
             CHECK( src.is_valid() );
         }
 
-        SUBCASE( "move constructed" )
+        SECTION( "move constructed" )
         {
             ureact::events<> src_move = std::move( src );
             CHECK( src_move.is_valid() );
             CHECK_FALSE( src.is_valid() );
         }
 
-        SUBCASE( "copy assignment" )
+        SECTION( "copy assignment" )
         {
             ureact::events<> src_copy;
             CHECK_FALSE( src_copy.is_valid() );
@@ -108,7 +108,7 @@ TEST_CASE( "EventsConstruction" )
             CHECK( src_copy.equal_to( src ) );
         }
 
-        SUBCASE( "move assignment" )
+        SECTION( "move assignment" )
         {
             ureact::events<> src_move;
             CHECK_FALSE( src_move.is_valid() );
@@ -126,7 +126,7 @@ TEST_CASE( "EventSourceConstruction" )
 
     // default constructed event_source isn't linked to a reactive node, thus
     // can't be used for anything but for following assignment
-    SUBCASE( "default constructed" )
+    SECTION( "default constructed" )
     {
         ureact::event_source<> null_src;
         CHECK_FALSE( null_src.is_valid() );
@@ -134,19 +134,19 @@ TEST_CASE( "EventSourceConstruction" )
 
     // event_source can be created via free function semantically close to std::make_shared
     // Event value type E has to be specified explicitly. It would be token if it is omitted
-    SUBCASE( "make_source<>()" )
+    SECTION( "make_source<>()" )
     {
         auto src = ureact::make_source<>( ctx );
         CHECK( src.is_valid() );
     }
 
     // copy and move construction of event_source
-    SUBCASE( "copy and move constructed" )
+    SECTION( "copy and move constructed" )
     {
         ureact::event_source src = ureact::make_source<int>( ctx );
         CHECK( src.is_valid() );
 
-        SUBCASE( "copy constructed" )
+        SECTION( "copy constructed" )
         {
             ureact::event_source<int> src_copy = src;
             CHECK( src_copy.is_valid() );
@@ -154,14 +154,14 @@ TEST_CASE( "EventSourceConstruction" )
             CHECK( src_copy.equal_to( src ) );
         }
 
-        SUBCASE( "move constructed" )
+        SECTION( "move constructed" )
         {
             ureact::event_source<int> src_move = std::move( src );
             CHECK( src_move.is_valid() );
             CHECK_FALSE( src.is_valid() );
         }
 
-        SUBCASE( "copy assignment" )
+        SECTION( "copy assignment" )
         {
             ureact::event_source<int> src_copy;
             CHECK_FALSE( src_copy.is_valid() );
@@ -172,7 +172,7 @@ TEST_CASE( "EventSourceConstruction" )
             CHECK( src_copy.equal_to( src ) );
         }
 
-        SUBCASE( "move assignment" )
+        SECTION( "move assignment" )
         {
             ureact::event_source<int> src_move;
             CHECK_FALSE( src_move.is_valid() );
@@ -220,8 +220,8 @@ TEST_CASE( "EventsSmartPointerSemantics" )
     std::vector<int> v{ 1, 2, 3, 4, 5, 6 };
     std::copy( v.begin(), v.end(), src.begin() );
 
-    CHECK_EQ( result_even.get(), std::vector{ 2, 4, 6 } );
-    CHECK_EQ( result_odd.get(), std::vector{ 1, 3, 5 } );
+    CHECK( result_even.get() == std::vector{ 2, 4, 6 } );
+    CHECK( result_odd.get() == std::vector{ 1, 3, 5 } );
 }
 
 // We can emit events using a bunch of methods doing basically the same
@@ -234,28 +234,28 @@ TEST_CASE( "EventSourceEmitting" )
 
     auto result = ureact::collect<std::vector>( src );
 
-    SUBCASE( "emit method" )
+    SECTION( "emit method" )
     {
         src.emit( 1 );  // R-value
         src.emit( _2 ); // L-value
     }
-    SUBCASE( "function object" )
+    SECTION( "function object" )
     {
         src( 1 );  // R-value
         src( _2 ); // L-value
     }
-    SUBCASE( "stream" )
+    SECTION( "stream" )
     {
         src << 1   // R-value
             << _2; // L-value
     }
-    SUBCASE( "stl iterator" )
+    SECTION( "stl iterator" )
     {
         std::generate_n( src.begin(), 1, [] { return 1; } );                   // R-value
         std::generate_n( src.begin(), 1, [&]() -> const int& { return _2; } ); // L-value
     }
 
-    CHECK_EQ( result.get(), std::vector{ 1, 2 } );
+    CHECK( result.get() == std::vector{ 1, 2 } );
 }
 
 // We can emit tokens using a bunch of methods doing basically the same
@@ -268,25 +268,25 @@ TEST_CASE( "EventSourceEmittingTokenSpecialization" )
 
     auto counted = ureact::count( src );
 
-    SUBCASE( "emit method" )
+    SECTION( "emit method" )
     {
         src.emit();                 // event_source<token> specialization without argument
         src.emit( ureact::unit{} ); // R-value
         src.emit( unit );           // L-value
     }
-    SUBCASE( "function object" )
+    SECTION( "function object" )
     {
         src();                 // event_source<token> specialization without argument
         src( ureact::unit{} ); // R-value
         src( unit );           // L-value
     }
-    SUBCASE( "stream" )
+    SECTION( "stream" )
     {
         src << ureact::unit{} // R-value
             << unit           // L-value
             << unit;          // L-value
     }
-    SUBCASE( "stl iterator" )
+    SECTION( "stl iterator" )
     {
         std::generate_n( src.begin(), 1, [] { return ureact::unit{}; } );           // R-value
         std::generate_n( src.begin(), 2, [&]() -> ureact::unit& { return unit; } ); // L-value

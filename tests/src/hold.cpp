@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/hold.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/observe.hpp"
 #include "ureact/events.hpp"
 
@@ -19,11 +19,11 @@ TEST_CASE( "Hold" )
     auto src = ureact::make_source<int>( ctx );
     ureact::signal<int> held;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         held = ureact::hold( src, -1 );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         held = src | ureact::hold( -1 );
     }

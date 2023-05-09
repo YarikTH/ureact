@@ -7,7 +7,7 @@
 //
 #include "ureact/scoped_observer.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/observe.hpp"
 #include "ureact/events.hpp"
 
@@ -42,13 +42,13 @@ TEST_CASE( "ScopedObserver" )
 
     CHECK( observation_count == 0 );
 
-    SUBCASE( "ScopedObserver" )
+    SECTION( "ScopedObserver" )
     {
         ureact::scoped_observer obs = ureact::observe( src, observe_handler );
 
         src.emit();
     }
-    SUBCASE( "ObserverDetach" )
+    SECTION( "ObserverDetach" )
     {
         ureact::observer obs = ureact::observe( src, observe_handler );
 

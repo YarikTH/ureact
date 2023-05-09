@@ -7,7 +7,7 @@
 //
 #include "ureact/detail/adaptor.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/filter.hpp"
 #include "ureact/adaptor/transform.hpp"
@@ -32,11 +32,11 @@ TEST_CASE( "ClosureCall" )
 #define R src
 #define C ureact::filter( is_positive )
 
-    SUBCASE( "functional call" )
+    SECTION( "functional call" )
     {
         e = C( R );
     }
-    SUBCASE( "pipe operator" )
+    SECTION( "pipe operator" )
     {
         e = R | C;
     }
@@ -76,19 +76,19 @@ TEST_CASE( "ClosureChaining" )
 #define C ureact::filter( is_positive )
 #define D ureact::transform( square )
 
-    SUBCASE( "default composition" )
+    SECTION( "default composition" )
     {
         e = R | C | D;
     }
-    SUBCASE( "default composition emphasized" )
+    SECTION( "default composition emphasized" )
     {
         e = ( R | C ) | D;
     }
-    SUBCASE( "closure composition" )
+    SECTION( "closure composition" )
     {
         e = R | ( C | D );
     }
-    SUBCASE( "closure composition L-value" )
+    SECTION( "closure composition L-value" )
     {
         auto chained = C | D;
         e = R | chained;

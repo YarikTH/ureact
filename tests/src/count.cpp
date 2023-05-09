@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/count.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/events.hpp"
 
 // Counts amount of received events into signal<S>
@@ -19,13 +19,13 @@ TEST_CASE( "Count" )
     ureact::signal<size_t> counter;
     ureact::signal<int> integer_counter;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         counter = ureact::count( src ); // Default version creates signal<size_t>
         integer_counter
             = ureact::count_as<int>( src ); // Type of signal can be explicitly requested
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         counter = src | ureact::count;
         integer_counter = src | ureact::count_as<int>;

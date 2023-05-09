@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/changed.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/count.hpp"
 
 // Emits value changes of signal as events
@@ -19,12 +19,12 @@ TEST_CASE( "Changed" )
     ureact::events<> changes;
     ureact::events<> changes_to_zero;
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         changes = ureact::changed( src );
         changes_to_zero = ureact::changed_to( src, 0 );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         changes = src | ureact::changed;
         changes_to_zero = src | ureact::changed_to( 0 );

@@ -7,7 +7,7 @@
 //
 #include "ureact/adaptor/process.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/transaction.hpp"
 
@@ -28,11 +28,11 @@ TEST_CASE( "Process" )
         ++calls;
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         processed = ureact::process<int>( src, repeater );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         processed = src | ureact::process<int>( repeater );
     }
@@ -71,11 +71,11 @@ TEST_CASE( "ProcessSynced" )
                 out << record_t{ timestamp, value };
     };
 
-    SUBCASE( "Functional syntax" )
+    SECTION( "Functional syntax" )
     {
         processed = ureact::process<record_t>( src, with( n, timestamp ), repeater );
     }
-    SUBCASE( "Piped syntax" )
+    SECTION( "Piped syntax" )
     {
         processed = src | ureact::process<record_t>( with( n, timestamp ), repeater );
     }

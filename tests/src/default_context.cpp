@@ -7,7 +7,7 @@
 //
 #include "ureact/default_context.hpp"
 
-#include "doctest_extra.h"
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/merge.hpp"
@@ -49,14 +49,14 @@ TEST_CASE( "DefaultContextTransaction" )
     ureact::var_signal src = make_var( 1 );
     ureact::signal src_values = ureact::monitor( src ) | ureact::collect<std::vector>;
 
-    SUBCASE( "transaction" )
+    SECTION( "transaction" )
     {
         transaction _;
         src <<= 2;
         src <<= 1;
         src <<= 4;
     }
-    SUBCASE( "do_transaction" )
+    SECTION( "do_transaction" )
     {
         do_transaction( [&]() { //
             src <<= 2;

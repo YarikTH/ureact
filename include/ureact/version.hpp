@@ -13,7 +13,7 @@
 #define UREACT_VERSION_MAJOR 0
 #define UREACT_VERSION_MINOR 12
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.12.0 wip"
+#define UREACT_VERSION_STR "0.12.0"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )

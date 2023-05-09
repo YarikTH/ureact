@@ -3,6 +3,61 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.12.0](https://github.com/YarikTH/ureact/releases/tag/0.12.0) (2023-05-09)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.11.0...0.12.0)
+
+Rework "has_changed" extension point and replace doctest with Cache2
+
+- BREAKING! rework approach to "calming" made via has_changed customization
+  point
+  Overloaded free function version of `ureact::detail::has_changed()` is
+  replaced with Customization Point Object
+  Existence of operator== is no longer condition for "calming", instead free
+  function `has_changed` is used.
+  `has_changed` is provided only for arithmetic types, enum types and library
+  classes `ureact::signal` and `ureact::events`.
+
+  Examples of `has_changed` function:
+    1. free function in the same namespace
+    ```C++
+    namespace foo
+    {
+        struct Foo
+        {
+            int value;
+        };
+        
+        constexpr bool has_changed( const Foo lhs, const Foo rhs ) noexcept
+        {
+            return !( lhs.value == rhs.value );
+        }
+    }
+    ```
+
+    2. hidden friend version for the shy ones
+    ```C++
+    namespace bar
+    {
+        class Bar
+        {
+            int value;
+           
+            friend constexpr bool has_changed( const Bar lhs, const Bar rhs ) noexcept
+            {
+                return !( lhs.value == rhs.value );
+            }
+        };
+    }
+    ```
+- Remove Codacy badge. Codacy proved to be useless for this repository
+- Replace doctest with Cache2. They are mostly the same in terms of interface,
+  but activity and support of Cache2 is better
+- Move the only benchmark from standalone benchmark folder into ureact_test
+  target.
+  Cache2 has microbenchmark feature, but I don't understand it's output and
+  don't trust it.
+
 ## [0.11.0](https://github.com/YarikTH/ureact/releases/tag/0.11.0) (2023-05-01)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.10.1...0.11.0)

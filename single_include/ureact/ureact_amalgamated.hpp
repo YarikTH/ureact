@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.12.0 wip
-// Generated: 2023-05-01 19:48:00.253156
+// Ureact v0.12.0
+// Generated: 2023-05-09 17:49:17.123193
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -34,7 +34,7 @@
 #define UREACT_VERSION_MAJOR 0
 #define UREACT_VERSION_MINOR 12
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.12.0 wip"
+#define UREACT_VERSION_STR "0.12.0"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
@@ -2552,6 +2552,16 @@ protected:
 
     template <typename Ret, typename Node, typename... Args>
     friend Ret detail::create_wrapped_node( Args&&... args );
+
+private:
+    /*!
+     * @brief has_changed overload for @ref events
+     */
+    UREACT_WARN_UNUSED_RESULT friend constexpr bool has_changed(
+        const events& lhs, const events& rhs ) noexcept
+    {
+        return !lhs.equal_to( rhs );
+    }
 };
 
 /*!
@@ -3238,82 +3248,72 @@ UREACT_END_NAMESPACE
 
 UREACT_BEGIN_NAMESPACE
 
-template <typename S>
-class signal;
-
-template <typename E>
-class events;
-
-namespace detail
-{
-
-/// c++17 analog of equality_comparable concept from c++20
-/// https://en.cppreference.com/w/cpp/concepts/equality_comparable
-template <typename T, typename = void>
-struct equality_comparable : std::false_type
-{};
-
-// TODO: check if result of == is exactly bool
-template <typename T>
-struct equality_comparable<T, std::void_t<decltype( std::declval<T>() == std::declval<T>() )>>
-    : std::true_type
-{};
-
-template <typename T>
-inline constexpr bool equality_comparable_v = equality_comparable<T>::value;
-
-} // namespace detail
-
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
 /*!
- * @brief std::not_equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
+ * @brief has_changed overload for arithmetic types and enums
  *
- *  Additionally:
- *  * it equally compares signal<S> and events<E> even if their operator== is overloaded
- *  * it equally compares reference wrappers because they can be used as S for signal<S> and their operator== does unexpected compare
- *  * it returns true if types are not equally comparable otherwise
+ * @note Can't use ADL, so should be placed before has_changed_comparable
+ * @note float-equal warning is suppressed, because it is perfectly fine to compare them in this context
  */
-template <typename T>
-UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const T& lhs, const T& rhs )
+template <class T, class = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
+UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const T lhs, const T rhs ) noexcept
 {
-    if constexpr( detail::equality_comparable_v<T> )
-    {
-        return !( lhs == rhs );
-    }
-    else
-    {
-        return true;
-    }
-}
-
-// TODO: check if lhs.equal_to( rhs ) can be called instead of checking for specific types
-template <typename S>
-UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const signal<S>& lhs, const signal<S>& rhs )
-{
-    return !lhs.equal_to( rhs );
-}
-
-template <typename E>
-UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( const events<E>& lhs, const events<E>& rhs )
-{
-    return !lhs.equal_to( rhs );
-}
-
-template <typename T>
-UREACT_WARN_UNUSED_RESULT constexpr bool has_changed( //
-    const std::reference_wrapper<T>& lhs,             //
-    const std::reference_wrapper<T>& rhs )
-{
-    return has_changed( lhs.get(), rhs.get() );
+    return !( lhs == rhs );
 }
 
 #if defined( __clang__ ) && defined( __clang_minor__ )
 #    pragma clang diagnostic pop
 #endif
+
+// msvc finds ureact::detail::has_changed niebloid if it is not in the different namespace
+// as a result infinite recursion occurs.
+// to prevent this additional detail namespace is provided.
+namespace has_changed_detail
+{
+
+template <typename T, typename = void>
+struct has_changed_comparable : std::false_type
+{};
+
+template <typename T>
+struct has_changed_comparable<T,
+    std::void_t<decltype( has_changed( std::declval<T>(), std::declval<T>() ) )>> : std::true_type
+{};
+
+template <typename T>
+inline constexpr bool has_changed_comparable_v = has_changed_comparable<T>::value;
+
+struct HasChangedCPO
+{
+    template <class T>
+    constexpr bool operator()( const T& lhs, const T& rhs ) const noexcept
+    {
+        if constexpr( has_changed_comparable_v<T> )
+            return has_changed( lhs, rhs );
+        else
+            return true; // Assume always changed
+    }
+};
+
+} // namespace has_changed_detail
+
+namespace detail
+{
+
+/*!
+ * @brief std::not_equal_to analog intended to prevent reaction of signals to setting the same value as before aka "calming"
+ * 
+ * @note To make a user-defined type "calmable", provide correct has_changed function
+ *       for the type in the same namespace the type is defined.
+ *       Expected signature is "bool has_changed( const T& lhs, const T& rhs )"
+ */
+inline constexpr has_changed_detail::HasChangedCPO has_changed{};
+
+} // namespace detail
 
 UREACT_END_NAMESPACE
 
@@ -3627,6 +3627,16 @@ protected:
 
     template <typename Ret, typename Node, typename... Args>
     friend Ret detail::create_wrapped_node( Args&&... args );
+
+private:
+    /*!
+     * @brief has_changed overload for @ref signal
+     */
+    UREACT_WARN_UNUSED_RESULT friend constexpr bool has_changed(
+        const signal& lhs, const signal& rhs ) noexcept
+    {
+        return !lhs.equal_to( rhs );
+    }
 };
 
 /*!
@@ -4644,7 +4654,7 @@ public:
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
-        if( has_changed( new_inner, m_inner ) )
+        if( new_inner != m_inner )
         {
             // Topology has been changed
             auto old_inner = m_inner;
@@ -4687,7 +4697,7 @@ public:
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
         const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
-        if( has_changed( new_inner, m_inner ) )
+        if( new_inner != m_inner )
         {
             // Topology has been changed
             auto old_inner = m_inner;

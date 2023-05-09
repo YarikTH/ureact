@@ -5,8 +5,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
+
 #include <nanobench.h>
 
+#include "catch2_extra.hpp"
 #include "ureact/adaptor/lift.hpp"
 
 namespace
@@ -74,7 +76,7 @@ void signal_functions_separate( ankerl::nanobench::Bench& bench )
 
 } // namespace
 
-int main()
+TEST_CASE( "BenchmakSignalComposing" )
 {
     ankerl::nanobench::Bench b;
     b.title( "Signal composing comparison" );

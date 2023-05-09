@@ -11,6 +11,7 @@ target_sources(
     ureact_test
     PRIVATE
         adaptor.cpp
+        benchmak_signal_composing.cpp
         cast.cpp
         changed.cpp
         collect.cpp
@@ -50,7 +51,10 @@ target_sources(
         zip.cpp
 )
 
-target_link_libraries(ureact_test PRIVATE ureact::ureact Catch2::Catch2WithMain)
+target_link_libraries(
+    ureact_test
+    PRIVATE ureact::ureact Catch2::Catch2WithMain nanobench::nanobench
+)
 
 target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
 

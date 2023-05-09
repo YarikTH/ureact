@@ -17,6 +17,14 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(Catch2)
+
+FetchContent_Declare(
+    nanobench
+    GIT_REPOSITORY "https://github.com/martinus/nanobench.git"
+    GIT_TAG "v4.3.11"
+)
+
+FetchContent_MakeAvailable(nanobench)
 # gersemi: on
 
 add_subdirectory(self_contained)

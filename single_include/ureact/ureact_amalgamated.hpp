@@ -9,8 +9,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 // ----------------------------------------------------------------
-// Ureact v0.13.0 wip
-// Generated: 2023-06-17 20:52:39.647562
+// Ureact v0.13.0
+// Generated: 2023-06-17 23:45:23.882619
 // ----------------------------------------------------------------
 // ureact - C++ header-only FRP library
 // The library is heavily influenced by cpp.react - https://github.com/snakster/cpp.react
@@ -34,7 +34,7 @@
 #define UREACT_VERSION_MAJOR 0
 #define UREACT_VERSION_MINOR 13
 #define UREACT_VERSION_PATCH 0
-#define UREACT_VERSION_STR "0.13.0 wip"
+#define UREACT_VERSION_STR "0.13.0"
 
 #define UREACT_VERSION                                                                             \
     ( UREACT_VERSION_MAJOR * 10000 + UREACT_VERSION_MINOR * 100 + UREACT_VERSION_PATCH )
@@ -3077,6 +3077,31 @@ UREACT_END_NAMESPACE
 
 #endif // UREACT_ADAPTOR_PROCESS_HPP
 
+#ifndef UREACT_DETAIL_DEDUCE_RESULT_TYPE_HPP
+#define UREACT_DETAIL_DEDUCE_RESULT_TYPE_HPP
+
+#include <type_traits>
+
+
+UREACT_BEGIN_NAMESPACE
+
+namespace detail
+{
+
+/// Deduce decayed function result unless RequestedType is specified
+/// TODO: consider adding strip_reference_wrapper: std::reference_wrapper<T> -> T&
+template <typename RequestedType, typename F, typename... Args>
+using deduce_result_type = std::conditional_t< //
+    std::is_same_v<RequestedType, void>,       //
+    std::decay_t<std::invoke_result_t<F, Args...>>,
+    RequestedType>;
+
+} // namespace detail
+
+UREACT_END_NAMESPACE
+
+#endif //UREACT_DETAIL_DEDUCE_RESULT_TYPE_HPP
+
 #ifndef UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 #define UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 
@@ -3120,7 +3145,8 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
+template <typename EIn = void>
+struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor<EIn>>
 {
     /*!
 	 * @brief Create a new event stream that transforms events from other stream
@@ -3135,13 +3161,12 @@ struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
 	 *
 	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
 	 */
-    template <typename InE,
-        typename F,
-        typename... Deps,
-        typename OutE = std::invoke_result_t<F, InE, Deps...>>
+    template <typename InE, typename F, typename... Deps>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<InE>& source, const signal_pack<Deps...>& dep_pack, F&& func ) const
     {
+        using OutE = deduce_result_type<EIn, F, InE, Deps...>;
+
         return process<OutE>( source,
             dep_pack, //
             [func = std::forward<F>( func )](
@@ -3151,12 +3176,23 @@ struct TransformAdaptor : SyncedAdaptorBase<TransformAdaptor>
             } );
     }
 
-    using SyncedAdaptorBase::operator();
+    using SyncedAdaptorBase<TransformAdaptor<EIn>>::operator();
 };
 
 } // namespace detail
 
-inline constexpr detail::TransformAdaptor transform;
+/*!
+ * @brief Create a new event stream that transforms events from other stream
+ *
+ *  Type of resulting events should be explicitly specified.
+ */
+template <typename EIn = void>
+inline constexpr detail::TransformAdaptor<EIn> transform_as;
+
+/*!
+ * @brief Create a new event stream that transforms events from other stream
+ */
+inline constexpr detail::TransformAdaptor<> transform;
 
 UREACT_END_NAMESPACE
 
@@ -5127,12 +5163,6 @@ private:
     F m_func;
 };
 
-// TODO: remove r-value reference only, leave simple references
-template <typename SIn, typename F, typename... Values>
-using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
-    std::decay_t<std::invoke_result_t<F, Values...>>,
-    SIn>;
-
 // Based on the transparent functor std::negate<>
 struct unary_plus
 {
@@ -5162,7 +5192,7 @@ struct LiftAdaptor : Adaptor
         const signal_pack<Values...>& arg_pack, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, Values...>;
+        using S = deduce_result_type<SIn, F, Values...>;
         using Op = function_op<S, F, signal_node_ptr_t<Values>...>;
 
         const context& context = std::get<0>( arg_pack.data ).get_context();
@@ -5185,7 +5215,7 @@ struct LiftAdaptor : Adaptor
         const signal<Value>& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, Value>;
+        using S = deduce_result_type<SIn, F, Value>;
         using Op = function_op<S, F, signal_node_ptr_t<Value>>;
         return temp_signal<S, Op>{
             arg.get_context(), std::forward<InF>( func ), get_internals( arg ).get_node_ptr() };
@@ -5201,7 +5231,7 @@ struct LiftAdaptor : Adaptor
         temp_signal<Value, OpIn>&& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, Value>;
+        using S = deduce_result_type<SIn, F, Value>;
         using Op = function_op<S, F, OpIn>;
         return temp_signal<S, Op>{
             arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
@@ -5279,7 +5309,7 @@ struct LiftAdaptor : Adaptor
         temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using S = deduce_result_type<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, RightOp>;
 
         const context& context = lhs.get_context();
@@ -5306,7 +5336,7 @@ struct LiftAdaptor : Adaptor
     {
         using RightVal = typename RightSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using S = deduce_result_type<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
         const context& context = lhs.get_context();
@@ -5333,7 +5363,7 @@ struct LiftAdaptor : Adaptor
     {
         using LeftVal = typename LeftSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using S = deduce_result_type<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
         const context& context = lhs.get_context();
@@ -5358,8 +5388,6 @@ inline constexpr detail::LiftAdaptor<SIn> lift_as;
 
 /*!
  * @brief Create a new signal applying function to given signals
- *
- *  Type of resulting signal should be explicitly specified.
  */
 inline constexpr detail::LiftAdaptor<> lift;
 

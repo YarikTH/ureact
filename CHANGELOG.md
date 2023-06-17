@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.0](https://github.com/YarikTH/ureact/releases/tag/0.13.0) (2023-06-17)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.12.0...0.13.0)
+
+- Add initial version of code coverage collection
+- Improve tests
+- Make `ureact::transform` compatible with invokable that return reference Now
+  it works the same way `ureact::lift` does - invoke result is decayed to deduce
+  result `ureact::events<E>` type
+- Add `ureact::transform_as` to manually select result type instead of relying
+  on the deduced type
+
 ## [0.12.0](https://github.com/YarikTH/ureact/releases/tag/0.12.0) (2023-05-09)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.11.0...0.12.0)

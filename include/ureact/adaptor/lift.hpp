@@ -11,6 +11,7 @@
 #define UREACT_ADAPTOR_LIFT_HPP
 
 #include <ureact/detail/adaptor.hpp>
+#include <ureact/detail/deduce_result_type.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/signal_pack.hpp>
@@ -74,12 +75,6 @@ private:
     F m_func;
 };
 
-// TODO: remove r-value reference only, leave simple references
-template <typename SIn, typename F, typename... Values>
-using deduce_s = std::conditional_t<std::is_same_v<SIn, void>, //
-    std::decay_t<std::invoke_result_t<F, Values...>>,
-    SIn>;
-
 // Based on the transparent functor std::negate<>
 struct unary_plus
 {
@@ -109,7 +104,7 @@ struct LiftAdaptor : Adaptor
         const signal_pack<Values...>& arg_pack, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, Values...>;
+        using S = deduce_result_type<SIn, F, Values...>;
         using Op = function_op<S, F, signal_node_ptr_t<Values>...>;
 
         const context& context = std::get<0>( arg_pack.data ).get_context();
@@ -132,7 +127,7 @@ struct LiftAdaptor : Adaptor
         const signal<Value>& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, Value>;
+        using S = deduce_result_type<SIn, F, Value>;
         using Op = function_op<S, F, signal_node_ptr_t<Value>>;
         return temp_signal<S, Op>{
             arg.get_context(), std::forward<InF>( func ), get_internals( arg ).get_node_ptr() };
@@ -148,7 +143,7 @@ struct LiftAdaptor : Adaptor
         temp_signal<Value, OpIn>&& arg, InF&& func ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, Value>;
+        using S = deduce_result_type<SIn, F, Value>;
         using Op = function_op<S, F, OpIn>;
         return temp_signal<S, Op>{
             arg.get_context(), std::forward<InF>( func ), std::move( arg ).steal_op() };
@@ -226,7 +221,7 @@ struct LiftAdaptor : Adaptor
         temp_signal<LeftVal, LeftOp>&& lhs, InF&& func, temp_signal<RightVal, RightOp>&& rhs ) const
     {
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using S = deduce_result_type<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, RightOp>;
 
         const context& context = lhs.get_context();
@@ -253,7 +248,7 @@ struct LiftAdaptor : Adaptor
     {
         using RightVal = typename RightSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using S = deduce_result_type<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, LeftOp, signal_node_ptr_t<RightVal>>;
 
         const context& context = lhs.get_context();
@@ -280,7 +275,7 @@ struct LiftAdaptor : Adaptor
     {
         using LeftVal = typename LeftSignal::value_t;
         using F = std::decay_t<InF>;
-        using S = deduce_s<SIn, F, LeftVal, RightVal>;
+        using S = deduce_result_type<SIn, F, LeftVal, RightVal>;
         using Op = function_op<S, F, signal_node_ptr_t<LeftVal>, RightOp>;
 
         const context& context = lhs.get_context();

@@ -19,3 +19,19 @@ struct identity
         return std::forward<T>( t );
     }
 };
+
+// identity variant to check work with functions returning references
+struct identity_ref
+{
+    template <class T>
+    constexpr T& operator()( T& t ) const noexcept
+    {
+        return t;
+    }
+
+    template <class T>
+    constexpr const T& operator()( const T& t ) const noexcept
+    {
+        return t;
+    }
+};

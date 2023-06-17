@@ -89,6 +89,7 @@ The library itself consists of a single header file licensed under the Boost Sof
 * [**gersemi**](https://github.com/blankspruce/gersemi) for automatic CMake code indentation
 * [**Cache2**](https://github.com/catchorg/Catch2) for the unit tests
 * [**nanobench**](https://github.com/martinus/nanobench) for the benchmarks
+* [**codecov.io**](https://about.codecov.io/) for monitoring test coverage
 
 ## Contact
 

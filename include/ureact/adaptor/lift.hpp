@@ -300,8 +300,6 @@ inline constexpr detail::LiftAdaptor<SIn> lift_as;
 
 /*!
  * @brief Create a new signal applying function to given signals
- *
- *  Type of resulting signal should be explicitly specified.
  */
 inline constexpr detail::LiftAdaptor<> lift;
 

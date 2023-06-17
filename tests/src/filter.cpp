@@ -8,6 +8,7 @@
 #include "ureact/adaptor/filter.hpp"
 
 #include "catch2_extra.hpp"
+#include "identity.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/transaction.hpp"
 
@@ -80,4 +81,34 @@ TEST_CASE( "FilterSynced" )
     // synced filtering performed only after new limit values are calculated
     const std::vector<int> expected = { /*first range*/ 4, 5, 6, 7, /*second range*/ 1, 2, 3 };
     CHECK( result.get() == expected );
+}
+
+TEST_CASE( "FilterRef" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_source<int>( ctx );
+    ureact::events<int> rvalue;
+    ureact::events<int> lvalue;
+
+    SECTION( "Functional syntax" )
+    {
+        rvalue = ureact::filter( src, identity{} );
+        lvalue = ureact::filter( src, identity_ref{} );
+    }
+    SECTION( "Piped syntax" )
+    {
+        rvalue = src | ureact::filter( identity{} );
+        lvalue = src | ureact::filter( identity_ref{} );
+    }
+
+    const auto result_rvalue = ureact::collect<std::vector>( rvalue );
+    const auto result_lvalue = ureact::collect<std::vector>( lvalue );
+
+    for( int i : { 1, 0, -1, 0, 0, 2 } )
+        src << i;
+
+    const std::vector<int> expected = { 1, -1, 2 };
+    CHECK( result_rvalue.get() == expected );
+    CHECK( result_lvalue.get() == expected );
 }

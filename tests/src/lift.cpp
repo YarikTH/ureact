@@ -483,3 +483,54 @@ TEST_CASE( "LiftOperatorPriority" )
     auto result2 = ( _2 + _2 ) * _2;
     CHECK( result2.get() == 8 );
 }
+
+// Check how it ureact::lift works with functions that return T&& or T&
+TEST_CASE( "LiftRef" )
+{
+    ureact::context ctx;
+
+    auto src = make_var( ctx, -1 );
+    ureact::signal<int> rvalue;
+    ureact::signal<int> lvalue;
+
+    SECTION( "Functional syntax" )
+    {
+        rvalue = ureact::lift( src, identity{} );
+        lvalue = ureact::lift( src, identity_ref{} );
+    }
+    SECTION( "Piped syntax" )
+    {
+        rvalue = src | ureact::lift( identity{} );
+        lvalue = src | ureact::lift( identity_ref{} );
+    }
+
+    for( int i = 0; i < 5; ++i )
+    {
+        src <<= i;
+        CHECK( rvalue.get() == i );
+        CHECK( lvalue.get() == i );
+    }
+}
+
+TEST_CASE( "LiftAs" )
+{
+    ureact::context ctx;
+
+    auto src = make_var( ctx, -1 );
+    ureact::signal<int64_t> big_int;
+
+    SECTION( "Functional syntax" )
+    {
+        big_int = ureact::lift_as<int64_t>( src, identity{} );
+    }
+    SECTION( "Piped syntax" )
+    {
+        big_int = src | ureact::lift_as<int64_t>( identity{} );
+    }
+
+    for( int i = 0; i < 5; ++i )
+    {
+        src <<= i;
+        CHECK( big_int.get() == i );
+    }
+}

@@ -61,6 +61,14 @@ jobs:
             cxxflags: -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls
             install: sudo apt-get install -y valgrind
             memcheck: true
+
+          - label: coverage
+            cxx: g++-10
+            build_type: Debug
+            std: 17
+            cxxflags: -g -O0 --coverage -fno-inline
+            install: sudo apt-get install -y lcov
+            coverage: true
     steps:
       - uses: actions/checkout@v3
 
@@ -104,3 +112,17 @@ jobs:
             find Testing/Temporary -name "MemoryChecker.*.log" -exec cat {} +
             exit 1
           fi
+
+      - name: Compute Coverage
+        if: ${{ matrix.coverage }}
+        run: |
+          mkdir -p coverage
+          lcov -c -d ${{runner.workspace}}/build -o coverage/lcov.info --include "*include/ureact*"
+
+      - name: Upload coverage reports to Codecov
+        if: ${{ matrix.coverage }}
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: true

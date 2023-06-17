@@ -6,6 +6,7 @@
 [![Windows](https://github.com/YarikTH/ureact/actions/workflows/windows.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/windows.yml)
 [![MacOS](https://github.com/YarikTH/ureact/actions/workflows/macos.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/macos.yml)
 [![CodeQL](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/codeql-analysis.yml)
+[![codecov](https://codecov.io/gh/YarikTH/ureact/branch/main/graph/badge.svg)](https://codecov.io/gh/YarikTH/ureact)
 
 [![Standard](https://img.shields.io/badge/c%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![Type](https://img.shields.io/badge/type-header--only-blue.svg)](.)

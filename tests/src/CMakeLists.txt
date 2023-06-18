@@ -26,6 +26,7 @@ target_sources(
         filter.cpp
         flatten.cpp
         fold.cpp
+        happened.cpp
         has_changed.cpp
         hold.cpp
         join.cpp

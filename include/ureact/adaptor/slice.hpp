@@ -24,9 +24,9 @@ namespace detail
 struct SliceAdaptor : Adaptor
 {
     /*!
-	 * @brief Keeps first N elements from the source stream
+	 * @brief Keeps given range (begin through end-1) of elements from the source stream
 	 *
-	 *  Semantically equivalent of std::ranges::views::take
+	 *  Semantically equivalent of proposed std::ranges::views::slice
 	 */
     template <typename E, typename N, class = std::enable_if_t<std::is_integral_v<N>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
@@ -54,9 +54,9 @@ struct SliceAdaptor : Adaptor
 } // namespace detail
 
 /*!
- * @brief Keeps given range of elements from the source stream
+ * @brief Keeps given range (begin through end-1) of elements from the source stream
  *
- *  Semantically equivalent of std::ranges::views::slice
+ *  Semantically equivalent of proposed std::ranges::views::slice
  */
 inline constexpr detail::SliceAdaptor slice;
 

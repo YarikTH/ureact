@@ -18,7 +18,7 @@
 UREACT_BEGIN_NAMESPACE
 
 /*!
- * @brief Represents a range of events. It it serves as an adaptor to the underlying event container of a source node
+ * @brief Represents a range of events. It is serves as an adaptor to the underlying event container of a source node
  *
  *  An instance of event_range holds a reference to the wrapped container and selectively exposes functionality
  *  that allows to iterate over its events without modifying it.

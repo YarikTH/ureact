@@ -27,7 +27,6 @@ namespace detail
 
 /// A simple slot map
 /// insert returns the slot index, which stays valid until the element is erased
-/// TODO: test it thoroughly
 template <typename T>
 class slot_map
 {
@@ -46,17 +45,44 @@ public:
         reset();
     }
 
-    UREACT_MAKE_NONCOPYABLE( slot_map );
-    UREACT_MAKE_MOVABLE( slot_map );
+    /// Custom move constructor
+    slot_map( slot_map&& other )
+        : m_storage( std::move( other.m_storage ) )
+        , m_free_indices( std::move( other.m_free_indices ) )
+        , m_size( other.m_size )
+        , m_capacity( other.m_capacity )
+    {
+        other.m_size = 0;
+        other.m_capacity = 0;
+    }
 
-    /// Returns a reference to the element at specified slot index. No bounds checking is performed.
+    /// Custom move assign
+    slot_map& operator=( slot_map&& other )
+    {
+        if( &other != this )
+        {
+            reset();
+
+            m_storage = std::move( other.m_storage );
+            m_free_indices = std::move( other.m_free_indices );
+            m_size = other.m_size;
+            m_capacity = other.m_capacity;
+            other.m_size = 0;
+            other.m_capacity = 0;
+        }
+        return *this;
+    }
+
+    UREACT_MAKE_NONCOPYABLE( slot_map );
+
+    /// Returns a reference to the element at specified slot index
     reference operator[]( size_type index )
     {
         assert( has_index( index ) );
         return *at( index );
     }
 
-    /// Returns a reference to the element at specified slot index. No bounds checking is performed.
+    /// Returns a constant reference to the element at specified slot index
     const_reference operator[]( size_type index ) const
     {
         assert( has_index( index ) );
@@ -105,7 +131,19 @@ public:
     /// Return if there is any element inside
     UREACT_WARN_UNUSED_RESULT bool empty() const
     {
-        return !total_size();
+        return m_size == 0;
+    }
+
+    /// Return how many slots are used
+    UREACT_WARN_UNUSED_RESULT size_type size() const
+    {
+        return m_size;
+    }
+
+    /// Return how many slots are allocated
+    UREACT_WARN_UNUSED_RESULT size_type capacity() const
+    {
+        return m_capacity;
     }
 
     /// Clear the data, leave capacity intact
@@ -162,9 +200,32 @@ private:
             : m_data{ std::make_unique<size_type[]>( amount ) }
         {}
 
+        /// Custom move constructor
+        free_indices( free_indices&& other )
+            : m_data( std::move( other.m_data ) )
+            , m_size( other.m_size )
+        {
+            other.m_size = 0;
+        }
+
+        /// Custom move assign
+        free_indices& operator=( free_indices&& other )
+        {
+            if( &other != this )
+            {
+                reset();
+
+                m_data = std::move( other.m_data );
+                m_size = other.m_size;
+                other.m_size = 0;
+            }
+            return *this;
+        }
+
         void reset()
         {
             m_data.reset();
+            m_size = 0u;
         }
 
         UREACT_WARN_UNUSED_RESULT size_type amount() const
@@ -301,6 +362,11 @@ private:
     }
 
     value_type* at( size_type index )
+    {
+        return std::addressof( m_storage[index].data );
+    }
+
+    const value_type* at( size_type index ) const
     {
         return std::addressof( m_storage[index].data );
     }

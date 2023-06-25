@@ -49,8 +49,8 @@ std::ostream& operator<<( std::ostream& os, const std::pair<T, Y>& pair )
     return os << "]";
 }
 
-template <typename... T>
-std::ostream& operator<<( std::ostream& os, const std::variant<T...>& variant )
+template <typename T1, typename... T>
+std::ostream& operator<<( std::ostream& os, const std::variant<T1, T...>& variant )
 {
     std::visit( [&os]( auto&& arg ) { os << arg; }, variant );
     return os;

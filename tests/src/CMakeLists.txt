@@ -10,52 +10,54 @@ add_executable(ureact_test)
 target_sources(
     ureact_test
     PRIVATE
+        adaptor/cast.cpp
+        adaptor/changed.cpp
+        adaptor/collect.cpp
+        adaptor/count.cpp
+        adaptor/elements.cpp
+        adaptor/filter.cpp
+        adaptor/flatten.cpp
+        adaptor/fold.cpp
+        adaptor/happened.cpp
+        adaptor/hold.cpp
+        adaptor/join.cpp
+        adaptor/lift.cpp
+        adaptor/merge.cpp
+        adaptor/monitor.cpp
+        adaptor/monitor_change.cpp
+        adaptor/process.cpp
+        adaptor/pulse.cpp
+        adaptor/snapshot.cpp
+        adaptor/stride.cpp
+        adaptor/take_drop.cpp
+        adaptor/take_drop_while.cpp
+        adaptor/tap.cpp
+        adaptor/transform.cpp
+        adaptor/unify.cpp
+        adaptor/unique.cpp
+        adaptor/zip.cpp
         adaptor.cpp
         benchmak_signal_composing.cpp
-        cast.cpp
-        changed.cpp
-        collect.cpp
         context.cpp
-        count.cpp
         default_context.cpp
         detail.cpp
-        elements.cpp
         event_emitter.cpp
         event_range.cpp
         events.cpp
-        filter.cpp
-        flatten.cpp
-        fold.cpp
-        happened.cpp
         has_changed.cpp
-        hold.cpp
-        join.cpp
-        lift.cpp
-        merge.cpp
-        monitor.cpp
-        monitor_change.cpp
         observer.cpp
-        process.cpp
         propagation.cpp
-        pulse.cpp
         scoped_observer.cpp
         signal.cpp
-        snapshot.cpp
-        stride.cpp
-        take_drop.cpp
-        take_drop_while.cpp
-        tap.cpp
         transaction.cpp
-        transform.cpp
-        unify.cpp
-        unique.cpp
-        zip.cpp
 )
 
 target_link_libraries(
     ureact_test
     PRIVATE ureact::ureact Catch2::Catch2WithMain nanobench::nanobench
 )
+
+target_include_directories(ureact_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_options(ureact_test PRIVATE ${UREACT_WARNING_OPTION})
 

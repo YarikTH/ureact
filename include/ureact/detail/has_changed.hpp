@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_HAS_CHANGED_HPP
-#define UREACT_HAS_CHANGED_HPP
+#ifndef UREACT_DETAIL_HAS_CHANGED_HPP
+#define UREACT_DETAIL_HAS_CHANGED_HPP
 
 #include <functional>
 #include <type_traits>
@@ -86,4 +86,4 @@ inline constexpr has_changed_detail::HasChangedCPO has_changed{};
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_HAS_CHANGED_HPP
+#endif //UREACT_DETAIL_HAS_CHANGED_HPP

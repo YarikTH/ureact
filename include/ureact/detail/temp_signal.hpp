@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_TEMP_SIGNAL_HPP
-#define UREACT_TEMP_SIGNAL_HPP
+#ifndef UREACT_DETAIL_TEMP_SIGNAL_HPP
+#define UREACT_DETAIL_TEMP_SIGNAL_HPP
 
 #include <ureact/signal.hpp>
 
@@ -118,4 +118,4 @@ public:
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_TEMP_SIGNAL_HPP
+#endif //UREACT_DETAIL_TEMP_SIGNAL_HPP

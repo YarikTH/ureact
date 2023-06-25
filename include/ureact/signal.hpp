@@ -12,8 +12,8 @@
 
 #include <ureact/context.hpp>
 #include <ureact/default_context.hpp>
+#include <ureact/detail/has_changed.hpp>
 #include <ureact/detail/observable_node.hpp>
-#include <ureact/has_changed.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE

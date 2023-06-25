@@ -13,9 +13,9 @@
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/deduce_result_type.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
+#include <ureact/detail/temp_signal.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/signal_pack.hpp>
-#include <ureact/temp_signal.hpp>
 #include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE

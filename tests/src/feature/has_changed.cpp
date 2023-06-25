@@ -5,13 +5,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/has_changed.hpp"
+#include "ureact/detail/has_changed.hpp"
 
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/events.hpp"
 #include "ureact/signal.hpp"
-#include "ureact/temp_signal.hpp"
 
 namespace
 {
@@ -118,3 +117,5 @@ TEST_CASE( "has_changed" )
         CHECK( checkIfLackOfChangeDetected( n ) );
     }
 }
+
+// TODO: move here tests that demonstrates effect of has_changed on lift and fold

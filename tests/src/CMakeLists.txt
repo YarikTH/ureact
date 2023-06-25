@@ -27,6 +27,7 @@ target_sources(
         adaptor/merge.cpp
         adaptor/monitor.cpp
         adaptor/monitor_change.cpp
+        adaptor/observe.cpp
         adaptor/once.cpp
         adaptor/process.cpp
         adaptor/pulse.cpp
@@ -41,17 +42,19 @@ target_sources(
         adaptor/unify.cpp
         adaptor/unique.cpp
         adaptor/zip.cpp
-        adaptor.cpp
-        benchmak_signal_composing.cpp
+        feature/adaptor.cpp
+        feature/default_context.cpp
+        feature/has_changed.cpp
+        feature/propagation.cpp
+        feature/reactive_members.cpp
+        feature/shared_ptr_semantics.cpp
+        benchmark_signal_composing.cpp
         context.cpp
-        default_context.cpp
         detail.cpp
         event_emitter.cpp
         event_range.cpp
         events.cpp
-        has_changed.cpp
         observer.cpp
-        propagation.cpp
         scoped_observer.cpp
         signal.cpp
         transaction.cpp

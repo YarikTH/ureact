@@ -12,7 +12,6 @@
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/count.hpp"
-#include "ureact/adaptor/filter.hpp"
 #include "ureact/adaptor/merge.hpp"
 
 // copyable and nothrow movable
@@ -182,46 +181,6 @@ TEST_CASE( "ureact::event_source<E> (construction)" )
             CHECK_FALSE( src.is_valid() );
         }
     }
-}
-
-// Events has shared_ptr semantics. They are literally shared_ptr to reactive node
-// that does all the work and form dependency tree
-TEST_CASE( "EventsSmartPointerSemantics" )
-{
-    ureact::context ctx;
-
-    ureact::event_source<int> src = ureact::make_source<int>( ctx );
-
-    const auto is_even = []( auto i ) { return i % 2 == 0; };
-    const auto is_odd = []( auto i ) { return i % 2 == 1; };
-
-    auto filtered = ureact::filter( src, is_even );
-
-    auto result_even = ureact::collect<std::vector>( filtered );
-
-    //      src         //
-    //       |          //
-    // filter(is_even)  //
-    //       |          //
-    //  result_even     //
-
-    // reassigning of 'filtered' doesn't affect result_even, because it depends not on
-    // 'filtered' itself, but on reactive node it pointed before
-    filtered = ureact::filter( src, is_odd );
-
-    auto result_odd = ureact::collect<std::vector>( filtered );
-
-    //               src                //
-    //            /       \             //
-    // filter(is_even)   filter(is_odd) //
-    //       |                 |        //
-    //  result_even        result_odd   //
-
-    std::vector<int> v{ 1, 2, 3, 4, 5, 6 };
-    std::copy( v.begin(), v.end(), src.begin() );
-
-    CHECK( result_even.get() == std::vector{ 2, 4, 6 } );
-    CHECK( result_odd.get() == std::vector{ 1, 3, 5 } );
 }
 
 // We can emit events using a bunch of methods doing basically the same

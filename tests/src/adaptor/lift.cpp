@@ -109,7 +109,6 @@ TEST_CASE( "ureact::lift (invoke)" )
 
         CHECK( std::invoke( &User::age, src.get() ) == 32 );
 
-        // TODO: invoke result is int&& that is not supported yet
         auto age = ureact::lift( src, &User::age );
 
         CHECK( age.get() == 32 );
@@ -140,7 +139,6 @@ TEST_CASE( "ureact::lift (invoke)" )
 
         CHECK( std::invoke( &User::age, src.get() ) == 32 );
 
-        // TODO: invoke result is int& that is not supported yet
         auto age = ureact::lift( src, &User::age );
 
         CHECK( age.get() == 32 );

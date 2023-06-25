@@ -5,14 +5,32 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "ureact/signal.hpp"
+
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/lift.hpp"
 
+// copyable and nothrow movable
+static_assert( std::is_default_constructible_v<ureact::signal<int>> );
+static_assert( std::is_copy_constructible_v<ureact::signal<int>> );
+static_assert( std::is_copy_assignable_v<ureact::signal<int>> );
+static_assert( std::is_move_constructible_v<ureact::signal<int>> );
+static_assert( std::is_move_assignable_v<ureact::signal<int>> );
+static_assert( std::is_nothrow_move_constructible_v<ureact::signal<int>> );
+static_assert( std::is_nothrow_move_assignable_v<ureact::signal<int>> );
+
+// copyable and nothrow movable
+static_assert( std::is_default_constructible_v<ureact::var_signal<int>> );
+static_assert( std::is_copy_constructible_v<ureact::var_signal<int>> );
+static_assert( std::is_copy_assignable_v<ureact::var_signal<int>> );
+static_assert( std::is_move_constructible_v<ureact::var_signal<int>> );
+static_assert( std::is_move_assignable_v<ureact::var_signal<int>> );
+static_assert( std::is_nothrow_move_constructible_v<ureact::var_signal<int>> );
+static_assert( std::is_nothrow_move_assignable_v<ureact::var_signal<int>> );
+
 // TODO: check type traits for signals
-// * signal<S>
-// * var_signal<S>
 // * temp_signal<S, ...>
-// * signal_pack
+// * signal_pack<S...>
 
 TEST_CASE( "ureact::signal<S> (construction)" )
 {
@@ -178,45 +196,6 @@ TEST_CASE( "ureact::var_signal<S> (assignment construction)" )
         CHECK( src_move.is_valid() );
         CHECK_FALSE( src.is_valid() );
     }
-}
-
-// Signal has shared_ptr semantics. They are literally shared_ptr to reactive node
-// that does all the work and form dependency tree
-TEST_CASE( "SignalSmartPointerSemantics" )
-{
-    ureact::context ctx;
-
-    ureact::var_signal x = ureact::make_var( ctx, 1 );
-
-    auto a = x * 2;
-
-    auto result_x2 = +a;
-
-    //       x       //
-    //       |       //
-    //    a(x * 2)   //
-    //       |       //
-    //   result_x2   //
-
-    // reassigning of 'a' doesn't affect result_x2, because it depends not on
-    // 'a' itself, but on reactive node it pointed before
-    a = x * 3;
-
-    auto result_x3 = +a;
-
-    //                x                 //
-    //          /           \           //
-    //   a(x * 2)           a(x * 3)    //
-    //       |                 |        //
-    //  result_x2          result_x3    //
-
-    CHECK( result_x2.get() == 2 );
-    CHECK( result_x3.get() == 3 );
-
-    x <<= 2;
-
-    CHECK( result_x2.get() == 4 );
-    CHECK( result_x3.get() == 6 );
 }
 
 TEST_CASE( "ureact::signal<S> (get)" )

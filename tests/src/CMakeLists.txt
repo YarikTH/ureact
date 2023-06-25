@@ -14,6 +14,8 @@ target_sources(
         adaptor/changed.cpp
         adaptor/collect.cpp
         adaptor/count.cpp
+        adaptor/drop.cpp
+        adaptor/drop_while.cpp
         adaptor/elements.cpp
         adaptor/filter.cpp
         adaptor/flatten.cpp
@@ -25,12 +27,14 @@ target_sources(
         adaptor/merge.cpp
         adaptor/monitor.cpp
         adaptor/monitor_change.cpp
+        adaptor/once.cpp
         adaptor/process.cpp
         adaptor/pulse.cpp
+        adaptor/slice.cpp
         adaptor/snapshot.cpp
         adaptor/stride.cpp
-        adaptor/take_drop.cpp
-        adaptor/take_drop_while.cpp
+        adaptor/take.cpp
+        adaptor/take_while.cpp
         adaptor/tap.cpp
         adaptor/transform.cpp
         adaptor/unify.cpp

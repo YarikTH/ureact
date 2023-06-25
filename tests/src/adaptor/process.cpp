@@ -12,7 +12,7 @@
 #include "ureact/transaction.hpp"
 
 // on every std::pair<N, value> pass value N times
-TEST_CASE( "Process" )
+TEST_CASE( "ureact::process" )
 {
     ureact::context ctx;
 
@@ -51,7 +51,7 @@ TEST_CASE( "Process" )
 }
 
 // on every value read additional values N and timestamp and pass pair<timestamp, value> N times
-TEST_CASE( "ProcessSynced" )
+TEST_CASE( "ureact::process (synced)" )
 {
     ureact::context ctx;
 

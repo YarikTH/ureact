@@ -12,7 +12,7 @@
 #include "ureact/events.hpp"
 
 // Emits value changes of signal as events
-TEST_CASE( "MonitorChange" )
+TEST_CASE( "ureact::monitor_change" )
 {
     ureact::context ctx;
 

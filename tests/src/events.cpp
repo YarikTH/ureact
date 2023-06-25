@@ -38,7 +38,7 @@ static_assert( std::is_move_assignable_v<ureact::event_source<>> );
 static_assert( std::is_nothrow_move_constructible_v<ureact::event_source<>> );
 static_assert( std::is_nothrow_move_assignable_v<ureact::event_source<>> );
 
-TEST_CASE( "EventsConstruction" )
+TEST_CASE( "ureact::events<E> (construction)" )
 {
     ureact::context ctx;
 
@@ -120,7 +120,7 @@ TEST_CASE( "EventsConstruction" )
     }
 }
 
-TEST_CASE( "EventSourceConstruction" )
+TEST_CASE( "ureact::event_source<E> (construction)" )
 {
     ureact::context ctx;
 
@@ -225,7 +225,7 @@ TEST_CASE( "EventsSmartPointerSemantics" )
 }
 
 // We can emit events using a bunch of methods doing basically the same
-TEST_CASE( "EventSourceEmitting" )
+TEST_CASE( "ureact::make_source<E> (emit)" )
 {
     ureact::context ctx;
 
@@ -258,8 +258,8 @@ TEST_CASE( "EventSourceEmitting" )
     CHECK( result.get() == std::vector{ 1, 2 } );
 }
 
-// We can emit tokens using a bunch of methods doing basically the same
-TEST_CASE( "EventSourceEmittingTokenSpecialization" )
+// We can emit ureact::unit using a bunch of methods doing basically the same
+TEST_CASE( "ureact::make_source<ureact::unit> (emit)" )
 {
     ureact::context ctx;
 

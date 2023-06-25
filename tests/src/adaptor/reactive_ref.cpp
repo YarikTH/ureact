@@ -63,7 +63,7 @@ private:
 
 } // namespace
 
-TEST_CASE( "ReactiveRef" )
+TEST_CASE( "ureact::reactive_ref" )
 {
     ureact::context ctx;
 

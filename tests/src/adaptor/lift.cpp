@@ -49,7 +49,7 @@ struct User
 
 // See capabilities of std::invoke
 // https://en.cppreference.com/w/cpp/utility/functional/invoke
-TEST_CASE( "LiftAsInvoke" )
+TEST_CASE( "ureact::lift (invoke)" )
 {
     ureact::context ctx;
 
@@ -149,21 +149,7 @@ TEST_CASE( "LiftAsInvoke" )
     // TODO: check member functions and data member access for Foo& and Foo* types
 }
 
-// TODO: prevent such behaviour. Possibly by forcing constness of a pointer
-TEST_CASE( "NonConstPointerBug" )
-{
-    ureact::context ctx;
-
-    int i = 42;
-
-    ureact::var_signal<int*> src = ureact::make_var( ctx, &i );
-
-    auto wtf = ureact::lift( src, []( int* p ) { return *p = -1; } );
-    CHECK( i == -1 );
-    CHECK( wtf.get() == -1 );
-}
-
-TEST_CASE( "LiftUnary" )
+TEST_CASE( "ureact::lift (unary)" )
 {
     ureact::context ctx;
 
@@ -201,7 +187,7 @@ TEST_CASE( "LiftUnary" )
     CHECK( result_2.get() == 14 );
 }
 
-TEST_CASE( "LiftBinary" )
+TEST_CASE( "ureact::lift (binary)" )
 {
     ureact::context ctx;
 
@@ -297,7 +283,7 @@ TEST_CASE( "LiftBinary" )
     CHECK( temp_op_temp.get() == 15 );
 }
 
-TEST_CASE( "LiftArithmeticOperators" )
+TEST_CASE( "ureact::lift (arithmetic operators)" )
 {
     ureact::context ctx;
 
@@ -313,7 +299,7 @@ TEST_CASE( "LiftArithmeticOperators" )
     CHECK( ( -lhs ).get() == ( -10 ) );
 }
 
-TEST_CASE( "LiftRelationalOperators" )
+TEST_CASE( "ureact::lift (relational operators)" )
 {
     ureact::context ctx;
 
@@ -330,7 +316,7 @@ TEST_CASE( "LiftRelationalOperators" )
     // clang-format on
 }
 
-TEST_CASE( "LiftLogicalOperators" )
+TEST_CASE( "ureact::lift (logical operators)" )
 {
     ureact::context ctx;
 
@@ -471,7 +457,7 @@ TEST_CASE( "CopyStatsForSignalCalculations" )
     CHECK( x.get().v == 1112 );
 }
 
-TEST_CASE( "LiftOperatorPriority" )
+TEST_CASE( "ureact::lift (operator priority)" )
 {
     ureact::context ctx;
 
@@ -485,7 +471,7 @@ TEST_CASE( "LiftOperatorPriority" )
 }
 
 // Check how it ureact::lift works with functions that return T&& or T&
-TEST_CASE( "LiftRef" )
+TEST_CASE( "ureact::lift (ref)" )
 {
     ureact::context ctx;
 
@@ -512,7 +498,7 @@ TEST_CASE( "LiftRef" )
     }
 }
 
-TEST_CASE( "LiftAs" )
+TEST_CASE( "ureact::lift_as" )
 {
     ureact::context ctx;
 

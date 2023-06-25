@@ -13,7 +13,7 @@
 
 // zip 3 event sources into 1
 // based on example https://en.cppreference.com/w/cpp/ranges/zip_view
-TEST_CASE( "Zip" )
+TEST_CASE( "ureact::zip" )
 {
     ureact::context ctx;
 

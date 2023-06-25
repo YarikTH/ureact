@@ -15,7 +15,7 @@
 #include "ureact/events.hpp"
 
 // Collects received events into signal<ContT<E>>
-TEST_CASE( "Collect" )
+TEST_CASE( "ureact::collect" )
 {
     ureact::context ctx;
 

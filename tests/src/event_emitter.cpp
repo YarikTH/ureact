@@ -11,7 +11,7 @@
 
 #include "catch2_extra.hpp"
 
-TEST_CASE( "EventEmitter" )
+TEST_CASE( "ureact::event_emitter<E>" )
 {
     std::vector<int> data;
     ureact::event_emitter<int> emitter{ data };

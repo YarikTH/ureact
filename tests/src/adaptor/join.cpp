@@ -18,7 +18,7 @@
 #include "ureact/events.hpp"
 
 // Based on https://en.cppreference.com/w/cpp/ranges/join_view
-TEST_CASE( "JoinStrings" )
+TEST_CASE( "ureact::join (strings)" )
 {
     ureact::context ctx;
 
@@ -43,7 +43,7 @@ TEST_CASE( "JoinStrings" )
     CHECK( result.get() == "https://cppreference.com"s );
 }
 
-TEST_CASE( "JoinBits" )
+TEST_CASE( "ureact::join (bits)" )
 {
     ureact::context ctx;
 
@@ -81,7 +81,7 @@ TEST_CASE( "JoinBits" )
 }
 
 // Based on https://en.cppreference.com/w/cpp/ranges/join_with_view
-TEST_CASE( "JoinWith" )
+TEST_CASE( "ureact::join_with" )
 {
     ureact::context ctx;
 

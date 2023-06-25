@@ -23,7 +23,7 @@
 #include "ureact/events.hpp"
 
 // merge 3 event sources into 1
-TEST_CASE( "Merge" )
+TEST_CASE( "ureact::merge" )
 {
     ureact::context ctx;
 
@@ -44,7 +44,7 @@ TEST_CASE( "Merge" )
     CHECK( result.get() == expected );
 }
 
-TEST_CASE( "MergeSeveralTypes" )
+TEST_CASE( "ureact::merge (several types)" )
 {
     ureact::context ctx;
 
@@ -68,7 +68,7 @@ TEST_CASE( "MergeSeveralTypes" )
 }
 
 #if HAS_WORKING_VARIANT
-TEST_CASE( "MergeAs" )
+TEST_CASE( "ureact::merge_as" )
 {
     ureact::context ctx;
 

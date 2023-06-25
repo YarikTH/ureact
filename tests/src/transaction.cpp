@@ -12,7 +12,7 @@
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/monitor.hpp"
 
-TEST_CASE( "TransactionGuard" )
+TEST_CASE( "ureact::transaction" )
 {
     ureact::context ctx;
 
@@ -32,7 +32,7 @@ TEST_CASE( "TransactionGuard" )
 
 // A transaction can be started inside an active transaction
 // Only the first transaction takes effect
-TEST_CASE( "RecursiveTransactions" )
+TEST_CASE( "Recursive transactions" )
 {
     ureact::context ctx;
 
@@ -53,7 +53,7 @@ TEST_CASE( "RecursiveTransactions" )
     CHECK( change_count.get() == 1 );
 }
 
-TEST_CASE( "ComplexTransaction" )
+TEST_CASE( "ureact::do_transaction (complex)" )
 {
     ureact::context ctx;
 
@@ -90,7 +90,7 @@ TEST_CASE( "ComplexTransaction" )
     CHECK( result.get() == 5 );
 }
 
-TEST_CASE( "ContextDeathInsideTransaction" )
+TEST_CASE( "Context death inside transaction" )
 {
     auto contextPtr = std::make_unique<ureact::context>();
 

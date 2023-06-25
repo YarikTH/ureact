@@ -12,7 +12,7 @@
 #include "ureact/adaptor/lift.hpp"
 
 // Keeps the first elements of the source stream that satisfy the predicate
-TEST_CASE( "TakeWhile" )
+TEST_CASE( "ureact::take_while" )
 {
     ureact::context ctx;
 
@@ -45,7 +45,7 @@ TEST_CASE( "TakeWhile" )
 
 // Keeps the first elements of the source stream that satisfy the predicate
 // that depends on signal values
-TEST_CASE( "TakeWhileSynced" )
+TEST_CASE( "ureact::take_while (synced)" )
 {
     ureact::context ctx;
 

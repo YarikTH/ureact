@@ -11,7 +11,7 @@
 #include "ureact/adaptor/count.hpp"
 
 // Transform values of event stream to ureact::unit
-TEST_CASE( "Unify" )
+TEST_CASE( "ureact::unify" )
 {
     ureact::context ctx;
 

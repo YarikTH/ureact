@@ -69,7 +69,7 @@ private:
 
 } // namespace
 
-TEST_CASE( "SlotMap" )
+TEST_CASE( "ureact::detail::slot_map" )
 {
     std::set<int> alive_indices;
 

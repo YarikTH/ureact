@@ -76,7 +76,7 @@ void signal_functions_separate( ankerl::nanobench::Bench& bench )
 
 } // namespace
 
-TEST_CASE( "BenchmakSignalComposing" )
+TEST_CASE( "Benchmark signal composing" )
 {
     ankerl::nanobench::Bench b;
     b.title( "Signal composing comparison" );

@@ -11,7 +11,7 @@
 #include "ureact/adaptor/collect.hpp"
 
 // demonstrate and test special filter function unique
-TEST_CASE( "Unique" )
+TEST_CASE( "ureact::unique" )
 {
     ureact::context ctx;
 

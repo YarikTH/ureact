@@ -15,7 +15,7 @@
 #include "ureact/transaction.hpp"
 
 // squaring integer events
-TEST_CASE( "Transform" )
+TEST_CASE( "ureact::transform" )
 {
     ureact::context ctx;
 
@@ -43,7 +43,7 @@ TEST_CASE( "Transform" )
 
 // clamp integer events with limit which values are in range which is presented in the form
 // of signals
-TEST_CASE( "TransformSynced" )
+TEST_CASE( "ureact::transform (synced)" )
 {
     ureact::context ctx;
 
@@ -85,7 +85,7 @@ TEST_CASE( "TransformSynced" )
 }
 
 // Check how it ureact::transform works with functions that return T&& or T&
-TEST_CASE( "TransformRef" )
+TEST_CASE( "ureact::transform (ref)" )
 {
     ureact::context ctx;
 
@@ -115,7 +115,7 @@ TEST_CASE( "TransformRef" )
     CHECK( result_lvalue.get() == expected );
 }
 
-TEST_CASE( "TransformAs" )
+TEST_CASE( "ureact::transform_as" )
 {
     ureact::context ctx;
 

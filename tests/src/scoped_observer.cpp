@@ -31,7 +31,7 @@ static_assert( std::is_nothrow_move_assignable_v<ureact::scoped_observer> );
 //
 // scoped_observer has similar semantics to a scoped lock.
 // When it's destroyed, it detaches and destroys the observer.
-TEST_CASE( "ScopedObserver" )
+TEST_CASE( "ureact::scoped_observer" )
 {
     ureact::context ctx;
 

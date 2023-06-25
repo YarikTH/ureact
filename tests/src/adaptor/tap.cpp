@@ -11,7 +11,7 @@
 #include "ureact/events.hpp"
 #include "ureact/signal.hpp"
 
-TEST_CASE( "TapSignal" )
+TEST_CASE( "ureact::tap (signal<S>)" )
 {
     ureact::context ctx;
 
@@ -41,7 +41,7 @@ TEST_CASE( "TapSignal" )
     CHECK( observed_src == std::vector<int>{ 0, 1, 2 } );
 }
 
-TEST_CASE( "TapEvents" )
+TEST_CASE( "ureact::tap (events<E>)" )
 {
     ureact::context ctx;
 
@@ -71,7 +71,7 @@ TEST_CASE( "TapEvents" )
     CHECK( observed_src == std::vector<int>{ 0, 1, 2 } );
 }
 
-TEST_CASE( "TapEventsSynced" )
+TEST_CASE( "ureact::tap (events<E>, synced)" )
 {
     ureact::context ctx;
 

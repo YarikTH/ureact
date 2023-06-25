@@ -12,7 +12,7 @@
 #include "ureact/events.hpp"
 
 // Static cast values of event stream
-TEST_CASE( "Cast" )
+TEST_CASE( "ureact::cast" )
 {
     ureact::context ctx;
 

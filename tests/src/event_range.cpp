@@ -9,7 +9,7 @@
 
 #include "catch2_extra.hpp"
 
-TEST_CASE( "EventRange" )
+TEST_CASE( "ureact::event_range<E>" )
 {
     SECTION( "empty range" )
     {

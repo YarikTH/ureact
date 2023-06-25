@@ -14,7 +14,7 @@
 
 // filter only even integer events
 // our check function depends only on event value
-TEST_CASE( "Filter" )
+TEST_CASE( "ureact::filter" )
 {
     ureact::context ctx;
 
@@ -43,7 +43,7 @@ TEST_CASE( "Filter" )
 
 // filter integer events which values are in range which is presented in the form
 // of signals
-TEST_CASE( "FilterSynced" )
+TEST_CASE( "ureact::filter (synced)" )
 {
     ureact::context ctx;
 
@@ -83,7 +83,7 @@ TEST_CASE( "FilterSynced" )
     CHECK( result.get() == expected );
 }
 
-TEST_CASE( "FilterRef" )
+TEST_CASE( "ureact::filter (ref)" )
 {
     ureact::context ctx;
 

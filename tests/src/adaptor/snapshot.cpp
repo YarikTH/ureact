@@ -13,7 +13,7 @@
 #include "ureact/adaptor/transform.hpp"
 
 // sets signal value to value of other signal when event is received
-TEST_CASE( "Snapshot" )
+TEST_CASE( "ureact::snapshot" )
 {
     ureact::context ctx;
 

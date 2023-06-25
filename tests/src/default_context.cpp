@@ -16,7 +16,7 @@
 #include "ureact/signal.hpp"
 #include "ureact/transaction.hpp"
 
-TEST_CASE( "DefaultContextSignal" )
+TEST_CASE( "ureact::default_context (signal<S>)" )
 {
     using namespace ureact::default_context;
 
@@ -29,7 +29,7 @@ TEST_CASE( "DefaultContextSignal" )
     CHECK( result.get() == 4 );
 }
 
-TEST_CASE( "DefaultContextEvents" )
+TEST_CASE( "ureact::default_context (events<E>)" )
 {
     using namespace ureact::default_context;
 
@@ -42,7 +42,7 @@ TEST_CASE( "DefaultContextEvents" )
     CHECK( result.get() == std::vector{ 1, 2, 3 } );
 }
 
-TEST_CASE( "DefaultContextTransaction" )
+TEST_CASE( "ureact::default_context (transactions)" )
 {
     using namespace ureact::default_context;
 

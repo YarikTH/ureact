@@ -10,7 +10,7 @@
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 
-TEST_CASE( "Stride" )
+TEST_CASE( "ureact::stride" )
 {
     ureact::context ctx;
 

@@ -12,7 +12,7 @@
 #include "ureact/events.hpp"
 
 // Based on example on https://en.cppreference.com/w/cpp/ranges/elements_view
-TEST_CASE( "Elements" )
+TEST_CASE( "ureact::elements" )
 {
     ureact::context ctx;
 

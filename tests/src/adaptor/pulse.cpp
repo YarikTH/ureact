@@ -13,7 +13,7 @@
 #include "ureact/transaction.hpp"
 
 // Emits value of target signal when event is received
-TEST_CASE( "Pulse" )
+TEST_CASE( "ureact::pulse" )
 {
     ureact::context ctx;
 

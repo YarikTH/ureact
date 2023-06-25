@@ -11,7 +11,7 @@
 #include "ureact/events.hpp"
 
 // Emits value changes of signal as events
-TEST_CASE( "Happened" )
+TEST_CASE( "ureact::happened" )
 {
     ureact::context ctx;
 

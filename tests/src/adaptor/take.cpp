@@ -11,7 +11,7 @@
 #include "ureact/adaptor/collect.hpp"
 
 // Keeps first N elements from the source stream
-TEST_CASE( "Take" )
+TEST_CASE( "ureact::take" )
 {
     ureact::context ctx;
 

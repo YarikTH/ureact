@@ -14,7 +14,7 @@
 // * temp_signal<S, ...>
 // * signal_pack
 
-TEST_CASE( "SignalConstruction" )
+TEST_CASE( "ureact::signal<S> (construction)" )
 {
     ureact::context ctx;
 
@@ -74,7 +74,7 @@ TEST_CASE( "SignalConstruction" )
     }
 }
 
-TEST_CASE( "SignalAssignmentConstruction" )
+TEST_CASE( "ureact::signal<S> (assignment construction)" )
 {
     ureact::context ctx;
 
@@ -103,7 +103,7 @@ TEST_CASE( "SignalAssignmentConstruction" )
     }
 }
 
-TEST_CASE( "VarSignalConstruction" )
+TEST_CASE( "ureact::var_signal<S> (construction)" )
 {
     ureact::context ctx;
 
@@ -151,7 +151,7 @@ TEST_CASE( "VarSignalConstruction" )
     }
 }
 
-TEST_CASE( "VarSignalAssignmentConstruction" )
+TEST_CASE( "ureact::var_signal<S> (assignment construction)" )
 {
     ureact::context ctx;
 
@@ -219,7 +219,7 @@ TEST_CASE( "SignalSmartPointerSemantics" )
     CHECK( result_x3.get() == 6 );
 }
 
-TEST_CASE( "SignalGetValue" )
+TEST_CASE( "ureact::signal<S> (get)" )
 {
     ureact::context ctx;
 
@@ -235,7 +235,7 @@ TEST_CASE( "SignalGetValue" )
     CHECK( sig() == 7 );
 }
 
-TEST_CASE( "VarSignalSetValue" )
+TEST_CASE( "ureact::var_signal<S> (set)" )
 {
     ureact::context ctx;
 
@@ -273,7 +273,7 @@ TEST_CASE( "VarSignalSetValue" )
     CHECK( src.get() == 5 );
 }
 
-TEST_CASE( "VarSignalModifyValue" )
+TEST_CASE( "ureact::var_signal<S> (modify)" )
 {
     ureact::context ctx;
 

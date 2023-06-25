@@ -12,7 +12,7 @@
 #include "ureact/events.hpp"
 
 // hold the last event value as a signal
-TEST_CASE( "Hold" )
+TEST_CASE( "ureact::hold" )
 {
     ureact::context ctx;
 

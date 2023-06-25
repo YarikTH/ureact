@@ -11,7 +11,7 @@
 #include "ureact/adaptor/count.hpp"
 
 // Emits value changes of signal as events
-TEST_CASE( "Changed" )
+TEST_CASE( "ureact::changed" )
 {
     ureact::context ctx;
 

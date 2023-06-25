@@ -16,7 +16,7 @@
 #include "ureact/transaction.hpp"
 
 // calculate sum and product of range of integers using value based function
-TEST_CASE( "FoldByValue" )
+TEST_CASE( "ureact::fold (by value)" )
 {
     ureact::context ctx;
 
@@ -60,7 +60,7 @@ TEST_CASE( "FoldByValue" )
 }
 
 // calculate sum and product of range of integers using reference based function
-TEST_CASE( "FoldByRef" )
+TEST_CASE( "ureact::fold (by reference)" )
 {
     ureact::context ctx;
 
@@ -133,7 +133,7 @@ TEST_CASE( "FoldByRef" )
 }
 
 // calculate sum of range of integers multiplied by using value based function
-TEST_CASE( "FoldByValueSynced" )
+TEST_CASE( "ureact::fold (by value, synced)" )
 {
     ureact::context ctx;
 
@@ -198,7 +198,7 @@ TEST_CASE( "FoldByValueSynced" )
 }
 
 // calculate sum of range of integers multiplied by using reference based function
-TEST_CASE( "FoldByRefSynced" )
+TEST_CASE( "ureact::fold (by reference, synced)" )
 {
     ureact::context ctx;
 
@@ -275,7 +275,7 @@ TEST_CASE( "FoldByRefSynced" )
 
 // fold integers to receive sum, product and dash concatenated string
 // based on example https://en.cppreference.com/w/cpp/algorithm/accumulate
-TEST_CASE( "FoldVsAccumulate" )
+TEST_CASE( "ureact::fold vs std::accumulate" )
 {
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 

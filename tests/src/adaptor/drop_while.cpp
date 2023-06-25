@@ -12,7 +12,7 @@
 #include "ureact/adaptor/lift.hpp"
 
 // Skips the first elements of the source stream that satisfy the predicate
-TEST_CASE( "DropWhile" )
+TEST_CASE( "ureact::drop_while" )
 {
     ureact::context ctx;
 
@@ -45,7 +45,7 @@ TEST_CASE( "DropWhile" )
 
 // Skips the first elements of the source stream that satisfy the predicate
 // that depends on signal values
-TEST_CASE( "DropWhileSynced" )
+TEST_CASE( "ureact::drop_while (synced)" )
 {
     ureact::context ctx;
 

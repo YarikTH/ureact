@@ -21,7 +21,7 @@
  *
  * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
  */
-TEST_CASE( "ClosureCall" )
+TEST_CASE( "Closure call" )
 {
     ureact::context ctx;
     auto src = ureact::make_source<int>( ctx );
@@ -63,7 +63,7 @@ TEST_CASE( "ClosureCall" )
  *
  * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
  */
-TEST_CASE( "ClosureChaining" )
+TEST_CASE( "Closure chaining" )
 {
     ureact::context ctx;
     auto src = ureact::make_source<int>( ctx );

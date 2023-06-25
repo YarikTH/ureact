@@ -55,10 +55,8 @@ constexpr bool has_changed(
 
 } // namespace
 
-TEST_CASE( "HasChanged" )
+TEST_CASE( "has_changed" )
 {
-    using ureact::detail::has_changed;
-
     // integral types
     CHECK( checkIfLackOfChangeDetected<bool>() );
     CHECK( checkIfLackOfChangeDetected<char>() );

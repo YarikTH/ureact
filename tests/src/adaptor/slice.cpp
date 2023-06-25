@@ -11,7 +11,7 @@
 #include "ureact/adaptor/collect.hpp"
 
 // Keeps given range (begin through end-1) of elements from the source stream
-TEST_CASE( "Slice" )
+TEST_CASE( "ureact::slice" )
 {
     ureact::context ctx;
 

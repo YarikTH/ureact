@@ -11,7 +11,7 @@
 #include "ureact/adaptor/collect.hpp"
 
 // Skips first N elements from the source stream
-TEST_CASE( "Drop" )
+TEST_CASE( "ureact::drop" )
 {
     ureact::context ctx;
 

@@ -8,6 +8,7 @@
 #include "ureact/signal.hpp"
 
 #include "catch2_extra.hpp"
+#include "identity.hpp"
 #include "ureact/adaptor/lift.hpp"
 
 // copyable and nothrow movable
@@ -212,6 +213,24 @@ TEST_CASE( "ureact::signal<S> (get)" )
 
     CHECK( sig.get() == 7 );
     CHECK( sig() == 7 );
+}
+
+TEST_CASE( "ureact::signal<S> (arrow access)" )
+{
+    ureact::context ctx;
+
+    ureact::var_signal src = ureact::make_var( ctx, std::make_pair( 1, 2 ) );
+    const ureact::signal sig = ureact::lift( src, identity{} );
+
+    // constant access to member values and methods using -> operator
+    // It is a short form of sig.get().<member> / sig().<member>
+    CHECK( sig->first == 1 );
+    CHECK( sig->second == 2 );
+
+    src.set( std::make_pair( 4, 2 ) );
+
+    CHECK( sig.get().first == 4 );
+    CHECK( sig.get().second == 2 );
 }
 
 TEST_CASE( "ureact::var_signal<S> (set)" )

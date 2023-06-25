@@ -30,6 +30,7 @@ target_sources(
         adaptor/once.cpp
         adaptor/process.cpp
         adaptor/pulse.cpp
+        adaptor/reactive_ref.cpp
         adaptor/slice.cpp
         adaptor/snapshot.cpp
         adaptor/stride.cpp

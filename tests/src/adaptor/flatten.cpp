@@ -11,9 +11,10 @@
 #include <queue>
 
 #include "catch2_extra.hpp"
+#include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/observe.hpp"
-#include "ureact/adaptor/reactive_ref.hpp"
 #include "ureact/events.hpp"
+#include "ureact/signal.hpp"
 #include "ureact/transaction.hpp"
 
 // TODO: replace FlattenN tests with more meaningful ones
@@ -236,88 +237,6 @@ TEST_CASE( "Member1" )
     ureact::observe( flattened, []( int v ) { CHECK( v == 30 ); } );
 
     outer <<= 30;
-}
-
-namespace
-{
-
-class Company : ureact::member_signal_user<Company>
-{
-public:
-    int index;
-    member_var_signal<std::string> name;
-
-    Company( ureact::context& ctx, const int index, const char* name )
-        : index( index )
-        , name( make_var( ctx, std::string( name ) ) )
-    {}
-
-    friend bool operator==( const Company& lhs, const Company& rhs )
-    {
-        // clang-format off
-        return std::tie( lhs.index, lhs.name.get() )
-            == std::tie( rhs.index, rhs.name.get() );
-        // clang-format on
-    }
-
-private:
-    friend std::ostream& operator<<( std::ostream& os, const Company& company )
-    {
-        os << "Company{ index: " << company.index << ", name: \"" << company.name.get() << "\" }";
-        return os;
-    }
-};
-
-class Employee : ureact::member_signal_user<Employee>
-{
-public:
-    member_var_signal<std::reference_wrapper<Company>> company;
-
-    Employee( ureact::context& ctx, Company& company_ref )
-        : company( make_var( ctx, std::ref( company_ref ) ) )
-    {}
-
-private:
-    friend std::ostream& operator<<( std::ostream& os, const Employee& employee )
-    {
-        os << "Employee{ company: " << employee.company.get() << " }";
-        return os;
-    }
-};
-
-} // namespace
-
-TEST_CASE( "DynamicSignalRefOrPtr" )
-{
-    ureact::context ctx;
-
-    Company company1( ctx, 1, "MetroTec" );
-    Company company2( ctx, 2, "ACME" );
-
-    ureact::signal<std::string> alice_company_name;
-
-    auto Alice = Employee{ ctx, company1 };
-    auto alice_company = Alice.company;
-
-    SECTION( "Functional syntax" )
-    {
-        alice_company_name = ureact::reactive_ref( alice_company, &Company::name );
-    }
-    SECTION( "Piped syntax" )
-    {
-        alice_company_name = alice_company | ureact::reactive_ref( &Company::name );
-    }
-
-    std::vector<std::string> alice_company_names;
-
-    ureact::observe( alice_company_name,
-        [&]( const std::string& name ) { alice_company_names.push_back( name ); } );
-
-    company1.name <<= std::string( "ModernTec" );
-    Alice.company <<= std::ref( company2 );
-    company2.name <<= std::string( "A.C.M.E." );
-
-    CHECK( alice_company_names == std::vector<std::string>{ "ModernTec", "ACME", "A.C.M.E." } );
 }
 
 TEST_CASE( "Signal of events" )

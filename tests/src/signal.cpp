@@ -292,3 +292,6 @@ TEST_CASE( "ureact::var_signal<S> (modify)" )
 
     CHECK( src.get() == 5 );
 }
+
+// TODO: test all possible combinations of set and modify
+//       and check if result value is correct and has_changed optimization is correct

@@ -172,6 +172,8 @@ private:
 
     void schedule_successors( node_data& parentNode );
 
+    void propagate_node_change( node_id nodeId );
+
     void finalize_changed_nodes();
 
     void unregister_queued_nodes();
@@ -277,41 +279,9 @@ inline void react_graph::propagate()
 {
     m_propagation_is_in_progress = true;
 
-    // Propagate changes
     while( m_scheduled_nodes.fetch_next() )
-    {
         for( const node_id nodeId : m_scheduled_nodes.next_values() )
-        {
-            node_data& node = m_node_data[nodeId];
-            if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
-            {
-                // A predecessor of this node has shifted to a lower level?
-                if( node.level < node.new_level )
-                {
-                    node.level = node.new_level;
-                    re_schedule_node( nodeId );
-                    continue;
-                }
-
-                const update_result result = nodePtr->update();
-
-                // Topology changed?
-                if( result == update_result::shifted )
-                {
-                    re_schedule_node( nodeId );
-                    continue;
-                }
-
-                if( result == update_result::changed )
-                {
-                    m_changed_nodes.add( nodeId );
-                    schedule_successors( node );
-                }
-            }
-
-            node.queued = false;
-        }
-    }
+            propagate_node_change( nodeId );
 
     finalize_changed_nodes();
 
@@ -351,6 +321,38 @@ inline void react_graph::schedule_successors( node_data& parentNode )
 {
     for( const node_id successorId : parentNode.successors )
         schedule_node( successorId );
+}
+
+inline void react_graph::propagate_node_change( const node_id nodeId )
+{
+    node_data& node = m_node_data[nodeId];
+    if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
+    {
+        // A predecessor of this node has shifted to a lower level?
+        if( node.level < node.new_level )
+        {
+            node.level = node.new_level;
+            re_schedule_node( nodeId );
+            return;
+        }
+
+        const update_result result = nodePtr->update();
+
+        // Topology changed?
+        if( result == update_result::shifted )
+        {
+            re_schedule_node( nodeId );
+            return;
+        }
+
+        if( result == update_result::changed )
+        {
+            m_changed_nodes.add( nodeId );
+            schedule_successors( node );
+        }
+    }
+
+    node.queued = false;
 }
 
 inline void react_graph::finalize_changed_nodes()

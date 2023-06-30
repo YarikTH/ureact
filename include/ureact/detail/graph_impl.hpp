@@ -172,6 +172,8 @@ private:
 
     void schedule_successors( node_data& parentNode );
 
+    void finalize_changed_nodes();
+
     void unregister_queued_nodes();
 
     node_id::context_id_type m_id = create_context_id();
@@ -311,16 +313,7 @@ inline void react_graph::propagate()
         }
     }
 
-    // Cleanup buffers in changed nodes etc
-    for( const node_id nodeId : m_changed_nodes )
-    {
-        node_data& node = m_node_data[nodeId];
-        if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
-        {
-            nodePtr->finalize();
-        }
-    }
-    m_changed_nodes.clear();
+    finalize_changed_nodes();
 
     m_propagation_is_in_progress = false;
 
@@ -358,6 +351,20 @@ inline void react_graph::schedule_successors( node_data& parentNode )
 {
     for( const node_id successorId : parentNode.successors )
         schedule_node( successorId );
+}
+
+inline void react_graph::finalize_changed_nodes()
+{
+    // Cleanup buffers in changed nodes etc
+    for( const node_id nodeId : m_changed_nodes )
+    {
+        node_data& node = m_node_data[nodeId];
+        if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
+        {
+            nodePtr->finalize();
+        }
+    }
+    m_changed_nodes.clear();
 }
 
 inline void react_graph::unregister_queued_nodes()

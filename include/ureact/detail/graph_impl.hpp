@@ -166,6 +166,8 @@ private:
 
     void recalculate_successor_levels( node_data& node );
 
+    void schedule_node( node_id nodeId );
+
     void schedule_successors( node_data& node );
 
     void unregister_queued_nodes();
@@ -180,8 +182,6 @@ private:
 
     bool m_propagation_is_in_progress = false;
 
-    node_id_vector m_changed_inputs;
-
     // local to propagate. Moved here to not reallocate
     node_id_vector m_changed_nodes;
 
@@ -194,7 +194,6 @@ inline react_graph::~react_graph()
     assert( m_scheduled_nodes.empty() );
     assert( m_transaction_level == 0 );
     assert( m_propagation_is_in_progress == false );
-    assert( m_changed_inputs.empty() );
     assert( m_changed_nodes.empty() );
     assert( m_nodes_queued_for_unregister.empty() );
 }
@@ -256,7 +255,7 @@ inline void react_graph::push_input( node_id nodeId )
 {
     assert( !m_propagation_is_in_progress );
 
-    m_changed_inputs.add( nodeId );
+    schedule_node( nodeId );
 
     if( m_transaction_level == 0 )
     {
@@ -278,27 +277,6 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::can_unregister_node() const
 inline void react_graph::propagate()
 {
     m_propagation_is_in_progress = true;
-
-    // Fill update queue with successors of changed inputs
-    for( node_id nodeId : m_changed_inputs )
-    {
-        auto& node = m_node_data[nodeId];
-        if( auto nodePtr = node.node_ptr.lock() )
-        {
-            const update_result result = nodePtr->update();
-
-            if( result == update_result::changed )
-            {
-                m_changed_nodes.add( nodeId );
-                schedule_successors( node );
-            }
-            else
-            {
-                assert( result == update_result::unchanged );
-            }
-        }
-    }
-    m_changed_inputs.clear();
 
     // Propagate changes
     while( m_scheduled_nodes.fetch_next() )
@@ -352,9 +330,6 @@ inline void react_graph::propagate()
     }
     m_changed_nodes.clear();
 
-    // TODO: think about allowing adding new inputs and looping for them
-    assert( m_changed_inputs.empty() );
-
     m_propagation_is_in_progress = false;
 
     unregister_queued_nodes();
@@ -373,19 +348,21 @@ inline void react_graph::recalculate_successor_levels( node_data& node )
     }
 }
 
+inline void react_graph::schedule_node( const node_id nodeId )
+{
+    auto& node = m_node_data[nodeId];
+
+    if( !node.queued )
+    {
+        node.queued = true;
+        m_scheduled_nodes.push( nodeId, node.level );
+    }
+}
+
 inline void react_graph::schedule_successors( node_data& node )
 {
-    // add children to queue
-    for( node_id successorId : node.successors )
-    {
-        auto& successor = m_node_data[successorId];
-
-        if( !successor.queued )
-        {
-            successor.queued = true;
-            m_scheduled_nodes.push( successorId, successor.level );
-        }
-    }
+    for( const node_id successorId : node.successors )
+        schedule_node( successorId );
 }
 
 inline void react_graph::unregister_queued_nodes()

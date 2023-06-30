@@ -164,13 +164,13 @@ private:
 
     void propagate();
 
-    void recalculate_successor_levels( node_data& node );
+    void recalculate_successor_levels( node_data& parentNode );
 
     void schedule_node( node_id nodeId );
 
     void re_schedule_node( node_id nodeId );
 
-    void schedule_successors( node_data& node );
+    void schedule_successors( node_data& parentNode );
 
     void unregister_queued_nodes();
 
@@ -206,16 +206,16 @@ inline node_id react_graph::register_node()
 }
 
 inline void react_graph::register_node_ptr(
-    node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr )
+    const node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr )
 {
     assert( nodeId.context_id() == m_id );
     assert( nodePtr.use_count() > 0 );
 
-    auto& node = m_node_data[nodeId];
+    node_data& node = m_node_data[nodeId];
     node.node_ptr = nodePtr;
 }
 
-inline void react_graph::unregister_node( node_id nodeId )
+inline void react_graph::unregister_node( const node_id nodeId )
 {
     assert( nodeId.context_id() == m_id );
     assert( m_node_data[nodeId].successors.empty() );
@@ -226,43 +226,38 @@ inline void react_graph::unregister_node( node_id nodeId )
         m_nodes_queued_for_unregister.add( nodeId );
 }
 
-inline void react_graph::attach_node( node_id nodeId, node_id parentId )
+inline void react_graph::attach_node( const node_id nodeId, const node_id parentId )
 {
     assert( nodeId.context_id() == m_id );
     assert( parentId.context_id() == m_id );
 
-    auto& node = m_node_data[nodeId];
-    auto& parent = m_node_data[parentId];
+    node_data& node = m_node_data[nodeId];
+    node_data& parent = m_node_data[parentId];
 
     parent.successors.add( nodeId );
 
-    if( node.level <= parent.level )
-    {
-        node.level = parent.level + 1;
-    }
+    node.level = std::max( node.level, parent.level + 1 );
 }
 
-inline void react_graph::detach_node( node_id nodeId, node_id parentId )
+inline void react_graph::detach_node( const node_id nodeId, const node_id parentId )
 {
     assert( nodeId.context_id() == m_id );
     assert( parentId.context_id() == m_id );
 
-    auto& parent = m_node_data[parentId];
-    auto& successors = parent.successors;
+    node_data& parent = m_node_data[parentId];
+    node_id_vector& successors = parent.successors;
 
     successors.remove( nodeId );
 }
 
-inline void react_graph::push_input( node_id nodeId )
+inline void react_graph::push_input( const node_id nodeId )
 {
     assert( !m_propagation_is_in_progress );
 
     schedule_node( nodeId );
 
     if( m_transaction_level == 0 )
-    {
         propagate();
-    }
 }
 
 inline node_id::context_id_type react_graph::create_context_id()
@@ -285,8 +280,8 @@ inline void react_graph::propagate()
     {
         for( const node_id nodeId : m_scheduled_nodes.next_values() )
         {
-            auto& node = m_node_data[nodeId];
-            if( auto nodePtr = node.node_ptr.lock() )
+            node_data& node = m_node_data[nodeId];
+            if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
             {
                 // A predecessor of this node has shifted to a lower level?
                 if( node.level < node.new_level )
@@ -317,10 +312,10 @@ inline void react_graph::propagate()
     }
 
     // Cleanup buffers in changed nodes etc
-    for( node_id nodeId : m_changed_nodes )
+    for( const node_id nodeId : m_changed_nodes )
     {
-        auto& node = m_node_data[nodeId];
-        if( auto nodePtr = node.node_ptr.lock() )
+        node_data& node = m_node_data[nodeId];
+        if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
         {
             nodePtr->finalize();
         }
@@ -332,22 +327,18 @@ inline void react_graph::propagate()
     unregister_queued_nodes();
 }
 
-inline void react_graph::recalculate_successor_levels( node_data& node )
+inline void react_graph::recalculate_successor_levels( node_data& parentNode )
 {
-    for( node_id successorId : node.successors )
+    for( const node_id successorId : parentNode.successors )
     {
-        auto& successor = m_node_data[successorId];
-
-        if( successor.new_level <= node.level )
-        {
-            successor.new_level = node.level + 1;
-        }
+        node_data& successorNode = m_node_data[successorId];
+        successorNode.new_level = std::max( successorNode.new_level, parentNode.level + 1 );
     }
 }
 
 inline void react_graph::schedule_node( const node_id nodeId )
 {
-    auto& node = m_node_data[nodeId];
+    node_data& node = m_node_data[nodeId];
 
     if( !node.queued )
     {
@@ -358,14 +349,14 @@ inline void react_graph::schedule_node( const node_id nodeId )
 
 inline void react_graph::re_schedule_node( const node_id nodeId )
 {
-    auto& node = m_node_data[nodeId];
+    node_data& node = m_node_data[nodeId];
     recalculate_successor_levels( node );
     m_scheduled_nodes.push( nodeId, node.level );
 }
 
-inline void react_graph::schedule_successors( node_data& node )
+inline void react_graph::schedule_successors( node_data& parentNode )
 {
-    for( const node_id successorId : node.successors )
+    for( const node_id successorId : parentNode.successors )
         schedule_node( successorId );
 }
 
@@ -373,7 +364,7 @@ inline void react_graph::unregister_queued_nodes()
 {
     assert( !m_propagation_is_in_progress );
 
-    for( node_id nodeId : m_nodes_queued_for_unregister )
+    for( const node_id nodeId : m_nodes_queued_for_unregister )
         unregister_node( nodeId );
     m_nodes_queued_for_unregister.clear();
 }
@@ -385,7 +376,7 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
 
     // Find min level of nodes in queue data
     auto minimal_level = std::numeric_limits<int>::max();
-    for( const auto& e : m_queue_data )
+    for( const entry& e : m_queue_data )
     {
         if( minimal_level > e.second )
         {

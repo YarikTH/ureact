@@ -168,6 +168,8 @@ private:
 
     void schedule_node( node_id nodeId );
 
+    void re_schedule_node( node_id nodeId );
+
     void schedule_successors( node_data& node );
 
     void unregister_queued_nodes();
@@ -281,7 +283,7 @@ inline void react_graph::propagate()
     // Propagate changes
     while( m_scheduled_nodes.fetch_next() )
     {
-        for( node_id nodeId : m_scheduled_nodes.next_values() )
+        for( const node_id nodeId : m_scheduled_nodes.next_values() )
         {
             auto& node = m_node_data[nodeId];
             if( auto nodePtr = node.node_ptr.lock() )
@@ -289,11 +291,8 @@ inline void react_graph::propagate()
                 // A predecessor of this node has shifted to a lower level?
                 if( node.level < node.new_level )
                 {
-                    // Re-schedule this node
                     node.level = node.new_level;
-
-                    recalculate_successor_levels( node );
-                    m_scheduled_nodes.push( nodeId, node.level );
+                    re_schedule_node( nodeId );
                     continue;
                 }
 
@@ -302,9 +301,7 @@ inline void react_graph::propagate()
                 // Topology changed?
                 if( result == update_result::shifted )
                 {
-                    // Re-schedule this node
-                    recalculate_successor_levels( node );
-                    m_scheduled_nodes.push( nodeId, node.level );
+                    re_schedule_node( nodeId );
                     continue;
                 }
 
@@ -357,6 +354,13 @@ inline void react_graph::schedule_node( const node_id nodeId )
         node.queued = true;
         m_scheduled_nodes.push( nodeId, node.level );
     }
+}
+
+inline void react_graph::re_schedule_node( const node_id nodeId )
+{
+    auto& node = m_node_data[nodeId];
+    recalculate_successor_levels( node );
+    m_scheduled_nodes.push( nodeId, node.level );
 }
 
 inline void react_graph::schedule_successors( node_data& node )

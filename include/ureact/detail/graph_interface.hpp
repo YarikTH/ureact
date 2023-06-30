@@ -40,7 +40,7 @@ public:
         return m_context_id;
     }
 
-    operator value_type() // NOLINT
+    operator value_type() const // NOLINT
     {
         return m_id;
     }

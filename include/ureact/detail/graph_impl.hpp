@@ -386,12 +386,7 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     // Find min level of nodes in queue data
     auto minimal_level = std::numeric_limits<int>::max();
     for( const entry& e : m_queue_data )
-    {
-        if( minimal_level > e.second )
-        {
-            minimal_level = e.second;
-        }
-    }
+        minimal_level = std::min( minimal_level, e.second );
 
     // Swap entries with min level to the end
     const auto p = detail::partition( m_queue_data.begin(),
@@ -404,9 +399,7 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
 
     // Move min level values to next data
     for( auto it = p, ite = m_queue_data.end(); it != ite; ++it )
-    {
         m_next_data.push_back( it->first );
-    }
 
     // Truncate moved entries
     const auto to_resize = static_cast<size_t>( std::distance( m_queue_data.begin(), p ) );

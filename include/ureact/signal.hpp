@@ -11,7 +11,6 @@
 #define UREACT_SIGNAL_HPP
 
 #include <ureact/context.hpp>
-#include <ureact/default_context.hpp>
 #include <ureact/detail/has_changed.hpp>
 #include <ureact/detail/observable_node.hpp>
 #include <ureact/type_traits.hpp>

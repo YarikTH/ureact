@@ -82,6 +82,29 @@ private:
     {}
 };
 
+namespace default_context
+{
+
+/**
+ * @brief Return default context
+ * Default contexts are thread_local
+ */
+inline context get()
+{
+    thread_local static std::weak_ptr<detail::react_graph> s_instance;
+
+    auto graphPtr = s_instance.lock();
+
+    if( !graphPtr )
+    {
+        s_instance = graphPtr = std::make_shared<detail::react_graph>();
+    }
+
+    return context{ std::move( graphPtr ) };
+}
+
+} // namespace default_context
+
 UREACT_END_NAMESPACE
 
 #endif //UREACT_CONTEXT_HPP

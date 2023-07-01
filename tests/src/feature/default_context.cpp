@@ -5,13 +5,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/default_context.hpp"
-
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/merge.hpp"
 #include "ureact/adaptor/monitor.hpp"
+#include "ureact/context.hpp"
 #include "ureact/events.hpp"
 #include "ureact/signal.hpp"
 #include "ureact/transaction.hpp"

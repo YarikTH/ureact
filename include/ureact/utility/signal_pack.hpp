@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_SIGNAL_PACK_HPP
-#define UREACT_SIGNAL_PACK_HPP
+#ifndef UREACT_UTILITY_SIGNAL_PACK_HPP
+#define UREACT_UTILITY_SIGNAL_PACK_HPP
 
 #include <tuple>
 
@@ -59,4 +59,4 @@ UREACT_WARN_UNUSED_RESULT auto with( const signal<Values>&... deps )
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_SIGNAL_PACK_HPP
+#endif //UREACT_UTILITY_SIGNAL_PACK_HPP

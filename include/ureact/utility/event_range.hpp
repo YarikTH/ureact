@@ -7,13 +7,13 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_EVENT_RANGE_HPP
-#define UREACT_EVENT_RANGE_HPP
+#ifndef UREACT_UTILITY_EVENT_RANGE_HPP
+#define UREACT_UTILITY_EVENT_RANGE_HPP
 
 #include <vector>
 
 #include <ureact/detail/defines.hpp>
-#include <ureact/unit.hpp>
+#include <ureact/utility/unit.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -94,4 +94,4 @@ private:
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_EVENT_RANGE_HPP
+#endif //UREACT_UTILITY_EVENT_RANGE_HPP

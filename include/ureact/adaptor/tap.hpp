@@ -11,7 +11,7 @@
 #define UREACT_ADAPTOR_TAP_HPP
 
 #include <ureact/adaptor/observe.hpp>
-#include <ureact/type_traits.hpp>
+#include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

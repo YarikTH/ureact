@@ -11,7 +11,7 @@
 #define UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/signal_pack.hpp>
+#include <ureact/utility/signal_pack.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

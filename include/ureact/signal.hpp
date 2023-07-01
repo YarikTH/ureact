@@ -13,7 +13,7 @@
 #include <ureact/context.hpp>
 #include <ureact/detail/has_changed.hpp>
 #include <ureact/detail/observable_node.hpp>
-#include <ureact/type_traits.hpp>
+#include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

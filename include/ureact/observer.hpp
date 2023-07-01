@@ -16,15 +16,6 @@
 UREACT_BEGIN_NAMESPACE
 
 /*!
- * @brief Observer functions can return values of this type to control further processing.
- */
-enum class observer_action
-{
-    next,           ///< Continue observing
-    stop_and_detach ///< Stop observing
-};
-
-/*!
  * @brief Shared pointer like object that holds a strong reference to the observed subject
  *
  *  An instance of this class provides a unique handle to an observer which can

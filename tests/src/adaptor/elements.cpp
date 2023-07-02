@@ -7,6 +7,9 @@
 //
 #include "ureact/adaptor/elements.hpp"
 
+#include <tuple>
+#include <vector>
+
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
@@ -23,14 +26,14 @@ TEST_CASE( "ureact::elements" )
 
     SECTION( "Functional syntax" )
     {
-        ints = ureact::keys( src );
-        chars = ureact::values( src );
+        ints = ureact::elements<0>( src );
+        chars = ureact::elements<1>( src );
         strings = ureact::elements<2>( src );
     }
     SECTION( "Piped syntax" )
     {
-        ints = src | ureact::keys;
-        chars = src | ureact::values;
+        ints = src | ureact::elements<0>;
+        chars = src | ureact::elements<1>;
         strings = src | ureact::elements<2>;
     }
 

@@ -24,6 +24,7 @@ target_sources(
         adaptor/happened.cpp
         adaptor/hold.cpp
         adaptor/join.cpp
+        adaptor/keys.cpp
         adaptor/lift.cpp
         adaptor/merge.cpp
         adaptor/monitor.cpp
@@ -42,6 +43,7 @@ target_sources(
         adaptor/transform.cpp
         adaptor/unify.cpp
         adaptor/unique.cpp
+        adaptor/values.cpp
         adaptor/zip.cpp
         feature/adaptor.cpp
         feature/default_context.cpp

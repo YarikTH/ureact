@@ -12,6 +12,7 @@ target_sources(
     PRIVATE
         adaptor/cast.cpp
         adaptor/changed.cpp
+        adaptor/changed_to.cpp
         adaptor/collect.cpp
         adaptor/count.cpp
         adaptor/drop.cpp

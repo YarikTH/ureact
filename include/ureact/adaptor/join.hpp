@@ -11,20 +11,12 @@
 #define UREACT_ADAPTOR_JOIN_HPP
 
 #include <ureact/adaptor/process.hpp>
+#include <ureact/detail/container_type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
-
-template <class ContainerT>
-struct container_value
-{
-    using type = std::decay_t<decltype( *std::begin( std::declval<ContainerT>() ) )>;
-};
-
-template <class ContainerT>
-using container_value_t = typename container_value<ContainerT>::type;
 
 struct JoinClosure : AdaptorClosure
 {

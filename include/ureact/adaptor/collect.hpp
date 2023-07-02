@@ -12,38 +12,12 @@
 
 #include <ureact/adaptor/fold.hpp>
 #include <ureact/detail/adaptor.hpp>
+#include <ureact/detail/container_type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
-
-template <typename Cont, typename Value, typename = void>
-struct has_push_back_method : std::false_type
-{};
-
-template <typename Cont, class Value>
-struct has_push_back_method<Cont,
-    Value,
-    std::void_t<decltype( std::declval<Cont>().push_back( std::declval<Value>() ) )>>
-    : std::true_type
-{};
-
-template <typename Cont, class Value>
-inline constexpr bool has_push_back_method_v = has_push_back_method<Cont, Value>::value;
-
-template <typename Cont, typename Value, typename = void>
-struct has_insert_method : std::false_type
-{};
-
-template <typename Cont, class Value>
-struct has_insert_method<Cont,
-    Value,
-    std::void_t<decltype( std::declval<Cont>().insert( std::declval<Value>() ) )>> : std::true_type
-{};
-
-template <typename Cont, class Value>
-inline constexpr bool has_insert_method_v = has_insert_method<Cont, Value>::value;
 
 template <template <typename...> class ContT>
 struct CollectClosure : AdaptorClosure

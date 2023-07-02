@@ -79,36 +79,3 @@ TEST_CASE( "ureact::join (bits)" )
 
     CHECK( result.get() == std::vector<bool>{ /*0b*/ 1, 0, 1, 0, /*'*/ 1, 0, 1, 1 } );
 }
-
-// Based on https://en.cppreference.com/w/cpp/ranges/join_with_view
-TEST_CASE( "ureact::join_with" )
-{
-    ureact::context ctx;
-
-    auto src = ureact::make_source<std::string_view>( ctx );
-    ureact::events<char> chars_1;
-    ureact::events<char> chars_2;
-
-    using namespace std::literals;
-
-    SECTION( "Functional syntax" )
-    {
-        chars_1 = ureact::join_with( src, ' ' );
-        chars_2 = ureact::join_with( src, ".."sv );
-    }
-    SECTION( "Piped syntax" )
-    {
-        chars_1 = src | ureact::join_with( ' ' );
-        chars_2 = src | ureact::join_with( ".."sv );
-    }
-
-    const auto result_1 = ureact::collect<std::basic_string>( chars_1 );
-    const auto result_2 = ureact::collect<std::basic_string>( chars_2 );
-
-    using namespace std::literals;
-    for( auto s : { "This"sv, "is"sv, "a"sv, "test."sv } )
-        src << s;
-
-    CHECK( result_1.get() == "This is a test."s );
-    CHECK( result_2.get() == "This..is..a..test."s );
-}

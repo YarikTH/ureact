@@ -24,6 +24,7 @@ target_sources(
         adaptor/happened.cpp
         adaptor/hold.cpp
         adaptor/join.cpp
+        adaptor/join_with.cpp
         adaptor/keys.cpp
         adaptor/lift.cpp
         adaptor/merge.cpp

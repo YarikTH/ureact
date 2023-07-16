@@ -126,15 +126,11 @@ struct reactive_node_interface
     {}
 };
 
-class observer_interface
+struct observer_interface
 {
-public:
     virtual ~observer_interface() = default;
 
-private:
     virtual void detach_observer() = 0;
-
-    friend class observable;
 };
 
 } // namespace detail

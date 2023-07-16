@@ -13,7 +13,7 @@
 #include <type_traits>
 
 #include <ureact/context.hpp>
-#include <ureact/detail/observable_node.hpp>
+#include <ureact/detail/node_base.hpp>
 #include <ureact/utility/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/utility/unit.hpp>
 
@@ -23,13 +23,13 @@ namespace detail
 {
 
 template <typename E>
-class event_stream_node : public observable_node
+class event_stream_node : public node_base
 {
 public:
     using event_value_list = std::vector<E>;
 
     explicit event_stream_node( const context& context )
-        : observable_node( context )
+        : node_base( context )
     {}
 
     event_value_list& get_events()

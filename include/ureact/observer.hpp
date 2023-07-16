@@ -10,30 +10,66 @@
 #ifndef UREACT_OBSERVER_HPP
 #define UREACT_OBSERVER_HPP
 
-#include <ureact/detail/observable_node.hpp>
+#include <utility>
+
+#include <ureact/detail/node_base.hpp>
 #include <ureact/detail/observer_node.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+class observer_internals
+{
+public:
+    observer_internals() = default;
+
+    explicit observer_internals( std::shared_ptr<observer_node> node )
+        : m_node( std::move( node ) )
+    {}
+
+    UREACT_MAKE_COPYABLE( observer_internals );
+    UREACT_MAKE_MOVABLE( observer_internals );
+
+    UREACT_WARN_UNUSED_RESULT std::shared_ptr<observer_node>& get_node_ptr()
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<observer_node>& get_node_ptr() const
+    {
+        return m_node;
+    }
+
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    {
+        return m_node->get_node_id();
+    }
+
+protected:
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    {
+        assert( m_node != nullptr && "Should be attached to a node" );
+        return get_internals( m_node->get_context() ).get_graph();
+    }
+
+    /// Pointer to owned node
+    std::shared_ptr<observer_node> m_node;
+};
+
+} // namespace detail
+
 /*!
- * @brief Shared pointer like object that holds a strong reference to the observed subject
+ * @brief Shared pointer like object that holds a strong reference to the observer node
  *
  *  An instance of this class provides a unique handle to an observer which can
- *  be used to detach it explicitly. It also holds a strong reference to
- *  the observed subject, so while it exists the subject and therefore
- *  the observer will not be destroyed.
- *
- *  If the handle is destroyed without calling detach(), the lifetime of
- *  the observer is tied to the subject.
+ *  be used to detach it explicitly
  */
-class observer final
+class observer final : protected detail::observer_internals
 {
-private:
-    using subject_ptr_t = std::shared_ptr<detail::observable_node>;
-    using Node = detail::observer_node;
-
 public:
-    UREACT_MAKE_NONCOPYABLE( observer );
+    UREACT_MAKE_COPYABLE( observer );
     UREACT_MAKE_MOVABLE( observer );
 
     /*!
@@ -42,22 +78,12 @@ public:
     observer() = default;
 
     /*!
-     * @brief Construct from the give node and a subject.
-     * 
-     * Not intended to be used directly. Use `observe()` instead.
-     */
-    observer( Node* node, subject_ptr_t subject )
-        : m_node( node )
-        , m_subject( std::move( subject ) )
-    {}
-
-    /*!
      * @brief Manually detaches the linked observer node from its subject
      */
     void detach()
     {
         assert( is_valid() );
-        m_subject->unregister_observer( m_node );
+        get_node_ptr()->detach_observer();
     }
 
     /*!
@@ -65,15 +91,36 @@ public:
      */
     UREACT_WARN_UNUSED_RESULT bool is_valid() const
     {
-        return m_node != nullptr;
+        return this->get_node_ptr() != nullptr;
     }
 
-private:
-    /// Owned by subject
-    Node* m_node = nullptr;
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend detail::observer_internals& get_internals( observer& obs )
+    {
+        return obs;
+    }
 
-    /// While the observer handle exists, the subject is not destroyed
-    subject_ptr_t m_subject = nullptr;
+    /*!
+     * @brief Return internals. Not intended to use in user code
+     */
+    UREACT_WARN_UNUSED_RESULT friend const detail::observer_internals& get_internals(
+        const observer& obs )
+    {
+        return obs;
+    }
+
+protected:
+    /*!
+     * @brief Construct from the given node
+     */
+    explicit observer( std::shared_ptr<detail::observer_node> node )
+        : observer_internals( std::move( node ) )
+    {}
+
+    template <typename Ret, typename Node, typename... Args>
+    friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 UREACT_END_NAMESPACE

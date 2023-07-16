@@ -59,7 +59,6 @@ target_sources(
         event_range.cpp
         events.cpp
         observer.cpp
-        scoped_observer.cpp
         signal.cpp
         transaction.cpp
 )

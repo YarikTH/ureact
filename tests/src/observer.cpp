@@ -7,6 +7,7 @@
 //
 #include "catch2_extra.hpp"
 #include "identity.hpp"
+#include "ureact/adaptor/hold.hpp"
 #include "ureact/adaptor/lift.hpp"
 #include "ureact/adaptor/observe.hpp"
 #include "ureact/events.hpp"
@@ -16,8 +17,8 @@
 static_assert( std::is_default_constructible_v<ureact::observer> );
 
 // nothrow movable only
-static_assert( !std::is_copy_constructible_v<ureact::observer> );
-static_assert( !std::is_copy_assignable_v<ureact::observer> );
+static_assert( std::is_copy_constructible_v<ureact::observer> );
+static_assert( std::is_copy_assignable_v<ureact::observer> );
 static_assert( std::is_move_constructible_v<ureact::observer> );
 static_assert( std::is_move_assignable_v<ureact::observer> );
 static_assert( std::is_nothrow_move_constructible_v<ureact::observer> );
@@ -50,26 +51,22 @@ TEST_CASE( "SelfObserverDetach" )
         }
     };
 
+    auto src = ureact::make_source<int>( ctx );
+    ureact::observer obs;
+
     std::vector input_values{ 1, 2, 3, -1, 4 };
 
     SECTION( "signal" )
     {
-        auto src = ureact::make_var<int>( ctx, -1 );
-
-        ureact::observer obs = ureact::observe( src, observe_handler );
-
-        for( int i : input_values )
-            src <<= i;
+        obs = ureact::observe( src | ureact::hold( -1 ), observe_handler );
     }
     SECTION( "source" )
     {
-        auto src = ureact::make_source<int>( ctx );
-
-        ureact::observer obs = ureact::observe( src, observe_handler );
-
-        for( int i : input_values )
-            src << i;
+        obs = ureact::observe( src, observe_handler );
     }
+
+    for( int i : { 1, 2, 3, -1, 4 } )
+        src << i;
 
     CHECK( results == std::vector{ 1, 2, 3 } );
 }
@@ -93,9 +90,9 @@ TEST_CASE( "NoObserveOnNoChanged" )
     int bObserveCount = 0;
     int productObserveCount = 0;
 
-    ureact::observe( a, [&]( int /*v*/ ) { ++aObserveCount; } );
-    ureact::observe( b, [&]( int /*v*/ ) { ++bObserveCount; } );
-    ureact::observe( product, [&]( int /*v*/ ) { ++productObserveCount; } );
+    ureact::observer obs1 = ureact::observe( a, [&]( int /*v*/ ) { ++aObserveCount; } );
+    ureact::observer obs2 = ureact::observe( b, [&]( int /*v*/ ) { ++bObserveCount; } );
+    ureact::observer obs3 = ureact::observe( product, [&]( int /*v*/ ) { ++productObserveCount; } );
 
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 0 );
@@ -154,7 +151,7 @@ TEST_CASE( "SyncedObserveTest" )
 
         result_t result;
 
-        ureact::observe(
+        ureact::observer _ = ureact::observe(
             src, with( sum, prod, diff ), [&]( ureact::unit, int sum, int prod, int diff ) {
                 result.emplace_back( sum, prod, diff );
             } );
@@ -178,7 +175,7 @@ TEST_CASE( "SyncedObserveTest" )
 
         result_t result;
 
-        ureact::observe(
+        ureact::observer _ = ureact::observe(
             src, with( sum, prod, diff ), [&]( const std::string& e, int sum, int prod, int diff ) {
                 result.emplace_back( e, sum, prod, diff );
             } );
@@ -215,9 +212,9 @@ TEST_CASE( "Observers" )
             // Create a signal in the function scope
             auto my_signal = ureact::lift( x, identity{} );
 
-            // The lifetime of the observer is bound to my_signal.
-            // After scope my_signal is destroyed, and so is the observer
-            ureact::observe( my_signal, on_x_value_change );
+            // [Obsolete] The lifetime of the observer is bound to my_signal.
+            // [Obsolete] After scope my_signal is destroyed, and so is the observer
+            ureact::observer _ = ureact::observe( my_signal, on_x_value_change );
 
             x <<= 1;
 
@@ -244,7 +241,7 @@ TEST_CASE( "Observers" )
                 // Move-assign to obs
                 obs = ureact::observe( my_signal, on_x_value_change );
 
-                // The node linked to my_signal is now also owned by obs
+                // [Obsolete] The node linked to my_signal is now also owned by obs
 
                 x <<= 1;
 
@@ -252,8 +249,8 @@ TEST_CASE( "Observers" )
             }
             // ~Inner scope
 
-            // my_signal was destroyed, but as long as obs exists and is still
-            // attached to the signal node, this signal node won't be destroyed
+            // [Obsolete] my_signal was destroyed, but as long as obs exists and is still
+            // [Obsolete] attached to the signal node, this signal node won't be destroyed
 
             x <<= 2;
 
@@ -261,9 +258,9 @@ TEST_CASE( "Observers" )
         }
         // ~Outer scope
 
-        // obs was destroyed
-        // -> the signal node is no longer owned by anything and is destroyed
-        // -> the observer node is destroyed as it was bound to the subject
+        // [Obsolete] obs was destroyed
+        // [Obsolete] -> the signal node is no longer owned by anything and is destroyed
+        // [Obsolete] -> the observer node is destroyed as it was bound to the subject
 
         x <<= 3; // no output
 

@@ -86,7 +86,7 @@ TEST_CASE( "ureact::reactive_ref" )
 
     std::vector<std::string> alice_company_names;
 
-    ureact::observe( alice_company_name,
+    ureact::observer _ = ureact::observe( alice_company_name,
         [&]( const std::string& name ) { alice_company_names.push_back( name ); } );
 
     company1.name <<= std::string( "ModernTec" );

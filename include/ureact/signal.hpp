@@ -12,7 +12,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/has_changed.hpp>
-#include <ureact/detail/observable_node.hpp>
+#include <ureact/detail/node_base.hpp>
 #include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -21,16 +21,16 @@ namespace detail
 {
 
 template <typename S>
-class signal_node : public observable_node
+class signal_node : public node_base
 {
 public:
     explicit signal_node( const context& context )
-        : observable_node( context )
+        : node_base( context )
     {}
 
     template <typename T>
     signal_node( const context& context, T&& value )
-        : observable_node( context )
+        : node_base( context )
         , m_value( std::forward<T>( value ) )
     {}
 

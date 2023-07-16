@@ -32,7 +32,7 @@ TEST_CASE( "Flatten1" )
 
     std::queue<int> results;
 
-    ureact::observe( flattened, [&]( int v ) { results.push( v ); } );
+    ureact::observer _ = ureact::observe( flattened, [&]( int v ) { results.push( v ); } );
 
     CHECK( outer.get().equal_to( inner1 ) );
     CHECK( flattened.get() == 123 );
@@ -82,7 +82,8 @@ TEST_CASE( "Flatten2" )
 
     int observeCount = 0;
 
-    ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
+    ureact::observer _
+        = ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto o1 = a0 + flattened;
     auto o2 = o1 + 0;
@@ -129,7 +130,8 @@ TEST_CASE( "Flatten3" )
 
     int observeCount = 0;
 
-    ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
+    ureact::observer _
+        = ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto result = flattened + a0;
 
@@ -183,7 +185,7 @@ TEST_CASE( "Flatten4" )
 
     auto result = flattened + a3;
 
-    ureact::observe( result, [&]( int v ) { results.push_back( v ); } );
+    ureact::observer _ = ureact::observe( result, [&]( int v ) { results.push_back( v ); } );
 
     do_transaction( ctx, [&] {
         a3 <<= 400;
@@ -209,7 +211,7 @@ TEST_CASE( "Flatten5" )
 
     std::queue<int> results;
 
-    ureact::observe( flattened, [&]( int v ) { results.push( v ); } );
+    ureact::observer _ = ureact::observe( flattened, [&]( int v ) { results.push( v ); } );
 
     CHECK( outer.get().equal_to( inner1 ) );
     CHECK( flattened.get() == 123 );
@@ -234,7 +236,7 @@ TEST_CASE( "Member1" )
 
     auto flattened = ureact::flatten( inner );
 
-    ureact::observe( flattened, []( int v ) { CHECK( v == 30 ); } );
+    ureact::observer _ = ureact::observe( flattened, []( int v ) { CHECK( v == 30 ); } );
 
     outer <<= 30;
 }
@@ -250,7 +252,8 @@ TEST_CASE( "Signal of events" )
 
     int reassign_count = 0;
 
-    ureact::observe( sig, [&]( const ureact::events<int>& ) { ++reassign_count; } );
+    ureact::observer obs1
+        = ureact::observe( sig, [&]( const ureact::events<int>& ) { ++reassign_count; } );
 
     ureact::events<int> e;
 
@@ -265,7 +268,8 @@ TEST_CASE( "Signal of events" )
 
     std::vector<int> saved_events;
 
-    ureact::observe( e, [&]( const int value ) { saved_events.push_back( value ); } );
+    ureact::observer obs2
+        = ureact::observe( e, [&]( const int value ) { saved_events.push_back( value ); } );
 
     in1 << -1;
     in2 << 1;

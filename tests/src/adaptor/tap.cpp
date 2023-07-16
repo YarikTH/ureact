@@ -33,8 +33,6 @@ TEST_CASE( "ureact::tap (signal<S>)" )
         result = src | ureact::tap( collector );
     }
 
-    CHECK( result.equal_to( src ) );
-
     for( int i : { 0, 1, 2 } )
         src <<= i;
 
@@ -62,8 +60,6 @@ TEST_CASE( "ureact::tap (events<E>)" )
     {
         result = src | ureact::tap( collector );
     }
-
-    CHECK( result.equal_to( src ) );
 
     for( int i : { 0, 1, 2 } )
         src << i;
@@ -94,8 +90,6 @@ TEST_CASE( "ureact::tap (events<E>, synced)" )
     {
         result = src | ureact::tap( with( _2 ), collector );
     }
-
-    CHECK( result.equal_to( src ) );
 
     for( int i : { 0, 1, 2 } )
         src << i;

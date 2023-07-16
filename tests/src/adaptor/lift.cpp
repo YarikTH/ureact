@@ -365,7 +365,7 @@ TEST_CASE( "Reactive class members" )
 
     auto on_size_value_change = [&]( const int new_value ) { size_values.push_back( new_value ); };
 
-    ureact::observe( my_shape.size, on_size_value_change );
+    ureact::observer _ = ureact::observe( my_shape.size, on_size_value_change );
 
     CHECK( size_values == std::vector<int>{} );
 

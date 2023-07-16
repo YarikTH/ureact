@@ -29,7 +29,7 @@ TEST_CASE( "ureact::hold" )
     }
 
     int changes = 0;
-    ureact::observe( held, [&changes]( const auto& ) { ++changes; } );
+    ureact::observer _ = ureact::observe( held, [&changes]( const auto& ) { ++changes; } );
 
     // pass values into src
     for( int i : { 0, 0, 1, 1, 2, 3 } )

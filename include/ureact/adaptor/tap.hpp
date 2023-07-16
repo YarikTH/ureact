@@ -18,10 +18,69 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+/// Passes target signal changes and holds its observer
+template <typename S>
+class signal_tap_node final : public signal_node<S>
+{
+public:
+    signal_tap_node( const context& context, const signal<S>& target, observer observer )
+        : signal_tap_node::signal_node( context, get_internals( target ).value_ref() )
+        , m_target( target )
+        , m_observer( std::move( observer ) )
+    {
+        this->attach_to( m_target );
+    }
+
+    ~signal_tap_node() override
+    {
+        this->detach_from_all();
+    }
+
+    UREACT_WARN_UNUSED_RESULT update_result update() override
+    {
+        return this->try_change_value( get_internals( m_target ).get_value() );
+    }
+
+private:
+    signal<S> m_target;
+    observer m_observer;
+};
+
+/// Passes target events changes and holds its observer
+template <typename E>
+class event_tap_node final : public event_stream_node<E>
+{
+public:
+    event_tap_node( const context& context, const events<E>& target, observer observer )
+        : event_tap_node::event_stream_node( context )
+        , m_target( target )
+        , m_observer( std::move( observer ) )
+    {
+        this->attach_to( m_target );
+    }
+
+    ~event_tap_node() override
+    {
+        this->detach_from_all();
+    }
+
+    UREACT_WARN_UNUSED_RESULT update_result update() override
+    {
+        const auto& src_events = get_internals( m_target ).get_events();
+        this->get_events() = src_events;
+
+        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
+    }
+
+private:
+    events<E> m_target;
+    observer m_observer;
+};
+
 struct TapAdaptor : Adaptor
 {
     /*!
-	 * @brief Create observer for signal and return observed signal
+	 * @brief Create tapped copy for observed signal
 	 *
 	 *  When the signal value S of subject changes, func is called
 	 *
@@ -33,17 +92,16 @@ struct TapAdaptor : Adaptor
 	 *  its own detachment. Returning observer_action::next keeps the observer attached.
 	 *  Using a void return type is the same as always returning observer_action::next.
 	 */
-    template <typename F,
-        typename Signal, //
-        class = std::enable_if_t<is_signal_v<std::decay_t<Signal>>>>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( Signal&& subject, F&& func ) const
+    template <typename F, typename S>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& subject, F&& func ) const
     {
-        std::ignore = observe( subject, std::forward<F>( func ) );
-        return std::forward<Signal>( subject );
+        return create_wrapped_node<signal<S>, signal_tap_node<S>>( subject.get_context(),
+            subject,
+            observe_signal_impl( subject, std::forward<F>( func ) ) );
     }
 
     /*!
-	 * @brief Create observer for event stream and return observed event stream
+	 * @brief Create tapped copy for observed event stream
 	 *
 	 *  For every event e in subject, func is called.
 	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
@@ -61,15 +119,13 @@ struct TapAdaptor : Adaptor
 	 *  @note The event_range<E> option allows to explicitly batch process single turn events
 	 *  @note Changes of signals in dep_pack do not trigger an update - only received events do
 	 */
-    template <typename F,
-        typename Events,
-        typename... Deps,
-        class = std::enable_if_t<is_event_v<std::decay_t<Events>>>>
+    template <typename F, typename E, typename... Deps>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
-        Events&& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
+        const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
     {
-        std::ignore = observe( subject, dep_pack, std::forward<F>( func ) );
-        return std::forward<Events>( subject );
+        return create_wrapped_node<events<E>, event_tap_node<E>>( subject.get_context(),
+            subject,
+            observe_events_impl( subject, dep_pack, std::forward<F>( func ) ) );
     }
 
     /*!

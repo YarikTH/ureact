@@ -18,7 +18,8 @@ TEST_CASE( "Reacting to value changes" )
     ureact::signal<int> xAbs = ureact::lift( x, []( int value ) { return abs( value ); } );
 
     std::vector<int> xAbs_values;
-    ureact::observe( xAbs, [&]( int new_value ) { xAbs_values.push_back( new_value ); } );
+    ureact::observer _
+        = ureact::observe( xAbs, [&]( int new_value ) { xAbs_values.push_back( new_value ); } );
 
     CHECK( xAbs.get() == 1 );
     CHECK( xAbs_values == std::vector<int>{} );
@@ -54,7 +55,8 @@ TEST_CASE( "Changing multiple inputs" )
     //   z   //
 
     std::vector<int> z_values;
-    ureact::observe( z, [&]( int new_value ) { z_values.push_back( new_value ); } );
+    ureact::observer _
+        = ureact::observe( z, [&]( int new_value ) { z_values.push_back( new_value ); } );
 
     CHECK( z.get() == 4 );
     CHECK( z_values == std::vector<int>{} );

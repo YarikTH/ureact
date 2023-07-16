@@ -3,6 +3,52 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.14.0](https://github.com/YarikTH/ureact/releases/tag/0.14.0) (2023-07-16)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.13.0...0.14.0)
+
+Rework header structure and rework observers
+
+- Add `ureact::happened` adaptor
+- BREAKING! Big structure update \
+  Root `ureact` folder become clearer (6 headers vs 14) and `ureact/adaptor`
+  folder now mostly contain only so named adaptors in each header.
+    - move `ureact/default_context.hpp` content into `ureact/context.hpp`
+      it contains a single function, and it is unconditionally included
+      in `ureact/signal.hpp` and `ureact/events.hpp` anyway
+    - move `ureact/temp_signal.hpp` into `ureact/detail`
+      because it is not intended to be included and used by library user
+    - move `ureact/has_changed.hpp` into `ureact/detail`
+      because it is not intended to be included and used by library user. User
+      can define its own `has_changed` overload, but `has_changed.hpp` is not
+      needed to do so.
+    - move some headers that are not useful by themselves in a
+      new `ureact/utility` directory. Namely:
+        - `ureact/unit.hpp`
+        - `ureact/type_traits.hpp`
+        - `ureact/signal_pack.hpp`
+        - `ureact/event_range.hpp`
+        - `ureact/event_emitter.hpp`
+    - extract `ureact::join_with` from `ureact/adaptor/join.hpp`
+      to `ureact/adaptor/join_with.hpp`
+    - extract `ureact::changed_to` from `ureact/adaptor/changed.hpp`
+      to `ureact/adaptor/changed_to.hpp`
+    - extract `ureact::keys` and `ureact::values`
+      from `ureact/adaptor/elements.hpp`
+      to `ureact/adaptor/keys.hpp` and `ureact/adaptor/values.hpp`
+- BREAKING! #120 Rework observers
+    - observable_node is no longer owns observers, and it is removed at all (
+      node_base is used instead)
+    - observer nodes own their subjects
+    - scoped_observer is removed
+    - observer owns its observer node and nothing else
+    - tap nodes are introduced to own both observer and observed node
+    - result of observe should no longer discarded for both L-value and R-value
+      subjects
+    - See #120 for examples and problem description
+- #113 Add observe_policy, so even current signal values can be notified if
+  needed
+
 ## [0.13.0](https://github.com/YarikTH/ureact/releases/tag/0.13.0) (2023-06-17)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.12.0...0.13.0)

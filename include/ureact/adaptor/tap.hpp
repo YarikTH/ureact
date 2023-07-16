@@ -11,6 +11,7 @@
 #define UREACT_ADAPTOR_TAP_HPP
 
 #include <ureact/adaptor/observe.hpp>
+#include <ureact/utility/observe_policy.hpp>
 #include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -93,11 +94,13 @@ struct TapAdaptor : Adaptor
 	 *  Using a void return type is the same as always returning observer_action::next.
 	 */
     template <typename F, typename S>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& subject, F&& func ) const
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& subject,
+        F&& func,
+        observe_policy policy = observe_policy::skip_current ) const
     {
         return create_wrapped_node<signal<S>, signal_tap_node<S>>( subject.get_context(),
             subject,
-            observe_signal_impl( subject, std::forward<F>( func ) ) );
+            observe_signal_impl( subject, std::forward<F>( func ), policy ) );
     }
 
     /*!
@@ -151,6 +154,15 @@ struct TapAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const
     {
         return make_partial<TapAdaptor>( std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of tap(T&& subject, F&& func, observe_policy policy)
+	 */
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func, observe_policy policy ) const
+    {
+        return make_partial<TapAdaptor>( std::forward<F>( func ), policy );
     }
 
     /*!

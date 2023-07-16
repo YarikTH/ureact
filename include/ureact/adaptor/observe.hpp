@@ -16,6 +16,7 @@
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/detail/observer_node.hpp>
 #include <ureact/observer.hpp>
+#include <ureact/utility/observe_policy.hpp>
 #include <ureact/utility/observer_action.hpp>
 #include <ureact/utility/signal_pack.hpp>
 #include <ureact/utility/type_traits.hpp>
@@ -191,7 +192,9 @@ private:
 };
 
 template <typename InF, typename S>
-auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
+auto observe_signal_impl(
+    const signal<S>& subject, InF&& func, observe_policy policy = observe_policy::skip_current )
+    -> observer
 {
     static_assert( std::is_invocable_v<InF, S>,
         "Passed functor should be callable with S. See documentation for ureact::observe()" );
@@ -205,8 +208,15 @@ auto observe_signal_impl( const signal<S>& subject, InF&& func ) -> observer
         signal_observer_node<S, add_observer_action_next_ret<F>>,
         signal_observer_node<S, F>>;
 
-    return create_wrapped_node<observer, Node>(
+    observer obs = create_wrapped_node<observer, Node>(
         subject.get_context(), subject, std::forward<InF>( func ) );
+
+    // Call passed functor with current value, using direct call to signal_observer_node::update()
+    // It allows not to duplicate observer_action handling logic
+    if( policy == observe_policy::notify_current )
+        std::ignore = get_internals( obs ).get_node_ptr()->update();
+
+    return obs;
 }
 
 template <typename InF, typename E, typename... Deps>
@@ -258,9 +268,11 @@ struct ObserveAdaptor : Adaptor
 	 *  Using a void return type is the same as always returning observer_action::next.
 	 */
     template <typename F, typename S>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& subject, F&& func ) const
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& subject,
+        F&& func,
+        observe_policy policy = observe_policy::skip_current ) const
     {
-        return observe_signal_impl( subject, std::forward<F>( func ) );
+        return observe_signal_impl( subject, std::forward<F>( func ), policy );
     }
 
     /*!
@@ -309,6 +321,16 @@ struct ObserveAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func ) const // TODO: check in tests
     {
         return make_partial<ObserveAdaptor>( std::forward<F>( func ) );
+    }
+
+    /*!
+	 * @brief Curried version of observe(T&& subject, F&& func, observe_policy policy)
+	 */
+    template <typename F>
+    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( F&& func,
+        observe_policy policy ) const // TODO: check in tests
+    {
+        return make_partial<ObserveAdaptor>( std::forward<F>( func ), policy );
     }
 
     /*!

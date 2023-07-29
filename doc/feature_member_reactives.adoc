@@ -1,0 +1,233 @@
+= Member reactives
+:toc:
+
+== Synopsis
+
+.Synopsis
+[source,c++]
+----
+namespace ureact
+{
+
+// #include <ureact/signal.hpp>
+template <typename Owner, typename S>
+class member_signal : public signal<S>;
+
+template <typename Owner, typename S>
+class member_var_signal : public var_signal<S>;
+
+#define UREACT_USE_MEMBER_SIGNALS(Owner)                     \
+    template <class S>                                       \
+    using member_signal = ::ureact::member_signal<Owner, S>; \
+    template <class S>                                       \
+    using member_var_signal = ::ureact::member_var_signal<Owner, S>
+
+template <class Owner>
+class member_signal_user {
+    friend Owner;
+    member_signal_user() = default;
+    UREACT_USE_MEMBER_SIGNALS(Owner);
+};
+
+// ==========================================================
+
+// #include <ureact/events.hpp>
+template <typename Owner, typename E>
+class member_events : public events<E>;
+
+template <typename Owner, typename E>
+class member_event_source : public event_source<E>;
+
+#define UREACT_USE_MEMBER_EVENTS(Owner)                      \
+    template <class E>                                       \
+    using member_events = ::ureact::member_events<Owner, E>; \
+    template <class E>                                       \
+    using member_event_source = ::ureact::member_event_source<Owner, E>
+
+template <class Owner>
+class member_events_user {
+    friend Owner;
+    member_events_user() = default;
+    UREACT_USE_MEMBER_EVENTS(Owner);
+};
+
+} // namespace ureact
+----
+
+== The problem
+
+Signals and events are designed to be public class members in mind.
+Take a look at example below:
+
+.Using `var_signal` as a public member (https://godbolt.org/z/c6vK5aqEh[run])
+[source,c++]
+----
+class Foo {  // <1>
+   public:
+    int value() const;
+    void value(int newValue) const;
+};
+
+class Bar {  // <2>
+   public:
+    var_signal<int> value;  // <3>
+};
+
+int main() {
+    Foo foo;
+    Bar bar;
+
+    foo.value(foo.value() + 1);  // <4>
+    bar.value(bar.value() + 1);  // <5>
+
+    bar.value = make_var(42);  // <6>
+}
+----
+
+<1> `Foo` demonstrates handling of RW property `value` without signals
+<2> `Bar` demonstrates handling of RW property `value` using public `var_signal` member
+<3> `value` var_signal.
+Behaves like pair of `Foo::value()` overloads
+<4> using getter and setter to increment ``Foo``'s `value`
+<5> using functional methods to increment ``Bar``'s `value`
+<6> reassign public member `Bar::value()` with a new value
+
+As you can see, `var_signal` public members to some extent can behave like https://en.wikipedia.org/wiki/Property_(programming)[property].
+Unfortunately, we can reassign `var_signal` public members with a new value from outside the owning class.
+It breaks encapsulation and thus allows introducing some silly and hard to debug errors.
+
+So, maybe there is some way to mitigate this only drawback?
+
+== The solution
+
+Solution is based on https://danieldinu.com/observable/getting-started.html#getting-started-with-observable-properties[observable properties idea] from https://github.com/ddinu[
+Daniel Dinu].
+
+.The idea is simple:
+* make class derived from the class which needs protection
+* provide `Owner` as a template parameter
+* make private constructors
+* friend `Owner` class
+
+As a result such class can be constructed and assigned only withing `Owner` class.
+
+See `member_var_signal` for example:
+
+.``member_var_signal``'s source
+[source,c++]
+----
+/*!
+ * @brief Interface for var_signal<S> that allows construction and assigment only for Owner class
+ * 
+ * member_var_signal is intended to be used as type for public members, so everybody can freely
+ * access its public interface while being restricted from reassignment that should be allowed
+ * only for the Owner class
+ */
+template <typename Owner, typename S>
+class member_var_signal : public var_signal<S>
+{
+    friend Owner;
+
+    /// Default construct
+    member_var_signal() = default;
+
+    /// Copy construct/assign
+    member_var_signal( const member_var_signal& ) = default;
+    member_var_signal& operator=( const member_var_signal& ) = default;
+
+    /// Move construct/assign
+    member_var_signal( member_var_signal&& ) = default;
+    member_var_signal& operator=( member_var_signal&& ) = default;
+
+    /// Copy/move construct from the given var_signal
+    member_var_signal( const var_signal<S>& );
+    member_var_signal( var_signal<S>&& ) noexcept;
+};
+----
+
+Other `member_` classes are identical to `member_var_signal`.
+
+== How to use them?
+
+The simplest usage is a direct replacement of public member `signal`, `var_signal`, `events` and `event_source` with their `member_` counterparts.
+
+.Using `member_var_signal` as a public member (https://godbolt.org/z/7fr998c4v[run])
+[source,c++]
+----
+class Bar {
+   public:
+    member_var_signal<Bar, int> value = make_var(0);  // <1>
+};
+
+int main() {
+    Bar bar;
+
+    bar.value(bar.value() + 1);  // <2>
+
+    bar.value = make_var(42); // <3>
+}
+----
+
+<1> replacing `var_signal<int>` with `member_var_signal<Bar, int>`
+<2> normal usage as before
+<3> reassigning `value` outside of `Bar` is prohibited and won't compile
+
+Such usage has a drawback: we need to repeat `Owner` class again and again.
+And if we need to copy/move such members in another class, you need to replace `Owner` type in all of them.
+In other words it is kinda cumbersome.
+
+=== Alias providers
+
+To mitigate this, lets use https://en.cppreference.com/w/cpp/language/type_alias[alias templates]:
+
+.Example of manual writing of `member_` aliases
+[source,c++]
+----
+class Bar {
+   public:
+    template <class S>
+    using member_signal = member_signal<Bar, S>;
+
+    template <class S>
+    using member_var_signal = member_var_signal<Bar, S>;
+
+    member_var_signal<int> value;
+    member_var_signal<int> value2;
+    member_var_signal<int> value3;
+    member_signal<int> read_only_value;
+};
+----
+
+Fortunately, `µReact` provides two ways to get such aliases easily:
+
+* Macro form - `UREACT_USE_MEMBER_SIGNALS(Owner)` and `UREACT_USE_MEMBER_EVENTS(Owner)`
+* Base class form - `member_signal_user<Owner>` and `member_events_user<Owner>`
+
+.Usage example of alias providers (https://godbolt.org/z/qjEdMWvP7[run])
+[source,c++]
+----
+class Bar : member_signal_user<Bar> { // <1>
+   public:
+    UREACT_USE_MEMBER_SIGNALS(Bar); // <2>
+
+    member_var_signal<int> value;
+    member_var_signal<int> value2;
+    member_var_signal<int> value3;
+    member_signal<int> read_only_value;
+};
+----
+
+<1> Base class form
+<2> Macro form
+
+Macro form is clearer and don't spoil inheritance graph, but it is not https://en.cppreference.com/w/cpp/language/modules[modules] friendly.
+
+[NOTE]
+====
+There is no point in using both forms at the same time.
+Choose one of them and be happy.
+
+Though, they are compiled, when used both.
+Aliases from macro override the same aliases from base class form.
+Thus class form has no effect at all, aside from spoiling inheritance tree.
+====

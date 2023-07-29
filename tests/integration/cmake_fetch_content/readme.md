@@ -1,6 +1,6 @@
 # CMake integration using FetchContent
 
-Since CMake v3.11,
+Since CMake v3.14,
 [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html) can
 be used to automatically download the repository as a dependency at configure time.
 

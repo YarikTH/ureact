@@ -21,6 +21,6 @@ function(generate_integration_cmake name cmake_min_ver)
 endfunction()
 
 generate_integration_cmake(cmake_external_project 3.8)
-generate_integration_cmake(cmake_fetch_content 3.11)
+generate_integration_cmake(cmake_fetch_content 3.14)
 generate_integration_cmake(cmake_find_package 3.8)
 generate_integration_cmake(cmake_subdirectory 3.8)

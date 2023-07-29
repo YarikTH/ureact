@@ -73,7 +73,7 @@ TEST_CASE( "ureact::reactive_ref" )
     ureact::signal<std::string> alice_company_name;
 
     auto Alice = Employee{ ctx, company1 };
-    auto alice_company = Alice.company;
+    ureact::signal alice_company = Alice.company;
 
     SECTION( "Functional syntax" )
     {

@@ -439,6 +439,9 @@ class member_events : public events<E>
 {
     friend Owner;
 
+    UREACT_MAKE_COPYABLE( member_events );
+    UREACT_MAKE_MOVABLE( member_events );
+
     /*!
      * @brief Default construct @ref member_events
      */
@@ -470,6 +473,9 @@ template <typename Owner, typename E>
 class member_event_source : public event_source<E>
 {
     friend Owner;
+
+    UREACT_MAKE_COPYABLE( member_event_source );
+    UREACT_MAKE_MOVABLE( member_event_source );
 
     /*!
      * @brief Default construct @ref member_event_source

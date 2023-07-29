@@ -490,6 +490,9 @@ class member_signal : public signal<S>
 {
     friend Owner;
 
+    UREACT_MAKE_COPYABLE( member_signal );
+    UREACT_MAKE_MOVABLE( member_signal );
+
     /*!
      * @brief Default construct @ref member_signal
      */
@@ -522,8 +525,11 @@ class member_var_signal : public var_signal<S>
 {
     friend Owner;
 
+    UREACT_MAKE_COPYABLE( member_var_signal );
+    UREACT_MAKE_MOVABLE( member_var_signal );
+
     /*!
-     * @brief Default construct @ref member_signal
+     * @brief Default construct @ref member_var_signal
      */
     member_var_signal() = default;
 

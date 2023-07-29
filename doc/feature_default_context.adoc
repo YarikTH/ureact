@@ -1,0 +1,131 @@
+= Default context
+:toc:
+
+== Synopsis
+
+.Synopsis
+[source,c++]
+----
+namespace ureact::default_context
+{
+
+// #include <ureact/context.hpp>
+context get();
+
+// ==========================================================
+
+// #include <ureact/signal.hpp>
+template <typename V>
+[[nodiscard]] var_signal</*unspecified*/> make_var( V&& value );
+
+template <typename V>
+[[nodiscard]] signal</*unspecified*/> make_const( V&& value );
+
+// ==========================================================
+
+// #include <ureact/events.hpp>
+template <typename E = unit>
+[[nodiscard]] event_source<E> make_source();
+
+template <typename E = unit>
+[[nodiscard]] events<E> make_never();
+
+// ==========================================================
+
+// #include <ureact/transaction.hpp>
+class [[nodiscard]] default_transaction;
+
+} // namespace ureact::default_context
+----
+
+== The problem
+
+Some of ``µReact``'s functions take `context` argument.
+It is useful if several `context` are needed, but for most common cases such fine-tuning is not needed and not convenient:
+
+.Explicit `context` usage (https://godbolt.org/z/Tvj6rcefP[run])
+[source,c++]
+----
+class Foo {
+   public:
+    Foo(const context& ctx)  // <3>
+        : ctx(ctx),
+          value(make_var(ctx, 0))  //
+    {}
+
+    void test()  // <4>
+    {
+        transaction _{ctx};
+        auto v = make_var(ctx, 0);
+    }
+
+    context ctx;
+    var_signal<int> value /*= make_var(0)*/;  // <5>
+};
+
+Foo make_foo(const context& ctx) {  // <2>
+    return Foo{ctx};
+}
+
+int main() {
+    context ctx;  // <1>
+    auto foo = make_foo(ctx);
+}
+----
+
+<1> `context` should be created and should be made available to anywhere we work with `µReact`
+<2> Functions should receive `context` parameter and pass it further
+<3> Classes should receive `context` parameter and pass it to members
+<4> Classes should store received `context` in case we need to create reactive nodes later or do transactions
+<5> We can't use https://en.cppreference.com/w/cpp/language/data_members#Member_initialization[default member initializer]
+
+== The solution
+
+The core of the solution is `ureact::default_context::get()` function.
+For each thread it returns a new `context` if previously created `context` is expired, or return existing `context` if it is still used.
+It is implemented in a singleton manner, by storing `thread_local` weak_ptr of `context` internals.
+
+It is good and all, but merely replacing `context` arguments with `ureact::default_context::get()` calls is still cumbersome.
+So, to make default_context's usage convenient, `µReact` provides default_context's versions of each function and class that receive
+`context` parameter.
+They are reside in `ureact::default_context` namespace.
+
+[CAUTION]
+====
+``transaction``'s default_context counterpart is `default_transaction`.
+Because `transaction _;` is ambiguous if both `ureact` and `ureact::default_context` namespaces are used.
+====
+
+.`default_context` usage (https://godbolt.org/z/dKrvb1h9j[run])
+[source,c++]
+----
+class Foo {
+   public:
+    Foo() = default;  // <3>
+
+    void test()  // <4>
+    {
+        default_context::default_transaction _;
+        auto v = default_context::make_var(0);
+    }
+
+    var_signal<int> value = default_context::make_var(0);  // <5>
+};
+
+Foo make_foo() {  // <2>
+    return Foo{};
+}
+
+int main() {  // <1>
+    auto foo = make_foo();
+}
+----
+
+<1> no explicit `context` creation is needed
+<2> No need to passing `context` in functions
+<3> No need to passing `context` in classes.
+It can even become `= default` if no additional creation code needed
+<4> Reactive nodes can be created and transactions can be performed in any method
+<5> We can use https://en.cppreference.com/w/cpp/language/data_members#Member_initialization[default member initializer]
+
+NOTE: `default_context` namespace is used explicitly for demonstration purpose

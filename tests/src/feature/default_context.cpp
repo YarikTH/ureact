@@ -50,7 +50,7 @@ TEST_CASE( "ureact::default_context (transactions)" )
 
     SECTION( "transaction" )
     {
-        transaction _;
+        default_transaction _;
         src <<= 2;
         src <<= 1;
         src <<= 4;

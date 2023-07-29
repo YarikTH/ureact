@@ -82,9 +82,9 @@ namespace default_context
  * @brief Guard class to perform several changes atomically
  *
  */
-struct UREACT_WARN_UNUSED_RESULT transaction : ureact::transaction
+struct UREACT_WARN_UNUSED_RESULT default_transaction : ureact::transaction
 {
-    transaction()
+    default_transaction()
         : ureact::transaction( default_context::get() )
     {}
 };
@@ -101,7 +101,7 @@ template <typename F,
     class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
 UREACT_WARN_UNUSED_RESULT auto do_transaction( F&& func, Args&&... args )
 {
-    default_context::transaction _;
+    default_transaction _;
 
     if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
     {

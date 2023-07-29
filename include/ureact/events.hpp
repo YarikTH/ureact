@@ -491,30 +491,24 @@ class member_event_source : public event_source<E>
     {}
 };
 
-/// Base class to setup aliases to member events classes with specific owner class
-template <class Owner>
-class member_events_user
-{
-    friend Owner;
-
-    /*!
-     * @brief Default construct @ref member_events_user
-     */
-    member_events_user() = default;
-
-    template <class E>
-    using member_events = member_events<Owner, E>;
-
-    template <class E>
-    using member_event_source = member_event_source<Owner, E>;
-};
-
 /// Macro to setup aliases to member events classes with specific owner class
 #define UREACT_USE_MEMBER_EVENTS( Owner )                                                          \
     template <class E>                                                                             \
     using member_events = ::ureact::member_events<Owner, E>;                                       \
     template <class E>                                                                             \
     using member_event_source = ::ureact::member_event_source<Owner, E>
+
+/// Base class to setup aliases to member events classes with specific owner class
+template <class Owner>
+class member_events_user
+{
+    friend Owner;
+
+    member_events_user() = default;
+
+    UREACT_USE_MEMBER_EVENTS( Owner );
+};
+
 
 /*!
  * @brief Create a new event source node and links it to the returned event_source instance

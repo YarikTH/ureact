@@ -542,30 +542,23 @@ class member_var_signal : public var_signal<S>
     {}
 };
 
-/// Base class to setup aliases to member signal classes with specific owner class
-template <class Owner>
-class member_signal_user
-{
-    friend Owner;
-
-    /*!
-     * @brief Default construct @ref member_signal_user
-     */
-    member_signal_user() = default;
-
-    template <class S>
-    using member_signal = member_signal<Owner, S>;
-
-    template <class S>
-    using member_var_signal = member_var_signal<Owner, S>;
-};
-
 /// Macro to setup aliases to member signal classes with specific owner class
 #define UREACT_USE_MEMBER_SIGNALS( Owner )                                                         \
     template <class S>                                                                             \
     using member_signal = ::ureact::member_signal<Owner, S>;                                       \
     template <class S>                                                                             \
     using member_var_signal = ::ureact::member_var_signal<Owner, S>
+
+/// Base class to setup aliases to member signal classes with specific owner class
+template <class Owner>
+class member_signal_user
+{
+    friend Owner;
+
+    member_signal_user() = default;
+
+    UREACT_USE_MEMBER_SIGNALS( Owner );
+};
 
 
 namespace detail

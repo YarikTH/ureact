@@ -28,27 +28,38 @@ class UREACT_WARN_UNUSED_RESULT transaction
 public:
     explicit transaction( context ctx )
         : m_context( std::move( ctx ) )
-        , m_self( get_internals( m_context ).get_graph() )
     {
-        ++m_self.m_transaction_level;
+        get_internals( m_context ).get_graph().start_transaction();
     }
 
     ~transaction()
     {
-        --m_self.m_transaction_level;
+        finish_impl();
+    }
 
-        if( m_self.m_transaction_level == 0 )
-        {
-            m_self.propagate();
-        }
+    /*!
+     * @brief Finish transaction before code scope is ended
+     */
+    void finish()
+    {
+        finish_impl();
     }
 
 private:
+    void finish_impl()
+    {
+        if( !m_finished )
+        {
+            get_internals( m_context ).get_graph().finish_transaction();
+            m_finished = true;
+        }
+    }
+
     UREACT_MAKE_NONCOPYABLE( transaction );
     UREACT_MAKE_NONMOVABLE( transaction );
 
     context m_context;
-    detail::react_graph& m_self;
+    bool m_finished = false;
 };
 
 /*!
@@ -80,7 +91,9 @@ namespace default_context
 
 /*!
  * @brief Guard class to perform several changes atomically
- *
+ * 
+ * Named differently from "transaction", so it is possible to use them both,
+ * where both ureact and ureact::default_context namespaces are used
  */
 struct UREACT_WARN_UNUSED_RESULT default_transaction : ureact::transaction
 {

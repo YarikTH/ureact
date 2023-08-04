@@ -108,6 +108,9 @@ public:
 
     void push_input( node_id nodeId );
 
+    void start_transaction();
+    void finish_transaction();
+
 private:
     friend class ureact::transaction;
 
@@ -259,6 +262,21 @@ inline void react_graph::push_input( const node_id nodeId )
     assert( !m_propagation_is_in_progress );
 
     schedule_node( nodeId );
+
+    if( m_transaction_level == 0 )
+        propagate();
+}
+
+inline void react_graph::start_transaction()
+{
+    ++m_transaction_level;
+}
+
+inline void react_graph::finish_transaction()
+{
+    assert( m_transaction_level > 0 );
+
+    --m_transaction_level;
 
     if( m_transaction_level == 0 )
         propagate();

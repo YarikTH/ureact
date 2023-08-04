@@ -42,7 +42,10 @@ TEST_CASE( "ureact::process" )
     src.emit( { 2u, -1 } );
     src.emit( { 0u, 666 } );
 
-    do_transaction( ctx, [&]() { src << std::make_pair( 1u, 2 ) << std::make_pair( 3u, 7 ); } );
+    {
+        ureact::transaction _{ ctx };
+        src << std::make_pair( 1u, 2 ) << std::make_pair( 3u, 7 );
+    }
 
     const std::vector<int> expected = { -1, -1, 2, 7, 7, 7 };
     CHECK( result.get() == expected );
@@ -89,13 +92,14 @@ TEST_CASE( "ureact::process (synced)" )
     n <<= 0;
     src.emit( 666 );
 
-    do_transaction( ctx, [&]() {
+    {
+        ureact::transaction _{ ctx };
         timestamp <<= "31 Feb 2021";
         n <<= 1;
 
         src( 2 );
         src( 7 );
-    } );
+    }
 
     const std::vector<record_t> expected = {
         { "1 Jan 2020", -1 },

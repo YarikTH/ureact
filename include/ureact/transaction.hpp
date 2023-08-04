@@ -62,30 +62,6 @@ private:
     bool m_finished = false;
 };
 
-/*!
- * @brief Perform several changes atomically
- * @tparam F type of passed functor
- * @tparam Args types of additional arguments passed to functor F
- *
- *  Can pass additional arguments to the functiona and optionally return a result
- */
-template <typename F,
-    typename... Args,
-    class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
-UREACT_WARN_UNUSED_RESULT auto do_transaction( context& ctx, F&& func, Args&&... args )
-{
-    transaction _{ ctx };
-
-    if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
-    {
-        std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
-    }
-    else
-    {
-        return std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
-    }
-}
-
 namespace default_context
 {
 
@@ -101,30 +77,6 @@ struct UREACT_WARN_UNUSED_RESULT default_transaction : ureact::transaction
         : ureact::transaction( default_context::get() )
     {}
 };
-
-/*!
- * @brief Perform several changes atomically
- * @tparam F type of passed functor
- * @tparam Args types of additional arguments passed to functor F
- *
- *  Can pass additional arguments to the functiona and optionally return a result
- */
-template <typename F,
-    typename... Args,
-    class = std::enable_if_t<std::is_invocable_v<F&&, Args&&...>>>
-UREACT_WARN_UNUSED_RESULT auto do_transaction( F&& func, Args&&... args )
-{
-    default_transaction _;
-
-    if constexpr( std::is_same_v<std::invoke_result_t<F&&, Args&&...>, void> )
-    {
-        std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
-    }
-    else
-    {
-        return std::invoke( std::forward<F>( func ), std::forward<Args>( args )... );
-    }
-}
 
 } // namespace default_context
 

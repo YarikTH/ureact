@@ -42,11 +42,12 @@ TEST_CASE( "ureact::pulse" )
     for( int i = 0; i < 2; ++i )
         trigger();
 
-    do_transaction( ctx, [&]() {
+    {
+        ureact::transaction _{ ctx };
         target <<= 6;
         for( int i = 0; i < 3; ++i )
             trigger();
-    } );
+    }
 
     // we expect first value twice and second value thrice
     CHECK( result.get() == std::vector{ 1, 1, 6, 6, 6 } );

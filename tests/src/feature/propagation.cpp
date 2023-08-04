@@ -18,7 +18,7 @@ TEST_CASE( "Reacting to value changes" )
     ureact::signal<int> xAbs = ureact::lift( x, []( int value ) { return abs( value ); } );
 
     std::vector<int> xAbs_values;
-    ureact::observer _
+    ureact::observer obs
         = ureact::observe( xAbs, [&]( int new_value ) { xAbs_values.push_back( new_value ); } );
 
     CHECK( xAbs.get() == 1 );
@@ -28,11 +28,12 @@ TEST_CASE( "Reacting to value changes" )
     x <<= -3; // xAbs is changed to 3
     x <<= 3;  // no output, xAbs is still 3
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         x <<= 4;
         x <<= -2;
         x <<= 3;
-    } ); // no output, result value of xAbs is still 3
+    } // no output, result value of xAbs is still 3
 
     CHECK( xAbs_values == std::vector<int>{ 2, 3 } );
 }
@@ -55,7 +56,7 @@ TEST_CASE( "Changing multiple inputs" )
     //   z   //
 
     std::vector<int> z_values;
-    ureact::observer _
+    ureact::observer obs
         = ureact::observe( z, [&]( int new_value ) { z_values.push_back( new_value ); } );
 
     CHECK( z.get() == 4 );
@@ -64,10 +65,11 @@ TEST_CASE( "Changing multiple inputs" )
     a <<= 2; // z is changed to 6
     b <<= 2; // z is changed to 8
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         a <<= 4;
         b <<= 4;
-    } ); // z is changed to 16
+    } // z is changed to 16
 
     CHECK( z_values == std::vector<int>{ 6, 8, 16 } );
 }

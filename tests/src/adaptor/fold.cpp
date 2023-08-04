@@ -49,9 +49,10 @@ TEST_CASE( "ureact::fold (by value)" )
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
     // do a single transaction to show the difference
-    do_transaction( ctx, [&]() { //
+    {
+        ureact::transaction _{ ctx };
         std::copy( v.begin(), v.end(), src.begin() );
-    } );
+    }
 
     CHECK( sum.get() == 55 );
     CHECK( product.get() == 3628800 );
@@ -99,9 +100,10 @@ TEST_CASE( "ureact::fold (by reference)" )
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
     // do a single transaction to show the difference
-    do_transaction( ctx, [&]() { //
+    {
+        ureact::transaction _{ ctx };
         std::copy( v.begin(), v.end(), src.begin() );
-    } );
+    }
 
     CHECK( sum_byval.get() == 55 );
     CHECK( sum_byref.get() == 55 );
@@ -167,29 +169,32 @@ TEST_CASE( "ureact::fold (by value, synced)" )
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
     // do a single transaction to show the difference
-    do_transaction( ctx, [&]() { //
+    {
+        ureact::transaction _{ ctx };
         std::copy( v.begin(), v.end(), src.begin() );
-    } );
+    }
 
     CHECK( sum.get() == 55 );
     CHECK( batch_sum.get() == 55 );
     CHECK( plus_calls == 10 );
     CHECK( batch_plus_calls == 1 );
 
-    do_transaction( ctx, [&]() { //
+    {
+        ureact::transaction _{ ctx };
         mult <<= 0;
         std::copy( v.begin(), v.end(), src.begin() );
-    } );
+    }
 
     CHECK( sum.get() == 55 );
     CHECK( batch_sum.get() == 55 );
     CHECK( plus_calls == 20 );
     CHECK( batch_plus_calls == 2 );
 
-    do_transaction( ctx, [&]() { //
+    {
+        ureact::transaction _{ ctx };
         mult <<= 3;
         src << 5;
-    } );
+    }
 
     CHECK( sum.get() == 70 );
     CHECK( batch_sum.get() == 70 );
@@ -239,9 +244,10 @@ TEST_CASE( "ureact::fold (by reference, synced)" )
     std::vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
     // do a single transaction to show the difference
-    do_transaction( ctx, [&]() { //
+    {
+        ureact::transaction _{ ctx };
         std::copy( v.begin(), v.end(), src.begin() );
-    } );
+    }
 
     CHECK( sum_byval.get() == 55 );
     CHECK( sum_byref.get() == 55 );

@@ -82,7 +82,7 @@ TEST_CASE( "Flatten2" )
 
     int observeCount = 0;
 
-    ureact::observer _
+    ureact::observer obs
         = ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto o1 = a0 + flattened;
@@ -102,10 +102,11 @@ TEST_CASE( "Flatten2" )
     CHECK( result.get() == 100 + 300 );
     CHECK( observeCount == 2 );
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         a0 <<= 5000;
         a1 <<= 6000;
-    } );
+    }
 
     CHECK( result.get() == 5000 + 6000 );
     CHECK( observeCount == 3 );
@@ -130,7 +131,7 @@ TEST_CASE( "Flatten3" )
 
     int observeCount = 0;
 
-    ureact::observer _
+    ureact::observer obs
         = ureact::observe( flattened, [&observeCount]( int /*unused*/ ) { observeCount++; } );
 
     auto result = flattened + a0;
@@ -138,28 +139,31 @@ TEST_CASE( "Flatten3" )
     CHECK( result.get() == 10 + 30 );
     CHECK( observeCount == 0 );
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         inner1 <<= 1000;
         a0 <<= 200000;
         a1 <<= 50000;
         outer <<= inner2;
-    } );
+    }
 
     CHECK( result.get() == 50000 + 200000 );
     CHECK( observeCount == 1 );
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         a0 <<= 667;
         a1 <<= 776;
-    } );
+    }
 
     CHECK( result.get() == 776 + 667 );
     CHECK( observeCount == 2 );
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         inner1 <<= 999;
         a0 <<= 888;
-    } );
+    }
 
     CHECK( result.get() == 776 + 888 );
     CHECK( observeCount == 2 );
@@ -185,12 +189,13 @@ TEST_CASE( "Flatten4" )
 
     auto result = flattened + a3;
 
-    ureact::observer _ = ureact::observe( result, [&]( int v ) { results.push_back( v ); } );
+    ureact::observer obs = ureact::observe( result, [&]( int v ) { results.push_back( v ); } );
 
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         a3 <<= 400;
         outer <<= inner2;
-    } );
+    }
 
     CHECK( results.size() == 1 );
 

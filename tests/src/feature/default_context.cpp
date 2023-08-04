@@ -48,20 +48,11 @@ TEST_CASE( "ureact::default_context (transactions)" )
     ureact::var_signal src = make_var( 1 );
     ureact::signal src_values = ureact::monitor( src ) | ureact::collect<std::vector>;
 
-    SECTION( "transaction" )
     {
         default_transaction _;
         src <<= 2;
         src <<= 1;
         src <<= 4;
-    }
-    SECTION( "do_transaction" )
-    {
-        do_transaction( [&]() { //
-            src <<= 2;
-            src <<= 1;
-            src <<= 4;
-        } );
     }
 
     CHECK( src_values.get() == std::vector{ 4 } );

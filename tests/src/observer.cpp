@@ -111,10 +111,11 @@ TEST_CASE( "NoObserveOnNoChanged" )
     CHECK( productObserveCount == 1 );
     CHECK( expressionString.get() == "1 * 2 = 2" );
 
-    do_transaction( ctx, [&]() {
+    {
+        ureact::transaction _{ ctx };
         b <<= 1;
         b <<= 2; // Shouldn't change
-    } );
+    }
     CHECK( aObserveCount == 0 );
     CHECK( bObserveCount == 1 );
     CHECK( productObserveCount == 1 );

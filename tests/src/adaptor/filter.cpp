@@ -69,13 +69,15 @@ TEST_CASE( "ureact::filter (synced)" )
         src << i;
 
     // change limits and pass the same values second time
-    do_transaction( ctx, [&]() {
+    {
+        ureact::transaction _{ ctx };
+
         for( int i = 0; i < 10; ++i )
             src << i;
 
         limit_min <<= 1;
         limit_max <<= 3;
-    } );
+    }
 
     // we expect only numbers in [limit_min, limit_max] range passed our filter
     // synced filtering performed only after new limit values are calculated

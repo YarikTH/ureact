@@ -365,15 +365,16 @@ TEST_CASE( "Reactive class members" )
 
     auto on_size_value_change = [&]( const int new_value ) { size_values.push_back( new_value ); };
 
-    ureact::observer _ = ureact::observe( my_shape.size, on_size_value_change );
+    ureact::observer obs = ureact::observe( my_shape.size, on_size_value_change );
 
     CHECK( size_values == std::vector<int>{} );
 
     // Do transaction to change width and height in single step
-    do_transaction( ctx, [&] {
+    {
+        ureact::transaction _{ ctx };
         my_shape.width <<= 4;
         my_shape.height <<= 4;
-    } );
+    }
 
     CHECK( size_values == std::vector<int>{ 16 } );
 

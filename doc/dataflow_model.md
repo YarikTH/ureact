@@ -19,40 +19,40 @@ Such a graph can be constructed from the dependency relations; each entity is a 
 
 To give an example, let `a`, `b` and `c` be arbitrary signals.
 `x` is another signal that is calculated based on the former.
-Instead of invoking `make_function` explicitly, the overloaded `+` operator is used to achieve the same result.
+Instead of invoking `lift` explicitly, the overloaded `+` operator is used to achieve the same result.
 
 ```cpp
-ureact::function<S> x = (a + b) + c;
+ureact::signal x = (a + b) + c;
 ```
 
 This is the matching dataflow graph:
 
-<p align="left"><img src="media/signals_1.svg"></p>
+<p align="left"><img src="media/dataflow_graph_1.svg"></p>
 
 From a dataflow perspective, what kind of data is propagated and what exactly happens to it in each node is not relevant.
 
 µReact does not expose the graph data structures directly to the user; instead, they are wrapped by lightweight proxies.
 Such a proxy is essentially a shared pointer to the heap-allocated node.
-Examples of proxy types are `value`, `function` and `observer`.
+Examples of proxy types are `var_signal`, `signal` and `observer`.
 The concrete type of the node is hidden behind the proxy.
 
 We show this scheme for the previous example:
 
 ```cpp
-ureact::value<S> a = make_value(...);
-ureact::value<S> b = make_value(...);
-ureact::value<S> c = make_value(...);
-ureact::function<S> x = (a + b) + c;
+ureact::var_signal a = make_var(...);
+ureact::var_signal b = make_var(...);
+ureact::var_signal c = make_var(...);
+ureact::signal x = (a + b) + c;
 ```
 
-The `make_value` function allocates the respective node and links it to the returned proxy.
+The `make_var` function allocates the respective node and links it to the returned proxy.
 Not all nodes in the graph are bound to a proxy; the temporary sub-expression `a + b` results in a node as well.
 If a new node is created, it takes shared ownership of its dependencies, because it needs them to calculate its own value.
 This prevents the `a + b` node from disappearing.
 
 The resulting reference graph is similar to the dataflow graph, but with reverse edges (and as such, a DAG as well):
 
-<p align="left"><img src="media/signals_2.svg"></p>
+<p align="left"><img src="media/dataflow_reference_graph.svg"></p>
 
 The number inside each node denotes its reference count. On the left are the proxy instances exposed by the API.
 Assuming the proxies for `a`, `b` and `c` would go out of scope, but `x` remains, the reference count of all nodes is still 1 until `x` disappears as well.
@@ -78,11 +78,11 @@ Propagating changes to the outside world could happen at any place through side 
 However, since side effects have certain implications on our ability to reason about program behaviour, by convention they're moved to designated *output nodes*.
 By definition, these nodes don't have any successors. Analogously to input nodes, they are the output interface of the reactive system.
 
-A typical example of an input node is a `value`, while an example of an output node is an `observer`.
+A typical example of an input node is a `var_signal`, while an example of an output node is an `observer`.
 
 This is the explanatory dataflow graph to show the difference:
 
-<p align="left"><img src="media/signals_3.svg"></p>
+<p align="left"><img src="media/input_and_output_nodes.svg"></p>
 
 
 ### Static and dynamic nodes
@@ -109,7 +109,7 @@ For static nodes, all dependencies have to be passed upon initialization; this m
 Dynamic nodes, on the other hand, can change their dependencies after initialization.
 This means they can be attached to one of their predecessors.
 
-Additionally, side effects from functors passed to the functions such as `value::modify()`, `make_function()` and `observe()`
+Additionally, side effects from functors passed to the functions such as `var_signal::modify()`, `lift()` and `observe()`
 might interact with the reactive system and thus form a shadow connection that is not managed by the µReact.
 Currently, forming such connections is considered an undefined behaviour and should be avoided.
 

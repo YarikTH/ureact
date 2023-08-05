@@ -27,7 +27,7 @@ ureact::function<S> x = (a + b) + c;
 
 This is the matching dataflow graph:
 
-<p align="left"><img src="../support/data/signals_1.svg"></p>
+<p align="left"><img src="media/signals_1.svg"></p>
 
 From a dataflow perspective, what kind of data is propagated and what exactly happens to it in each node is not relevant.
 
@@ -52,7 +52,7 @@ This prevents the `a + b` node from disappearing.
 
 The resulting reference graph is similar to the dataflow graph, but with reverse edges (and as such, a DAG as well):
 
-<p align="left"><img src="../support/data/signals_2.svg"></p>
+<p align="left"><img src="media/signals_2.svg"></p>
 
 The number inside each node denotes its reference count. On the left are the proxy instances exposed by the API.
 Assuming the proxies for `a`, `b` and `c` would go out of scope, but `x` remains, the reference count of all nodes is still 1 until `x` disappears as well.
@@ -82,7 +82,7 @@ A typical example of an input node is a `value`, while an example of an output n
 
 This is the explanatory dataflow graph to show the difference:
 
-<p align="left"><img src="../support/data/signals_3.svg"></p>
+<p align="left"><img src="media/signals_3.svg"></p>
 
 
 ### Static and dynamic nodes

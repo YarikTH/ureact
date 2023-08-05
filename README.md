@@ -1,6 +1,6 @@
 # µReact
 
-<p align="center"><img src="support/data/logo/logo_1.svg"></p>
+<p align="center"><img src="doc/media/logo/logo_1.svg"></p>
 
 [![Linux](https://github.com/YarikTH/ureact/actions/workflows/linux.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/linux.yml)
 [![Windows](https://github.com/YarikTH/ureact/actions/workflows/windows.yml/badge.svg)](https://github.com/YarikTH/ureact/actions/workflows/windows.yml)

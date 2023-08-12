@@ -29,7 +29,10 @@ public:
     explicit transaction( context ctx )
         : m_context( std::move( ctx ) )
     {
-        get_internals( m_context ).get_graph().start_transaction();
+        auto& graph = get_internals( m_context ).get_graph();
+        assert( !graph.is_propagation_in_progress()
+                && "Can't start transaction in the middle of the change propagation process" );
+        graph.start_transaction();
     }
 
     ~transaction()

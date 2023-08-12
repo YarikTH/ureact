@@ -111,6 +111,11 @@ public:
     void start_transaction();
     void finish_transaction();
 
+    [[nodiscard]] bool is_propagation_in_progress() const
+    {
+        return m_propagation_is_in_progress;
+    }
+
 private:
     friend class ureact::transaction;
 
@@ -269,11 +274,14 @@ inline void react_graph::push_input( const node_id nodeId )
 
 inline void react_graph::start_transaction()
 {
+    assert( !m_propagation_is_in_progress );
+
     ++m_transaction_level;
 }
 
 inline void react_graph::finish_transaction()
 {
+    assert( !m_propagation_is_in_progress );
     assert( m_transaction_level > 0 );
 
     --m_transaction_level;

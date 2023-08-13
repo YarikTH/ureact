@@ -91,11 +91,11 @@ template <typename Iter, class Value>
 inline constexpr bool is_output_iterator_v = is_output_iterator<Iter, Value>::value;
 
 template <typename E, typename F, typename... Args>
-class add_observer_range_wrapper
+class add_observer_event_range_wrapper
 {
 public:
-    template <typename InF, class = disable_if_same_t<InF, add_observer_range_wrapper>>
-    explicit add_observer_range_wrapper( InF&& func )
+    template <typename InF, class = disable_if_same_t<InF, add_observer_event_range_wrapper>>
+    explicit add_observer_event_range_wrapper( InF&& func )
         : m_func( std::forward<InF>( func ) )
     {}
 
@@ -271,19 +271,19 @@ auto observe_events_impl(
         select_t<
             // output_iterator
             condition<is_output_iterator_v<F, E>,
-                      add_observer_range_wrapper<E, add_observer_iterator_wrapper<F>, Deps...>>,
+                      add_observer_event_range_wrapper<E, add_observer_iterator_wrapper<F>, Deps...>>,
             // observer_action func(event_range<E> range, const Deps& ...)
             condition<std::is_invocable_r_v<observer_action, F, event_range<E>, Deps...>,
                       F>,
             // observer_action func(const E&, const Deps& ...)
             condition<std::is_invocable_r_v<observer_action, F, E, Deps...>,
-                      add_observer_range_wrapper<E, F, Deps...>>,
+                      add_observer_event_range_wrapper<E, F, Deps...>>,
             // void func(event_range<E> range, const Deps& ...)
             condition<std::is_invocable_r_v<void, F, event_range<E>, Deps...>,
                       add_observer_action_next_ret<F>>,
             // void func(const E&, const Deps& ...)
             condition<std::is_invocable_r_v<void, F, E, Deps...>,
-                      add_observer_range_wrapper<E, add_observer_action_next_ret<F>, Deps...>>,
+                      add_observer_event_range_wrapper<E, add_observer_action_next_ret<F>, Deps...>>,
             signature_mismatches>;
     // clang-format on
 

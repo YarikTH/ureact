@@ -7,7 +7,10 @@
 //
 #include "ureact/adaptor/observe.hpp"
 
+#include <list>
+#include <ranges>
 #include <sstream>
+#include <vector>
 
 #include "catch2_extra.hpp"
 #include "ureact/events.hpp"
@@ -146,4 +149,56 @@ TEST_CASE( "ureact::observe (Output iterator support)" )
     CHECK( os.str() == "1, 2, -1, 42, " );
     CHECK( values == std::vector<int>{ 1, 2, -1, 42 } );
     CHECK( values2 == std::vector<int>{ 0, 1, 2, -1, 42, 0 } );
+}
+
+TEST_CASE( "ureact::observe (Output range support)" )
+{
+    ureact::context ctx;
+
+    ureact::observer obs1;
+    ureact::observer obs2;
+    ureact::observer obs3;
+    ureact::observer obs4;
+
+    std::vector<int> values1( 2 );
+    int values2[3] = {};
+    std::list<int> values3( 5 );
+    std::vector<int> values4;
+
+    auto setup_observers = [&]( auto src ) {
+        obs1 = ureact::observe( src, values1 );
+        obs2 = ureact::observe( src, values2 );
+        obs3 = ureact::observe(
+            src, values3 | std::views::reverse | std::views::drop( 1 ) | std::views::take( 3 ) );
+        obs4 = ureact::observe( src, values4 );
+    };
+    
+//    std::begin(values3 | std::views::reverse | std::views::drop( 1 ) | std::views::take( 3 ));
+//    
+    //*std::begin(values3 | std::views::reverse | std::views::drop( 1 ) | std::views::take( 3 ))++ = 4;
+
+    SECTION( "signal<S>" )
+    {
+        auto x = ureact::make_var( ctx, -1 );
+
+        setup_observers( x );
+
+        for( int i : { 1, 2, -1, 42 } )
+            x <<= i;
+    }
+    SECTION( "events<E>" )
+    {
+        auto src = ureact::make_source<int>( ctx );
+
+        setup_observers( src );
+
+        for( int i : { 1, 2, -1, 42 } )
+            src << i;
+    }
+
+    CHECK( values1 == std::vector<int>{ 1, 2 } );
+    CHECK(
+        std::vector( std::begin( values2 ), std::end( values2 ) ) == std::vector<int>{ 1, 2, -1 } );
+    CHECK( values3 == std::list<int>{ 0, -1, 2, 1, 0 } );
+    CHECK( values4.empty() );
 }

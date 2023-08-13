@@ -90,6 +90,61 @@ struct is_output_iterator<Iter,
 template <typename Iter, class Value>
 inline constexpr bool is_output_iterator_v = is_output_iterator<Iter, Value>::value;
 
+template <typename Range>
+class add_observer_range_wrapper
+{
+public:
+    template <typename InRange, class = disable_if_same_t<InRange, add_observer_range_wrapper>>
+    explicit add_observer_range_wrapper( InRange&& rng )
+        : m_range( std::forward<InRange>( rng ) )
+        , m_it( std::begin( m_range ) )
+        , m_end( std::end( m_range ) )
+    {}
+
+    template <typename Arg>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg )
+    {
+        // Detach on first call if range is empty. We can't detach it before
+        if( m_it == m_end )
+            return observer_action::stop_and_detach;
+
+        *m_it++ = std::forward<Arg>( arg );
+
+        return ( m_it == m_end ) //
+                 ? observer_action::stop_and_detach
+                 : observer_action::next;
+    }
+
+private:
+    Range& m_range;
+    decltype( std::begin( std::declval<Range&>() ) ) m_it;
+    const decltype( std::end( std::declval<Range&>() ) ) m_end;
+};
+
+// Convert R-value to L-value to use in SFINAE
+// https://stackoverflow.com/a/67059296/9323999
+template <class T>
+T& unmove( T&& t )
+{
+    return static_cast<T&>( t );
+}
+
+template <typename Range, typename Value, typename = void>
+struct is_output_range : std::false_type
+{};
+
+template <typename Range, class Value>
+struct is_output_range<Range,
+    Value,
+    std::void_t< //
+        decltype( *unmove( std::begin( std::declval<Range&>() ) )++ = std::declval<Value>() ),
+        decltype( std::begin( std::declval<Range&>() ) == std::end( std::declval<Range&>() ) )>>
+    : std::true_type
+{};
+
+template <typename Range, class Value>
+inline constexpr bool is_output_range_v = is_output_range<Range, Value>::value;
+
 template <typename E, typename F, typename... Args>
 class add_observer_event_range_wrapper
 {
@@ -237,6 +292,9 @@ auto observe_signal_impl(
             // output_iterator
             condition<is_output_iterator_v<F, S>,
                       add_observer_iterator_wrapper<F>>,
+            // output range
+            condition<is_output_range_v<InF, S>,
+                      add_observer_range_wrapper<InF>>,
             // observer_action func(const S&)
             condition<std::is_invocable_r_v<observer_action, F, S>,
                       F>,
@@ -272,6 +330,9 @@ auto observe_events_impl(
             // output_iterator
             condition<is_output_iterator_v<F, E>,
                       add_observer_event_range_wrapper<E, add_observer_iterator_wrapper<F>, Deps...>>,
+            // output range
+            condition<is_output_range_v<InF, E>,
+                      add_observer_event_range_wrapper<E, add_observer_range_wrapper<InF>, Deps...>>,
             // observer_action func(event_range<E> range, const Deps& ...)
             condition<std::is_invocable_r_v<observer_action, F, event_range<E>, Deps...>,
                       F>,

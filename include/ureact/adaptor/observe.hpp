@@ -57,6 +57,39 @@ template <class F>
 using add_observer_action_next_ret
     = add_default_return_value_wrapper<F, observer_action, observer_action::next>;
 
+template <typename Iter>
+class add_observer_iterator_wrapper
+{
+public:
+    template <typename InIter, class = disable_if_same_t<InIter, add_observer_iterator_wrapper>>
+    explicit add_observer_iterator_wrapper( InIter&& iter )
+        : m_iter( std::forward<InIter>( iter ) )
+    {}
+
+    template <typename Arg>
+    UREACT_WARN_UNUSED_RESULT auto operator()( Arg&& arg )
+    {
+        *m_iter++ = std::forward<Arg>( arg );
+        return observer_action::next;
+    }
+
+private:
+    Iter m_iter;
+};
+
+template <typename Iter, typename Value, typename = void>
+struct is_output_iterator : std::false_type
+{};
+
+template <typename Iter, class Value>
+struct is_output_iterator<Iter,
+    Value,
+    std::void_t<decltype( *std::declval<Iter>()++ = std::declval<Value>() )>> : std::true_type
+{};
+
+template <typename Iter, class Value>
+inline constexpr bool is_output_iterator_v = is_output_iterator<Iter, Value>::value;
+
 template <typename E, typename F, typename... Args>
 class add_observer_range_wrapper
 {
@@ -196,19 +229,27 @@ auto observe_signal_impl(
     const signal<S>& subject, InF&& func, observe_policy policy = observe_policy::skip_current )
     -> observer
 {
-    static_assert( std::is_invocable_v<InF, S>,
-        "Passed functor should be callable with S. See documentation for ureact::observe()" );
-
     using F = std::decay_t<InF>;
-    using R = std::invoke_result_t<InF, S>;
 
-    // If return value of passed function is void, add observer_action::next as
-    // default return value.
-    using Node = std::conditional_t<std::is_same_v<void, R>,
-        signal_observer_node<S, add_observer_action_next_ret<F>>,
-        signal_observer_node<S, F>>;
+    // clang-format off
+    using wrapper_t =
+        select_t<
+            // output_iterator
+            condition<is_output_iterator_v<F, S>,
+                      add_observer_iterator_wrapper<F>>,
+            // observer_action func(const S&)
+            condition<std::is_invocable_r_v<observer_action, F, S>,
+                      F>,
+            // void func(const S&)
+            condition<std::is_invocable_r_v<void, F, S>,
+                      add_observer_action_next_ret<F>>,
+            signature_mismatches>;
+    // clang-format on
 
-    observer obs = create_wrapped_node<observer, Node>(
+    static_assert( !std::is_same_v<wrapper_t, signature_mismatches>,
+        "observe: Passed function does not match any of the supported signatures" );
+
+    observer obs = create_wrapped_node<observer, signal_observer_node<S, wrapper_t>>(
         subject.get_context(), subject, std::forward<InF>( func ) );
 
     // Call passed functor with current value, using direct call to signal_observer_node::update()
@@ -228,6 +269,9 @@ auto observe_events_impl(
     // clang-format off
     using wrapper_t =
         select_t<
+            // output_iterator
+            condition<is_output_iterator_v<F, E>,
+                      add_observer_range_wrapper<E, add_observer_iterator_wrapper<F>, Deps...>>,
             // observer_action func(event_range<E> range, const Deps& ...)
             condition<std::is_invocable_r_v<observer_action, F, event_range<E>, Deps...>,
                       F>,
@@ -260,6 +304,7 @@ struct ObserveAdaptor : Adaptor
 	 *  When the signal value S of subject changes, func is called
 	 *
 	 *  The signature of func should be equivalent to:
+     *  * output_iterator
 	 *  * void func(const S&)
 	 *  * observer_action func(const S&)
 	 *
@@ -282,6 +327,7 @@ struct ObserveAdaptor : Adaptor
 	 *  Synchronized values of signals in dep_pack are passed to func as additional arguments.
 	 *
 	 *  The signature of func should be equivalent to:
+     *  * output_iterator
 	 *  * observer_action func(event_range<E> range, const Deps& ...)
 	 *  * observer_action func(const E&, const Deps& ...)
 	 *  * void func(event_range<E> range, const Deps& ...)

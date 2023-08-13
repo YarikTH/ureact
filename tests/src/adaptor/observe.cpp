@@ -7,7 +7,10 @@
 //
 #include "ureact/adaptor/observe.hpp"
 
+#include <sstream>
+
 #include "catch2_extra.hpp"
+#include "ureact/events.hpp"
 #include "ureact/signal.hpp"
 
 // TODO: move here tests for ureact::observe
@@ -101,4 +104,46 @@ TEST_CASE( "ureact::observe (Observer Policy and auto detach)" )
 
     CHECK( observed_skip_current == std::vector<int>{ 1, 2, 42 } );
     CHECK( observed_notify_current == std::vector<int>{ 42 } );
+}
+
+TEST_CASE( "ureact::observe (Output iterator support)" )
+{
+    ureact::context ctx;
+
+    ureact::observer obs_printer;
+    ureact::observer obs_collector;
+    ureact::observer obs_collector_2;
+
+    std::ostringstream os;
+    std::vector<int> values;
+    std::vector<int> values2( 6 );
+
+    auto setup_observers = [&]( auto src ) {
+        obs_printer = ureact::observe( src, std::ostream_iterator<int>( os, ", " ) );
+        obs_collector = ureact::observe( src, std::back_inserter( values ) );
+        obs_collector_2 = ureact::observe( src, values2.begin() + 1 );
+    };
+
+    SECTION( "signal<S>" )
+    {
+        auto x = ureact::make_var( ctx, -1 );
+
+        setup_observers( x );
+
+        for( int i : { 1, 2, -1, 42 } )
+            x <<= i;
+    }
+    SECTION( "events<E>" )
+    {
+        auto src = ureact::make_source<int>( ctx );
+
+        setup_observers( src );
+
+        for( int i : { 1, 2, -1, 42 } )
+            src << i;
+    }
+
+    CHECK( os.str() == "1, 2, -1, 42, " );
+    CHECK( values == std::vector<int>{ 1, 2, -1, 42 } );
+    CHECK( values2 == std::vector<int>{ 0, 1, 2, -1, 42, 0 } );
 }

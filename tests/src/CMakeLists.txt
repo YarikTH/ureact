@@ -46,6 +46,7 @@ target_sources(
         adaptor/unique.cpp
         adaptor/values.cpp
         adaptor/zip.cpp
+        adaptor/zip_transform.cpp
         feature/adaptor.cpp
         feature/default_context.cpp
         feature/has_changed.cpp

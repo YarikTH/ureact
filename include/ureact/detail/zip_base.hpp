@@ -39,56 +39,83 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
-        // Move events into buffers
-        // TODO: move to method
-        std::apply(
-            []( slot<Values>&... slots ) {
-                ( fetch_buffer( slots ), ... ); //
-            },
-            m_slots );
+        fetch_buffers();
 
-        // TODO: move to method
-        const auto is_ready = [this]() {
-            return std::apply(
-                []( const slot<Values>&... slots ) {
-                    return ( !slots.buffer.empty() && ... ); //
-                },
-                m_slots );
-        };
+        auto& events = this->get_events();
 
-        while( is_ready() )
-        {
-            // Pop values from buffers and emit tuple
-            // TODO: move to method
-            std::apply(
-                [this]( slot<Values>&... slots ) {
-                    this->get_events().emplace_back( slots.buffer.front()... );
-                    ( slots.buffer.pop_front(), ... );
-                },
-                m_slots );
-        }
+        while( are_all_slots_ready() )
+            pop_slots_to_emit_event( [&events]( Values&&... values ) { //
+                events.emplace_back( std::forward<Values>( values )... );
+            } );
 
         return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
     template <typename T>
-    struct slot
+    class slot
     {
-        explicit slot( const events<T>& source )
-            : source( source )
+    public:
+        explicit slot( events<T> source )
+            : m_source( std::move( source ) )
         {}
 
-        events<T> source;
-        std::deque<T> buffer;
+        void fetch_buffer()
+        {
+            const auto& src_events = get_internals( m_source ).get_events();
+            m_buffer.insert( m_buffer.end(), src_events.begin(), src_events.end() );
+        }
+
+        [[nodiscard]] bool is_ready() const
+        {
+            return !m_buffer.empty();
+        }
+
+        T&& front()
+        {
+            return std::move( m_buffer.front() );
+        }
+
+        void pop_front()
+        {
+            m_buffer.pop_front();
+        }
+
+    private:
+        events<T> m_source;
+        std::deque<T> m_buffer;
     };
 
-    template <typename T>
-    static void fetch_buffer( slot<T>& slot )
+    // Move source events into buffers
+    void fetch_buffers()
     {
-        const auto& src_events = get_internals( slot.source ).get_events();
+        std::apply(
+            []( slot<Values>&... slots ) {
+                ( slots.fetch_buffer(), ... ); //
+            },
+            m_slots );
+    }
 
-        slot.buffer.insert( slot.buffer.end(), src_events.begin(), src_events.end() );
+    // Check if all slots are ready (has value)
+    [[nodiscard]] bool are_all_slots_ready() const
+    {
+        return std::apply(
+            []( const slot<Values>&... slots ) {
+                return ( slots.is_ready() && ... ); //
+            },
+            m_slots );
+    }
+
+    // Pop values from buffers and emit value
+    template <typename EmitEventT>
+    void pop_slots_to_emit_event( const EmitEventT& emit_event )
+    {
+        std::apply(
+            [&emit_event]( slot<Values>&... slots ) {
+                emit_event( std::move( slots.front() )... );
+                ( slots.pop_front(), ... );
+            },
+            m_slots );
     }
 
     std::tuple<slot<Values>...> m_slots;

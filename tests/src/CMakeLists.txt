@@ -18,6 +18,7 @@ target_sources(
         adaptor/drop.cpp
         adaptor/drop_while.cpp
         adaptor/elements.cpp
+        adaptor/enumerate.cpp
         adaptor/filter.cpp
         adaptor/flatten.cpp
         adaptor/fold.cpp

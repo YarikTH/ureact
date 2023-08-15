@@ -200,14 +200,9 @@ TEST_CASE( "ureact::detail::slot_map" )
 
         SECTION( "from self" )
         {
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wself-move"
-#endif
+            UREACT_CLANG_SUPPRESS_WARNING_WITH_PUSH( "-Wself-move" )
             slot_map = std::move( slot_map );
-#if defined( __clang__ ) && defined( __clang_minor__ )
-#    pragma clang diagnostic pop
-#endif
+            UREACT_CLANG_SUPPRESS_WARNING_POP
 
             // slot_map should stay intact
             CHECK_FALSE( slot_map.empty() );

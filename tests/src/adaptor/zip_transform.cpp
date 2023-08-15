@@ -21,7 +21,12 @@ TEST_CASE( "ureact::zip_transform" )
     auto v2 = ureact::make_source<short>( ctx );
     auto v3 = ureact::make_source<int>( ctx );
 
+    UREACT_CLANG_SUPPRESS_WARNING_PUSH
+#if UREACT_CLANG >= UREACT_COMPILER( 10, 0, 0 )
+    UREACT_CLANG_SUPPRESS_WARNING( "-Wimplicit-int-float-conversion" )
+#endif
     const auto add = []( auto a, auto b, auto c ) { return a + b + c; };
+    UREACT_CLANG_SUPPRESS_WARNING_POP
 
     ureact::events<float> src = ureact::zip_transform( add, v1, v2, v3 );
 

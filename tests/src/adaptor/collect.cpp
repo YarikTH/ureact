@@ -13,6 +13,7 @@
 #include <set>
 
 #include "catch2_extra.hpp"
+#include "ureact/adaptor/enumerate.hpp"
 #include "ureact/adaptor/transform.hpp"
 #include "ureact/events.hpp"
 
@@ -97,4 +98,31 @@ TEST_CASE( "ureact::collect (associative)" )
     CHECK( collected_map.get() == expected_map );
     CHECK( collected_map_2.get() == expected_map );
     CHECK( collected_mmap.get() == expected_mmap );
+}
+
+TEST_CASE( "ureact::collect (with enumerate)" )
+{
+    ureact::context ctx;
+    auto src = ureact::make_source<double>( ctx );
+    auto enumerated = ureact::enumerate( src );
+
+    ureact::signal collected_vec = enumerated | ureact::collect<std::vector>;
+    ureact::signal collected_map = enumerated | ureact::collect<std::map>;
+
+    for( int i : { 10, 20, 30 } )
+        src << i;
+
+    const std::vector<std::tuple<size_t, double>> expected_vec = { {
+        { 0, 10.0 },
+        { 1, 20.0 },
+        { 2, 30.0 },
+    } };
+    const std::map<size_t, double> expected_map = {
+        { 0, 10.0 },
+        { 1, 20.0 },
+        { 2, 30.0 },
+    };
+
+    CHECK( collected_vec.get() == expected_vec );
+    CHECK( collected_map.get() == expected_map );
 }

@@ -34,17 +34,41 @@ struct CollectClosure : AdaptorClosure
 	 *  @warning Use with caution, because there is no way to finalize its value, or to ensure it destroyed
 	 *           because any observer or signal/events node will prolong its lifetime.
 	 */
-    template <class E, class Cont = ContT<E>>
+    template <class E>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const
-        -> signal<Cont>
     {
+        using Cont = container_detector_t<ContT, E>;
         return fold( source,
             Cont{},                         //
             []( const E& e, Cont& accum ) { //
-                if constexpr( has_push_back_method_v<Cont, E> )
-                    accum.push_back( e );
-                else if constexpr( has_insert_method_v<Cont, E> )
-                    accum.insert( e );
+                if constexpr( is_sequence_container_v<ContT, E> )
+                {
+                    if constexpr( has_push_back_method_v<Cont, E> )
+                        accum.push_back( e );
+                    else if constexpr( has_insert_method_v<Cont, E> )
+                        accum.insert( e );
+                    else
+                        static_assert( always_false<Cont, E>, "Unsupported container" );
+                }
+                else if constexpr( is_associative_container_v<ContT, E> )
+                {
+                    if constexpr( has_array_subscript_operator_v<Cont,
+                                      std::tuple_element_t<0, E>,
+                                      std::tuple_element_t<1, E>> )
+                        accum[std::get<0>( e )] = std::get<1>( e );
+                    else if constexpr( has_insert_method_v<Cont, E> )
+                        accum.insert( e );
+                    else
+                    {
+                        std::pair ep = std::make_pair( std::get<0>( e ), std::get<1>( e ) );
+                        if constexpr( has_push_back_method_v<Cont, decltype( ep )> )
+                            accum.push_back( std::move( ep ) );
+                        else if constexpr( has_insert_method_v<Cont, decltype( ep )> )
+                            accum.insert( std::move( ep ) );
+                        else
+                            static_assert( always_false<Cont, E>, "Unsupported container" );
+                    }
+                }
                 else
                     static_assert( always_false<Cont, E>, "Unsupported container" );
             } );

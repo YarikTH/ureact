@@ -9,13 +9,15 @@
 
 #include <deque>
 #include <list>
+#include <map>
 #include <set>
 
 #include "catch2_extra.hpp"
+#include "ureact/adaptor/transform.hpp"
 #include "ureact/events.hpp"
 
 // Collects received events into signal<ContT<E>>
-TEST_CASE( "ureact::collect" )
+TEST_CASE( "ureact::collect (sequential)" )
 {
     ureact::context ctx;
 
@@ -47,4 +49,52 @@ TEST_CASE( "ureact::collect" )
     CHECK( collected_deq.get() == std::deque{ 1, 2, 3 } );
     CHECK( collected_lst.get() == std::list{ 1, 2, 3 } );
     CHECK( collected_set.get() == std::set{ 1, 2, 3 } );
+}
+
+TEST_CASE( "ureact::collect (associative)" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_source<std::pair<std::string, int>>( ctx );
+    auto src_tuple = ureact::transform(
+        src, []( const auto& pair ) { return std::make_tuple( pair.first, pair.second ); } );
+
+    ureact::signal<std::map<std::string, int>> collected_map;
+    ureact::signal<std::map<std::string, int>> collected_map_2;
+    ureact::signal<std::multimap<std::string, int>> collected_mmap;
+
+    SECTION( "Functional syntax" )
+    {
+        collected_map = ureact::collect<std::map>( src );
+        collected_map_2 = ureact::collect<std::map>( src_tuple );
+        collected_mmap = ureact::collect<std::multimap>( src_tuple );
+    }
+    SECTION( "Piped syntax" )
+    {
+        collected_map = src | ureact::collect<std::map>;
+        collected_map_2 = src_tuple | ureact::collect<std::map>;
+        collected_mmap = src_tuple | ureact::collect<std::multimap>;
+    }
+
+    src << std::pair( "A", 1 );
+    src << std::pair( "B", 10 );
+    src << std::pair( "C", 3 );
+    src << std::pair( "B", 2 );
+
+    using namespace std::string_literals;
+    const std::map<std::string, int> expected_map = {
+        std::pair( "A"s, 1 ),
+        std::pair( "B"s, 2 ),
+        std::pair( "C"s, 3 ),
+    };
+    const std::multimap<std::string, int> expected_mmap = {
+        std::pair( "A"s, 1 ),
+        std::pair( "B"s, 10 ),
+        std::pair( "B"s, 2 ),
+        std::pair( "C"s, 3 ),
+    };
+
+    CHECK( collected_map.get() == expected_map );
+    CHECK( collected_map_2.get() == expected_map );
+    CHECK( collected_mmap.get() == expected_mmap );
 }

@@ -32,8 +32,6 @@ struct ZipTransformAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         F&& func, const events<Source>& source1, const events<Sources>&... sources ) const
     {
-        static_assert( sizeof...( Sources ) >= 1, "zip: 2+ arguments are required" );
-
         using node_type = event_zip_node<F, Source, Sources...>;
         using E = typename node_type::E;
 

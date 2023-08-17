@@ -10,6 +10,9 @@ add_executable(ureact_test)
 target_sources(
     ureact_test
     PRIVATE
+        adaptor/adjacent.cpp
+        adaptor/adjacent_filter.cpp
+        adaptor/adjacent_transform.cpp
         adaptor/cast.cpp
         adaptor/changed.cpp
         adaptor/changed_to.cpp
@@ -33,6 +36,9 @@ target_sources(
         adaptor/monitor_change.cpp
         adaptor/observe.cpp
         adaptor/once.cpp
+        adaptor/pairwise.cpp
+        adaptor/pairwise_filter.cpp
+        adaptor/pairwise_transform.cpp
         adaptor/process.cpp
         adaptor/pulse.cpp
         adaptor/reactive_ref.cpp

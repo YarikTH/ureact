@@ -10,38 +10,19 @@
 #ifndef UREACT_ADAPTOR_UNIQUE_HPP
 #define UREACT_ADAPTOR_UNIQUE_HPP
 
-#include <ureact/adaptor/filter.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/adaptor/pairwise_filter.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
-namespace detail
-{
-
-struct UniqueClosure : AdaptorClosure
-{
-    /*!
-	 * @brief Filter out all except the first element from every consecutive group of equivalent elements
-	 *
-	 *  In other words: removes consecutive (adjacent) duplicates
-	 *
-	 *  Semantically equivalent of std::unique
-	 */
-    template <typename E>
-    UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const
-    {
-        return filter( source, [first = true, prev = E{}]( const E& e ) mutable {
-            const bool pass = first || e != prev;
-            first = false;
-            prev = e;
-            return pass;
-        } );
-    }
-};
-
-} // namespace detail
-
-inline constexpr detail::UniqueClosure unique;
+/*!
+ * @brief Filter out all except the first element from every consecutive group of equivalent elements
+ *
+ *  In other words: removes consecutive (adjacent) duplicates
+ *
+ *  Semantically equivalent of std::unique
+ */
+inline constexpr auto unique = pairwise_filter(
+    []( const auto& last, const auto& current ) { return !( current == last ); } );
 
 UREACT_END_NAMESPACE
 

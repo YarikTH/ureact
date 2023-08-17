@@ -8,6 +8,7 @@
 #include "ureact/adaptor/zip_transform.hpp"
 
 #include "catch2_extra.hpp"
+#include "identity.hpp"
 #include "ureact/adaptor/collect.hpp"
 #include "ureact/events.hpp"
 
@@ -39,4 +40,24 @@ TEST_CASE( "ureact::zip_transform" )
     // clang-format on
 
     CHECK( result.get() == std::vector<float>{ 3, 6, 9 } );
+}
+
+TEST_CASE( "ureact::zip_transform (ref)" )
+{
+    ureact::context ctx;
+
+    auto src = ureact::make_source<int>( ctx );
+
+    ureact::events<int> rvalue = ureact::zip_transform( identity{}, src );
+    ureact::events<int> lvalue = ureact::zip_transform( identity_ref{}, src );
+
+    const auto result_rvalue = ureact::collect<std::vector>( rvalue );
+    const auto result_lvalue = ureact::collect<std::vector>( lvalue );
+
+    for( int i = 0; i < 5; ++i )
+        src << i;
+
+    const std::vector<int> expected = { 0, 1, 2, 3, 4 };
+    CHECK( result_rvalue.get() == expected );
+    CHECK( result_lvalue.get() == expected );
 }

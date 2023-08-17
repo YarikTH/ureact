@@ -32,7 +32,7 @@ struct ZipTransformAdaptor : Adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         F&& func, const events<Source>& source1, const events<Sources>&... sources ) const
     {
-        using node_type = event_zip_node<F, Source, Sources...>;
+        using node_type = event_zip_node<zip_type::transform, F, Source, Sources...>;
         using E = typename node_type::E;
 
         const context& context = source1.get_context();

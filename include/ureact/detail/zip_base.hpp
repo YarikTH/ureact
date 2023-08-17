@@ -16,30 +16,42 @@
 
 #include <ureact/detail/defines.hpp>
 #include <ureact/events.hpp>
+#include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-template <typename F, typename... Values>
-struct zip_result
+enum class zip_type
 {
-    using func_type = std::conditional_t< //
-        std::is_same_v<F, unit>,          //
-        decltype( std::make_tuple<Values...> ),
-        F>;
-    using type = std::invoke_result_t<func_type, Values...>;
+    normal,
+    transform,
+};
+
+template <zip_type Type, typename F, typename... Values>
+struct zip_result;
+
+template <typename F, typename... Values>
+struct zip_result<zip_type::normal, F, Values...>
+{
+    using type = std::tuple<Values...>;
 };
 
 template <typename F, typename... Values>
-using zip_result_t = typename zip_result<F, Values...>::type;
+struct zip_result<zip_type::transform, F, Values...>
+{
+    using type = std::decay_t<std::invoke_result_t<F, Values...>>;
+};
 
-template <typename F, typename... Values>
-class event_zip_node final : public event_stream_node<zip_result_t<F, Values...>>
+template <zip_type Type, typename F, typename... Values>
+using zip_result_t = typename zip_result<Type, F, Values...>::type;
+
+template <zip_type Type, typename F, typename... Values>
+class event_zip_node final : public event_stream_node<zip_result_t<Type, F, Values...>>
 {
 public:
-    using E = zip_result_t<F, Values...>;
+    using E = zip_result_t<Type, F, Values...>;
 
     template <typename InF>
     explicit event_zip_node( const context& context, InF&& func, const events<Values>&... sources )
@@ -59,17 +71,8 @@ public:
     {
         fetch_buffers();
 
-        auto& events = this->get_events();
-
         while( are_all_slots_ready() )
-            pop_slots_to_emit_event( [this, &events]( Values&&... values ) { //
-                std::ignore = this; // [[maybe_unused]] analog for lambda capture
-
-                if constexpr( std::is_same_v<F, unit> )
-                    events.emplace_back( std::forward<Values>( values )... );
-                else
-                    events.push_back( std::invoke( m_func, std::forward<Values>( values )... ) );
-            } );
+            pop_slots_to_emit_event();
 
         return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
@@ -130,15 +133,25 @@ private:
     }
 
     // Pop values from buffers and emit value
-    template <typename EmitEventT>
-    void pop_slots_to_emit_event( const EmitEventT& emit_event )
+    void pop_slots_to_emit_event()
     {
         std::apply(
-            [&emit_event]( slot<Values>&... slots ) {
+            [this]( slot<Values>&... slots ) {
                 emit_event( std::move( slots.front() )... );
                 ( slots.pop_front(), ... );
             },
             m_slots );
+    }
+
+    void emit_event( Values&&... values )
+    {
+        if constexpr( Type == zip_type::normal )
+            this->get_events().emplace_back( std::forward<Values>( values )... );
+        else if constexpr( Type == zip_type::transform )
+            this->get_events().push_back(
+                std::invoke( m_func, std::forward<Values>( values )... ) );
+        else
+            static_assert( always_false<decltype( Type )>, "Incorrect zip_type" );
     }
 
     F m_func;

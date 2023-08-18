@@ -30,6 +30,8 @@ ureact_setup_self_contained_test_sources()
 
 target_link_libraries(ureact_self_contained_headers_test PRIVATE ureact::ureact)
 
+set_property(TARGET ureact_self_contained_headers_test PROPERTY UNITY_BUILD OFF)
+
 target_compile_options(
     ureact_self_contained_headers_test
     PRIVATE ${UREACT_WARNING_OPTION}

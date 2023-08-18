@@ -220,9 +220,12 @@ The next example shows how signals can be used for this scenario.
 
 == Final solution: Signals
 
-.Signals example (https://godbolt.org/z/s9zbGrWe1[run])
+.Signals example (https://godbolt.org/z/f5Ts4e6nM[run])
 [source,c++]
 ----
+#include <ureact/signal.hpp>
+#include <ureact/adaptor/lift.hpp>
+#include <ureact/adaptor/observe.hpp>
 #include <iostream>
 
 using namespace ureact;

@@ -40,24 +40,30 @@
 
 ## Examples
 
-**Basic usage** ([run](https://godbolt.org/z/45rqEnPr7))
+**Basic usage** ([run](https://godbolt.org/z/G6z95Tc8n))
 
 ```cpp
-ureact::context ctx;
+#include <ureact/signal.hpp>
+#include <ureact/adaptor/lift.hpp>
+#include <iostream>
 
-// Declaring reactive variables. We can reassign their values later
-ureact::var_signal<int> b = make_var( ctx, 1 );
-ureact::var_signal<int> c = make_var( ctx, 2 );
+int main() {
+    ureact::context ctx;
 
-// Defining reactive signal using overloaded operator
-// Its value will be updated each time its dependencies are changed
-ureact::signal<int> a = b + c;
+    // Declaring reactive variables. We can reassign their values later
+    ureact::var_signal<int> b = make_var( ctx, 1 );
+    ureact::var_signal<int> c = make_var( ctx, 2 );
 
-std::cout << "a (init): " << a.get() << "\n"; // 3
+    // Defining reactive signal using overloaded operator
+    // Its value will be updated each time its dependencies are changed
+    ureact::signal<int> a = b + c;
 
-// Assign a new value to 'b'. Value of 'a' is recalculated automatically
-b <<= 10;
-std::cout << "a  (new): " << a.get() << "\n"; // 12
+    std::cout << "a (init): " << a.get() << "\n"; // 3
+
+    // Assign a new value to 'b'. Value of 'a' is recalculated automatically
+    b <<= 10;
+    std::cout << "a  (new): " << a.get() << "\n"; // 12
+}
 ```
 
 ## License

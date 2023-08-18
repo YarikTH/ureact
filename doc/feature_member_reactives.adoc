@@ -59,7 +59,7 @@ class member_events_user {
 Signals and events are designed to be public class members in mind.
 Take a look at example below:
 
-.Using `var_signal` as a public member (https://godbolt.org/z/c6vK5aqEh[run])
+.Using `var_signal` as a public member (https://godbolt.org/z/hbKz3jezY[run])
 [source,c++]
 ----
 class Foo {  // <1>
@@ -151,7 +151,7 @@ Other `member_` classes are identical to `member_var_signal`.
 
 The simplest usage is a direct replacement of public member `signal`, `var_signal`, `events` and `event_source` with their `member_` counterparts.
 
-.Using `member_var_signal` as a public member (https://godbolt.org/z/7fr998c4v[run])
+.Using `member_var_signal` as a public member (https://godbolt.org/z/5vPqYbTKT[run])
 [source,c++]
 ----
 class Bar {
@@ -203,7 +203,7 @@ Fortunately, `µReact` provides two ways to get such aliases easily:
 * Macro form - `UREACT_USE_MEMBER_SIGNALS(Owner)` and `UREACT_USE_MEMBER_EVENTS(Owner)`
 * Base class form - `member_signal_user<Owner>` and `member_events_user<Owner>`
 
-.Usage example of alias providers (https://godbolt.org/z/qjEdMWvP7[run])
+.Usage example of alias providers (https://godbolt.org/z/TaPYhzM1E[run])
 [source,c++]
 ----
 class Bar : member_signal_user<Bar> { // <1>

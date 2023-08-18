@@ -43,7 +43,7 @@ class [[nodiscard]] default_transaction;
 Some of ``µReact``'s functions take `context` argument.
 It is useful if several `context` are needed, but for most common cases such fine-tuning is not needed and not convenient:
 
-.Explicit `context` usage (https://godbolt.org/z/Tvj6rcefP[run])
+.Explicit `context` usage (https://godbolt.org/z/PscxK5s6s[run])
 [source,c++]
 ----
 class Foo {
@@ -96,7 +96,7 @@ They are reside in `ureact::default_context` namespace.
 Because `transaction _;` is ambiguous if both `ureact` and `ureact::default_context` namespaces are used.
 ====
 
-.`default_context` usage (https://godbolt.org/z/dKrvb1h9j[run])
+.`default_context` usage (https://godbolt.org/z/54sT9jYcs[run])
 [source,c++]
 ----
 class Foo {

@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.15.0](https://github.com/YarikTH/ureact/releases/tag/0.15.0) (2023-08-18)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.14.0...0.15.0)
+
+- BREAKING! Remove `do_transaction()` function.  
+  It is literally a function receiving a function and calling it in the scope
+  with `transaction`
+- BREAKING! Rename `default_context::transaction`
+  to `default_context::default_transaction`  
+  `transaction _;` won't longer be ambiguous when both `ureact`
+  and `ureact::default_context` namespaces are used
+- #121 Add `transaction::finish()` to finish transaction before code scope is
+  ended
+- #127 Get rid of `ureact_amalgamated.hpp`  
+  It was used for godbolt example only, but now `µReact` is added on godbolt, so
+  there is no longer reason to have it
+- Allow calling `zip` with a single argument
+- Add `zip_transform` adaptor
+- Add `enumerate` adaptor
+- Add `adjustment` and `pairwise` adapters of all possible flavors:
+    - `adjacent`
+    - `adjacent_filter`
+    - `adjacent_transform`
+    - `pairwise`
+    - `pairwise_filter`
+    - `pairwise_transform`
+- #111 Add associative containers support in `collect` adaptor
+- #122 Support iterators as `observer`'s argument
+- #123 Make sure transactions can't be started or finished when turn is in
+  progress
+- Fix `member_` by making their copy/move constructors/assignments private
+
 ## [0.14.0](https://github.com/YarikTH/ureact/releases/tag/0.14.0) (2023-07-16)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.13.0...0.14.0)

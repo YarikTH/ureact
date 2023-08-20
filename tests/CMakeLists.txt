@@ -28,4 +28,5 @@ FetchContent_MakeAvailable(nanobench)
 # gersemi: on
 
 add_subdirectory(self_contained)
+add_subdirectory(compilation_time)
 add_subdirectory(src)

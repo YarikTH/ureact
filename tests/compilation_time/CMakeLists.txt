@@ -12,6 +12,7 @@ target_sources(
     PRIVATE #
         compiler_args.cpp
         std_headers_include_time.cpp
+        transform_compilation.cpp
 )
 
 target_link_libraries(

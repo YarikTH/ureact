@@ -61,6 +61,7 @@ target_sources(
         feature/reactive_members.cpp
         feature/shared_ptr_semantics.cpp
         benchmark_signal_composing.cpp
+        benchmark_transform.cpp
         context.cpp
         detail.cpp
         event_emitter.cpp

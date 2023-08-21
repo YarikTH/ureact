@@ -10,7 +10,6 @@
 #ifndef UREACT_DETAIL_HAS_CHANGED_HPP
 #define UREACT_DETAIL_HAS_CHANGED_HPP
 
-#include <functional>
 #include <type_traits>
 
 #include <ureact/detail/defines.hpp>

@@ -10,6 +10,8 @@
 #ifndef UREACT_ADAPTOR_LIFT_HPP
 #define UREACT_ADAPTOR_LIFT_HPP
 
+#include <functional>
+
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/deduce_result_type.hpp>
 #include <ureact/detail/reactive_op_base.hpp>

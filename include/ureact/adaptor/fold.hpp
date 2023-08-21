@@ -10,6 +10,8 @@
 #ifndef UREACT_ADAPTOR_FOLD_HPP
 #define UREACT_ADAPTOR_FOLD_HPP
 
+#include <functional>
+
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/signal.hpp>

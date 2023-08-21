@@ -8,6 +8,18 @@
 #if TRANSFORM_VERSION == 1
 #    include <ureact/adaptor/transform.hpp>
 #    define ADAPTOR_NAME transform
+#elif TRANSFORM_VERSION == 2
+#    include "ureact/adaptor/transform2.hpp"
+#    define ADAPTOR_NAME transform2
+#elif TRANSFORM_VERSION == 3
+#    include "ureact/adaptor/transform3.hpp"
+#    define ADAPTOR_NAME transform3
+#elif TRANSFORM_VERSION == 4
+#    include "ureact/adaptor/transform4.hpp"
+#    define ADAPTOR_NAME transform4
+#elif TRANSFORM_VERSION == 5
+#    include "ureact/adaptor/transform5.hpp"
+#    define ADAPTOR_NAME transform5
 #endif
 
 #ifndef INCLUDE_ONLY

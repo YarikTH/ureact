@@ -33,7 +33,7 @@ TEST_CASE( "transform compilation time" )
 
     ankerl::nanobench::Bench bench;
     bench.title( "transform compilation time" );
-    bench.relative( true );
+    //bench.relative( true );
     bench.performanceCounters( false );
     bench.timeUnit( 1ms, "ms" );
     bench.minEpochIterations( 1 );
@@ -49,27 +49,29 @@ TEST_CASE( "transform compilation time" )
         Compiler{ clang, 14 },
     };
 
-    const auto args = generateCompilerArgs( compilers, { BuildConfiguration::Default }, 17 );
+    const auto args = generateCompilerArgs(
+        compilers, { BuildConfiguration::Debug, BuildConfiguration::Release }, 17 );
     for( const auto& compilerArgs : args )
     {
         const auto compilerString = compilerArgs.get_name();
 
-        const auto add_make_source_test = [&]( const int transformVersion, size_t i ) {
-            std::string name = "transform";
-            if( transformVersion > 1 )
-                name += std::to_string( transformVersion );
+        [[maybe_unused]] const auto add_make_source_test
+            = [&]( const int transformVersion, size_t i ) {
+                  std::string name = "transform";
+                  if( transformVersion > 1 )
+                      name += std::to_string( transformVersion );
 
-            perform_test( bench,
-                std::string{ name + " make_source x" } + std::to_string( i ) + " (" + compilerString
-                    + ')',
-                CompilerArgs{ compilerArgs } //
-                    .source( "transform.cpp" )
-                    .definition( "TRANSFORM_VERSION=" + std::to_string( transformVersion ) )
-                    .definition( "MAKE_SOURCE_ONLY" )
-                    .definition( std::string{ "COPY_COUNT=" } + std::to_string( i ) )
-                //
-            );
-        };
+                  perform_test( bench,
+                      std::string{ name + " make_source x" } + std::to_string( i ) + " ("
+                          + compilerString + ')',
+                      CompilerArgs{ compilerArgs } //
+                          .source( "transform.cpp" )
+                          .definition( "TRANSFORM_VERSION=" + std::to_string( transformVersion ) )
+                          .definition( "MAKE_SOURCE_ONLY" )
+                          .definition( std::string{ "COPY_COUNT=" } + std::to_string( i ) )
+                      //
+                  );
+              };
 
         const auto add_transform_test = [&]( const int transformVersion,
                                             const size_t i,
@@ -102,30 +104,30 @@ TEST_CASE( "transform compilation time" )
             );
         };
 
-        for( const auto& transformVersion : { 1 } )
+        for( const auto& transformVersion : { 1, 2, 3, 4, 5 } )
         {
-            {
-                std::string name = "transform";
-                if( transformVersion > 1 )
-                    name += std::to_string( transformVersion );
-                perform_test( bench,
-                    std::string{ name + " include" } + " (" + compilerString + ')',
-                    CompilerArgs{ compilerArgs } //
-                        .source( "transform.cpp" )
-                        .definition( "TRANSFORM_VERSION=" + std::to_string( transformVersion ) )
-                        .definition( "INCLUDE_ONLY" )
-                    //
-                );
-            }
+            //            {
+            //                std::string name = "transform";
+            //                if( transformVersion > 1 )
+            //                    name += std::to_string( transformVersion );
+            //                perform_test( bench,
+            //                    std::string{ name + " include" } + " (" + compilerString + ')',
+            //                    CompilerArgs{ compilerArgs } //
+            //                        .source( "transform.cpp" )
+            //                        .definition( "TRANSFORM_VERSION=" + std::to_string( transformVersion ) )
+            //                        .definition( "INCLUDE_ONLY" )
+            //                    //
+            //                );
+            //            }
+            //
+            //            add_make_source_test( transformVersion, 1 );
+            //            add_make_source_test( transformVersion, 11 );
 
-            add_make_source_test( transformVersion, 1 );
-            add_make_source_test( transformVersion, 11 );
-
-            add_transform_test( transformVersion, 1, FunctionType::unique, AdapterType::func );
+            //            add_transform_test( transformVersion, 1, FunctionType::unique, AdapterType::func );
             add_transform_test( transformVersion, 1, FunctionType::unique, AdapterType::pipe );
-            add_transform_test( transformVersion, 11, FunctionType::shared, AdapterType::func );
-            add_transform_test( transformVersion, 11, FunctionType::shared, AdapterType::pipe );
-            add_transform_test( transformVersion, 11, FunctionType::unique, AdapterType::func );
+            //            add_transform_test( transformVersion, 11, FunctionType::shared, AdapterType::func );
+            //            add_transform_test( transformVersion, 11, FunctionType::shared, AdapterType::pipe );
+            //            add_transform_test( transformVersion, 11, FunctionType::unique, AdapterType::func );
             add_transform_test( transformVersion, 11, FunctionType::unique, AdapterType::pipe );
         }
     }

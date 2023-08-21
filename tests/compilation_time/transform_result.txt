@@ -1,0 +1,585 @@
+| relative |               ms/op |                op/s |    err% |     total | transform compilation time
+|---------:|--------------------:|--------------------:|--------:|----------:|:---------------------------
+|   100.0% |              465.43 |                2.15 |    1.4% |      5.16 | `transform include (g++-9 c++17 Default)`
+|    63.9% |              728.73 |                1.37 |    1.6% |      8.00 | `transform make_source x1 (g++-9 c++17 Default)`
+|    65.0% |              716.21 |                1.40 |    0.6% |      7.91 | `transform make_source x11 (g++-9 c++17 Default)`
+|    56.2% |              828.71 |                1.21 |    0.6% |      9.15 | `transform func x1 (g++-9 c++17 Default)`
+|    55.2% |              842.85 |                1.19 |    0.1% |      9.28 | `transform pipe x1 (g++-9 c++17 Default)`
+|    56.6% |              822.73 |                1.22 |    0.2% |      9.06 | `transform shared func x11 (g++-9 c++17 Default)`
+|    55.5% |              839.31 |                1.19 |    0.2% |      9.24 | `transform shared pipe x11 (g++-9 c++17 Default)`
+|    32.6% |            1,428.93 |                0.70 |    0.3% |     15.76 | `transform unique func x11 (g++-9 c++17 Default)`
+|    29.1% |            1,598.05 |                0.63 |    0.2% |     17.62 | `transform unique pipe x11 (g++-9 c++17 Default)`
+|   106.6% |              436.44 |                2.29 |    0.1% |      4.81 | `transform2 include (g++-9 c++17 Default)`
+|    66.0% |              705.59 |                1.42 |    0.2% |      7.77 | `transform2 make_source x1 (g++-9 c++17 Default)`
+|    65.2% |              713.40 |                1.40 |    0.0% |      7.87 | `transform2 make_source x11 (g++-9 c++17 Default)`
+|    57.3% |              812.87 |                1.23 |    0.1% |      8.95 | `transform2 func x1 (g++-9 c++17 Default)`
+|    55.9% |              831.89 |                1.20 |    0.1% |      9.17 | `transform2 pipe x1 (g++-9 c++17 Default)`
+|    56.9% |              818.19 |                1.22 |    0.8% |      9.07 | `transform2 shared func x11 (g++-9 c++17 Default)`
+|    56.6% |              822.75 |                1.22 |    0.1% |      9.10 | `transform2 shared pipe x11 (g++-9 c++17 Default)`
+|    35.3% |            1,320.31 |                0.76 |    0.2% |     14.52 | `transform2 unique func x11 (g++-9 c++17 Default)`
+|    31.2% |            1,490.38 |                0.67 |    0.1% |     16.39 | `transform2 unique pipe x11 (g++-9 c++17 Default)`
+|   100.0% |              443.64 |                2.25 |    0.7% |      4.87 | `transform3 include (g++-9 c++17 Default)`
+|    63.2% |              702.38 |                1.42 |    0.1% |      7.74 | `transform3 make_source x1 (g++-9 c++17 Default)`
+|    62.2% |              713.12 |                1.40 |    0.1% |      7.85 | `transform3 make_source x11 (g++-9 c++17 Default)`
+|    54.5% |              814.68 |                1.23 |    0.7% |      8.95 | `transform3 func x1 (g++-9 c++17 Default)`
+|    54.1% |              820.15 |                1.22 |    0.1% |      9.03 | `transform3 pipe x1 (g++-9 c++17 Default)`
+|    55.2% |              803.92 |                1.24 |    0.1% |      8.85 | `transform3 shared func x11 (g++-9 c++17 Default)`
+|    54.1% |              820.05 |                1.22 |    0.2% |      9.02 | `transform3 shared pipe x11 (g++-9 c++17 Default)`
+|    34.6% |            1,283.34 |                0.78 |    0.1% |     14.12 | `transform3 unique func x11 (g++-9 c++17 Default)`
+|    30.4% |            1,457.46 |                0.69 |    0.1% |     16.03 | `transform3 unique pipe x11 (g++-9 c++17 Default)`
+|   100.0% |              468.73 |                2.13 |    2.4% |      5.16 | `transform4 include (g++-9 c++17 Default)`
+|    63.8% |              735.01 |                1.36 |    1.1% |      8.09 | `transform4 make_source x1 (g++-9 c++17 Default)`
+|    63.2% |              742.01 |                1.35 |    1.6% |      8.17 | `transform4 make_source x11 (g++-9 c++17 Default)`
+|    56.7% |              826.27 |                1.21 |    1.0% |      9.14 | `transform4 func x1 (g++-9 c++17 Default)`
+|    55.2% |              849.37 |                1.18 |    1.9% |      9.39 | `transform4 pipe x1 (g++-9 c++17 Default)`
+|    55.3% |              846.88 |                1.18 |    1.9% |      9.32 | `transform4 shared func x11 (g++-9 c++17 Default)`
+|    54.7% |              856.19 |                1.17 |    1.2% |      9.42 | `transform4 shared pipe x11 (g++-9 c++17 Default)`
+|    35.4% |            1,324.01 |                0.76 |    0.7% |     14.53 | `transform4 unique func x11 (g++-9 c++17 Default)`
+|    32.1% |            1,459.80 |                0.69 |    0.4% |     16.16 | `transform4 unique pipe x11 (g++-9 c++17 Default)`
+|   103.2% |              450.92 |                2.22 |    0.2% |      4.96 | `transform include (g++-9 c++2a Default)`
+|    64.7% |              719.65 |                1.39 |    0.1% |      7.91 | `transform make_source x1 (g++-9 c++2a Default)`
+|    63.9% |              728.30 |                1.37 |    0.1% |      8.01 | `transform make_source x11 (g++-9 c++2a Default)`
+|    55.6% |              837.73 |                1.19 |    0.1% |      9.24 | `transform func x1 (g++-9 c++2a Default)`
+|    54.5% |              854.33 |                1.17 |    0.1% |      9.40 | `transform pipe x1 (g++-9 c++2a Default)`
+|    55.8% |              833.84 |                1.20 |    0.2% |      9.18 | `transform shared func x11 (g++-9 c++2a Default)`
+|    54.8% |              849.27 |                1.18 |    0.2% |      9.35 | `transform shared pipe x11 (g++-9 c++2a Default)`
+|    32.5% |            1,432.50 |                0.70 |    0.2% |     15.76 | `transform unique func x11 (g++-9 c++2a Default)`
+|    28.9% |            1,607.79 |                0.62 |    0.2% |     17.68 | `transform unique pipe x11 (g++-9 c++2a Default)`
+|   103.3% |              450.45 |                2.22 |    0.1% |      4.95 | `transform2 include (g++-9 c++2a Default)`
+|    64.6% |              720.06 |                1.39 |    0.2% |      7.92 | `transform2 make_source x1 (g++-9 c++2a Default)`
+|    64.0% |              726.97 |                1.38 |    0.1% |      8.00 | `transform2 make_source x11 (g++-9 c++2a Default)`
+|    56.4% |              824.54 |                1.21 |    0.2% |      9.07 | `transform2 func x1 (g++-9 c++2a Default)`
+|    55.2% |              842.60 |                1.19 |    0.2% |      9.27 | `transform2 pipe x1 (g++-9 c++2a Default)`
+|    56.5% |              823.67 |                1.21 |    0.2% |      9.06 | `transform2 shared func x11 (g++-9 c++2a Default)`
+|    55.4% |              840.69 |                1.19 |    0.1% |      9.24 | `transform2 shared pipe x11 (g++-9 c++2a Default)`
+|    34.9% |            1,335.09 |                0.75 |    0.1% |     14.69 | `transform2 unique func x11 (g++-9 c++2a Default)`
+|    30.9% |            1,506.37 |                0.66 |    0.1% |     16.58 | `transform2 unique pipe x11 (g++-9 c++2a Default)`
+|    98.6% |              449.88 |                2.22 |    0.1% |      4.95 | `transform3 include (g++-9 c++2a Default)`
+|    61.5% |              721.85 |                1.39 |    0.4% |      7.95 | `transform3 make_source x1 (g++-9 c++2a Default)`
+|    60.0% |              739.61 |                1.35 |    0.4% |      8.13 | `transform3 make_source x11 (g++-9 c++2a Default)`
+|    53.3% |              831.84 |                1.20 |    0.8% |      9.17 | `transform3 func x1 (g++-9 c++2a Default)`
+|    51.3% |              865.57 |                1.16 |    1.9% |      9.51 | `transform3 pipe x1 (g++-9 c++2a Default)`
+|    51.7% |              857.48 |                1.17 |    1.5% |      9.43 | `transform3 shared func x11 (g++-9 c++2a Default)`
+|    51.5% |              861.73 |                1.16 |    0.8% |      9.63 | `transform3 shared pipe x11 (g++-9 c++2a Default)`
+|    32.2% |            1,376.62 |                0.73 |    1.8% |     15.11 | `transform3 unique func x11 (g++-9 c++2a Default)`
+|    29.5% |            1,503.74 |                0.67 |    1.3% |     16.53 | `transform3 unique pipe x11 (g++-9 c++2a Default)`
+|   101.4% |              462.46 |                2.16 |    0.9% |      5.11 | `transform4 include (g++-9 c++2a Default)`
+|    63.7% |              735.91 |                1.36 |    0.7% |      8.15 | `transform4 make_source x1 (g++-9 c++2a Default)`
+|    61.8% |              758.93 |                1.32 |    0.6% |      8.31 | `transform4 make_source x11 (g++-9 c++2a Default)`
+|    55.0% |              852.74 |                1.17 |    0.2% |      9.33 | `transform4 func x1 (g++-9 c++2a Default)`
+|    54.3% |              863.29 |                1.16 |    1.1% |      9.44 | `transform4 pipe x1 (g++-9 c++2a Default)`
+|    55.5% |              843.97 |                1.18 |    0.8% |      9.25 | `transform4 shared func x11 (g++-9 c++2a Default)`
+|    55.2% |              848.70 |                1.18 |    0.6% |      9.43 | `transform4 shared pipe x11 (g++-9 c++2a Default)`
+|    35.3% |            1,328.39 |                0.75 |    0.8% |     14.66 | `transform4 unique func x11 (g++-9 c++2a Default)`
+|    31.2% |            1,502.07 |                0.67 |    0.8% |     16.53 | `transform4 unique pipe x11 (g++-9 c++2a Default)`
+|    95.9% |              485.39 |                2.06 |    0.1% |      5.34 | `transform include (g++-12 c++17 Default)`
+|    56.5% |              823.74 |                1.21 |    0.2% |      9.07 | `transform make_source x1 (g++-12 c++17 Default)`
+|    55.8% |              834.79 |                1.20 |    0.2% |      9.19 | `transform make_source x11 (g++-12 c++17 Default)`
+|    48.0% |              970.50 |                1.03 |    0.2% |     10.67 | `transform func x1 (g++-12 c++17 Default)`
+|    47.0% |              989.38 |                1.01 |    0.1% |     10.89 | `transform pipe x1 (g++-12 c++17 Default)`
+|    48.1% |              967.35 |                1.03 |    0.1% |     10.64 | `transform shared func x11 (g++-12 c++17 Default)`
+|    47.1% |              988.85 |                1.01 |    0.1% |     10.88 | `transform shared pipe x11 (g++-12 c++17 Default)`
+|    28.0% |            1,662.87 |                0.60 |    0.1% |     18.29 | `transform unique func x11 (g++-12 c++17 Default)`
+|    24.8% |            1,873.83 |                0.53 |    0.1% |     20.61 | `transform unique pipe x11 (g++-12 c++17 Default)`
+|    95.9% |              485.20 |                2.06 |    0.1% |      5.34 | `transform2 include (g++-12 c++17 Default)`
+|    56.6% |              821.91 |                1.22 |    0.3% |      9.04 | `transform2 make_source x1 (g++-12 c++17 Default)`
+|    55.9% |              832.78 |                1.20 |    0.1% |      9.16 | `transform2 make_source x11 (g++-12 c++17 Default)`
+|    48.6% |              956.90 |                1.05 |    0.0% |     10.52 | `transform2 func x1 (g++-12 c++17 Default)`
+|    47.7% |              975.13 |                1.03 |    0.1% |     10.73 | `transform2 pipe x1 (g++-12 c++17 Default)`
+|    48.6% |              956.81 |                1.05 |    0.1% |     10.53 | `transform2 shared func x11 (g++-12 c++17 Default)`
+|    47.6% |              977.15 |                1.02 |    0.1% |     10.76 | `transform2 shared pipe x11 (g++-12 c++17 Default)`
+|    29.9% |            1,556.22 |                0.64 |    0.1% |     17.12 | `transform2 unique func x11 (g++-12 c++17 Default)`
+|    26.4% |            1,762.40 |                0.57 |    0.1% |     19.39 | `transform2 unique pipe x11 (g++-12 c++17 Default)`
+|    91.4% |              485.12 |                2.06 |    0.3% |      5.38 | `transform3 include (g++-12 c++17 Default)`
+|    53.8% |              824.75 |                1.21 |    0.3% |      9.12 | `transform3 make_source x1 (g++-12 c++17 Default)`
+|    52.6% |              843.85 |                1.19 |    0.4% |      9.29 | `transform3 make_source x11 (g++-12 c++17 Default)`
+|    45.4% |              977.34 |                1.02 |    1.0% |     10.72 | `transform3 func x1 (g++-12 c++17 Default)`
+|    44.2% |            1,002.57 |                1.00 |    0.8% |     11.01 | `transform3 pipe x1 (g++-12 c++17 Default)`
+|    44.4% |              999.47 |                1.00 |    0.9% |     11.02 | `transform3 shared func x11 (g++-12 c++17 Default)`
+|    43.7% |            1,015.03 |                0.99 |    1.2% |     11.17 | `transform3 shared pipe x11 (g++-12 c++17 Default)`
+|    28.4% |            1,560.34 |                0.64 |    0.6% |     17.08 | `transform3 unique func x11 (g++-12 c++17 Default)`
+|    25.7% |            1,727.54 |                0.58 |    0.4% |     19.17 | `transform3 unique pipe x11 (g++-12 c++17 Default)`
+|    93.5% |              501.37 |                1.99 |    1.3% |      5.54 | `transform4 include (g++-12 c++17 Default)`
+|    55.0% |              852.85 |                1.17 |    1.1% |      9.35 | `transform4 make_source x1 (g++-12 c++17 Default)`
+|    54.8% |              855.81 |                1.17 |    1.1% |      9.48 | `transform4 make_source x11 (g++-12 c++17 Default)`
+|    47.7% |              983.21 |                1.02 |    0.4% |     10.73 | `transform4 func x1 (g++-12 c++17 Default)`
+|    46.7% |            1,002.97 |                1.00 |    0.7% |     10.97 | `transform4 pipe x1 (g++-12 c++17 Default)`
+|    47.8% |              980.21 |                1.02 |    1.1% |     10.73 | `transform4 shared func x11 (g++-12 c++17 Default)`
+|    46.7% |            1,004.07 |                1.00 |    0.2% |     10.99 | `transform4 shared pipe x11 (g++-12 c++17 Default)`
+|    31.3% |            1,499.72 |                0.67 |    0.3% |     16.61 | `transform4 unique func x11 (g++-12 c++17 Default)`
+|    26.7% |            1,754.10 |                0.57 |    0.5% |     19.11 | `transform4 unique pipe x11 (g++-12 c++17 Default)`
+|    69.4% |              670.92 |                1.49 |    0.2% |      7.38 | `transform include (g++-12 c++20 Default)`
+|    45.5% |            1,022.07 |                0.98 |    0.1% |     11.24 | `transform make_source x1 (g++-12 c++20 Default)`
+|    45.0% |            1,033.83 |                0.97 |    0.1% |     11.37 | `transform make_source x11 (g++-12 c++20 Default)`
+|    39.4% |            1,181.94 |                0.85 |    0.1% |     13.00 | `transform func x1 (g++-12 c++20 Default)`
+|    38.7% |            1,201.19 |                0.83 |    0.1% |     13.21 | `transform pipe x1 (g++-12 c++20 Default)`
+|    39.7% |            1,173.84 |                0.85 |    0.1% |     12.91 | `transform shared func x11 (g++-12 c++20 Default)`
+|    39.0% |            1,194.10 |                0.84 |    0.1% |     13.15 | `transform shared pipe x11 (g++-12 c++20 Default)`
+|    24.3% |            1,918.12 |                0.52 |    0.1% |     21.10 | `transform unique func x11 (g++-12 c++20 Default)`
+|    21.8% |            2,135.96 |                0.47 |    0.1% |     23.49 | `transform unique pipe x11 (g++-12 c++20 Default)`
+|    69.5% |              669.26 |                1.49 |    0.2% |      7.37 | `transform2 include (g++-12 c++20 Default)`
+|    45.7% |            1,019.16 |                0.98 |    0.1% |     11.21 | `transform2 make_source x1 (g++-12 c++20 Default)`
+|    45.1% |            1,032.81 |                0.97 |    0.0% |     11.35 | `transform2 make_source x11 (g++-12 c++20 Default)`
+|    39.9% |            1,165.58 |                0.86 |    0.0% |     12.83 | `transform2 func x1 (g++-12 c++20 Default)`
+|    39.3% |            1,185.50 |                0.84 |    0.1% |     13.04 | `transform2 pipe x1 (g++-12 c++20 Default)`
+|    40.0% |            1,162.50 |                0.86 |    0.1% |     12.79 | `transform2 shared func x11 (g++-12 c++20 Default)`
+|    39.4% |            1,182.09 |                0.85 |    0.1% |     13.01 | `transform2 shared pipe x11 (g++-12 c++20 Default)`
+|    25.8% |            1,806.10 |                0.55 |    0.1% |     19.87 | `transform2 unique func x11 (g++-12 c++20 Default)`
+|    23.1% |            2,015.47 |                0.50 |    0.0% |     22.17 | `transform2 unique pipe x11 (g++-12 c++20 Default)`
+|    64.9% |              683.92 |                1.46 |    0.9% |      7.53 | `transform3 include (g++-12 c++20 Default)`
+|    42.2% |            1,050.67 |                0.95 |    0.3% |     11.53 | `transform3 make_source x1 (g++-12 c++20 Default)`
+|    42.9% |            1,034.81 |                0.97 |    0.3% |     11.44 | `transform3 make_source x11 (g++-12 c++20 Default)`
+|    37.6% |            1,179.43 |                0.85 |    1.2% |     13.00 | `transform3 func x1 (g++-12 c++20 Default)`
+|    37.1% |            1,194.29 |                0.84 |    0.8% |     13.20 | `transform3 pipe x1 (g++-12 c++20 Default)`
+|    36.8% |            1,205.88 |                0.83 |    0.5% |     13.21 | `transform3 shared func x11 (g++-12 c++20 Default)`
+|    36.7% |            1,208.73 |                0.83 |    1.2% |     13.33 | `transform3 shared pipe x11 (g++-12 c++20 Default)`
+|    24.3% |            1,823.58 |                0.55 |    1.6% |     19.94 | `transform3 unique func x11 (g++-12 c++20 Default)`
+|    21.8% |            2,033.18 |                0.49 |    1.1% |     22.44 | `transform3 unique pipe x11 (g++-12 c++20 Default)`
+|    67.4% |              695.78 |                1.44 |    1.0% |      7.63 | `transform4 include (g++-12 c++20 Default)`
+|    44.0% |            1,064.40 |                0.94 |    0.4% |     11.70 | `transform4 make_source x1 (g++-12 c++20 Default)`
+|    44.5% |            1,052.57 |                0.95 |    0.4% |     11.71 | `transform4 make_source x11 (g++-12 c++20 Default)`
+|    39.1% |            1,200.11 |                0.83 |    0.3% |     13.11 | `transform4 func x1 (g++-12 c++20 Default)`
+|    39.3% |            1,194.01 |                0.84 |    0.2% |     13.22 | `transform4 pipe x1 (g++-12 c++20 Default)`
+|    39.0% |            1,201.01 |                0.83 |    0.4% |     13.16 | `transform4 shared func x11 (g++-12 c++20 Default)`
+|    38.4% |            1,221.93 |                0.82 |    0.7% |     13.37 | `transform4 shared pipe x11 (g++-12 c++20 Default)`
+|    26.1% |            1,795.38 |                0.56 |    0.1% |     19.60 | `transform4 unique func x11 (g++-12 c++20 Default)`
+|    23.8% |            1,971.79 |                0.51 |    0.2% |     21.86 | `transform4 unique pipe x11 (g++-12 c++20 Default)`
+|    98.5% |              472.74 |                2.12 |    0.1% |      5.21 | `transform include (clang++-11 c++17 libstdc++ Default)`
+|    79.3% |              586.77 |                1.70 |    0.1% |      6.47 | `transform make_source x1 (clang++-11 c++17 libstdc++ Default)`
+|    78.9% |              590.03 |                1.69 |    0.1% |      6.49 | `transform make_source x11 (clang++-11 c++17 libstdc++ Default)`
+|    71.1% |              654.58 |                1.53 |    0.2% |      7.20 | `transform func x1 (clang++-11 c++17 libstdc++ Default)`
+|    69.9% |              665.83 |                1.50 |    0.3% |      7.33 | `transform pipe x1 (clang++-11 c++17 libstdc++ Default)`
+|    71.9% |              646.99 |                1.55 |    0.1% |      7.12 | `transform shared func x11 (clang++-11 c++17 libstdc++ Default)`
+|    70.6% |              659.32 |                1.52 |    0.1% |      7.25 | `transform shared pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    45.8% |            1,015.76 |                0.98 |    0.1% |     11.18 | `transform unique func x11 (clang++-11 c++17 libstdc++ Default)`
+|    40.8% |            1,140.80 |                0.88 |    0.1% |     12.54 | `transform unique pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    98.7% |              471.61 |                2.12 |    0.1% |      5.19 | `transform2 include (clang++-11 c++17 libstdc++ Default)`
+|    79.4% |              586.27 |                1.71 |    0.1% |      6.45 | `transform2 make_source x1 (clang++-11 c++17 libstdc++ Default)`
+|    78.9% |              589.91 |                1.70 |    0.1% |      6.49 | `transform2 make_source x11 (clang++-11 c++17 libstdc++ Default)`
+|    72.0% |              646.40 |                1.55 |    0.1% |      7.12 | `transform2 func x1 (clang++-11 c++17 libstdc++ Default)`
+|    70.8% |              657.41 |                1.52 |    0.1% |      7.23 | `transform2 pipe x1 (clang++-11 c++17 libstdc++ Default)`
+|    72.6% |              640.79 |                1.56 |    0.2% |      7.05 | `transform2 shared func x11 (clang++-11 c++17 libstdc++ Default)`
+|    71.4% |              652.09 |                1.53 |    0.1% |      7.18 | `transform2 shared pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    49.0% |              949.41 |                1.05 |    0.2% |     10.45 | `transform2 unique func x11 (clang++-11 c++17 libstdc++ Default)`
+|    43.2% |            1,076.19 |                0.93 |    0.2% |     11.83 | `transform2 unique pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    91.9% |              482.61 |                2.07 |    1.4% |      5.32 | `transform3 include (clang++-11 c++17 libstdc++ Default)`
+|    73.1% |              606.90 |                1.65 |    0.9% |      6.66 | `transform3 make_source x1 (clang++-11 c++17 libstdc++ Default)`
+|    73.3% |              605.55 |                1.65 |    0.8% |      6.69 | `transform3 make_source x11 (clang++-11 c++17 libstdc++ Default)`
+|    68.3% |              649.55 |                1.54 |    0.4% |      7.20 | `transform3 func x1 (clang++-11 c++17 libstdc++ Default)`
+|    66.0% |              672.18 |                1.49 |    1.0% |      7.43 | `transform3 pipe x1 (clang++-11 c++17 libstdc++ Default)`
+|    68.2% |              650.13 |                1.54 |    0.8% |      7.25 | `transform3 shared func x11 (clang++-11 c++17 libstdc++ Default)`
+|    67.0% |              662.54 |                1.51 |    0.9% |      7.37 | `transform3 shared pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    46.9% |              945.57 |                1.06 |    0.7% |     10.47 | `transform3 unique func x11 (clang++-11 c++17 libstdc++ Default)`
+|    41.0% |            1,082.51 |                0.92 |    1.3% |     11.89 | `transform3 unique pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    94.7% |              495.12 |                2.02 |    0.6% |      5.43 | `transform4 include (clang++-11 c++17 libstdc++ Default)`
+|    78.1% |              599.97 |                1.67 |    0.2% |      6.64 | `transform4 make_source x1 (clang++-11 c++17 libstdc++ Default)`
+|    76.1% |              616.06 |                1.62 |    0.8% |      6.75 | `transform4 make_source x11 (clang++-11 c++17 libstdc++ Default)`
+|    69.6% |              673.07 |                1.49 |    0.2% |      7.33 | `transform4 func x1 (clang++-11 c++17 libstdc++ Default)`
+|    69.6% |              673.37 |                1.49 |    1.2% |      7.43 | `transform4 pipe x1 (clang++-11 c++17 libstdc++ Default)`
+|    71.0% |              659.82 |                1.52 |    0.7% |      7.23 | `transform4 shared func x11 (clang++-11 c++17 libstdc++ Default)`
+|    70.8% |              661.65 |                1.51 |    0.5% |      7.33 | `transform4 shared pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    49.3% |              951.02 |                1.05 |    1.5% |     10.41 | `transform4 unique func x11 (clang++-11 c++17 libstdc++ Default)`
+|    43.3% |            1,082.59 |                0.92 |    0.9% |     11.83 | `transform4 unique pipe x11 (clang++-11 c++17 libstdc++ Default)`
+|    69.6% |              668.55 |                1.50 |    0.1% |      7.36 | `transform include (clang++-11 c++20 libstdc++ Default)`
+|    59.2% |              786.83 |                1.27 |    0.0% |      8.65 | `transform make_source x1 (clang++-11 c++20 libstdc++ Default)`
+|    58.9% |              790.71 |                1.26 |    0.1% |      8.70 | `transform make_source x11 (clang++-11 c++20 libstdc++ Default)`
+|    54.3% |              857.10 |                1.17 |    0.0% |      9.43 | `transform func x1 (clang++-11 c++20 libstdc++ Default)`
+|    53.6% |              868.69 |                1.15 |    0.2% |      9.56 | `transform pipe x1 (clang++-11 c++20 libstdc++ Default)`
+|    54.7% |              851.33 |                1.17 |    0.2% |      9.36 | `transform shared func x11 (clang++-11 c++20 libstdc++ Default)`
+|    54.1% |              860.35 |                1.16 |    0.2% |      9.47 | `transform shared pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    37.9% |            1,227.71 |                0.81 |    0.1% |     13.52 | `transform unique func x11 (clang++-11 c++20 libstdc++ Default)`
+|    34.3% |            1,357.97 |                0.74 |    0.1% |     14.94 | `transform unique pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    69.8% |              667.10 |                1.50 |    0.1% |      7.34 | `transform2 include (clang++-11 c++20 libstdc++ Default)`
+|    59.2% |              785.92 |                1.27 |    0.1% |      8.65 | `transform2 make_source x1 (clang++-11 c++20 libstdc++ Default)`
+|    58.9% |              789.81 |                1.27 |    0.3% |      8.70 | `transform2 make_source x11 (clang++-11 c++20 libstdc++ Default)`
+|    55.1% |              844.16 |                1.18 |    0.1% |      9.28 | `transform2 func x1 (clang++-11 c++20 libstdc++ Default)`
+|    54.4% |              855.91 |                1.17 |    0.1% |      9.41 | `transform2 pipe x1 (clang++-11 c++20 libstdc++ Default)`
+|    55.5% |              839.36 |                1.19 |    0.1% |      9.23 | `transform2 shared func x11 (clang++-11 c++20 libstdc++ Default)`
+|    54.6% |              851.92 |                1.17 |    0.2% |      9.38 | `transform2 shared pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    40.1% |            1,159.70 |                0.86 |    0.2% |     12.76 | `transform2 unique func x11 (clang++-11 c++20 libstdc++ Default)`
+|    36.1% |            1,288.25 |                0.78 |    0.1% |     14.17 | `transform2 unique pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    64.3% |              689.53 |                1.45 |    1.5% |      7.60 | `transform3 include (clang++-11 c++20 libstdc++ Default)`
+|    55.0% |              806.40 |                1.24 |    1.2% |      8.91 | `transform3 make_source x1 (clang++-11 c++20 libstdc++ Default)`
+|    54.0% |              821.59 |                1.22 |    0.7% |      9.04 | `transform3 make_source x11 (clang++-11 c++20 libstdc++ Default)`
+|    51.4% |              862.29 |                1.16 |    1.0% |      9.57 | `transform3 func x1 (clang++-11 c++20 libstdc++ Default)`
+|    50.4% |              880.68 |                1.14 |    0.9% |      9.75 | `transform3 pipe x1 (clang++-11 c++20 libstdc++ Default)`
+|    51.4% |              863.05 |                1.16 |    1.2% |      9.52 | `transform3 shared func x11 (clang++-11 c++20 libstdc++ Default)`
+|    49.3% |              900.10 |                1.11 |    2.0% |      9.94 | `transform3 shared pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    37.1% |            1,195.06 |                0.84 |    1.7% |     13.13 | `transform3 unique func x11 (clang++-11 c++20 libstdc++ Default)`
+|    33.6% |            1,319.55 |                0.76 |    1.5% |     14.57 | `transform3 unique pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    67.2% |              697.86 |                1.43 |    1.6% |      7.67 | `transform4 include (clang++-11 c++20 libstdc++ Default)`
+|    56.8% |              824.97 |                1.21 |    0.4% |      9.05 | `transform4 make_source x1 (clang++-11 c++20 libstdc++ Default)`
+|    57.9% |              809.72 |                1.23 |    0.2% |      8.97 | `transform4 make_source x11 (clang++-11 c++20 libstdc++ Default)`
+|    53.0% |              884.04 |                1.13 |    0.5% |      9.68 | `transform4 func x1 (clang++-11 c++20 libstdc++ Default)`
+|    53.4% |              878.21 |                1.14 |    0.6% |      9.72 | `transform4 pipe x1 (clang++-11 c++20 libstdc++ Default)`
+|    54.3% |              862.69 |                1.16 |    0.8% |      9.55 | `transform4 shared func x11 (clang++-11 c++20 libstdc++ Default)`
+|    53.1% |              883.14 |                1.13 |    0.9% |      9.71 | `transform4 shared pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    40.1% |            1,168.71 |                0.86 |    1.0% |     12.87 | `transform4 unique func x11 (clang++-11 c++20 libstdc++ Default)`
+|    35.7% |            1,312.52 |                0.76 |    0.9% |     14.37 | `transform4 unique pipe x11 (clang++-11 c++20 libstdc++ Default)`
+|    93.0% |              500.31 |                2.00 |    0.1% |      5.51 | `transform include (clang++-14 c++17 libstdc++ Default)`
+|    76.5% |              608.30 |                1.64 |    0.1% |      6.69 | `transform make_source x1 (clang++-14 c++17 libstdc++ Default)`
+|    75.9% |              612.88 |                1.63 |    0.2% |      6.75 | `transform make_source x11 (clang++-14 c++17 libstdc++ Default)`
+|    68.9% |              675.17 |                1.48 |    0.2% |      7.43 | `transform func x1 (clang++-14 c++17 libstdc++ Default)`
+|    67.5% |              689.34 |                1.45 |    0.3% |      7.63 | `transform pipe x1 (clang++-14 c++17 libstdc++ Default)`
+|    69.2% |              672.61 |                1.49 |    0.2% |      7.39 | `transform shared func x11 (clang++-14 c++17 libstdc++ Default)`
+|    67.9% |              685.19 |                1.46 |    0.4% |      7.53 | `transform shared pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    44.9% |            1,037.14 |                0.96 |    0.3% |     11.47 | `transform unique func x11 (clang++-14 c++17 libstdc++ Default)`
+|    39.8% |            1,169.48 |                0.86 |    0.2% |     12.87 | `transform unique pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    92.7% |              501.99 |                1.99 |    0.4% |      5.54 | `transform2 include (clang++-14 c++17 libstdc++ Default)`
+|    76.3% |              609.70 |                1.64 |    0.2% |      6.74 | `transform2 make_source x1 (clang++-14 c++17 libstdc++ Default)`
+|    75.4% |              617.02 |                1.62 |    0.1% |      6.80 | `transform2 make_source x11 (clang++-14 c++17 libstdc++ Default)`
+|    69.2% |              672.66 |                1.49 |    0.2% |      7.43 | `transform2 func x1 (clang++-14 c++17 libstdc++ Default)`
+|    68.3% |              681.08 |                1.47 |    0.3% |      7.51 | `transform2 pipe x1 (clang++-14 c++17 libstdc++ Default)`
+|    70.2% |              662.68 |                1.51 |    0.1% |      7.30 | `transform2 shared func x11 (clang++-14 c++17 libstdc++ Default)`
+|    68.9% |              675.83 |                1.48 |    0.3% |      7.45 | `transform2 shared pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    47.9% |              971.45 |                1.03 |    0.2% |     10.70 | `transform2 unique func x11 (clang++-14 c++17 libstdc++ Default)`
+|    42.3% |            1,099.06 |                0.91 |    0.1% |     12.09 | `transform2 unique pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    84.1% |              527.70 |                1.90 |    2.4% |      5.84 | `transform3 include (clang++-14 c++17 libstdc++ Default)`
+|    70.4% |              629.91 |                1.59 |    0.9% |      7.01 | `transform3 make_source x1 (clang++-14 c++17 libstdc++ Default)`
+|    69.9% |              634.99 |                1.57 |    1.4% |      6.98 | `transform3 make_source x11 (clang++-14 c++17 libstdc++ Default)`
+|    65.9% |              672.76 |                1.49 |    0.6% |      7.41 | `transform3 func x1 (clang++-14 c++17 libstdc++ Default)`
+|    64.3% |              689.79 |                1.45 |    0.7% |      7.56 | `transform3 pipe x1 (clang++-14 c++17 libstdc++ Default)`
+|    65.8% |              673.81 |                1.48 |    0.6% |      7.40 | `transform3 shared func x11 (clang++-14 c++17 libstdc++ Default)`
+|    65.6% |              675.77 |                1.48 |    0.1% |      7.46 | `transform3 shared pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    45.5% |              974.64 |                1.03 |    0.4% |     10.85 | `transform3 unique func x11 (clang++-14 c++17 libstdc++ Default)`
+|    39.7% |            1,117.68 |                0.89 |    0.8% |     12.49 | `transform3 unique pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    89.3% |              524.71 |                1.91 |    0.9% |      5.76 | `transform4 include (clang++-14 c++17 libstdc++ Default)`
+|    73.4% |              638.62 |                1.57 |    1.6% |      6.98 | `transform4 make_source x1 (clang++-14 c++17 libstdc++ Default)`
+|    73.5% |              637.38 |                1.57 |    1.1% |      7.01 | `transform4 make_source x11 (clang++-14 c++17 libstdc++ Default)`
+|    67.8% |              690.91 |                1.45 |    0.8% |      7.58 | `transform4 func x1 (clang++-14 c++17 libstdc++ Default)`
+|    66.5% |              705.28 |                1.42 |    0.7% |      7.69 | `transform4 pipe x1 (clang++-14 c++17 libstdc++ Default)`
+|    68.6% |              683.62 |                1.46 |    0.3% |      7.49 | `transform4 shared func x11 (clang++-14 c++17 libstdc++ Default)`
+|    67.6% |              693.20 |                1.44 |    1.0% |      7.62 | `transform4 shared pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    49.3% |              950.74 |                1.05 |    0.6% |     10.47 | `transform4 unique func x11 (clang++-14 c++17 libstdc++ Default)`
+|    43.0% |            1,090.09 |                0.92 |    1.0% |     11.97 | `transform4 unique pipe x11 (clang++-14 c++17 libstdc++ Default)`
+|    65.8% |              707.38 |                1.41 |    0.2% |      7.78 | `transform include (clang++-14 c++20 libstdc++ Default)`
+|    57.0% |              816.85 |                1.22 |    0.1% |      8.98 | `transform make_source x1 (clang++-14 c++20 libstdc++ Default)`
+|    56.7% |              821.16 |                1.22 |    0.1% |      9.04 | `transform make_source x11 (clang++-14 c++20 libstdc++ Default)`
+|    52.6% |              885.57 |                1.13 |    0.1% |      9.74 | `transform func x1 (clang++-14 c++20 libstdc++ Default)`
+|    51.8% |              898.20 |                1.11 |    0.1% |      9.88 | `transform pipe x1 (clang++-14 c++20 libstdc++ Default)`
+|    52.9% |              879.23 |                1.14 |    0.1% |      9.67 | `transform shared func x11 (clang++-14 c++20 libstdc++ Default)`
+|    52.2% |              891.53 |                1.12 |    0.1% |      9.81 | `transform shared pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    37.0% |            1,258.18 |                0.79 |    0.2% |     13.84 | `transform unique func x11 (clang++-14 c++20 libstdc++ Default)`
+|    33.5% |            1,388.53 |                0.72 |    0.1% |     15.28 | `transform unique pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    65.9% |              706.51 |                1.42 |    0.0% |      7.77 | `transform2 include (clang++-14 c++20 libstdc++ Default)`
+|    57.0% |              816.25 |                1.23 |    0.1% |      8.98 | `transform2 make_source x1 (clang++-14 c++20 libstdc++ Default)`
+|    56.7% |              820.93 |                1.22 |    0.1% |      9.03 | `transform2 make_source x11 (clang++-14 c++20 libstdc++ Default)`
+|    53.1% |              876.88 |                1.14 |    0.0% |      9.65 | `transform2 func x1 (clang++-14 c++20 libstdc++ Default)`
+|    52.3% |              889.19 |                1.12 |    0.1% |      9.79 | `transform2 pipe x1 (clang++-14 c++20 libstdc++ Default)`
+|    53.4% |              871.56 |                1.15 |    0.1% |      9.59 | `transform2 shared func x11 (clang++-14 c++20 libstdc++ Default)`
+|    52.7% |              882.93 |                1.13 |    0.0% |      9.72 | `transform2 shared pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    39.2% |            1,188.85 |                0.84 |    0.1% |     13.07 | `transform2 unique func x11 (clang++-14 c++20 libstdc++ Default)`
+|    35.3% |            1,319.02 |                0.76 |    0.1% |     14.53 | `transform2 unique pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    61.3% |              724.12 |                1.38 |    1.7% |      8.01 | `transform3 include (clang++-14 c++20 libstdc++ Default)`
+|    53.8% |              824.37 |                1.21 |    0.3% |      9.16 | `transform3 make_source x1 (clang++-14 c++20 libstdc++ Default)`
+|    50.8% |              873.72 |                1.14 |    0.8% |      9.62 | `transform3 make_source x11 (clang++-14 c++20 libstdc++ Default)`
+|    49.0% |              905.04 |                1.10 |    0.7% |      9.96 | `transform3 func x1 (clang++-14 c++20 libstdc++ Default)`
+|    48.9% |              907.71 |                1.10 |    0.1% |      9.97 | `transform3 pipe x1 (clang++-14 c++20 libstdc++ Default)`
+|    50.5% |              878.56 |                1.14 |    0.7% |      9.70 | `transform3 shared func x11 (clang++-14 c++20 libstdc++ Default)`
+|    49.2% |              901.54 |                1.11 |    1.9% |      9.97 | `transform3 shared pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    35.9% |            1,237.14 |                0.81 |    0.7% |     13.61 | `transform3 unique func x11 (clang++-14 c++20 libstdc++ Default)`
+|    32.9% |            1,347.97 |                0.74 |    0.9% |     15.01 | `transform3 unique pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    63.6% |              736.85 |                1.36 |    1.2% |      8.13 | `transform4 include (clang++-14 c++20 libstdc++ Default)`
+|    55.5% |              843.84 |                1.19 |    1.8% |      9.32 | `transform4 make_source x1 (clang++-14 c++20 libstdc++ Default)`
+|    55.5% |              844.15 |                1.18 |    0.8% |      9.29 | `transform4 make_source x11 (clang++-14 c++20 libstdc++ Default)`
+|    51.6% |              908.03 |                1.10 |    0.9% |      9.99 | `transform4 func x1 (clang++-14 c++20 libstdc++ Default)`
+|    51.5% |              910.66 |                1.10 |    0.8% |     10.12 | `transform4 pipe x1 (clang++-14 c++20 libstdc++ Default)`
+|    52.6% |              891.24 |                1.12 |    0.5% |      9.85 | `transform4 shared func x11 (clang++-14 c++20 libstdc++ Default)`
+|    51.4% |              912.12 |                1.10 |    1.2% |     10.03 | `transform4 shared pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|    39.2% |            1,194.84 |                0.84 |    0.9% |     13.14 | `transform4 unique func x11 (clang++-14 c++20 libstdc++ Default)`
+|    35.5% |            1,318.78 |                0.76 |    0.4% |     14.60 | `transform4 unique pipe x11 (clang++-14 c++20 libstdc++ Default)`
+|   102.7% |              453.08 |                2.21 |    0.3% |      5.01 | `transform include (clang++-14 c++17 libc++ Default)`
+|    83.7% |              556.11 |                1.80 |    0.1% |      6.12 | `transform make_source x1 (clang++-14 c++17 libc++ Default)`
+|    83.2% |              559.32 |                1.79 |    0.1% |      6.16 | `transform make_source x11 (clang++-14 c++17 libc++ Default)`
+|    75.1% |              619.95 |                1.61 |    0.1% |      6.82 | `transform func x1 (clang++-14 c++17 libc++ Default)`
+|    73.4% |              634.47 |                1.58 |    0.1% |      6.97 | `transform pipe x1 (clang++-14 c++17 libc++ Default)`
+|    75.7% |              614.73 |                1.63 |    0.2% |      6.76 | `transform shared func x11 (clang++-14 c++17 libc++ Default)`
+|    74.1% |              628.51 |                1.59 |    0.1% |      6.91 | `transform shared pipe x11 (clang++-14 c++17 libc++ Default)`
+|    50.3% |              925.80 |                1.08 |    0.1% |     10.19 | `transform unique func x11 (clang++-14 c++17 libc++ Default)`
+|    43.5% |            1,070.16 |                0.93 |    0.2% |     11.77 | `transform unique pipe x11 (clang++-14 c++17 libc++ Default)`
+|   103.1% |              451.29 |                2.22 |    0.1% |      4.97 | `transform2 include (clang++-14 c++17 libc++ Default)`
+|    84.0% |              554.25 |                1.80 |    0.2% |      6.12 | `transform2 make_source x1 (clang++-14 c++17 libc++ Default)`
+|    83.4% |              558.06 |                1.79 |    0.2% |      6.14 | `transform2 make_source x11 (clang++-14 c++17 libc++ Default)`
+|    75.9% |              613.24 |                1.63 |    0.1% |      6.75 | `transform2 func x1 (clang++-14 c++17 libc++ Default)`
+|    74.3% |              626.41 |                1.60 |    0.1% |      6.89 | `transform2 pipe x1 (clang++-14 c++17 libc++ Default)`
+|    76.5% |              608.80 |                1.64 |    0.1% |      6.70 | `transform2 shared func x11 (clang++-14 c++17 libc++ Default)`
+|    74.9% |              621.45 |                1.61 |    0.1% |      6.84 | `transform2 shared pipe x11 (clang++-14 c++17 libc++ Default)`
+|    53.6% |              868.78 |                1.15 |    0.2% |      9.55 | `transform2 unique func x11 (clang++-14 c++17 libc++ Default)`
+|    46.1% |            1,009.09 |                0.99 |    0.1% |     11.10 | `transform2 unique pipe x11 (clang++-14 c++17 libc++ Default)`
+|    94.2% |              471.18 |                2.12 |    1.4% |      5.19 | `transform3 include (clang++-14 c++17 libc++ Default)`
+|    75.2% |              590.04 |                1.69 |    1.2% |      6.54 | `transform3 make_source x1 (clang++-14 c++17 libc++ Default)`
+|    75.3% |              589.18 |                1.70 |    2.0% |      6.46 | `transform3 make_source x11 (clang++-14 c++17 libc++ Default)`
+|    70.4% |              630.42 |                1.59 |    0.3% |      7.01 | `transform3 func x1 (clang++-14 c++17 libc++ Default)`
+|    68.3% |              649.98 |                1.54 |    0.9% |      7.17 | `transform3 pipe x1 (clang++-14 c++17 libc++ Default)`
+|    71.0% |              624.66 |                1.60 |    1.8% |      6.86 | `transform3 shared func x11 (clang++-14 c++17 libc++ Default)`
+|    68.9% |              644.19 |                1.55 |    1.2% |      7.08 | `transform3 shared pipe x11 (clang++-14 c++17 libc++ Default)`
+|    49.6% |              894.68 |                1.12 |    1.5% |      9.86 | `transform3 unique func x11 (clang++-14 c++17 libc++ Default)`
+|    43.1% |            1,029.89 |                0.97 |    1.7% |     11.34 | `transform3 unique pipe x11 (clang++-14 c++17 libc++ Default)`
+|    99.3% |              472.18 |                2.12 |    1.4% |      5.18 | `transform4 include (clang++-14 c++17 libc++ Default)`
+|    81.9% |              572.60 |                1.75 |    0.9% |      6.33 | `transform4 make_source x1 (clang++-14 c++17 libc++ Default)`
+|    80.1% |              585.28 |                1.71 |    0.7% |      6.41 | `transform4 make_source x11 (clang++-14 c++17 libc++ Default)`
+|    74.0% |              633.75 |                1.58 |    0.4% |      6.93 | `transform4 func x1 (clang++-14 c++17 libc++ Default)`
+|    73.6% |              636.49 |                1.57 |    0.1% |      7.08 | `transform4 pipe x1 (clang++-14 c++17 libc++ Default)`
+|    74.1% |              632.39 |                1.58 |    0.9% |      6.93 | `transform4 shared func x11 (clang++-14 c++17 libc++ Default)`
+|    72.4% |              647.17 |                1.55 |    1.6% |      7.09 | `transform4 shared pipe x11 (clang++-14 c++17 libc++ Default)`
+|    53.1% |              883.38 |                1.13 |    1.5% |      9.70 | `transform4 unique func x11 (clang++-14 c++17 libc++ Default)`
+|    45.4% |            1,031.84 |                0.97 |    2.1% |     11.34 | `transform4 unique pipe x11 (clang++-14 c++17 libc++ Default)`
+|    83.9% |              554.78 |                1.80 |    0.1% |      6.11 | `transform include (clang++-14 c++20 libc++ Default)`
+|    70.2% |              663.19 |                1.51 |    0.1% |      7.29 | `transform make_source x1 (clang++-14 c++20 libc++ Default)`
+|    69.9% |              665.59 |                1.50 |    0.2% |      7.32 | `transform make_source x11 (clang++-14 c++20 libc++ Default)`
+|    63.6% |              731.54 |                1.37 |    0.2% |      8.05 | `transform func x1 (clang++-14 c++20 libc++ Default)`
+|    62.3% |              746.58 |                1.34 |    0.1% |      8.21 | `transform pipe x1 (clang++-14 c++20 libc++ Default)`
+|    64.2% |              725.06 |                1.38 |    0.1% |      7.98 | `transform shared func x11 (clang++-14 c++20 libc++ Default)`
+|    63.0% |              738.96 |                1.35 |    0.0% |      8.13 | `transform shared pipe x11 (clang++-14 c++20 libc++ Default)`
+|    43.5% |            1,071.00 |                0.93 |    0.1% |     11.78 | `transform unique func x11 (clang++-14 c++20 libc++ Default)`
+|    38.2% |            1,219.10 |                0.82 |    0.2% |     13.42 | `transform unique pipe x11 (clang++-14 c++20 libc++ Default)`
+|    84.1% |              553.62 |                1.81 |    0.2% |      6.10 | `transform2 include (clang++-14 c++20 libc++ Default)`
+|    70.3% |              662.28 |                1.51 |    0.1% |      7.29 | `transform2 make_source x1 (clang++-14 c++20 libc++ Default)`
+|    69.9% |              666.14 |                1.50 |    0.1% |      7.33 | `transform2 make_source x11 (clang++-14 c++20 libc++ Default)`
+|    64.3% |              723.37 |                1.38 |    0.1% |      7.96 | `transform2 func x1 (clang++-14 c++20 libc++ Default)`
+|    63.1% |              737.90 |                1.36 |    0.1% |      8.12 | `transform2 pipe x1 (clang++-14 c++20 libc++ Default)`
+|    64.7% |              719.64 |                1.39 |    0.1% |      7.92 | `transform2 shared func x11 (clang++-14 c++20 libc++ Default)`
+|    63.4% |              733.61 |                1.36 |    0.1% |      8.07 | `transform2 shared pipe x11 (clang++-14 c++20 libc++ Default)`
+|    46.1% |            1,009.99 |                0.99 |    0.1% |     11.11 | `transform2 unique func x11 (clang++-14 c++20 libc++ Default)`
+|    40.2% |            1,157.77 |                0.86 |    0.1% |     12.74 | `transform2 unique pipe x11 (clang++-14 c++20 libc++ Default)`
+|    77.4% |              572.92 |                1.75 |    0.8% |      6.38 | `transform3 include (clang++-14 c++20 libc++ Default)`
+|    64.4% |              689.38 |                1.45 |    1.3% |      7.69 | `transform3 make_source x1 (clang++-14 c++20 libc++ Default)`
+|    64.0% |              692.78 |                1.44 |    2.8% |      7.74 | `transform3 make_source x11 (clang++-14 c++20 libc++ Default)`
+|    60.1% |              737.85 |                1.36 |    0.9% |      8.13 | `transform3 func x1 (clang++-14 c++20 libc++ Default)`
+|    58.6% |              756.95 |                1.32 |    1.2% |      8.36 | `transform3 pipe x1 (clang++-14 c++20 libc++ Default)`
+|    60.4% |              734.74 |                1.36 |    0.7% |      8.13 | `transform3 shared func x11 (clang++-14 c++20 libc++ Default)`
+|    58.0% |              764.80 |                1.31 |    1.9% |      8.39 | `transform3 shared pipe x11 (clang++-14 c++20 libc++ Default)`
+|    43.6% |            1,017.48 |                0.98 |    0.6% |     11.22 | `transform3 unique func x11 (clang++-14 c++20 libc++ Default)`
+|    37.7% |            1,176.23 |                0.85 |    0.5% |     13.06 | `transform3 unique pipe x11 (clang++-14 c++20 libc++ Default)`
+|    80.9% |              579.69 |                1.73 |    1.4% |      6.35 | `transform4 include (clang++-14 c++20 libc++ Default)`
+|    69.2% |              677.54 |                1.48 |    0.2% |      7.50 | `transform4 make_source x1 (clang++-14 c++20 libc++ Default)`
+|    68.8% |              681.00 |                1.47 |    0.2% |      7.52 | `transform4 make_source x11 (clang++-14 c++20 libc++ Default)`
+|    63.6% |              737.09 |                1.36 |    0.3% |      8.17 | `transform4 func x1 (clang++-14 c++20 libc++ Default)`
+|    61.2% |              765.42 |                1.31 |    1.2% |      8.37 | `transform4 pipe x1 (clang++-14 c++20 libc++ Default)`
+|    64.0% |              732.84 |                1.36 |    0.4% |      8.12 | `transform4 shared func x11 (clang++-14 c++20 libc++ Default)`
+|    62.8% |              746.72 |                1.34 |    0.4% |      8.30 | `transform4 shared pipe x11 (clang++-14 c++20 libc++ Default)`
+|    46.4% |            1,009.50 |                0.99 |    0.7% |     11.20 | `transform4 unique func x11 (clang++-14 c++20 libc++ Default)`
+|    40.3% |            1,162.48 |                0.86 |    0.5% |     12.88 | `transform4 unique pipe x11 (clang++-14 c++20 libc++ Default)`
+
+pipe (clang++-14 c++20 libc++ Default)
+transform   746 to 1219   47,3 per func
+transform2  738 to 1157   41,9 per func -11%
+transform3  757 to 1176   41,9 per func
+transform4  765 to 1162   39,7 per func -16%
+
+pipe (clang++-14 c++17 libstdc++ Default)
+transform   689 to 1169   48 per func
+transform2  681 to 1099   41,8 per func -13%
+transform3  689 to 1117   42,8 per func
+transform4  705 to 1090   38,5 per func -20%
+
+
+
+
+
+
+
+
+|               ms/op |                op/s |    err% |     total | transform compilation time
+|--------------------:|--------------------:|--------:|----------:|:---------------------------
+|            1,037.90 |                0.96 |    1.9% |     11.45 | `transform pipe x1 (g++-9 c++17 Debug)`
+|            1,950.82 |                0.51 |    0.7% |     21.41 | `transform unique pipe x11 (g++-9 c++17 Debug)`
+|              997.17 |                1.00 |    1.5% |     10.95 | `transform2 pipe x1 (g++-9 c++17 Debug)`
+|            1,782.73 |                0.56 |    1.3% |     19.59 | `transform2 unique pipe x11 (g++-9 c++17 Debug)`
+|              961.76 |                1.04 |    0.7% |     10.52 | `transform3 pipe x1 (g++-9 c++17 Debug)`
+|            1,760.36 |                0.57 |    2.6% |     19.65 | `transform3 unique pipe x11 (g++-9 c++17 Debug)`
+|              936.78 |                1.07 |    0.1% |     10.31 | `transform4 pipe x1 (g++-9 c++17 Debug)`
+|            1,683.68 |                0.59 |    0.2% |     18.54 | `transform4 unique pipe x11 (g++-9 c++17 Debug)`
+|              963.15 |                1.04 |    0.1% |     10.61 | `transform5 pipe x1 (g++-9 c++17 Debug)`
+|            1,441.74 |                0.69 |    0.2% |     15.85 | `transform5 unique pipe x11 (g++-9 c++17 Debug)`
+|              991.72 |                1.01 |    0.2% |     10.90 | `transform pipe x1 (g++-9 c++2a Debug)`
+|            1,914.66 |                0.52 |    0.1% |     21.08 | `transform unique pipe x11 (g++-9 c++2a Debug)`
+|              971.03 |                1.03 |    0.2% |     10.68 | `transform2 pipe x1 (g++-9 c++2a Debug)`
+|            1,835.71 |                0.54 |    1.7% |     20.01 | `transform2 unique pipe x11 (g++-9 c++2a Debug)`
+|              994.55 |                1.01 |    1.9% |     11.13 | `transform3 pipe x1 (g++-9 c++2a Debug)`
+|            1,806.77 |                0.55 |    0.9% |     19.82 | `transform3 unique pipe x11 (g++-9 c++2a Debug)`
+|              977.68 |                1.02 |    0.8% |     10.75 | `transform4 pipe x1 (g++-9 c++2a Debug)`
+|            1,711.11 |                0.58 |    0.3% |     18.92 | `transform4 unique pipe x11 (g++-9 c++2a Debug)`
+|              992.64 |                1.01 |    0.1% |     10.97 | `transform5 pipe x1 (g++-9 c++2a Debug)`
+|            1,468.68 |                0.68 |    0.5% |     16.25 | `transform5 unique pipe x11 (g++-9 c++2a Debug)`
+|              975.48 |                1.03 |    0.2% |     10.81 | `transform pipe x1 (g++-9 c++17 Release)`
+|            2,856.17 |                0.35 |    0.9% |     31.21 | `transform unique pipe x11 (g++-9 c++17 Release)`
+|            1,058.66 |                0.94 |    0.4% |     11.65 | `transform2 pipe x1 (g++-9 c++17 Release)`
+|            2,651.09 |                0.38 |    1.7% |     29.32 | `transform2 unique pipe x11 (g++-9 c++17 Release)`
+|            1,010.24 |                0.99 |    1.7% |     11.16 | `transform3 pipe x1 (g++-9 c++17 Release)`
+|            2,654.87 |                0.38 |    1.1% |     29.26 | `transform3 unique pipe x11 (g++-9 c++17 Release)`
+|              986.24 |                1.01 |    0.9% |     10.80 | `transform4 pipe x1 (g++-9 c++17 Release)`
+|            2,627.80 |                0.38 |    1.5% |     28.95 | `transform4 unique pipe x11 (g++-9 c++17 Release)`
+|            1,013.61 |                0.99 |    1.3% |     11.11 | `transform5 pipe x1 (g++-9 c++17 Release)`
+|            1,566.78 |                0.64 |    0.5% |     17.18 | `transform5 unique pipe x11 (g++-9 c++17 Release)`
+|            1,003.29 |                1.00 |    0.2% |     11.10 | `transform pipe x1 (g++-9 c++2a Release)`
+|            2,712.90 |                0.37 |    0.4% |     29.74 | `transform unique pipe x11 (g++-9 c++2a Release)`
+|            1,026.09 |                0.97 |    1.6% |     11.33 | `transform2 pipe x1 (g++-9 c++2a Release)`
+|            2,688.61 |                0.37 |    2.8% |     30.01 | `transform2 unique pipe x11 (g++-9 c++2a Release)`
+|            1,008.36 |                0.99 |    1.3% |     11.12 | `transform3 pipe x1 (g++-9 c++2a Release)`
+|            2,627.62 |                0.38 |    0.6% |     29.08 | `transform3 unique pipe x11 (g++-9 c++2a Release)`
+|            1,005.95 |                0.99 |    0.3% |     11.00 | `transform4 pipe x1 (g++-9 c++2a Release)`
+|            2,658.05 |                0.38 |    0.7% |     29.39 | `transform4 unique pipe x11 (g++-9 c++2a Release)`
+|            1,043.84 |                0.96 |    2.4% |     11.51 | `transform5 pipe x1 (g++-9 c++2a Release)`
+|            1,544.68 |                0.65 |    0.5% |     16.98 | `transform5 unique pipe x11 (g++-9 c++2a Release)`
+|            1,153.80 |                0.87 |    0.8% |     12.66 | `transform pipe x1 (g++-12 c++17 Debug)`
+|            2,227.36 |                0.45 |    0.3% |     24.40 | `transform unique pipe x11 (g++-12 c++17 Debug)`
+|            1,111.06 |                0.90 |    0.1% |     12.29 | `transform2 pipe x1 (g++-12 c++17 Debug)`
+|            2,053.52 |                0.49 |    0.9% |     22.66 | `transform2 unique pipe x11 (g++-12 c++17 Debug)`
+|            1,128.55 |                0.89 |    0.4% |     12.34 | `transform3 pipe x1 (g++-12 c++17 Debug)`
+|            1,991.91 |                0.50 |    0.7% |     22.11 | `transform3 unique pipe x11 (g++-12 c++17 Debug)`
+|            1,117.44 |                0.89 |    1.5% |     12.34 | `transform4 pipe x1 (g++-12 c++17 Debug)`
+|            1,979.33 |                0.51 |    0.9% |     22.00 | `transform4 unique pipe x11 (g++-12 c++17 Debug)`
+|            1,141.32 |                0.88 |    0.6% |     12.63 | `transform5 pipe x1 (g++-12 c++17 Debug)`
+|            1,734.74 |                0.58 |    0.6% |     19.13 | `transform5 unique pipe x11 (g++-12 c++17 Debug)`
+|            1,379.17 |                0.73 |    1.1% |     15.12 | `transform pipe x1 (g++-12 c++20 Debug)`
+|            2,552.34 |                0.39 |    2.0% |     28.32 | `transform unique pipe x11 (g++-12 c++20 Debug)`
+|            1,344.10 |                0.74 |    0.7% |     14.77 | `transform2 pipe x1 (g++-12 c++20 Debug)`
+|            2,349.86 |                0.43 |    1.7% |     26.03 | `transform2 unique pipe x11 (g++-12 c++20 Debug)`
+|            1,371.46 |                0.73 |    1.3% |     15.22 | `transform3 pipe x1 (g++-12 c++20 Debug)`
+|            2,380.33 |                0.42 |    1.9% |     25.81 | `transform3 unique pipe x11 (g++-12 c++20 Debug)`
+|            1,321.30 |                0.76 |    0.6% |     14.59 | `transform4 pipe x1 (g++-12 c++20 Debug)`
+|            2,202.06 |                0.45 |    0.2% |     24.36 | `transform4 unique pipe x11 (g++-12 c++20 Debug)`
+|            1,376.26 |                0.73 |    1.0% |     15.15 | `transform5 pipe x1 (g++-12 c++20 Debug)`
+|            2,045.51 |                0.49 |    1.6% |     22.62 | `transform5 unique pipe x11 (g++-12 c++20 Debug)`
+|            1,176.99 |                0.85 |    0.6% |     13.00 | `transform pipe x1 (g++-12 c++17 Release)`
+|            3,268.05 |                0.31 |    1.7% |     36.23 | `transform unique pipe x11 (g++-12 c++17 Release)`
+|            1,161.31 |                0.86 |    0.3% |     12.88 | `transform2 pipe x1 (g++-12 c++17 Release)`
+|            3,210.40 |                0.31 |    1.0% |     35.59 | `transform2 unique pipe x11 (g++-12 c++17 Release)`
+|            1,221.38 |                0.82 |    1.0% |     13.60 | `transform3 pipe x1 (g++-12 c++17 Release)`
+|            3,196.87 |                0.31 |    0.6% |     35.24 | `transform3 unique pipe x11 (g++-12 c++17 Release)`
+|            1,212.77 |                0.82 |    2.3% |     13.21 | `transform4 pipe x1 (g++-12 c++17 Release)`
+|            3,391.62 |                0.29 |    2.8% |     36.67 | `transform4 unique pipe x11 (g++-12 c++17 Release)`
+|            1,197.38 |                0.84 |    0.3% |     13.28 | `transform5 pipe x1 (g++-12 c++17 Release)`
+|            1,967.89 |                0.51 |    0.7% |     21.52 | `transform5 unique pipe x11 (g++-12 c++17 Release)`
+|            1,412.61 |                0.71 |    1.4% |     15.76 | `transform pipe x1 (g++-12 c++20 Release)`
+|            3,449.68 |                0.29 |    0.9% |     38.05 | `transform unique pipe x11 (g++-12 c++20 Release)`
+|            1,419.58 |                0.70 |    0.9% |     15.56 | `transform2 pipe x1 (g++-12 c++20 Release)`
+|            3,416.24 |                0.29 |    1.0% |     37.46 | `transform2 unique pipe x11 (g++-12 c++20 Release)`
+|            1,414.22 |                0.71 |    1.4% |     15.48 | `transform3 pipe x1 (g++-12 c++20 Release)`
+|            3,395.08 |                0.29 |    0.7% |     37.17 | `transform3 unique pipe x11 (g++-12 c++20 Release)`
+|            1,435.52 |                0.70 |    2.1% |     15.82 | `transform4 pipe x1 (g++-12 c++20 Release)`
+|            3,341.40 |                0.30 |    1.0% |     36.93 | `transform4 unique pipe x11 (g++-12 c++20 Release)`
+|            1,448.25 |                0.69 |    1.4% |     16.02 | `transform5 pipe x1 (g++-12 c++20 Release)`
+|            2,130.03 |                0.47 |    1.8% |     23.79 | `transform5 unique pipe x11 (g++-12 c++20 Release)`
+|              824.96 |                1.21 |    1.1% |      9.20 | `transform pipe x1 (clang++-11 c++17 libstdc++ Debug)`
+|            1,395.11 |                0.72 |    1.6% |     15.69 | `transform unique pipe x11 (clang++-11 c++17 libstdc++ Debug)`
+|              764.33 |                1.31 |    0.4% |      8.40 | `transform2 pipe x1 (clang++-11 c++17 libstdc++ Debug)`
+|            1,309.63 |                0.76 |    0.4% |     14.39 | `transform2 unique pipe x11 (clang++-11 c++17 libstdc++ Debug)`
+|              749.25 |                1.33 |    0.6% |      8.27 | `transform3 pipe x1 (clang++-11 c++17 libstdc++ Debug)`
+|            1,261.92 |                0.79 |    0.9% |     13.90 | `transform3 unique pipe x11 (clang++-11 c++17 libstdc++ Debug)`
+|              743.80 |                1.34 |    0.8% |      8.18 | `transform4 pipe x1 (clang++-11 c++17 libstdc++ Debug)`
+|            1,235.94 |                0.81 |    0.5% |     13.68 | `transform4 unique pipe x11 (clang++-11 c++17 libstdc++ Debug)`
+|              762.65 |                1.31 |    0.5% |      8.41 | `transform5 pipe x1 (clang++-11 c++17 libstdc++ Debug)`
+|            1,125.22 |                0.89 |    0.5% |     12.37 | `transform5 unique pipe x11 (clang++-11 c++17 libstdc++ Debug)`
+|              976.00 |                1.02 |    0.9% |     10.70 | `transform pipe x1 (clang++-11 c++20 libstdc++ Debug)`
+|            1,585.59 |                0.63 |    0.3% |     17.59 | `transform unique pipe x11 (clang++-11 c++20 libstdc++ Debug)`
+|              953.28 |                1.05 |    0.8% |     10.56 | `transform2 pipe x1 (clang++-11 c++20 libstdc++ Debug)`
+|            1,569.21 |                0.64 |    3.4% |     17.37 | `transform2 unique pipe x11 (clang++-11 c++20 libstdc++ Debug)`
+|              970.29 |                1.03 |    0.5% |     10.64 | `transform3 pipe x1 (clang++-11 c++20 libstdc++ Debug)`
+|            1,529.30 |                0.65 |    2.3% |     17.05 | `transform3 unique pipe x11 (clang++-11 c++20 libstdc++ Debug)`
+|              955.19 |                1.05 |    0.7% |     10.48 | `transform4 pipe x1 (clang++-11 c++20 libstdc++ Debug)`
+|            1,485.31 |                0.67 |    0.8% |     16.31 | `transform4 unique pipe x11 (clang++-11 c++20 libstdc++ Debug)`
+|              965.94 |                1.04 |    0.6% |     10.66 | `transform5 pipe x1 (clang++-11 c++20 libstdc++ Debug)`
+|            1,342.16 |                0.75 |    1.0% |     14.76 | `transform5 unique pipe x11 (clang++-11 c++20 libstdc++ Debug)`
+|            1,009.40 |                0.99 |    0.5% |     11.10 | `transform pipe x1 (clang++-11 c++17 libstdc++ Release)`
+|            2,016.00 |                0.50 |    0.7% |     22.32 | `transform unique pipe x11 (clang++-11 c++17 libstdc++ Release)`
+|              994.62 |                1.01 |    1.1% |     10.92 | `transform2 pipe x1 (clang++-11 c++17 libstdc++ Release)`
+|            1,919.71 |                0.52 |    0.3% |     21.20 | `transform2 unique pipe x11 (clang++-11 c++17 libstdc++ Release)`
+|              982.94 |                1.02 |    0.7% |     10.84 | `transform3 pipe x1 (clang++-11 c++17 libstdc++ Release)`
+|            1,886.37 |                0.53 |    0.9% |     20.75 | `transform3 unique pipe x11 (clang++-11 c++17 libstdc++ Release)`
+|              987.15 |                1.01 |    0.9% |     10.99 | `transform4 pipe x1 (clang++-11 c++17 libstdc++ Release)`
+|            1,883.63 |                0.53 |    1.4% |     20.73 | `transform4 unique pipe x11 (clang++-11 c++17 libstdc++ Release)`
+|            1,007.52 |                0.99 |    0.7% |     11.12 | `transform5 pipe x1 (clang++-11 c++17 libstdc++ Release)`
+|            1,555.35 |                0.64 |    0.9% |     17.12 | `transform5 unique pipe x11 (clang++-11 c++17 libstdc++ Release)`
+|            1,193.34 |                0.84 |    0.2% |     13.14 | `transform pipe x1 (clang++-11 c++20 libstdc++ Release)`
+|            2,243.98 |                0.45 |    0.8% |     24.68 | `transform unique pipe x11 (clang++-11 c++20 libstdc++ Release)`
+|            1,193.03 |                0.84 |    0.8% |     13.13 | `transform2 pipe x1 (clang++-11 c++20 libstdc++ Release)`
+|            2,131.17 |                0.47 |    0.9% |     23.47 | `transform2 unique pipe x11 (clang++-11 c++20 libstdc++ Release)`
+|            1,182.27 |                0.85 |    0.1% |     13.01 | `transform3 pipe x1 (clang++-11 c++20 libstdc++ Release)`
+|            2,079.46 |                0.48 |    0.3% |     22.87 | `transform3 unique pipe x11 (clang++-11 c++20 libstdc++ Release)`
+|            1,177.29 |                0.85 |    0.4% |     12.95 | `transform4 pipe x1 (clang++-11 c++20 libstdc++ Release)`
+|            2,110.04 |                0.47 |    1.4% |     23.21 | `transform4 unique pipe x11 (clang++-11 c++20 libstdc++ Release)`
+|            1,217.38 |                0.82 |    1.1% |     13.41 | `transform5 pipe x1 (clang++-11 c++20 libstdc++ Release)`
+|            1,775.46 |                0.56 |    1.2% |     19.57 | `transform5 unique pipe x11 (clang++-11 c++20 libstdc++ Release)`
+|              797.12 |                1.25 |    0.7% |      8.82 | `transform pipe x1 (clang++-14 c++17 libstdc++ Debug)`
+|            1,405.31 |                0.71 |    1.3% |     15.48 | `transform unique pipe x11 (clang++-14 c++17 libstdc++ Debug)`
+|              773.96 |                1.29 |    0.5% |      8.52 | `transform2 pipe x1 (clang++-14 c++17 libstdc++ Debug)`
+|            1,323.41 |                0.76 |    0.9% |     14.63 | `transform2 unique pipe x11 (clang++-14 c++17 libstdc++ Debug)`
+|              783.05 |                1.28 |    1.2% |      8.63 | `transform3 pipe x1 (clang++-14 c++17 libstdc++ Debug)`
+|            1,305.02 |                0.77 |    0.6% |     14.40 | `transform3 unique pipe x11 (clang++-14 c++17 libstdc++ Debug)`
+|              808.06 |                1.24 |    1.2% |      8.86 | `transform4 pipe x1 (clang++-14 c++17 libstdc++ Debug)`
+|            1,294.58 |                0.77 |    1.1% |     14.24 | `transform4 unique pipe x11 (clang++-14 c++17 libstdc++ Debug)`
+|              801.49 |                1.25 |    0.6% |      8.79 | `transform5 pipe x1 (clang++-14 c++17 libstdc++ Debug)`
+|            1,136.28 |                0.88 |    0.5% |     12.57 | `transform5 unique pipe x11 (clang++-14 c++17 libstdc++ Debug)`
+|              995.67 |                1.00 |    0.8% |     11.00 | `transform pipe x1 (clang++-14 c++20 libstdc++ Debug)`
+|            1,642.77 |                0.61 |    0.4% |     17.97 | `transform unique pipe x11 (clang++-14 c++20 libstdc++ Debug)`
+|              978.61 |                1.02 |    0.3% |     10.84 | `transform2 pipe x1 (clang++-14 c++20 libstdc++ Debug)`
+|            1,558.33 |                0.64 |    1.6% |     17.11 | `transform2 unique pipe x11 (clang++-14 c++20 libstdc++ Debug)`
+|              993.69 |                1.01 |    0.2% |     10.86 | `transform3 pipe x1 (clang++-14 c++20 libstdc++ Debug)`
+|            1,525.57 |                0.66 |    0.3% |     16.67 | `transform3 unique pipe x11 (clang++-14 c++20 libstdc++ Debug)`
+|              989.72 |                1.01 |    1.7% |     10.85 | `transform4 pipe x1 (clang++-14 c++20 libstdc++ Debug)`
+|            1,514.68 |                0.66 |    1.4% |     16.72 | `transform4 unique pipe x11 (clang++-14 c++20 libstdc++ Debug)`
+|            1,015.59 |                0.98 |    1.2% |     11.11 | `transform5 pipe x1 (clang++-14 c++20 libstdc++ Debug)`
+|            1,383.73 |                0.72 |    1.8% |     15.19 | `transform5 unique pipe x11 (clang++-14 c++20 libstdc++ Debug)`
+|              736.48 |                1.36 |    0.1% |      8.07 | `transform pipe x1 (clang++-14 c++17 libc++ Debug)`
+|            1,309.48 |                0.76 |    2.2% |     14.41 | `transform unique pipe x11 (clang++-14 c++17 libc++ Debug)`
+|              743.09 |                1.35 |    1.3% |      8.20 | `transform2 pipe x1 (clang++-14 c++17 libc++ Debug)`
+|            1,259.26 |                0.79 |    0.8% |     13.82 | `transform2 unique pipe x11 (clang++-14 c++17 libc++ Debug)`
+|              727.88 |                1.37 |    1.2% |      8.06 | `transform3 pipe x1 (clang++-14 c++17 libc++ Debug)`
+|            1,212.55 |                0.82 |    1.3% |     13.43 | `transform3 unique pipe x11 (clang++-14 c++17 libc++ Debug)`
+|              718.56 |                1.39 |    1.3% |      7.92 | `transform4 pipe x1 (clang++-14 c++17 libc++ Debug)`
+|            1,167.40 |                0.86 |    0.6% |     12.97 | `transform4 unique pipe x11 (clang++-14 c++17 libc++ Debug)`
+|              794.31 |                1.26 |    0.7% |      8.68 | `transform5 pipe x1 (clang++-14 c++17 libc++ Debug)`
+|            1,706.08 |                0.59 |    0.5% |     18.86 | `transform5 unique pipe x11 (clang++-14 c++17 libc++ Debug)`
+|              837.07 |                1.19 |    0.3% |      9.28 | `transform pipe x1 (clang++-14 c++20 libc++ Debug)`
+|            1,436.20 |                0.70 |    0.4% |     15.93 | `transform unique pipe x11 (clang++-14 c++20 libc++ Debug)`
+|              827.89 |                1.21 |    0.4% |      9.25 | `transform2 pipe x1 (clang++-14 c++20 libc++ Debug)`
+|            1,383.87 |                0.72 |    0.6% |     15.14 | `transform2 unique pipe x11 (clang++-14 c++20 libc++ Debug)`
+|              839.62 |                1.19 |    0.7% |      9.21 | `transform3 pipe x1 (clang++-14 c++20 libc++ Debug)`
+|            1,346.50 |                0.74 |    1.1% |     14.86 | `transform3 unique pipe x11 (clang++-14 c++20 libc++ Debug)`
+|              818.93 |                1.22 |    0.2% |      9.06 | `transform4 pipe x1 (clang++-14 c++20 libc++ Debug)`
+|            1,349.35 |                0.74 |    0.7% |     14.79 | `transform4 unique pipe x11 (clang++-14 c++20 libc++ Debug)`
+|              915.56 |                1.09 |    0.5% |     10.00 | `transform5 pipe x1 (clang++-14 c++20 libc++ Debug)`
+|            1,856.92 |                0.54 |    0.6% |     20.59 | `transform5 unique pipe x11 (clang++-14 c++20 libc++ Debug)`
+|            1,019.74 |                0.98 |    1.1% |     11.25 | `transform pipe x1 (clang++-14 c++17 libstdc++ Release)`
+|            2,035.09 |                0.49 |    0.6% |     22.47 | `transform unique pipe x11 (clang++-14 c++17 libstdc++ Release)`
+|              996.79 |                1.00 |    0.6% |     11.03 | `transform2 pipe x1 (clang++-14 c++17 libstdc++ Release)`
+|            1,907.43 |                0.52 |    0.8% |     20.84 | `transform2 unique pipe x11 (clang++-14 c++17 libstdc++ Release)`
+|            1,001.13 |                1.00 |    0.9% |     10.99 | `transform3 pipe x1 (clang++-14 c++17 libstdc++ Release)`
+|            1,871.33 |                0.53 |    0.4% |     20.48 | `transform3 unique pipe x11 (clang++-14 c++17 libstdc++ Release)`
+|              991.85 |                1.01 |    0.8% |     10.84 | `transform4 pipe x1 (clang++-14 c++17 libstdc++ Release)`
+|            1,833.60 |                0.55 |    1.1% |     20.26 | `transform4 unique pipe x11 (clang++-14 c++17 libstdc++ Release)`
+|            1,015.59 |                0.98 |    0.1% |     11.15 | `transform5 pipe x1 (clang++-14 c++17 libstdc++ Release)`
+|            1,511.53 |                0.66 |    0.2% |     16.54 | `transform5 unique pipe x11 (clang++-14 c++17 libstdc++ Release)`
+|            1,231.56 |                0.81 |    0.6% |     13.46 | `transform pipe x1 (clang++-14 c++20 libstdc++ Release)`
+|            2,212.22 |                0.45 |    0.7% |     24.47 | `transform unique pipe x11 (clang++-14 c++20 libstdc++ Release)`
+|            1,195.34 |                0.84 |    0.1% |     13.22 | `transform2 pipe x1 (clang++-14 c++20 libstdc++ Release)`
+|            2,139.98 |                0.47 |    0.7% |     23.49 | `transform2 unique pipe x11 (clang++-14 c++20 libstdc++ Release)`
+|            1,193.67 |                0.84 |    0.2% |     13.17 | `transform3 pipe x1 (clang++-14 c++20 libstdc++ Release)`
+|            2,106.04 |                0.47 |    0.5% |     23.01 | `transform3 unique pipe x11 (clang++-14 c++20 libstdc++ Release)`
+|            1,210.38 |                0.83 |    0.7% |     13.23 | `transform4 pipe x1 (clang++-14 c++20 libstdc++ Release)`
+|            2,078.94 |                0.48 |    0.6% |     22.70 | `transform4 unique pipe x11 (clang++-14 c++20 libstdc++ Release)`
+|            1,215.77 |                0.82 |    0.7% |     13.42 | `transform5 pipe x1 (clang++-14 c++20 libstdc++ Release)`
+|            1,715.07 |                0.58 |    0.9% |     18.93 | `transform5 unique pipe x11 (clang++-14 c++20 libstdc++ Release)`
+|              896.94 |                1.11 |    1.0% |      9.85 | `transform pipe x1 (clang++-14 c++17 libc++ Release)`
+|            1,719.54 |                0.58 |    0.2% |     19.02 | `transform unique pipe x11 (clang++-14 c++17 libc++ Release)`
+|              919.13 |                1.09 |    1.4% |     10.09 | `transform2 pipe x1 (clang++-14 c++17 libc++ Release)`
+|            1,744.15 |                0.57 |    1.2% |     19.19 | `transform2 unique pipe x11 (clang++-14 c++17 libc++ Release)`
+|              888.09 |                1.13 |    1.2% |      9.77 | `transform3 pipe x1 (clang++-14 c++17 libc++ Release)`
+|            1,687.64 |                0.59 |    2.3% |     18.67 | `transform3 unique pipe x11 (clang++-14 c++17 libc++ Release)`
+|              895.69 |                1.12 |    1.3% |      9.83 | `transform4 pipe x1 (clang++-14 c++17 libc++ Release)`
+|            1,640.36 |                0.61 |    0.6% |     18.06 | `transform4 unique pipe x11 (clang++-14 c++17 libc++ Release)`
+|              961.93 |                1.04 |    1.1% |     10.56 | `transform5 pipe x1 (clang++-14 c++17 libc++ Release)`
+|            2,062.10 |                0.48 |    2.3% |     22.82 | `transform5 unique pipe x11 (clang++-14 c++17 libc++ Release)`
+|            1,034.13 |                0.97 |    0.9% |     11.38 | `transform pipe x1 (clang++-14 c++20 libc++ Release)`
+|            1,880.10 |                0.53 |    0.7% |     20.91 | `transform unique pipe x11 (clang++-14 c++20 libc++ Release)`
+|              985.10 |                1.02 |    0.3% |     10.88 | `transform2 pipe x1 (clang++-14 c++20 libc++ Release)`
+|            1,859.53 |                0.54 |    1.0% |     20.63 | `transform2 unique pipe x11 (clang++-14 c++20 libc++ Release)`
+|            1,002.18 |                1.00 |    2.2% |     11.15 | `transform3 pipe x1 (clang++-14 c++20 libc++ Release)`
+|            1,861.77 |                0.54 |    0.8% |     20.46 | `transform3 unique pipe x11 (clang++-14 c++20 libc++ Release)`
+|            1,012.96 |                0.99 |    0.5% |     11.13 | `transform4 pipe x1 (clang++-14 c++20 libc++ Release)`
+|            1,807.98 |                0.55 |    1.0% |     19.81 | `transform4 unique pipe x11 (clang++-14 c++20 libc++ Release)`
+|            1,111.14 |                0.90 |    0.4% |     12.22 | `transform5 pipe x1 (clang++-14 c++20 libc++ Release)`
+|            2,195.99 |                0.46 |    2.1% |     24.33 | `transform5 unique pipe x11 (clang++-14 c++20 libc++ Release)`
+

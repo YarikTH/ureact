@@ -84,7 +84,7 @@ public:
         // There hasn't been any set(...) input yet, modify.
         if( !m_is_input_added )
         {
-            std::invoke( func, this->m_value );
+            func( this->m_value );
 
             m_is_input_modified = true;
         }
@@ -93,7 +93,7 @@ public:
         // in apply_input
         else
         {
-            std::invoke( func, m_new_value );
+            func( m_new_value );
         }
     }
 

@@ -10,18 +10,20 @@
 #ifndef UREACT_DETAIL_ALGORITHM_HPP
 #define UREACT_DETAIL_ALGORITHM_HPP
 
-#include <iterator>
-
 #include <ureact/detail/defines.hpp>
 
 #ifdef UREACT_USE_STD_ALGORITHM
 #    include <algorithm>
+#else
+#    include <cstddef>
+#    include <utility>
 #endif
 
 UREACT_BEGIN_NAMESPACE
 
 // Partial alternative to <algorithm> is provided and used by default because library requires
 // only a few algorithms while standard <algorithm> is quite bloated
+// also `next` and `distance` from <iterator> are added, because standard <iterator> is even more bloated
 namespace detail
 {
 
@@ -72,6 +74,21 @@ void iter_swap( LhsForwardIt a, RhsForwardIt b )
     swap( *a, *b );
 }
 
+// random_access_iterator_tag version of std::next()
+template <typename LhsForwardIt>
+auto next( LhsForwardIt iter, size_t n = 1 )
+{
+    iter += n;
+    return iter;
+}
+
+// random_access_iterator_tag version of std::distance()
+template <typename InputIter>
+auto distance( InputIter first, InputIter last )
+{
+    return last - first;
+}
+
 // Code based on possible implementation at
 // https://en.cppreference.com/w/cpp/algorithm/partition
 template <typename ForwardIt, typename Pred>
@@ -83,7 +100,7 @@ ForwardIt partition( ForwardIt first, ForwardIt last, Pred pred )
         return first;
     }
 
-    for( ForwardIt i = std::next( first ); i != last; ++i )
+    for( ForwardIt i = detail::next( first ); i != last; ++i )
     {
         if( pred( *i ) )
         {
@@ -101,7 +118,7 @@ void sort( ForwardIt first, ForwardIt last )
 {
     if( first == last )
         return;
-    const auto pivot = *std::next( first, std::distance( first, last ) / 2 );
+    const auto pivot = *detail::next( first, detail::distance( first, last ) / 2 );
     const auto middle1
         = detail::partition( first, last, [pivot]( const auto& em ) { return em < pivot; } );
     const auto middle2

@@ -7,6 +7,7 @@
 //
 #include "ureact/adaptor/observe.hpp"
 
+#include <iterator>
 #include <sstream>
 
 #include "catch2_extra.hpp"

@@ -13,6 +13,7 @@ target_sources(
         compiler_args.cpp
         std_headers_include_time.cpp
         ureact_headers_include_time.cpp
+        signal.cpp
         transform_compilation.cpp
 )
 

@@ -14,6 +14,7 @@ target_sources(
         std_headers_include_time.cpp
         ureact_headers_include_time.cpp
         signal.cpp
+        events.cpp
         transform_compilation.cpp
 )
 

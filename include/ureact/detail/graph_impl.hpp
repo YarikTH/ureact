@@ -27,8 +27,6 @@
 
 UREACT_BEGIN_NAMESPACE
 
-class transaction;
-
 namespace detail
 {
 
@@ -117,8 +115,6 @@ public:
     }
 
 private:
-    friend class ureact::transaction;
-
     struct node_data
     {
         UREACT_MAKE_NONCOPYABLE( node_data );

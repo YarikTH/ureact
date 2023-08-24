@@ -12,48 +12,25 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_impl.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 /*!
  * @brief Guard class to perform several changes atomically
- *
  */
 class UREACT_WARN_UNUSED_RESULT transaction
 {
 public:
-    explicit transaction( context ctx )
-        : m_context( std::move( ctx ) )
-    {
-        auto& graph = get_internals( m_context ).get_graph();
-        assert( !graph.is_propagation_in_progress()
-                && "Can't start transaction in the middle of the change propagation process" );
-        graph.start_transaction();
-    }
-
-    ~transaction()
-    {
-        finish_impl();
-    }
+    explicit transaction( context ctx );
+    ~transaction();
 
     /*!
      * @brief Finish transaction before code scope is ended
      */
-    void finish()
-    {
-        finish_impl();
-    }
+    void finish();
 
 private:
-    void finish_impl()
-    {
-        if( !m_finished )
-        {
-            get_internals( m_context ).get_graph().finish_transaction();
-            m_finished = true;
-        }
-    }
+    void finish_impl();
 
     UREACT_MAKE_NONCOPYABLE( transaction );
     UREACT_MAKE_NONMOVABLE( transaction );
@@ -71,15 +48,17 @@ namespace default_context
  * Named differently from "transaction", so it is possible to use them both,
  * where both ureact and ureact::default_context namespaces are used
  */
-struct UREACT_WARN_UNUSED_RESULT default_transaction : ureact::transaction
+struct UREACT_WARN_UNUSED_RESULT default_transaction : public transaction
 {
-    default_transaction()
-        : ureact::transaction( default_context::get() )
-    {}
+    default_transaction();
 };
 
 } // namespace default_context
 
 UREACT_END_NAMESPACE
+
+#if UREACT_HEADER_ONLY
+#    include <ureact/detail/transaction.inl>
+#endif
 
 #endif // UREACT_TRANSACTION_HPP

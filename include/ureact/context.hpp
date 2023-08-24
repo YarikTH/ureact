@@ -10,17 +10,43 @@
 #ifndef UREACT_CONTEXT_HPP
 #define UREACT_CONTEXT_HPP
 
+#include <memory>
+
 #include <ureact/detail/defines.hpp>
 #include <ureact/detail/graph_impl.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
+namespace detail
+{
+
+class context_internals
+{
+public:
+    explicit context_internals(
+        std::shared_ptr<react_graph> graph = std::make_shared<react_graph>() );
+
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph();
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const;
+
+private:
+    std::shared_ptr<react_graph> m_graph_ptr;
+};
+
+} // namespace detail
+
 class context;
 
 namespace default_context
 {
+
+/**
+ * @brief Return default context
+ * Default contexts are thread_local
+ */
 context get();
-}
+
+} // namespace default_context
 
 /*!
  * @brief Core class that connects all reactive nodes together.
@@ -77,34 +103,13 @@ private:
     /*!
      * @brief Construct @ref context from given react_graph
      */
-    explicit context( std::shared_ptr<detail::react_graph> graph )
-        : detail::context_internals( std::move( graph ) )
-    {}
+    explicit context( std::shared_ptr<detail::react_graph> graph );
 };
 
-namespace default_context
-{
-
-/**
- * @brief Return default context
- * Default contexts are thread_local
- */
-inline context get()
-{
-    thread_local static std::weak_ptr<detail::react_graph> s_instance;
-
-    auto graphPtr = s_instance.lock();
-
-    if( !graphPtr )
-    {
-        s_instance = graphPtr = std::make_shared<detail::react_graph>();
-    }
-
-    return context{ std::move( graphPtr ) };
-}
-
-} // namespace default_context
-
 UREACT_END_NAMESPACE
+
+#if UREACT_HEADER_ONLY
+#    include <ureact/detail/context.inl>
+#endif
 
 #endif //UREACT_CONTEXT_HPP

@@ -11,6 +11,7 @@
 #define UREACT_DETAIL_NODE_BASE_HPP
 
 #include <memory>
+#include <tuple>
 #include <utility>
 
 #include <ureact/context.hpp>
@@ -41,18 +42,9 @@ Ret create_wrapped_node( Args&&... args )
 class node_base : public reactive_node_interface
 {
 public:
-    explicit node_base( context context )
-        : m_context( std::move( context ) )
-    {
-        assert( !get_graph().is_locked() && "Can't create node from callback" );
-        m_id = get_graph().register_node();
-    }
+    explicit node_base( context context );
 
-    ~node_base() override
-    {
-        detach_from_all();
-        get_graph().unregister_node( m_id );
-    }
+    ~node_base() override;
 
     UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
     {
@@ -70,36 +62,14 @@ public:
     }
 
 protected:
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
-    {
-        return get_internals( m_context ).get_graph();
-    }
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph();
+    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const;
 
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
-    {
-        return get_internals( m_context ).get_graph();
-    }
+    void attach_to( node_id parentId );
 
-    void attach_to( node_id parentId )
-    {
-        m_parents.add( parentId );
-        get_graph().attach_node( m_id, parentId );
-    }
+    void detach_from( node_id parentId );
 
-    void detach_from( node_id parentId )
-    {
-        get_graph().detach_node( m_id, parentId );
-        m_parents.remove( parentId );
-    }
-
-    void detach_from_all()
-    {
-        for( node_id parentId : m_parents )
-        {
-            get_graph().detach_node( m_id, parentId );
-        }
-        m_parents.clear();
-    }
+    void detach_from_all();
 
     template <class... Deps>
     void attach_to( const Deps&... deps )
@@ -136,5 +106,9 @@ private:
 } // namespace detail
 
 UREACT_END_NAMESPACE
+
+#if UREACT_HEADER_ONLY
+#    include <ureact/detail/node_base.inl>
+#endif
 
 #endif // UREACT_DETAIL_NODE_BASE_HPP

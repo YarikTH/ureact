@@ -23,8 +23,7 @@ namespace detail
 class context_internals
 {
 public:
-    explicit context_internals(
-        std::shared_ptr<react_graph> graph = std::make_shared<react_graph>() );
+    explicit context_internals( std::shared_ptr<react_graph> graph = make_react_graph() );
 
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph();
     UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const;

@@ -52,7 +52,7 @@ UREACT_FUNC context get()
 
     if( !graphPtr )
     {
-        s_instance = graphPtr = std::make_shared<detail::react_graph>();
+        s_instance = graphPtr = detail::make_react_graph();
     }
 
     return context{ std::move( graphPtr ) };

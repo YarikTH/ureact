@@ -430,6 +430,11 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     return !m_next_data.empty();
 }
 
+inline std::shared_ptr<react_graph> make_react_graph()
+{
+    return std::make_shared<react_graph>();
+}
+
 } // namespace detail
 
 UREACT_END_NAMESPACE

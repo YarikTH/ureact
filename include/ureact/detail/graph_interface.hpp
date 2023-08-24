@@ -10,11 +10,9 @@
 #ifndef UREACT_DETAIL_GRAPH_INTERFACE_HPP
 #define UREACT_DETAIL_GRAPH_INTERFACE_HPP
 
-#include <cassert>
 #include <cstddef>
 #include <vector>
 
-#include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -63,49 +61,20 @@ private:
 class node_id_vector
 {
 public:
-    void add( node_id id )
-    {
-        m_data.push_back( id );
-    }
+    using value_type = node_id;
+    using container_type = std::vector<value_type>;
+    using iterator = container_type::iterator;
 
-    void remove( node_id id )
-    {
-        const auto it = detail::find( m_data.begin(), m_data.end(), id );
-        assert( it != m_data.end() );
+    void add( node_id id );
+    void remove( node_id id );
+    void clear();
+    UREACT_WARN_UNUSED_RESULT bool empty() const;
 
-        // Unstable erase algorithm
-        // If we remove not the last element, then copy last element on erased position and remove last element
-        const auto last_it = m_data.begin() + m_data.size() - 1;
-        if( it != last_it )
-        {
-            *it = *last_it;
-        }
-
-        m_data.resize( m_data.size() - 1 );
-    }
-
-    UREACT_WARN_UNUSED_RESULT auto begin()
-    {
-        return m_data.begin();
-    }
-
-    UREACT_WARN_UNUSED_RESULT auto end()
-    {
-        return m_data.end();
-    }
-
-    void clear()
-    {
-        m_data.clear();
-    }
-
-    UREACT_WARN_UNUSED_RESULT bool empty() const
-    {
-        return m_data.empty();
-    }
+    UREACT_WARN_UNUSED_RESULT iterator begin();
+    UREACT_WARN_UNUSED_RESULT iterator end();
 
 private:
-    std::vector<node_id> m_data;
+    container_type m_data;
 };
 
 enum class update_result
@@ -136,5 +105,9 @@ struct observer_interface
 } // namespace detail
 
 UREACT_END_NAMESPACE
+
+#if UREACT_HEADER_ONLY
+#    include <ureact/detail/graph_interface.inl>
+#endif
 
 #endif //UREACT_DETAIL_GRAPH_INTERFACE_HPP

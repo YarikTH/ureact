@@ -430,28 +430,6 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     return !m_next_data.empty();
 }
 
-class context_internals
-{
-public:
-    explicit context_internals(
-        std::shared_ptr<detail::react_graph> graph = std::make_shared<react_graph>() )
-        : m_graph_ptr( std::move( graph ) )
-    {}
-
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph()
-    {
-        return *m_graph_ptr;
-    }
-
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const
-    {
-        return *m_graph_ptr;
-    }
-
-private:
-    std::shared_ptr<react_graph> m_graph_ptr;
-};
-
 } // namespace detail
 
 UREACT_END_NAMESPACE

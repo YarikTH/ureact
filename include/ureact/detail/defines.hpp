@@ -121,6 +121,16 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
         {
 #endif
 
+#ifndef UREACT_HEADER_ONLY
+#    define UREACT_HEADER_ONLY 1
+#endif
+
+#if UREACT_HEADER_ONLY
+#    define UREACT_FUNC inline
+#else
+#    define UREACT_FUNC
+#endif
+
 #define UREACT_SETUP_COPY( ClassName, Action )                                                     \
     ClassName( const ClassName& ) = Action;                                                        \
     ClassName& operator=( const ClassName& ) = Action

@@ -10,9 +10,6 @@
 #ifndef UREACT_TRANSACTION_HPP
 #define UREACT_TRANSACTION_HPP
 
-#include <functional>
-#include <type_traits>
-
 #include <ureact/context.hpp>
 #include <ureact/detail/defines.hpp>
 #include <ureact/detail/graph_impl.hpp>

@@ -25,34 +25,18 @@ class observer_internals
 public:
     observer_internals() = default;
 
-    explicit observer_internals( std::shared_ptr<observer_node> node )
-        : m_node( std::move( node ) )
-    {}
+    explicit observer_internals( std::shared_ptr<observer_node> node );
 
     UREACT_MAKE_COPYABLE( observer_internals );
     UREACT_MAKE_MOVABLE( observer_internals );
 
-    UREACT_WARN_UNUSED_RESULT std::shared_ptr<observer_node>& get_node_ptr()
-    {
-        return m_node;
-    }
+    UREACT_WARN_UNUSED_RESULT std::shared_ptr<observer_node>& get_node_ptr();
+    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<observer_node>& get_node_ptr() const;
 
-    UREACT_WARN_UNUSED_RESULT const std::shared_ptr<observer_node>& get_node_ptr() const
-    {
-        return m_node;
-    }
-
-    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
-    {
-        return m_node->get_node_id();
-    }
+    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const;
 
 protected:
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
-    {
-        assert( m_node != nullptr && "Should be attached to a node" );
-        return get_internals( m_node->get_context() ).get_graph();
-    }
+    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const;
 
     /// Pointer to owned node
     std::shared_ptr<observer_node> m_node;
@@ -80,19 +64,12 @@ public:
     /*!
      * @brief Manually detaches the linked observer node from its subject
      */
-    void detach()
-    {
-        assert( is_valid() );
-        get_node_ptr()->detach_observer();
-    }
+    void detach();
 
     /*!
      * @brief Tests if this instance is linked to a node
      */
-    UREACT_WARN_UNUSED_RESULT bool is_valid() const
-    {
-        return this->get_node_ptr() != nullptr;
-    }
+    UREACT_WARN_UNUSED_RESULT bool is_valid() const;
 
     /*!
      * @brief Return internals. Not intended to use in user code
@@ -115,14 +92,16 @@ protected:
     /*!
      * @brief Construct from the given node
      */
-    explicit observer( std::shared_ptr<detail::observer_node> node )
-        : observer_internals( std::move( node ) )
-    {}
+    explicit observer( std::shared_ptr<detail::observer_node> node );
 
     template <typename Ret, typename Node, typename... Args>
     friend Ret detail::create_wrapped_node( Args&&... args );
 };
 
 UREACT_END_NAMESPACE
+
+#if UREACT_HEADER_ONLY
+#    include <ureact/detail/observer.inl>
+#endif
 
 #endif //UREACT_OBSERVER_HPP

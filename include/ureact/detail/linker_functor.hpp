@@ -19,8 +19,6 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-class react_graph;
-
 template <typename Node>
 class linker_functor_base
 {

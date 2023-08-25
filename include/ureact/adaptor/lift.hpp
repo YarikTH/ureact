@@ -10,6 +10,7 @@
 #ifndef UREACT_ADAPTOR_LIFT_HPP
 #define UREACT_ADAPTOR_LIFT_HPP
 
+#include <cassert>
 #include <functional>
 
 #include <ureact/detail/adaptor.hpp>

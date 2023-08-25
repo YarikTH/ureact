@@ -10,6 +10,7 @@
 #ifndef UREACT_DETAIL_TAKE_DROP_BASE_HPP
 #define UREACT_DETAIL_TAKE_DROP_BASE_HPP
 
+#include <cassert>
 #include <type_traits>
 
 #include <ureact/adaptor/filter.hpp>

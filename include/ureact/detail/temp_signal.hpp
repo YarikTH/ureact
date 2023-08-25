@@ -10,6 +10,8 @@
 #ifndef UREACT_DETAIL_TEMP_SIGNAL_HPP
 #define UREACT_DETAIL_TEMP_SIGNAL_HPP
 
+#include <cassert>
+
 #include <ureact/signal.hpp>
 
 UREACT_BEGIN_NAMESPACE

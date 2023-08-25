@@ -10,6 +10,7 @@
 #ifndef UREACT_ADAPTOR_SLICE_HPP
 #define UREACT_ADAPTOR_SLICE_HPP
 
+#include <cassert>
 #include <type_traits>
 
 #include <ureact/adaptor/filter.hpp>

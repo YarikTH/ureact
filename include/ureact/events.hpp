@@ -10,6 +10,7 @@
 #ifndef UREACT_EVENTS_HPP
 #define UREACT_EVENTS_HPP
 
+#include <cassert>
 #include <type_traits>
 
 #include <ureact/context.hpp>

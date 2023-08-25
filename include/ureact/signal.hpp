@@ -10,6 +10,8 @@
 #ifndef UREACT_SIGNAL_HPP
 #define UREACT_SIGNAL_HPP
 
+#include <cassert>
+
 #include <ureact/context.hpp>
 #include <ureact/detail/has_changed.hpp>
 #include <ureact/detail/node_base.hpp>

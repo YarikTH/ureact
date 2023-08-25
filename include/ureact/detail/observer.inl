@@ -11,6 +11,7 @@
 #define UREACT_DETAIL_OBSERVER_INL
 
 #include <ureact/detail/defines.hpp>
+#include <cassert>
 
 UREACT_BEGIN_NAMESPACE
 

@@ -9,11 +9,16 @@ add_executable(ureact_self_contained_headers_test main.cpp)
 
 function(ureact_setup_self_contained_test_sources)
     file(
-        GLOB_RECURSE ureact_headers
+        GLOB_RECURSE ureact_headers_hpp
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/../../include"
         "../../include/ureact/*.hpp"
     )
-    foreach(header IN LISTS ureact_headers)
+    file(
+        GLOB_RECURSE ureact_headers_inl
+        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/../../include"
+        "../../include/ureact/*.inl"
+    )
+    foreach(header IN LISTS ureact_headers_hpp ureact_headers_inl)
         string(MAKE_C_IDENTIFIER "${header}" _out)
         set(src_filename
             "${CMAKE_CURRENT_BINARY_DIR}/check_if_${_out}_self_contained.cpp"

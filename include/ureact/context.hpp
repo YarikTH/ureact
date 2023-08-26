@@ -20,7 +20,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-class context_internals
+class UREACT_API context_internals
 {
 public:
     explicit context_internals( std::shared_ptr<react_graph> graph = make_react_graph() );
@@ -43,7 +43,7 @@ namespace default_context
  * @brief Return default context
  * Default contexts are thread_local
  */
-context get();
+UREACT_API context get();
 
 } // namespace default_context
 
@@ -53,7 +53,7 @@ context get();
  *  Each signal and node belongs to a single ureact context.
  *  Signals from different contexts can't interact with each other.
  */
-class context final : protected detail::context_internals
+class UREACT_API context final : protected detail::context_internals
 {
 public:
     /*!

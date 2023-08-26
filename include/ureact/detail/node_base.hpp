@@ -39,7 +39,7 @@ Ret create_wrapped_node( Args&&... args )
     return Ret{ create_node<Node>( std::forward<Args>( args )... ) };
 }
 
-class node_base : public reactive_node_interface
+class UREACT_API node_base : public reactive_node_interface
 {
 public:
     explicit node_base( context context );

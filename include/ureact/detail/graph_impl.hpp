@@ -86,7 +86,7 @@ struct react_graph
     [[nodiscard]] virtual bool is_propagation_in_progress() const = 0;
 };
 
-std::shared_ptr<react_graph> make_react_graph();
+UREACT_API std::shared_ptr<react_graph> make_react_graph();
 
 } // namespace detail
 

@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 /*!
  * @brief Guard class to perform several changes atomically
  */
-class UREACT_WARN_UNUSED_RESULT transaction
+class UREACT_API UREACT_WARN_UNUSED_RESULT transaction
 {
 public:
     explicit transaction( context ctx );
@@ -48,7 +48,7 @@ namespace default_context
  * Named differently from "transaction", so it is possible to use them both,
  * where both ureact and ureact::default_context namespaces are used
  */
-struct UREACT_WARN_UNUSED_RESULT default_transaction : public transaction
+struct UREACT_API UREACT_WARN_UNUSED_RESULT default_transaction : public transaction
 {
     default_transaction();
 };

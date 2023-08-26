@@ -131,6 +131,23 @@ static_assert( __cplusplus >= 201703L, "At least c++17 standard is required" );
 #    define UREACT_FUNC
 #endif
 
+#if !UREACT_HEADER_ONLY && defined( _WIN32 )
+#    ifdef UREACT_EXPORT
+#        define UREACT_API __declspec( dllexport )
+#    elif defined( UREACT_SHARED )
+#        define UREACT_API __declspec( dllimport )
+#    endif
+#else
+#    if defined( UREACT_EXPORT ) || defined( UREACT_SHARED )
+#        if defined( __GNUC__ ) || defined( __clang__ )
+#            define UREACT_API __attribute__( ( visibility( "default" ) ) )
+#        endif
+#    endif
+#endif
+#ifndef UREACT_API
+#    define UREACT_API
+#endif
+
 #define UREACT_SETUP_COPY( ClassName, Action )                                                     \
     ClassName( const ClassName& ) = Action;                                                        \
     ClassName& operator=( const ClassName& ) = Action

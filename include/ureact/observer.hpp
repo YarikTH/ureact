@@ -20,7 +20,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-class observer_internals
+class UREACT_API observer_internals
 {
 public:
     observer_internals() = default;
@@ -50,7 +50,7 @@ protected:
  *  An instance of this class provides a unique handle to an observer which can
  *  be used to detach it explicitly
  */
-class observer final : protected detail::observer_internals
+class UREACT_API observer final : protected detail::observer_internals
 {
 public:
     UREACT_MAKE_COPYABLE( observer );

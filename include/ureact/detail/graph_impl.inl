@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_GRAPH_IMPL_HPP
-#define UREACT_DETAIL_GRAPH_IMPL_HPP
+#ifndef UREACT_DETAIL_GRAPH_IMPL_INL
+#define UREACT_DETAIL_GRAPH_IMPL_INL
 
 #include <cassert>
 #include <cstddef>
@@ -439,4 +439,4 @@ inline std::shared_ptr<react_graph> make_react_graph()
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_GRAPH_IMPL_HPP
+#endif // UREACT_DETAIL_GRAPH_IMPL_INL

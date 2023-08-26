@@ -76,19 +76,53 @@ endif()
 message(STATUS "ureact compiler warning options: \"${UREACT_WARNING_OPTION}\"")
 
 ### ureact
-add_library(ureact INTERFACE)
+add_library(ureact)
 
 add_library(ureact::ureact ALIAS ureact)
 
 target_include_directories(
     ureact
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+)
+target_include_directories(
+    ureact
+    SYSTEM
+    INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+)
+
+target_sources(ureact PRIVATE src/ureact.cpp)
+
+target_compile_definitions(ureact PUBLIC UREACT_HEADER_ONLY=0)
+target_compile_features(ureact PUBLIC cxx_std_17)
+if(MSVC)
+    # See https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
+    target_compile_options(ureact PUBLIC "/Zc:__cplusplus")
+endif()
+target_compile_options(ureact PRIVATE ${UREACT_WARNING_OPTION})
+
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(
+        ureact
+        PRIVATE UREACT_EXPORT
+        INTERFACE UREACT_SHARED
+    )
+endif()
+
+### ureact-header-only
+add_library(ureact-header-only INTERFACE)
+
+add_library(ureact::ureact-header-only ALIAS ureact-header-only)
+
+target_include_directories(
+    ureact-header-only
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_features(ureact INTERFACE cxx_std_17)
+target_compile_definitions(ureact-header-only INTERFACE UREACT_HEADER_ONLY=1)
+target_compile_features(ureact-header-only INTERFACE cxx_std_17)
 if(MSVC)
     # See https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
-    target_compile_options(ureact INTERFACE "/Zc:__cplusplus")
+    target_compile_options(ureact-header-only INTERFACE "/Zc:__cplusplus")
 endif()
 
 ################################################################################

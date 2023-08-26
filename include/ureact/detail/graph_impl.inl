@@ -11,17 +11,13 @@
 #define UREACT_DETAIL_GRAPH_IMPL_INL
 
 #include <cassert>
-#include <cstddef>
-#include <cstdint>
 #include <limits>
 #include <memory>
-#include <tuple>
-#include <type_traits>
-#include <utility>
 #include <vector>
 
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
+#include <ureact/detail/graph_impl.hpp>
 #include <ureact/detail/graph_interface.hpp>
 #include <ureact/detail/slot_map.hpp>
 
@@ -30,86 +26,46 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-#if !defined( NDEBUG )
-/// Utility class to check if callbacks passed in lift(), process() etc
-/// are used properly
-class callback_sanitizer
+class react_graph_impl : public react_graph
 {
-public:
-    /// Return if external callback is in progress
-    UREACT_WARN_UNUSED_RESULT bool is_locked() const
+#if !defined( NDEBUG )
+    bool m_is_locked = false;
+
+    bool is_locked() const override
     {
         return m_is_locked;
     }
 
-    /// Marks begin of an external callback
-    void begin_external_callback()
+    void begin_external_callback() override
     {
         assert( !m_is_locked );
         m_is_locked = true;
     }
 
-    /// Marks end of an external callback
-    void end_external_callback()
+    void end_external_callback() override
     {
         assert( m_is_locked );
         m_is_locked = false;
     }
-
-    /// Marks a place where an external callback is called
-    struct guard
-    {
-        callback_sanitizer& self;
-
-        explicit guard( callback_sanitizer& self )
-            : self( self )
-        {
-            self.begin_external_callback();
-        }
-
-        ~guard()
-        {
-            self.end_external_callback();
-        }
-
-        UREACT_MAKE_NONCOPYABLE( guard );
-        UREACT_MAKE_NONMOVABLE( guard );
-    };
-
-private:
-    bool m_is_locked = false;
-};
-
-#    define UREACT_CALLBACK_GUARD( _SELF_ ) callback_sanitizer::guard _( _SELF_ )
-#else
-#    define UREACT_CALLBACK_GUARD( _SELF_ )                                                        \
-        do                                                                                         \
-        {                                                                                          \
-        } while( false )
 #endif
-
-class react_graph
-#if !defined( NDEBUG )
-    : public callback_sanitizer
-#endif
-{
 public:
-    react_graph() = default;
-    ~react_graph();
+    react_graph_impl() = default;
+    ~react_graph_impl() override;
 
-    node_id register_node();
-    void register_node_ptr( node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr );
-    void unregister_node( node_id nodeId );
+    node_id register_node() override;
+    void register_node_ptr(
+        node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr ) override;
+    void unregister_node( node_id nodeId ) override;
 
-    void attach_node( node_id nodeId, node_id parentId );
-    void detach_node( node_id nodeId, node_id parentId );
+    void attach_node( node_id nodeId, node_id parentId ) override;
+    void detach_node( node_id nodeId, node_id parentId ) override;
 
-    void push_input( node_id nodeId );
+    void push_input( node_id nodeId ) override;
 
-    void start_transaction();
-    void finish_transaction();
+    void start_transaction() override;
+    void finish_transaction() override;
 
-    [[nodiscard]] bool is_propagation_in_progress() const
+    [[nodiscard]] bool is_propagation_in_progress() const override
     {
         return m_propagation_is_in_progress;
     }
@@ -198,7 +154,7 @@ private:
     node_id_vector m_nodes_queued_for_unregister;
 };
 
-inline react_graph::~react_graph()
+UREACT_FUNC react_graph_impl::~react_graph_impl()
 {
     assert( m_node_data.empty() );
     assert( m_scheduled_nodes.empty() );
@@ -208,12 +164,12 @@ inline react_graph::~react_graph()
     assert( m_nodes_queued_for_unregister.empty() );
 }
 
-inline node_id react_graph::register_node()
+UREACT_FUNC node_id react_graph_impl::register_node()
 {
     return node_id{ m_id, m_node_data.emplace() };
 }
 
-inline void react_graph::register_node_ptr(
+UREACT_FUNC void react_graph_impl::register_node_ptr(
     const node_id nodeId, const std::weak_ptr<reactive_node_interface>& nodePtr )
 {
     assert( nodeId.context_id() == m_id );
@@ -223,7 +179,7 @@ inline void react_graph::register_node_ptr(
     node.node_ptr = nodePtr;
 }
 
-inline void react_graph::unregister_node( const node_id nodeId )
+UREACT_FUNC void react_graph_impl::unregister_node( const node_id nodeId )
 {
     assert( nodeId.context_id() == m_id );
     assert( m_node_data[nodeId].successors.empty() );
@@ -234,7 +190,7 @@ inline void react_graph::unregister_node( const node_id nodeId )
         m_nodes_queued_for_unregister.add( nodeId );
 }
 
-inline void react_graph::attach_node( const node_id nodeId, const node_id parentId )
+UREACT_FUNC void react_graph_impl::attach_node( const node_id nodeId, const node_id parentId )
 {
     assert( nodeId.context_id() == m_id );
     assert( parentId.context_id() == m_id );
@@ -247,7 +203,7 @@ inline void react_graph::attach_node( const node_id nodeId, const node_id parent
     node.level = std::max( node.level, parent.level + 1 );
 }
 
-inline void react_graph::detach_node( const node_id nodeId, const node_id parentId )
+UREACT_FUNC void react_graph_impl::detach_node( const node_id nodeId, const node_id parentId )
 {
     assert( nodeId.context_id() == m_id );
     assert( parentId.context_id() == m_id );
@@ -258,7 +214,7 @@ inline void react_graph::detach_node( const node_id nodeId, const node_id parent
     successors.remove( nodeId );
 }
 
-inline void react_graph::push_input( const node_id nodeId )
+UREACT_FUNC void react_graph_impl::push_input( const node_id nodeId )
 {
     assert( !m_propagation_is_in_progress );
 
@@ -268,14 +224,14 @@ inline void react_graph::push_input( const node_id nodeId )
         propagate();
 }
 
-inline void react_graph::start_transaction()
+UREACT_FUNC void react_graph_impl::start_transaction()
 {
     assert( !m_propagation_is_in_progress );
 
     ++m_transaction_level;
 }
 
-inline void react_graph::finish_transaction()
+UREACT_FUNC void react_graph_impl::finish_transaction()
 {
     assert( !m_propagation_is_in_progress );
     assert( m_transaction_level > 0 );
@@ -286,18 +242,18 @@ inline void react_graph::finish_transaction()
         propagate();
 }
 
-inline node_id::context_id_type react_graph::create_context_id()
+UREACT_FUNC node_id::context_id_type react_graph_impl::create_context_id()
 {
     static node_id::context_id_type s_next_id = 1u;
     return s_next_id++;
 }
 
-UREACT_WARN_UNUSED_RESULT inline bool react_graph::can_unregister_node() const
+UREACT_FUNC bool react_graph_impl::can_unregister_node() const
 {
     return m_transaction_level == 0 && !m_propagation_is_in_progress;
 }
 
-inline void react_graph::propagate()
+UREACT_FUNC void react_graph_impl::propagate()
 {
     m_propagation_is_in_progress = true;
 
@@ -312,7 +268,7 @@ inline void react_graph::propagate()
     unregister_queued_nodes();
 }
 
-inline void react_graph::recalculate_successor_levels( node_data& parentNode )
+UREACT_FUNC void react_graph_impl::recalculate_successor_levels( node_data& parentNode )
 {
     for( const node_id successorId : parentNode.successors )
     {
@@ -321,7 +277,7 @@ inline void react_graph::recalculate_successor_levels( node_data& parentNode )
     }
 }
 
-inline void react_graph::schedule_node( const node_id nodeId )
+UREACT_FUNC void react_graph_impl::schedule_node( const node_id nodeId )
 {
     node_data& node = m_node_data[nodeId];
 
@@ -332,20 +288,20 @@ inline void react_graph::schedule_node( const node_id nodeId )
     }
 }
 
-inline void react_graph::re_schedule_node( const node_id nodeId )
+UREACT_FUNC void react_graph_impl::re_schedule_node( const node_id nodeId )
 {
     node_data& node = m_node_data[nodeId];
     recalculate_successor_levels( node );
     m_scheduled_nodes.push( nodeId, node.level );
 }
 
-inline void react_graph::schedule_successors( node_data& parentNode )
+UREACT_FUNC void react_graph_impl::schedule_successors( node_data& parentNode )
 {
     for( const node_id successorId : parentNode.successors )
         schedule_node( successorId );
 }
 
-inline void react_graph::propagate_node_change( const node_id nodeId )
+UREACT_FUNC void react_graph_impl::propagate_node_change( const node_id nodeId )
 {
     node_data& node = m_node_data[nodeId];
     if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
@@ -377,7 +333,7 @@ inline void react_graph::propagate_node_change( const node_id nodeId )
     node.queued = false;
 }
 
-inline void react_graph::finalize_changed_nodes()
+UREACT_FUNC void react_graph_impl::finalize_changed_nodes()
 {
     // Cleanup buffers in changed nodes etc
     for( const node_id nodeId : m_changed_nodes )
@@ -391,7 +347,7 @@ inline void react_graph::finalize_changed_nodes()
     m_changed_nodes.clear();
 }
 
-inline void react_graph::unregister_queued_nodes()
+UREACT_FUNC void react_graph_impl::unregister_queued_nodes()
 {
     assert( !m_propagation_is_in_progress );
 
@@ -400,7 +356,7 @@ inline void react_graph::unregister_queued_nodes()
     m_nodes_queued_for_unregister.clear();
 }
 
-UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next()
+UREACT_FUNC bool react_graph_impl::topological_queue::fetch_next()
 {
     // Throw away previous values
     m_next_data.clear();
@@ -430,9 +386,9 @@ UREACT_WARN_UNUSED_RESULT inline bool react_graph::topological_queue::fetch_next
     return !m_next_data.empty();
 }
 
-inline std::shared_ptr<react_graph> make_react_graph()
+UREACT_FUNC std::shared_ptr<react_graph> make_react_graph()
 {
-    return std::make_shared<react_graph>();
+    return std::make_shared<react_graph_impl>();
 }
 
 } // namespace detail

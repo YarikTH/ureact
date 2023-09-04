@@ -20,7 +20,7 @@ namespace detail
 
 class observer_node
     : public node_base
-    , public observer_interface
+    , public core::observer_interface
 {
 public:
     explicit observer_node( const context& context )

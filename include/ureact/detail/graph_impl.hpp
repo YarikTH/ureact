@@ -12,8 +12,8 @@
 
 #include <memory>
 
+#include <ureact/core/graph_interface.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_interface.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

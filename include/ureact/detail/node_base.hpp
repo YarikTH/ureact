@@ -15,8 +15,8 @@
 #include <utility>
 
 #include <ureact/context.hpp>
+#include <ureact/core/graph_interface.hpp>
 #include <ureact/detail/graph_impl.hpp>
-#include <ureact/detail/graph_interface.hpp>
 #include <ureact/detail/node_id_vector.hpp>
 
 UREACT_BEGIN_NAMESPACE

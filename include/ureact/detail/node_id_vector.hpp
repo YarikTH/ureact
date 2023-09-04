@@ -12,8 +12,8 @@
 
 #include <vector>
 
+#include <ureact/core/graph_interface.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_interface.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -23,12 +23,12 @@ namespace detail
 class node_id_vector
 {
 public:
-    using value_type = node_id;
+    using value_type = core::node_id;
     using container_type = std::vector<value_type>;
     using iterator = container_type::iterator;
 
-    void add( node_id id );
-    void remove( node_id id );
+    void add( value_type id );
+    void remove( value_type id );
     void clear();
     UREACT_WARN_UNUSED_RESULT bool empty() const;
 

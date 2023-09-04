@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_GRAPH_INTERFACE_HPP
-#define UREACT_DETAIL_GRAPH_INTERFACE_HPP
+#ifndef UREACT_CORE_GRAPH_INTERFACE_HPP
+#define UREACT_CORE_GRAPH_INTERFACE_HPP
 
 #include <cstddef>
 
@@ -16,7 +16,7 @@
 
 UREACT_BEGIN_NAMESPACE
 
-namespace detail
+namespace core
 {
 
 class node_id
@@ -82,8 +82,8 @@ struct observer_interface
     virtual void detach_observer() = 0;
 };
 
-} // namespace detail
+} // namespace core
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_DETAIL_GRAPH_INTERFACE_HPP
+#endif //UREACT_CORE_GRAPH_INTERFACE_HPP

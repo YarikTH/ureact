@@ -18,7 +18,7 @@
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
 #include <ureact/detail/graph_impl.hpp>
-#include <ureact/detail/graph_interface.hpp>
+#include <ureact/core/graph_interface.hpp>
 #include <ureact/detail/node_id_vector.hpp>
 #include <ureact/detail/slot_map.hpp>
 
@@ -165,7 +165,7 @@ UREACT_FUNC react_graph_impl::~react_graph_impl()
     assert( m_nodes_queued_for_unregister.empty() );
 }
 
-UREACT_FUNC node_id react_graph_impl::register_node()
+UREACT_FUNC core::node_id react_graph_impl::register_node()
 {
     return node_id{ m_id, m_node_data.emplace() };
 }
@@ -243,7 +243,7 @@ UREACT_FUNC void react_graph_impl::finish_transaction()
         propagate();
 }
 
-UREACT_FUNC node_id::context_id_type react_graph_impl::create_context_id()
+UREACT_FUNC core::node_id::context_id_type react_graph_impl::create_context_id()
 {
     static node_id::context_id_type s_next_id = 1u;
     return s_next_id++;
@@ -304,6 +304,8 @@ UREACT_FUNC void react_graph_impl::schedule_successors( node_data& parentNode )
 
 UREACT_FUNC void react_graph_impl::propagate_node_change( const node_id nodeId )
 {
+    using update_result = core::update_result;
+
     node_data& node = m_node_data[nodeId];
     if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
     {

@@ -21,12 +21,12 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-UREACT_FUNC void node_id_vector::add( const node_id id )
+UREACT_FUNC void node_id_vector::add( const value_type id )
 {
     m_data.push_back( id );
 }
 
-UREACT_FUNC void node_id_vector::remove( const node_id id )
+UREACT_FUNC void node_id_vector::remove( const value_type id )
 {
     const auto it = detail::find( m_data.begin(), m_data.end(), id );
     assert( it != m_data.end() );

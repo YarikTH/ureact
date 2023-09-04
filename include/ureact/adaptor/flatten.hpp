@@ -48,7 +48,7 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
         if( new_inner != m_inner )
@@ -60,7 +60,7 @@ public:
             this->detach_from( old_inner->get_node_id() );
             this->attach_to( new_inner->get_node_id() );
 
-            return update_result::shifted;
+            return core::update_result::shifted;
         }
 
         return this->try_change_value( m_inner->value_ref() );
@@ -91,7 +91,7 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         const auto& new_inner = get_internals( m_outer->value_ref() ).get_node_ptr();
         if( new_inner != m_inner )
@@ -103,13 +103,14 @@ public:
             this->detach_from( old_inner->get_node_id() );
             this->attach_to( new_inner->get_node_id() );
 
-            return update_result::shifted;
+            return core::update_result::shifted;
         }
 
         this->get_events().insert(
             this->get_events().end(), m_inner->get_events().begin(), m_inner->get_events().end() );
 
-        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? core::update_result::changed
+                                           : core::update_result::unchanged;
     }
 
 private:

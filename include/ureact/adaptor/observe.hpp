@@ -139,7 +139,7 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         if( m_subject.is_valid() )
         {
@@ -150,7 +150,7 @@ public:
                 detach_observer();
         }
 
-        return update_result::unchanged;
+        return core::update_result::unchanged;
     }
 
 private:
@@ -188,7 +188,7 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         if( m_subject.is_valid() )
         {
@@ -208,7 +208,7 @@ public:
             }
         }
 
-        return update_result::unchanged;
+        return core::update_result::unchanged;
     }
 
 private:

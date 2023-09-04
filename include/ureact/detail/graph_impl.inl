@@ -307,8 +307,6 @@ UREACT_FUNC void react_graph_impl::schedule_successors( node_data& parentNode )
 
 UREACT_FUNC void react_graph_impl::propagate_node_change( const node_id nodeId )
 {
-    using update_result = core::update_result;
-
     node_data& node = m_node_data[nodeId];
     if( std::shared_ptr<reactive_node_interface> nodePtr = node.node_ptr.lock() )
     {
@@ -320,16 +318,16 @@ UREACT_FUNC void react_graph_impl::propagate_node_change( const node_id nodeId )
             return;
         }
 
-        const update_result result = nodePtr->update();
+        const core::update_result result = nodePtr->update();
 
         // Topology changed?
-        if( result == update_result::shifted )
+        if( result == core::update_result::shifted )
         {
             re_schedule_node( nodeId );
             return;
         }
 
-        if( result == update_result::changed )
+        if( result == core::update_result::changed )
         {
             m_changed_nodes.add( nodeId );
             schedule_successors( node );

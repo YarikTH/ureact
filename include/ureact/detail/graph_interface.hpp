@@ -11,7 +11,6 @@
 #define UREACT_DETAIL_GRAPH_INTERFACE_HPP
 
 #include <cstddef>
-#include <vector>
 
 #include <ureact/detail/defines.hpp>
 
@@ -58,25 +57,6 @@ private:
     value_type m_id = -1;
 };
 
-class node_id_vector
-{
-public:
-    using value_type = node_id;
-    using container_type = std::vector<value_type>;
-    using iterator = container_type::iterator;
-
-    void add( node_id id );
-    void remove( node_id id );
-    void clear();
-    UREACT_WARN_UNUSED_RESULT bool empty() const;
-
-    UREACT_WARN_UNUSED_RESULT iterator begin();
-    UREACT_WARN_UNUSED_RESULT iterator end();
-
-private:
-    container_type m_data;
-};
-
 enum class update_result
 {
     unchanged,
@@ -105,9 +85,5 @@ struct observer_interface
 } // namespace detail
 
 UREACT_END_NAMESPACE
-
-#if UREACT_HEADER_ONLY
-#    include <ureact/detail/graph_interface.inl>
-#endif
 
 #endif //UREACT_DETAIL_GRAPH_INTERFACE_HPP

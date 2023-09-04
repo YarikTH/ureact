@@ -34,7 +34,7 @@ UREACT_FUNC const std::shared_ptr<observer_node>& observer_internals::get_node_p
     return m_node;
 }
 
-UREACT_FUNC node_id observer_internals::get_node_id() const
+UREACT_FUNC core::node_id observer_internals::get_node_id() const
 {
     return m_node->get_node_id();
 }

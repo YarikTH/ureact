@@ -33,7 +33,7 @@ public:
     UREACT_WARN_UNUSED_RESULT std::shared_ptr<observer_node>& get_node_ptr();
     UREACT_WARN_UNUSED_RESULT const std::shared_ptr<observer_node>& get_node_ptr() const;
 
-    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const;
+    UREACT_WARN_UNUSED_RESULT core::node_id get_node_id() const;
 
 protected:
     UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const;

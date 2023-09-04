@@ -95,12 +95,12 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         const auto& src_events = get_internals( m_source ).get_events();
 
         if( src_events.empty() )
-            return update_result::unchanged;
+            return core::update_result::unchanged;
 
         if constexpr( std::is_invocable_r_v<S, F, event_range<E>, S, Deps...> )
         {
@@ -127,7 +127,7 @@ public:
                 m_deps.data );
 
             // Always assume change
-            return update_result::changed;
+            return core::update_result::changed;
         }
         else
         {

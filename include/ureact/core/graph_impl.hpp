@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_GRAPH_IMPL_HPP
-#define UREACT_DETAIL_GRAPH_IMPL_HPP
+#ifndef UREACT_CORE_GRAPH_IMPL_HPP
+#define UREACT_CORE_GRAPH_IMPL_HPP
 
 #include <memory>
 
@@ -17,7 +17,7 @@
 
 UREACT_BEGIN_NAMESPACE
 
-namespace detail
+namespace core
 {
 
 #if !defined( NDEBUG )
@@ -88,7 +88,7 @@ struct react_graph
 
 UREACT_API std::shared_ptr<react_graph> make_react_graph();
 
-} // namespace detail
+} // namespace core
 
 UREACT_END_NAMESPACE
 
@@ -96,4 +96,4 @@ UREACT_END_NAMESPACE
 #    include <ureact/detail/graph_impl.inl>
 #endif
 
-#endif // UREACT_DETAIL_GRAPH_IMPL_HPP
+#endif // UREACT_CORE_GRAPH_IMPL_HPP

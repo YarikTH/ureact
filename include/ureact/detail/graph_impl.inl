@@ -15,10 +15,10 @@
 #include <memory>
 #include <vector>
 
+#include <ureact/core/graph_impl.hpp>
+#include <ureact/core/graph_interface.hpp>
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_impl.hpp>
-#include <ureact/core/graph_interface.hpp>
 #include <ureact/detail/node_id_vector.hpp>
 #include <ureact/detail/slot_map.hpp>
 
@@ -27,7 +27,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-class react_graph_impl : public react_graph
+class react_graph_impl : public core::react_graph
 {
 #if !defined( NDEBUG )
     bool m_is_locked = false;
@@ -50,6 +50,9 @@ class react_graph_impl : public react_graph
     }
 #endif
 public:
+    using node_id = core::node_id;
+    using reactive_node_interface = core::reactive_node_interface;
+
     react_graph_impl() = default;
     ~react_graph_impl() override;
 
@@ -389,12 +392,17 @@ UREACT_FUNC bool react_graph_impl::topological_queue::fetch_next()
     return !m_next_data.empty();
 }
 
+} // namespace detail
+
+namespace core
+{
+
 UREACT_FUNC std::shared_ptr<react_graph> make_react_graph()
 {
-    return std::make_shared<react_graph_impl>();
+    return std::make_shared<detail::react_graph_impl>();
 }
 
-} // namespace detail
+} // namespace core
 
 UREACT_END_NAMESPACE
 

@@ -12,8 +12,8 @@
 
 #include <memory>
 
+#include <ureact/core/graph_impl.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_impl.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -23,13 +23,14 @@ namespace detail
 class UREACT_API context_internals
 {
 public:
-    explicit context_internals( std::shared_ptr<react_graph> graph = make_react_graph() );
+    explicit context_internals(
+        std::shared_ptr<core::react_graph> graph = core::make_react_graph() );
 
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph();
-    UREACT_WARN_UNUSED_RESULT const react_graph& get_graph() const;
+    UREACT_WARN_UNUSED_RESULT core::react_graph& get_graph();
+    UREACT_WARN_UNUSED_RESULT const core::react_graph& get_graph() const;
 
 private:
-    std::shared_ptr<react_graph> m_graph_ptr;
+    std::shared_ptr<core::react_graph> m_graph_ptr;
 };
 
 } // namespace detail
@@ -102,7 +103,7 @@ private:
     /*!
      * @brief Construct @ref context from given react_graph
      */
-    explicit context( std::shared_ptr<detail::react_graph> graph );
+    explicit context( std::shared_ptr<core::react_graph> graph );
 };
 
 UREACT_END_NAMESPACE

@@ -13,8 +13,8 @@
 #include <cassert>
 
 #include <ureact/context.hpp>
+#include <ureact/core/graph_impl.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_impl.hpp>
 #include <ureact/transaction.hpp>
 
 UREACT_BEGIN_NAMESPACE

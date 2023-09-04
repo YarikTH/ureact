@@ -7,14 +7,14 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_GRAPH_INTERFACE_INL
-#define UREACT_DETAIL_GRAPH_INTERFACE_INL
+#ifndef UREACT_DETAIL_NODE_ID_VECTOR_INL
+#define UREACT_DETAIL_NODE_ID_VECTOR_INL
 
 #include <cassert>
 
 #include <ureact/detail/algorithm.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/graph_interface.hpp>
+#include <ureact/detail/node_id_vector.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -66,4 +66,4 @@ UREACT_FUNC node_id_vector::iterator node_id_vector::end()
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_DETAIL_GRAPH_INTERFACE_INL
+#endif //UREACT_DETAIL_NODE_ID_VECTOR_INL

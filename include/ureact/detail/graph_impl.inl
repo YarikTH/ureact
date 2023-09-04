@@ -19,6 +19,7 @@
 #include <ureact/detail/defines.hpp>
 #include <ureact/detail/graph_impl.hpp>
 #include <ureact/detail/graph_interface.hpp>
+#include <ureact/detail/node_id_vector.hpp>
 #include <ureact/detail/slot_map.hpp>
 
 UREACT_BEGIN_NAMESPACE

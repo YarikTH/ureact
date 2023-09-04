@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/detail/adaptor.hpp"
+#include "ureact/core/adaptor.hpp"
 
 #include "catch2_extra.hpp"
 #include "ureact/adaptor/collect.hpp"

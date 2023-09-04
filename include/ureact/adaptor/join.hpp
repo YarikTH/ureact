@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct JoinClosure : AdaptorClosure
+struct JoinClosure : core::adaptor_closure
 {
     /*!
 	 * @brief Emits the sequence obtained from flattening received event value

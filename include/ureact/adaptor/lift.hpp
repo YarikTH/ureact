@@ -13,7 +13,7 @@
 #include <cassert>
 #include <functional>
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/deduce_result_type.hpp>
 #include <ureact/detail/reactive_op_base.hpp>
 #include <ureact/detail/temp_signal.hpp>
@@ -93,7 +93,7 @@ struct unary_plus
 };
 
 template <typename SIn = void>
-struct LiftAdaptor : Adaptor
+struct LiftAdaptor : core::adaptor
 {
 
     /*!

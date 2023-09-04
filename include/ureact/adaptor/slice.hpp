@@ -22,7 +22,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct SliceAdaptor : Adaptor
+struct SliceAdaptor : core::adaptor
 {
     /*!
 	 * @brief Keeps given range (begin through end-1) of elements from the source stream

@@ -12,7 +12,7 @@
 
 #include <ureact/adaptor/flatten.hpp>
 #include <ureact/adaptor/lift.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -48,7 +48,7 @@ struct decay_input<member_var_signal<Owner, S>>
 template <typename T>
 using decay_input_t = typename decay_input<T>::type;
 
-struct ReactiveRefAdaptor : Adaptor
+struct ReactiveRefAdaptor : core::adaptor
 {
     /*!
 	 * @brief Adaptor to flatten public signal attribute of class pointed be reference

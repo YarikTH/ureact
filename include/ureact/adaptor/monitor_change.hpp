@@ -12,14 +12,14 @@
 
 #include <ureact/adaptor/monitor.hpp>
 #include <ureact/adaptor/transform.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct MonitorChangeClosure : AdaptorClosure
+struct MonitorChangeClosure : core::adaptor_closure
 {
     /*!
 	 * @brief Emits pairs of value changes of signal as events

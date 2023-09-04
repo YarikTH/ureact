@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/events.hpp>
 #include <ureact/utility/event_emitter.hpp>
@@ -73,7 +73,7 @@ private:
 };
 
 template <typename OutE>
-struct ProcessAdaptor : Adaptor
+struct ProcessAdaptor : core::adaptor
 {
     /*!
 	 * @brief Create a new event stream by batch processing events from other stream

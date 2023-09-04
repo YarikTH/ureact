@@ -13,14 +13,14 @@
 #include <ureact/adaptor/filter.hpp>
 #include <ureact/adaptor/monitor.hpp>
 #include <ureact/adaptor/unify.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct ChangedToAdaptor : Adaptor
+struct ChangedToAdaptor : core::adaptor
 {
     template <typename V, typename S = std::decay_t<V>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target, V&& value ) const

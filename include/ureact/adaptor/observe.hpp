@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/detail/observer_node.hpp>
 #include <ureact/observer.hpp>
@@ -296,7 +296,7 @@ auto observe_events_impl(
         context, subject, std::forward<InF>( func ), dep_pack );
 }
 
-struct ObserveAdaptor : Adaptor
+struct ObserveAdaptor : core::adaptor
 {
     /*!
 	 * @brief Create observer for signal

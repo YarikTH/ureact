@@ -11,7 +11,7 @@
 #define UREACT_ADAPTOR_COLLECT_HPP
 
 #include <ureact/adaptor/fold.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/container_type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -20,7 +20,7 @@ namespace detail
 {
 
 template <template <typename...> class ContT>
-struct CollectClosure : AdaptorClosure
+struct CollectClosure : core::adaptor_closure
 {
     /*!
 	 * @brief Collects received events into signal<ContT<E>>

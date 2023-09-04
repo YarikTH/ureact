@@ -14,14 +14,14 @@
 #include <type_traits>
 
 #include <ureact/adaptor/filter.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct StrideAdaptor : Adaptor
+struct StrideAdaptor : core::adaptor
 {
     /*!
 	 * @brief Advances N elements from the source stream at a time

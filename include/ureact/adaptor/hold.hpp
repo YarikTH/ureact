@@ -11,14 +11,14 @@
 #define UREACT_ADAPTOR_HOLD_HPP
 
 #include <ureact/adaptor/fold.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct HoldAdaptor : Adaptor
+struct HoldAdaptor : core::adaptor
 {
     /*!
 	 * @brief Holds the most recent event in a signal

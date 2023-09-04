@@ -10,7 +10,7 @@
 #ifndef UREACT_ADAPTOR_MERGE_HPP
 #define UREACT_ADAPTOR_MERGE_HPP
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/events.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -56,7 +56,7 @@ private:
 };
 
 template <typename EIn = void>
-struct MergeAdaptor : Adaptor
+struct MergeAdaptor : core::adaptor
 {
     /// TODO: rewrite to something more sane. Unfortunately conditional_t doesn't work
     template <typename... Sources>

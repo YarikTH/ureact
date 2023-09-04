@@ -13,7 +13,7 @@
 #include <memory>
 
 #include <ureact/context.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/node_base.hpp>
 #include <ureact/utility/type_traits.hpp>
 
@@ -117,7 +117,7 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
-struct FlattenClosure : AdaptorClosure
+struct FlattenClosure : core::adaptor_closure
 {
     /*!
 	 * @brief Create a new event stream by flattening a signal

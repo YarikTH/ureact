@@ -11,14 +11,14 @@
 #define UREACT_ADAPTOR_PULSE_HPP
 
 #include <ureact/adaptor/process.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct PulseAdaptor : Adaptor
+struct PulseAdaptor : core::adaptor
 {
     /*!
 	 * @brief Emits the value of a target signal when an event is received

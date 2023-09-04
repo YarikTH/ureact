@@ -14,7 +14,7 @@
 #include <type_traits>
 
 #include <ureact/adaptor/filter.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -67,7 +67,7 @@ private:
 };
 
 template <typename Derived>
-struct TakeDropAdaptorBase : Adaptor
+struct TakeDropAdaptorBase : core::adaptor
 {
     template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const

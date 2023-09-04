@@ -10,7 +10,7 @@
 #ifndef UREACT_ADAPTOR_ZIP_TRANSFORM_HPP
 #define UREACT_ADAPTOR_ZIP_TRANSFORM_HPP
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/zip_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct ZipTransformAdaptor : Adaptor
+struct ZipTransformAdaptor : core::adaptor
 {
     /*!
 	 * @brief Emit an invoke result for func(e1,…,eN) for each complete set of values for sources 1...N

@@ -11,14 +11,14 @@
 #define UREACT_ADAPTOR_SNAPSHOT_HPP
 
 #include <ureact/adaptor/fold.hpp>
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
 {
 
-struct SnapshotAdaptor : Adaptor
+struct SnapshotAdaptor : core::adaptor
 {
     /*!
 	 * @brief Sets the signal value to the value of a target signal when an event is received

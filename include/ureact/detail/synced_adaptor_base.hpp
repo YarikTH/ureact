@@ -10,7 +10,7 @@
 #ifndef UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 #define UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/utility/signal_pack.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <typename Derived>
-struct SyncedAdaptorBase : Adaptor
+struct SyncedAdaptorBase : core::adaptor
 {
     template <typename E, typename F>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, F&& func ) const

@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/utility/event_range.hpp>
@@ -141,7 +141,7 @@ private:
     signal_pack<Deps...> m_deps;
 };
 
-struct FoldAdaptor : Adaptor
+struct FoldAdaptor : core::adaptor
 {
     /*!
 	 * @brief Folds values from an event stream into a signal

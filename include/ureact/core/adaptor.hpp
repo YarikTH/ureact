@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_ADAPTOR_HPP
-#define UREACT_DETAIL_ADAPTOR_HPP
+#ifndef UREACT_CORE_ADAPTOR_HPP
+#define UREACT_CORE_ADAPTOR_HPP
 
 #include <tuple>
 #include <utility>
@@ -18,20 +18,20 @@
 
 UREACT_BEGIN_NAMESPACE
 
-namespace detail
+namespace core
 {
 
 // Forward
-struct AdaptorClosure;
+struct adaptor_closure;
 
 template <typename Lhs, typename Rhs>
-class Pipe;
+class pipe;
 
 /*!
  * @brief Return if type is closure
  */
 template <typename T>
-struct is_closure : std::is_base_of<AdaptorClosure, remove_cvref_t<T>>
+struct is_closure : std::is_base_of<adaptor_closure, detail::remove_cvref_t<T>>
 {};
 
 /*!
@@ -59,7 +59,7 @@ inline constexpr bool is_closure_v = is_closure<T>::value;
  *
  * @note similar to https://en.cppreference.com/w/cpp/ranges#Range_adaptor_closure_objects
  */
-struct AdaptorClosure
+struct adaptor_closure
 {
     /// chain two closures to make another one
     template <typename Lhs,
@@ -68,7 +68,7 @@ struct AdaptorClosure
         class = std::enable_if_t<is_closure_v<Rhs>>>
     UREACT_WARN_UNUSED_RESULT friend constexpr auto operator|( Lhs lhs, Rhs rhs )
     {
-        return Pipe<Lhs, Rhs>{ std::move( lhs ), std::move( rhs ) };
+        return pipe<Lhs, Rhs>{ std::move( lhs ), std::move( rhs ) };
     }
 
     /// apply arg to given closure and return its result
@@ -85,10 +85,10 @@ struct AdaptorClosure
 
 /// Composition of the adaptor closures Lhs and Rhs.
 template <typename Lhs, typename Rhs>
-class Pipe : public AdaptorClosure
+class pipe : public adaptor_closure
 {
 public:
-    constexpr Pipe( Lhs lhs, Rhs rhs )
+    constexpr pipe( Lhs lhs, Rhs rhs )
         : m_lhs( std::move( lhs ) )
         , m_rhs( std::move( rhs ) )
     {}
@@ -115,10 +115,10 @@ private:
 
 /// Partial application of the adaptor
 template <typename Adaptor, typename... Args>
-class Partial : public AdaptorClosure
+class partial : public adaptor_closure
 {
 public:
-    constexpr explicit Partial( Args... args )
+    constexpr explicit partial( Args... args )
         : m_args( std::move( args )... )
     {}
 
@@ -154,18 +154,18 @@ private:
  *  
  *  Equivalent of "Range adaptors" from std ranges library
  */
-struct Adaptor
+struct adaptor
 {
 protected:
     template <typename Derived, typename... Args>
     static constexpr auto make_partial( Args&&... args )
     {
-        return Partial<Derived, std::decay_t<Args>...>{ std::forward<Args>( args )... };
+        return partial<Derived, std::decay_t<Args>...>{ std::forward<Args>( args )... };
     }
 };
 
-} // namespace detail
+} // namespace core
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_ADAPTOR_HPP
+#endif // UREACT_CORE_ADAPTOR_HPP

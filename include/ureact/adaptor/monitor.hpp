@@ -10,7 +10,7 @@
 #ifndef UREACT_ADAPTOR_MONITOR_HPP
 #define UREACT_ADAPTOR_MONITOR_HPP
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/events.hpp>
 #include <ureact/signal.hpp>
 
@@ -46,7 +46,7 @@ private:
     signal<S> m_target;
 };
 
-struct MonitorClosure : AdaptorClosure
+struct MonitorClosure : core::adaptor_closure
 {
     /*!
 	 * @brief Emits value changes of signal as events

@@ -78,7 +78,7 @@ private:
     observer m_observer;
 };
 
-struct TapAdaptor : Adaptor
+struct TapAdaptor : core::adaptor
 {
     /*!
 	 * @brief Create tapped copy for observed signal

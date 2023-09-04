@@ -10,7 +10,7 @@
 #ifndef UREACT_ADAPTOR_ADJACENT_FILTER_HPP
 #define UREACT_ADAPTOR_ADJACENT_FILTER_HPP
 
-#include <ureact/detail/adaptor.hpp>
+#include <ureact/core/adaptor.hpp>
 #include <ureact/detail/adjacent_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <size_t N>
-struct AdjacentFilterAdaptor : Adaptor
+struct AdjacentFilterAdaptor : core::adaptor
 {
     static_assert( N >= 1 );
 

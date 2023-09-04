@@ -34,14 +34,15 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         std::apply(
             [this](
                 const events<Values>&... sources ) { ( this->copy_events_from( sources ), ... ); },
             m_sources );
 
-        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? core::update_result::changed
+                                           : core::update_result::unchanged;
     }
 
 private:

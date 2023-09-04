@@ -35,11 +35,11 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         this->get_events().push_back( get_internals( m_target ).get_value() );
 
-        return update_result::changed;
+        return core::update_result::changed;
     }
 
 private:

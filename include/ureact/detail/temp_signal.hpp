@@ -41,7 +41,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         return this->try_change_value( evaluate() );
     }

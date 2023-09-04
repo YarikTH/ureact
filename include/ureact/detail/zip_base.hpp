@@ -67,14 +67,15 @@ public:
         this->detach_from_all();
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         fetch_buffers();
 
         while( are_all_slots_ready() )
             pop_slots_to_emit_event();
 
-        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? core::update_result::changed
+                                           : core::update_result::unchanged;
     }
 
 private:

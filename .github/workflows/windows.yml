@@ -7,6 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        label: [ "" ]
         os: [ windows-2019, windows-2022 ]
         build_type: [ Debug, Release ]
         architecture: [ Win32, x64 ]
@@ -16,6 +17,12 @@ jobs:
             cmake_generator: "Visual Studio 16 2019"
           - os: windows-2022
             cmake_generator: "Visual Studio 17 2022"
+
+          - label: clang12
+            cxx: C:/Program Files/LLVM/bin/clang++.exe
+            install: curl -fsSL -o LLVM12.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/LLVM-12.0.0-win64.exe ; 7z x LLVM12.exe -y -o"C:/Program Files/LLVM"
+            cmake_generator: "MinGW Makefiles"
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -33,6 +40,7 @@ jobs:
         run: cmake --warn-uninitialized
           -S .
           -B ${{ runner.workspace }}/build
+          -D CMAKE_BUILD_TYPE=${{matrix.build_type}}
           -D CMAKE_CXX_STANDARD=${{ matrix.std }}
           -A ${{ matrix.architecture }}
           -G "${{ matrix.cmake_generator }}"
@@ -51,43 +59,50 @@ jobs:
     runs-on: windows-2019
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+
       - name: Install Clang
         run: curl -fsSL -o LLVM12.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/LLVM-12.0.0-win64.exe ; 7z x LLVM12.exe -y -o"C:/Program Files/LLVM"
+
       - name: Configure
-        run: cmake -S . \
-          -B ${{runner.workspace}}/build \
-          --warn-uninitialized \
-          -D CMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" \
-          -D CMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" \
-          -D CMAKE_BUILD_TYPE=Release \
-          -D UREACT_PEDANTIC:BOOL=y \
-          -D UREACT_WERROR:BOOL=y \
-          -G"MinGW Makefiles"
+        env:
+          CXX: ${{ matrix.cxx }}
+          CXXFLAGS: ${{ matrix.cxxflags }}
+        run: cmake -S .
+          -B ${{ runner.workspace }}/build
+          --warn-uninitialized
+          -D CMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe"
+          -D CMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe"
+          -D CMAKE_BUILD_TYPE=Release
+          -D UREACT_PEDANTIC:BOOL=y
+          -D UREACT_WERROR:BOOL=y
+          -G "MinGW Makefiles"
+
       - name: Build
-        working-directory: ${{runner.workspace}}/build
-        run: cmake --build . --parallel 10
+        working-directory: ${{ runner.workspace }}/build
+        run: cmake --build . --parallel 10 --config ${{ matrix.build_type }}
+
       - name: Test
-        working-directory: ${{runner.workspace}}/build
-        run: ctest -j 10 -C Release --output-on-failure
+        working-directory: ${{ runner.workspace }}/build
+        run: ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
   clang-cl-10:
     runs-on: windows-2019
     strategy:
       matrix:
-        arch: [Win32, x64]
+        arch: [ Win32, x64 ]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Configure
         run: cmake -S . \
-          -B ${{runner.workspace}}/build \
+          -B ${{ runner.workspace }}/build \
           --warn-uninitialized \
           -G "Visual Studio 16 2019" \
           -A ${{matrix.arch}} \
           -T ClangCL
       - name: Build
-        working-directory: ${{runner.workspace}}/build
+        working-directory: ${{ runner.workspace }}/build
         run: cmake --build . --config Release --parallel 10
       - name: Test
-        working-directory: ${{runner.workspace}}/build
+        working-directory: ${{ runner.workspace }}/build
         run: ctest -j 10 -C Release --output-on-failure

@@ -126,7 +126,7 @@ template <size_t n, typename... T>
 typename std::enable_if<( n < sizeof...( T ) )>::type print_tuple(
     std::ostream& os, const std::tuple<T...>& tup )
 {
-    if( n != 0 )
+    if constexpr( n != 0 )
         os << ", ";
     os << std::get<n>( tup );
     print_tuple<n + 1>( os, tup );

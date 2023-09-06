@@ -282,7 +282,7 @@ endfunction()
 function(set_msvc_warning_flags result_var_name)
     set(MSVC_WARNING_OPTIONS)
 
-    list(APPEND MSVC_WARNING_OPTIONS /W3)
+    list(APPEND MSVC_WARNING_OPTIONS /W4)
 
     set(${result_var_name} "${MSVC_WARNING_OPTIONS}" PARENT_SCOPE)
 endfunction()

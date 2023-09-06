@@ -33,7 +33,7 @@ struct SnapshotAdaptor : Adaptor
         return fold( trigger,
             target.get(),
             with( target ),
-            []( event_range<E> range, const S&, const S& value ) { //
+            []( event_range<E>, const S&, const S& value ) { //
                 return value;
             } );
     }

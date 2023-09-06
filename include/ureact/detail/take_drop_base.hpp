@@ -50,7 +50,7 @@ public:
     // checkable in boolean context
     explicit operator bool() const
     {
-        return m_value;
+        return m_value != 0;
     }
 
 private:

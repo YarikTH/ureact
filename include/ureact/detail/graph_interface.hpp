@@ -53,8 +53,8 @@ public:
     }
 
 private:
-    context_id_type m_context_id = -1;
-    value_type m_id = -1;
+    context_id_type m_context_id = context_id_type( -1 );
+    value_type m_id = value_type( -1 );
 };
 
 enum class update_result

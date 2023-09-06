@@ -258,9 +258,9 @@ private:
             return m_data[--m_size];
         }
 
-        void shake( const size_type elements )
+        void shake( const size_type elements_amount )
         {
-            const auto total_size = [&]() { return elements + m_size; };
+            const auto total_size = [&]() { return elements_amount + m_size; };
 
             while( m_size > 0 && back_() == total_size() - 1 )
             {

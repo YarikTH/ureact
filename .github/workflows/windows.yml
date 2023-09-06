@@ -13,6 +13,11 @@ jobs:
         architecture: [ Win32, x64 ]
         toolset_name: [ "", ClangCL ]
         std: [ 17, 20 ]
+
+        exclude:
+          - toolset_name: ClangCL
+            build_type: Debug
+
         include:
           - os: windows-2019
             cmake_generator: "Visual Studio 16 2019"

@@ -42,11 +42,11 @@ jobs:
         env:
           CXX: ${{ matrix.cxx }}
           CXXFLAGS: ${{ matrix.cxxflags }}
+          CMAKE_GENERATOR_TOOLSET: ${{ matrix.toolset_name }}
         run: cmake --warn-uninitialized
           -S .
           -B "${{ runner.workspace }}/build"
           -A "${{ matrix.architecture }}"
-          -T "${{ matrix.toolset_name }}"
           -D CMAKE_CXX_STANDARD=${{ matrix.std }}
           -G "${{ matrix.cmake_generator }}"
           -D UREACT_PEDANTIC:BOOL=y

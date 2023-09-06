@@ -58,7 +58,7 @@ struct MonitorClosure : core::adaptor_closure
         -> events<S>
     {
         const context& context = target.get_context();
-        return detail::create_wrapped_node<events<S>, monitor_node<S>>( context, target );
+        return core::create_wrapped_node<events<S>, monitor_node<S>>( context, target );
     }
 };
 

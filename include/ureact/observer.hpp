@@ -12,7 +12,7 @@
 
 #include <utility>
 
-#include <ureact/detail/node_base.hpp>
+#include <ureact/core/node_base.hpp>
 #include <ureact/detail/observer_node.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -36,7 +36,7 @@ public:
     UREACT_WARN_UNUSED_RESULT core::node_id get_node_id() const;
 
 protected:
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const;
+    UREACT_WARN_UNUSED_RESULT core::react_graph& get_graph() const;
 
     /// Pointer to owned node
     std::shared_ptr<observer_node> m_node;
@@ -95,7 +95,7 @@ protected:
     explicit observer( std::shared_ptr<detail::observer_node> node );
 
     template <typename Ret, typename Node, typename... Args>
-    friend Ret detail::create_wrapped_node( Args&&... args );
+    friend Ret core::create_wrapped_node( Args&&... args );
 };
 
 UREACT_END_NAMESPACE

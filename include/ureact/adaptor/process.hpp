@@ -97,7 +97,7 @@ struct ProcessAdaptor : core::adaptor
 
         const context& context = source.get_context();
 
-        return detail::create_wrapped_node<events<OutE>,
+        return core::create_wrapped_node<events<OutE>,
             event_processing_node<InE, OutE, F, Deps...>>(
             context, source, std::forward<Op>( op ), dep_pack );
     }

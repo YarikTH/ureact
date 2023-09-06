@@ -99,7 +99,7 @@ struct TapAdaptor : core::adaptor
         F&& func,
         observe_policy policy = observe_policy::skip_current ) const
     {
-        return create_wrapped_node<signal<S>, signal_tap_node<S>>( subject.get_context(),
+        return core::create_wrapped_node<signal<S>, signal_tap_node<S>>( subject.get_context(),
             subject,
             observe_signal_impl( subject, std::forward<F>( func ), policy ) );
     }
@@ -127,7 +127,7 @@ struct TapAdaptor : core::adaptor
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()(
         const events<E>& subject, const signal_pack<Deps...>& dep_pack, F&& func ) const
     {
-        return create_wrapped_node<events<E>, event_tap_node<E>>( subject.get_context(),
+        return core::create_wrapped_node<events<E>, event_tap_node<E>>( subject.get_context(),
             subject,
             observe_events_impl( subject, dep_pack, std::forward<F>( func ) ) );
     }

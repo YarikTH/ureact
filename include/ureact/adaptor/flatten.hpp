@@ -14,7 +14,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/core/adaptor.hpp>
-#include <ureact/detail/node_base.hpp>
+#include <ureact/core/node_base.hpp>
 #include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -143,7 +143,7 @@ struct FlattenClosure : core::adaptor_closure
         static_assert( !std::is_same_v<Node, signature_mismatches>,
             "flatten: Passed signal does not match any of the supported signatures" );
 
-        return detail::create_wrapped_node<InnerS, Node>( context,
+        return core::create_wrapped_node<InnerS, Node>( context,
             get_internals( outer ).get_node_ptr(),
             get_internals( outer.get() ).get_node_ptr() );
     }

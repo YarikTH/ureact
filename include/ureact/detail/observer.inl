@@ -39,7 +39,7 @@ UREACT_FUNC core::node_id observer_internals::get_node_id() const
     return m_node->get_node_id();
 }
 
-UREACT_FUNC react_graph& observer_internals::get_graph() const
+UREACT_FUNC core::react_graph& observer_internals::get_graph() const
 {
     assert( m_node != nullptr && "Should be attached to a node" );
     return get_internals( m_node->get_context() ).get_graph();

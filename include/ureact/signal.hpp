@@ -13,8 +13,8 @@
 #include <cassert>
 
 #include <ureact/context.hpp>
+#include <ureact/core/node_base.hpp>
 #include <ureact/detail/has_changed.hpp>
-#include <ureact/detail/node_base.hpp>
 #include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -23,7 +23,7 @@ namespace detail
 {
 
 template <typename S>
-class signal_node : public node_base
+class signal_node : public core::node_base
 {
 public:
     explicit signal_node( const context& context )
@@ -43,14 +43,14 @@ public:
 
     // Assign a new value if is differed and return if updated
     template <class T>
-    UREACT_WARN_UNUSED_RESULT update_result try_change_value( T&& new_value )
+    UREACT_WARN_UNUSED_RESULT core::update_result try_change_value( T&& new_value )
     {
         if( has_changed( this->m_value, new_value ) )
         {
             this->m_value = std::forward<T>( new_value );
-            return update_result::changed;
+            return core::update_result::changed;
         }
-        return update_result::unchanged;
+        return core::update_result::unchanged;
     }
 
 protected:
@@ -99,7 +99,7 @@ public:
         }
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
         if( m_is_input_added )
         {
@@ -112,10 +112,10 @@ public:
         {
             m_is_input_modified = false;
 
-            return update_result::changed;
+            return core::update_result::changed;
         }
 
-        return update_result::unchanged;
+        return core::update_result::unchanged;
     }
 
 private:
@@ -145,7 +145,7 @@ public:
         return m_node;
     }
 
-    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    UREACT_WARN_UNUSED_RESULT core::node_id get_node_id() const
     {
         assert( m_node != nullptr && "Should be attached to a node" );
         return m_node->get_node_id();
@@ -165,7 +165,7 @@ public:
     }
 
 protected:
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    UREACT_WARN_UNUSED_RESULT core::react_graph& get_graph() const
     {
         assert( m_node != nullptr && "Should be attached to a node" );
         return get_internals( m_node->get_context() ).get_graph();
@@ -174,7 +174,7 @@ protected:
     template <typename T>
     void set_value( T&& new_value ) const
     {
-        react_graph& graph_ref = get_graph();
+        core::react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't set signal value from callback" );
 
         var_node<S>* node_ptr = get_var_node();
@@ -185,7 +185,7 @@ protected:
     template <typename F>
     void modify_value( const F& func ) const
     {
-        react_graph& graph_ref = get_graph();
+        core::react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't modify signal value from callback" );
 
         var_node<S>* node_ptr = get_var_node();
@@ -324,7 +324,7 @@ protected:
     {}
 
     template <typename Ret, typename Node, typename... Args>
-    friend Ret detail::create_wrapped_node( Args&&... args );
+    friend Ret core::create_wrapped_node( Args&&... args );
 
 private:
     /*!
@@ -477,7 +477,7 @@ protected:
     {}
 
     template <typename Ret, typename Node, typename... Args>
-    friend Ret detail::create_wrapped_node( Args&&... args );
+    friend Ret core::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -590,12 +590,12 @@ UREACT_WARN_UNUSED_RESULT auto make_var_impl( const context& context, V&& v )
                 S>;
         // clang-format on
 
-        return detail::create_wrapped_node<var_signal<S2>, var_node<S2>>(
+        return core::create_wrapped_node<var_signal<S2>, var_node<S2>>(
             context, std::forward<V>( v ) );
     }
     else
     {
-        return detail::create_wrapped_node<var_signal<S>, var_node<S>>(
+        return core::create_wrapped_node<var_signal<S>, var_node<S>>(
             context, std::forward<V>( v ) );
     }
 }

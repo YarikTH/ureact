@@ -30,7 +30,7 @@ struct AdjacentClosure : core::adaptor_closure
         using E = typename node_type::E;
 
         const context& context = source.get_context();
-        return detail::create_wrapped_node<events<E>, node_type>(
+        return core::create_wrapped_node<events<E>, node_type>(
             context, source, unit{}, signal_pack<>{} );
     }
 };

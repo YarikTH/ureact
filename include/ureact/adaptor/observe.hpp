@@ -249,7 +249,7 @@ auto observe_signal_impl(
     static_assert( !std::is_same_v<wrapper_t, signature_mismatches>,
         "observe: Passed function does not match any of the supported signatures" );
 
-    observer obs = create_wrapped_node<observer, signal_observer_node<S, wrapper_t>>(
+    observer obs = core::create_wrapped_node<observer, signal_observer_node<S, wrapper_t>>(
         subject.get_context(), subject, std::forward<InF>( func ) );
 
     // Call passed functor with current value, using direct call to signal_observer_node::update()
@@ -292,7 +292,7 @@ auto observe_events_impl(
 
     const context& context = subject.get_context();
 
-    return detail::create_wrapped_node<observer, events_observer_node<E, wrapper_t, Deps...>>(
+    return core::create_wrapped_node<observer, events_observer_node<E, wrapper_t, Deps...>>(
         context, subject, std::forward<InF>( func ), dep_pack );
 }
 

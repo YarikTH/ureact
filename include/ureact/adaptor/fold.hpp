@@ -201,7 +201,7 @@ struct FoldAdaptor : core::adaptor
 
         const context& context = events.get_context();
 
-        return detail::create_wrapped_node<signal<S>, Node>(
+        return core::create_wrapped_node<signal<S>, Node>(
             context, std::forward<V>( init ), events, std::forward<InF>( func ), dep_pack );
     }
 

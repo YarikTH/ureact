@@ -14,7 +14,7 @@
 #include <type_traits>
 
 #include <ureact/context.hpp>
-#include <ureact/detail/node_base.hpp>
+#include <ureact/core/node_base.hpp>
 #include <ureact/utility/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/utility/unit.hpp>
 
@@ -24,7 +24,7 @@ namespace detail
 {
 
 template <typename E>
-class event_stream_node : public node_base
+class event_stream_node : public core::node_base
 {
 public:
     using event_value_list = std::vector<E>;
@@ -68,9 +68,10 @@ public:
         this->get_events().push_back( std::forward<V>( v ) );
     }
 
-    UREACT_WARN_UNUSED_RESULT update_result update() override
+    UREACT_WARN_UNUSED_RESULT core::update_result update() override
     {
-        return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
+        return !this->get_events().empty() ? core::update_result::changed
+                                           : core::update_result::unchanged;
     }
 };
 
@@ -95,7 +96,7 @@ public:
         return m_node;
     }
 
-    UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
+    UREACT_WARN_UNUSED_RESULT core::node_id get_node_id() const
     {
         return m_node->get_node_id();
     }
@@ -117,7 +118,7 @@ private:
     }
 
 protected:
-    UREACT_WARN_UNUSED_RESULT react_graph& get_graph() const
+    UREACT_WARN_UNUSED_RESULT core::react_graph& get_graph() const
     {
         assert( m_node != nullptr && "Should be attached to a node" );
         return get_internals( m_node->get_context() ).get_graph();
@@ -126,7 +127,7 @@ protected:
     template <typename T>
     void emit_event( T&& e ) const
     {
-        react_graph& graph_ref = get_graph();
+        core::react_graph& graph_ref = get_graph();
         assert( !graph_ref.is_locked() && "Can't emit event from callback" );
 
         event_source_node<E>* node_ptr = get_event_source_node();
@@ -224,7 +225,7 @@ protected:
     {}
 
     template <typename Ret, typename Node, typename... Args>
-    friend Ret detail::create_wrapped_node( Args&&... args );
+    friend Ret core::create_wrapped_node( Args&&... args );
 
 private:
     /*!
@@ -377,7 +378,7 @@ protected:
     {}
 
     template <typename Ret, typename Node, typename... Args>
-    friend Ret detail::create_wrapped_node( Args&&... args );
+    friend Ret core::create_wrapped_node( Args&&... args );
 };
 
 /*!
@@ -527,7 +528,7 @@ UREACT_WARN_UNUSED_RESULT auto make_source( const context& context ) -> event_so
 {
     assert(
         !get_internals( context ).get_graph().is_locked() && "Can't make source from callback" );
-    return detail::create_wrapped_node<event_source<E>, detail::event_source_node<E>>( context );
+    return core::create_wrapped_node<event_source<E>, detail::event_source_node<E>>( context );
 }
 
 /*!
@@ -543,7 +544,7 @@ template <typename E = unit>
 UREACT_WARN_UNUSED_RESULT auto make_never( const context& context ) -> events<E>
 {
     assert( !get_internals( context ).get_graph().is_locked() && "Can't make never from callback" );
-    return detail::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
+    return core::create_wrapped_node<events<E>, detail::event_source_node<E>>( context );
 }
 
 namespace default_context

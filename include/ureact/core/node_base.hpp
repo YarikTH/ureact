@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_NODE_BASE_HPP
-#define UREACT_DETAIL_NODE_BASE_HPP
+#ifndef UREACT_CORE_NODE_BASE_HPP
+#define UREACT_CORE_NODE_BASE_HPP
 
 #include <memory>
 #include <tuple>
@@ -22,6 +22,17 @@
 UREACT_BEGIN_NAMESPACE
 
 namespace detail
+{
+
+template <typename Node>
+class attach_functor;
+
+template <typename Node>
+class detach_functor;
+
+} // namespace detail
+
+namespace core
 {
 
 template <typename Node, typename... Args>
@@ -89,10 +100,10 @@ protected:
     }
 
     template <typename Node>
-    friend class attach_functor;
+    friend class detail::attach_functor;
 
     template <typename Node>
-    friend class detach_functor;
+    friend class detail::detach_functor;
 
 private:
     UREACT_MAKE_NONCOPYABLE( node_base );
@@ -101,15 +112,15 @@ private:
 
     node_id m_id;
 
-    node_id_vector m_parents;
+    detail::node_id_vector m_parents;
 };
 
-} // namespace detail
+} // namespace core
 
 UREACT_END_NAMESPACE
 
 #if UREACT_HEADER_ONLY
-#    include <ureact/detail/node_base.inl>
+#    include <ureact/core/node_base.inl>
 #endif
 
-#endif // UREACT_DETAIL_NODE_BASE_HPP
+#endif // UREACT_CORE_NODE_BASE_HPP

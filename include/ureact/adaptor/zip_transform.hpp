@@ -36,7 +36,7 @@ struct ZipTransformAdaptor : core::adaptor
         using E = typename node_type::E;
 
         const context& context = source1.get_context();
-        return detail::create_wrapped_node<events<E>, node_type>(
+        return core::create_wrapped_node<events<E>, node_type>(
             context, std::forward<F>( func ), source1, sources... );
     }
 };

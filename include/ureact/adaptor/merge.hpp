@@ -86,7 +86,7 @@ struct MergeAdaptor : core::adaptor
         static_assert( sizeof...( Sources ) >= 1, "merge: 2+ arguments are required" );
 
         const context& context = source1.get_context();
-        return detail::create_wrapped_node<events<E>, event_merge_node<E, Source, Sources...>>(
+        return core::create_wrapped_node<events<E>, event_merge_node<E, Source, Sources...>>(
             context, source1, sources... );
     }
 };

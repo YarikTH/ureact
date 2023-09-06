@@ -94,7 +94,7 @@ public:
      */
     template <typename... Args>
     explicit temp_signal( const context& context, Args&&... args )
-        : temp_signal::signal( detail::create_node<Node>( context, std::forward<Args>( args )... ) )
+        : temp_signal::signal( core::create_node<Node>( context, std::forward<Args>( args )... ) )
     {}
 
     /*!

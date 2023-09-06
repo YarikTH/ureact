@@ -7,17 +7,17 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_NODE_BASE_INL
-#define UREACT_DETAIL_NODE_BASE_INL
+#ifndef UREACT_CORE_NODE_BASE_INL
+#define UREACT_CORE_NODE_BASE_INL
 
 #include <cassert>
 
+#include <ureact/core/node_base.hpp>
 #include <ureact/detail/defines.hpp>
-#include <ureact/detail/node_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
-namespace detail
+namespace core
 {
 
 UREACT_FUNC node_base::node_base( context context )
@@ -62,8 +62,8 @@ UREACT_FUNC void node_base::detach_from_all()
     m_parents.clear();
 }
 
-} // namespace detail
+} // namespace core
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_DETAIL_NODE_BASE_INL
+#endif //UREACT_CORE_NODE_BASE_INL

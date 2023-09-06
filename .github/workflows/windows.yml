@@ -1,27 +1,51 @@
 name: "Windows"
-# based on https://github.com/nlohmann/json/blob/develop/.github/workflows/windows.yml
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
-  msvc2019:
-    runs-on: windows-2019
+  msvc:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-2019, windows-2022 ]
+        build_type: [ Debug, Release ]
+        architecture: [ Win32, x64 ]
+        std: [ 17, 20 ]
+        include:
+          - os: windows-2019
+            cmake_generator: "Visual Studio 16 2019"
+          - os: windows-2022
+            cmake_generator: "Visual Studio 17 2022"
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+
+      - name: Create Build Environment
+        run: |
+          ${{ matrix.install }}
+          cmake -E make_directory ${{ runner.workspace }}/build
+
       - name: Configure
-        run: cmake -S . \
-          -B ${{runner.workspace}}/build \
-          --warn-uninitialized \
-          -D UREACT_PEDANTIC:BOOL=y \
-          -D UREACT_WERROR:BOOL=y \
-          -G "Visual Studio 16 2019"
+        env:
+          CXX: ${{ matrix.cxx }}
+          CXXFLAGS: ${{ matrix.cxxflags }}
+        run: cmake --warn-uninitialized
+          -S .
+          -B ${{ runner.workspace }}/build
+          -D CMAKE_CXX_STANDARD=${{ matrix.std }}
+          -A ${{ matrix.architecture }}
+          -G "${{ matrix.cmake_generator }}"
+          -D UREACT_PEDANTIC:BOOL=y
+          -D UREACT_WERROR:BOOL=y
+
       - name: Build
-        working-directory: ${{runner.workspace}}/build
-        run: cmake --build . --parallel 10 --config Release
+        working-directory: ${{ runner.workspace }}/build
+        run: cmake --build . --parallel 10 --config ${{ matrix.build_type }}
+
       - name: Test
-        working-directory: ${{runner.workspace}}/build
-        run: ctest -j 10 -C Release --output-on-failure
+        working-directory: ${{ runner.workspace }}/build
+        run: ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
   clang12:
     runs-on: windows-2019

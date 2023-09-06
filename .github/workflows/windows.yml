@@ -38,7 +38,7 @@ jobs:
           cmake -E make_directory ${{ runner.workspace }}/build
 
       - name: Configure
-        if: matrix.cmake_generator != 'MinGW Makefiles'
+        if: contains(matrix.cmake_generator, 'Visual Studio')
         env:
           CXX: ${{ matrix.cxx }}
           CXXFLAGS: ${{ matrix.cxxflags }}
@@ -52,7 +52,7 @@ jobs:
           -D UREACT_WERROR:BOOL=y
 
       - name: Configure
-        if: matrix.cmake_generator == 'MinGW Makefiles'
+        if: !contains(matrix.cmake_generator, 'Visual Studio')
         env:
           CXX: ${{ matrix.cxx }}
           CXXFLAGS: ${{ matrix.cxxflags }}

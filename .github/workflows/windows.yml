@@ -8,19 +8,17 @@ jobs:
       fail-fast: false
       matrix:
         label: [ "" ]
-        os: [ windows-2019, windows-2022 ]
-        build_type: [ Debug, Release ]
-        architecture: [ Win32, x64 ]
+        os: [ windows-2022 ]
+        build_type: [ Release ]
+        architecture: [ x64 ]
         toolset_name: [ "", ClangCL ]
-        std: [ 17, 20 ]
+        std: [ 20 ]
 
         exclude:
           - toolset_name: ClangCL
             build_type: Debug
 
         include:
-          - os: windows-2019
-            cmake_generator: "Visual Studio 16 2019"
           - os: windows-2022
             cmake_generator: "Visual Studio 17 2022"
 

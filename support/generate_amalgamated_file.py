@@ -93,7 +93,8 @@ def formatted_file_header() -> str:
 def discover_hpp(where: Path) -> List[Path]:
     result: List[Path] = []
 
-    for root, _, filenames in os.walk(where):
+    for root, dirs, filenames in os.walk(where):
+        dirs[:] = [d for d in dirs if d != 'detail']
         for filename in [Path(f) for f in filenames]:
             if filename.suffix == '.hpp':
             # if filename.name in ['events.hpp']: # events fwd

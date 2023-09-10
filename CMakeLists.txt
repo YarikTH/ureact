@@ -39,22 +39,23 @@ if(NOT DEFINED UREACT_MASTER_PROJECT)
     set(UREACT_MASTER_PROJECT OFF)
     if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         set(UREACT_MASTER_PROJECT ON)
-        message(STATUS "CMake version: ${CMAKE_VERSION}")
     endif()
 endif()
 
 # Options that control generation of various targets.
-option(UREACT_PEDANTIC "Enable extra warnings and expensive tests." OFF)
+option(UREACT_PEDANTIC "Enable extra warnings and expensive tests." n)
 option(
     UREACT_WERROR
     "Halt the compilation with an error on compiler warnings."
-    OFF
+    n
 )
 option(UREACT_TEST "Generate the test target." ${UREACT_MASTER_PROJECT})
 option(UREACT_INSTALL "Generate install target." ${UREACT_MASTER_PROJECT})
 option(UREACT_СTEST "Generate the CTest targets for CI." n)
 
-message(STATUS "ureact version: ${UREACT_VERSION}${UREACT_VERSION_LABEL}")
+if(UREACT_MASTER_PROJECT)
+    message(STATUS "ureact version: ${UREACT_VERSION}${UREACT_VERSION_LABEL}")
+endif()
 
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -73,7 +74,12 @@ endif()
 if(UREACT_WERROR)
     set_werror_flag(UREACT_WARNING_OPTION)
 endif()
-message(STATUS "ureact compiler warning options: \"${UREACT_WARNING_OPTION}\"")
+if(UREACT_MASTER_PROJECT)
+    message(
+        STATUS
+        "ureact compiler warning options: \"${UREACT_WARNING_OPTION}\""
+    )
+endif()
 
 ### ureact
 add_library(ureact INTERFACE)

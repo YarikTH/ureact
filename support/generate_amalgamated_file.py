@@ -23,7 +23,7 @@ ureact_include_path = root_path.joinpath('include')
 output_header = root_path.joinpath(root_path, 'single_include', 'ureact', 'ureact_amalgamated.hpp')
 
 # Compiled regular expression to detect ureact self includes
-internal_include_parser = re.compile(r'\s*#include <(ureact/.*)>.*')
+internal_include_parser = re.compile(r'\s*#\s*include <(ureact/.*)>.*')
 
 # Copyright text
 copyright_text = '''\

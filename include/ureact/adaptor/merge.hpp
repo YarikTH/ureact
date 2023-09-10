@@ -36,22 +36,23 @@ public:
 
     UREACT_WARN_UNUSED_RESULT update_result update() override
     {
+        const auto copy_events_from = [this]( const auto& src ) {
+            const auto& src_events = get_internals( src ).get_events();
+            this->get_events().insert( //
+                this->get_events().end(),
+                src_events.begin(),
+                src_events.end() );
+        };
+
         std::apply(
-            [this](
-                const events<Values>&... sources ) { ( this->copy_events_from( sources ), ... ); },
+            [&copy_events_from](
+                const events<Values>&... sources ) { ( copy_events_from( sources ), ... ); },
             m_sources );
 
         return !this->get_events().empty() ? update_result::changed : update_result::unchanged;
     }
 
 private:
-    template <typename V>
-    void copy_events_from( const events<V>& src )
-    {
-        const auto& src_events = get_internals( src ).get_events();
-        this->get_events().insert( this->get_events().end(), src_events.begin(), src_events.end() );
-    }
-
     std::tuple<events<Values>...> m_sources;
 };
 

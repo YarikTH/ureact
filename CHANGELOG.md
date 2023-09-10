@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.16.0](https://github.com/YarikTH/ureact/releases/tag/0.16.0) (2023-09-10)
+
+[Full Changelog](https://github.com/YarikTH/ureact/compare/0.15.0...0.16.0)
+
+- BREAKING! #126 Improve compile times
+    - Inclusion of `<functional>` and `<iterator>` hurts compilation times, so
+      their usage is removed for core headers (all, but adaptor).
+    - allow only functors in var_signal::modify() (any invokable were valid
+      before). It allows not including `<functional>` in `<ureact/signal.hpp>`
+- #134 Get rid of issue_template.md
+- #136 Work around broken `ureact::merge` with latest MSVC in c++20 mode
+- #133 Fix MSVC's /W4 warnings
+
 ## [0.15.0](https://github.com/YarikTH/ureact/releases/tag/0.15.0) (2023-08-18)
 
 [Full Changelog](https://github.com/YarikTH/ureact/compare/0.14.0...0.15.0)

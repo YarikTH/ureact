@@ -14,7 +14,7 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/has_changed.hpp>
-#include <ureact/detail/node_base.hpp>
+#include <ureact/detail/node.hpp>
 #include <ureact/utility/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -23,16 +23,16 @@ namespace detail
 {
 
 template <typename S>
-class signal_node : public node_base
+class signal_node : public node
 {
 public:
     explicit signal_node( const context& context )
-        : node_base( context )
+        : node( context )
     {}
 
     template <typename T>
     signal_node( const context& context, T&& value )
-        : node_base( context )
+        : node( context )
         , m_value( std::forward<T>( value ) )
     {}
 

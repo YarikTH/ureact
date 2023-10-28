@@ -12,7 +12,7 @@
 
 #include <utility>
 
-#include <ureact/detail/node_base.hpp>
+#include <ureact/detail/node.hpp>
 #include <ureact/detail/observer_node.hpp>
 
 UREACT_BEGIN_NAMESPACE

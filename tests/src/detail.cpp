@@ -10,14 +10,14 @@
 #include <tuple>
 
 #include "catch2_extra.hpp"
-#include "ureact/detail/node_base.hpp"
+#include "ureact/detail/node.hpp"
 #include "ureact/detail/slot_map.hpp"
 
 // non-copyable and non-movable
-static_assert( !std::is_copy_constructible_v<ureact::detail::node_base> );
-static_assert( !std::is_copy_assignable_v<ureact::detail::node_base> );
-static_assert( !std::is_move_constructible_v<ureact::detail::node_base> );
-static_assert( !std::is_move_assignable_v<ureact::detail::node_base> );
+static_assert( !std::is_copy_constructible_v<ureact::detail::node> );
+static_assert( !std::is_copy_assignable_v<ureact::detail::node> );
+static_assert( !std::is_move_constructible_v<ureact::detail::node> );
+static_assert( !std::is_move_assignable_v<ureact::detail::node> );
 
 namespace
 {

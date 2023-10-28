@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_NODE_BASE_HPP
-#define UREACT_DETAIL_NODE_BASE_HPP
+#ifndef UREACT_DETAIL_NODE_HPP
+#define UREACT_DETAIL_NODE_HPP
 
 #include <memory>
 #include <tuple>
@@ -40,12 +40,12 @@ Ret create_wrapped_node( Args&&... args )
     return Ret{ create_node<Node>( std::forward<Args>( args )... ) };
 }
 
-class UREACT_API node_base : public reactive_node_interface
+class UREACT_API node : public reactive_node_interface
 {
 public:
-    explicit node_base( context context );
+    explicit node( context context );
 
-    ~node_base() override;
+    ~node() override;
 
     UREACT_WARN_UNUSED_RESULT node_id get_node_id() const
     {
@@ -95,7 +95,7 @@ protected:
     friend class detach_functor;
 
 private:
-    UREACT_MAKE_NONCOPYABLE( node_base );
+    UREACT_MAKE_NONCOPYABLE( node );
 
     context m_context{};
 
@@ -109,7 +109,7 @@ private:
 UREACT_END_NAMESPACE
 
 #if UREACT_HEADER_ONLY
-#    include <ureact/detail/node_base.inl>
+#    include <ureact/detail/node.inl>
 #endif
 
-#endif // UREACT_DETAIL_NODE_BASE_HPP
+#endif // UREACT_DETAIL_NODE_HPP

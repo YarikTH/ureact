@@ -11,7 +11,7 @@
 #define UREACT_DETAIL_OBSERVER_NODE_HPP
 
 #include <ureact/detail/graph_interface.hpp>
-#include <ureact/detail/node_base.hpp>
+#include <ureact/detail/node.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -19,12 +19,12 @@ namespace detail
 {
 
 class observer_node
-    : public node_base
+    : public node
     , public observer_interface
 {
 public:
     explicit observer_node( const context& context )
-        : node_base( context )
+        : node( context )
     {}
 };
 

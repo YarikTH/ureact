@@ -10,8 +10,8 @@
 #ifndef UREACT_ADAPTOR_TAKE_WHILE_HPP
 #define UREACT_ADAPTOR_TAKE_WHILE_HPP
 
+#include <ureact/adaptor/detail/synced_adaptor_base.hpp>
 #include <ureact/adaptor/filter.hpp>
-#include <ureact/detail/synced_adaptor_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

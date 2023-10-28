@@ -10,8 +10,8 @@
 #ifndef UREACT_ADAPTOR_ADJACENT_HPP
 #define UREACT_ADAPTOR_ADJACENT_HPP
 
+#include <ureact/adaptor/detail/adjacent_base.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/adjacent_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

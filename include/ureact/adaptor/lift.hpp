@@ -13,9 +13,9 @@
 #include <cassert>
 #include <functional>
 
+#include <ureact/adaptor/detail/reactive_op_base.hpp>
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/deduce_result_type.hpp>
-#include <ureact/detail/reactive_op_base.hpp>
 #include <ureact/detail/temp_signal.hpp>
 #include <ureact/signal.hpp>
 #include <ureact/utility/signal_pack.hpp>

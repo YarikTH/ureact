@@ -10,9 +10,9 @@
 #ifndef UREACT_ADAPTOR_TRANSFORM_HPP
 #define UREACT_ADAPTOR_TRANSFORM_HPP
 
+#include <ureact/adaptor/detail/synced_adaptor_base.hpp>
 #include <ureact/adaptor/process.hpp>
 #include <ureact/detail/deduce_result_type.hpp>
-#include <ureact/detail/synced_adaptor_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

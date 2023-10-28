@@ -10,8 +10,8 @@
 #ifndef UREACT_ADAPTOR_ZIP_TRANSFORM_HPP
 #define UREACT_ADAPTOR_ZIP_TRANSFORM_HPP
 
+#include <ureact/adaptor/detail/zip_base.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/detail/zip_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

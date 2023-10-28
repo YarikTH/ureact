@@ -13,8 +13,8 @@
 #include <cassert>
 #include <type_traits>
 
+#include <ureact/adaptor/detail/take_drop_base.hpp>
 #include <ureact/adaptor/filter.hpp>
-#include <ureact/detail/take_drop_base.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

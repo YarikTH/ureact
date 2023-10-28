@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
-#define UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+#ifndef UREACT_ADAPTOR_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+#define UREACT_ADAPTOR_DETAIL_SYNCED_ADAPTOR_BASE_HPP
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/utility/signal_pack.hpp>
@@ -45,4 +45,4 @@ struct SyncedAdaptorBase : adaptor
 
 UREACT_END_NAMESPACE
 
-#endif // UREACT_DETAIL_SYNCED_ADAPTOR_BASE_HPP
+#endif // UREACT_ADAPTOR_DETAIL_SYNCED_ADAPTOR_BASE_HPP

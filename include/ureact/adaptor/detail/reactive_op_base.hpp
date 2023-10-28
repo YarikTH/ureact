@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_DETAIL_REACTIVE_OP_BASE_HPP
-#define UREACT_DETAIL_REACTIVE_OP_BASE_HPP
+#ifndef UREACT_ADAPTOR_DETAIL_REACTIVE_OP_BASE_HPP
+#define UREACT_ADAPTOR_DETAIL_REACTIVE_OP_BASE_HPP
 
 #include <ureact/detail/linker_functor.hpp>
 #include <ureact/utility/type_traits.hpp>
@@ -64,4 +64,4 @@ protected:
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_DETAIL_REACTIVE_OP_BASE_HPP
+#endif //UREACT_ADAPTOR_DETAIL_REACTIVE_OP_BASE_HPP

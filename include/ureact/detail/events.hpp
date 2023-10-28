@@ -7,13 +7,13 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_EVENTS_HPP
-#define UREACT_EVENTS_HPP
+#ifndef UREACT_DETAIL_EVENTS_HPP
+#define UREACT_DETAIL_EVENTS_HPP
 
 #include <cassert>
 #include <type_traits>
 
-#include <ureact/context.hpp>
+#include <ureact/detail/context.hpp>
 #include <ureact/detail/node.hpp>
 #include <ureact/utility/event_range.hpp> // event ranges often needed along with events.hpp header
 #include <ureact/utility/unit.hpp>
@@ -571,4 +571,4 @@ UREACT_WARN_UNUSED_RESULT auto make_never() -> events<E>
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_EVENTS_HPP
+#endif //UREACT_DETAIL_EVENTS_HPP

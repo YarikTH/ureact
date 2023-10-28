@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_OBSERVER_HPP
-#define UREACT_OBSERVER_HPP
+#ifndef UREACT_DETAIL_OBSERVER_HPP
+#define UREACT_DETAIL_OBSERVER_HPP
 
 #include <utility>
 
@@ -104,4 +104,4 @@ UREACT_END_NAMESPACE
 #    include <ureact/detail/observer.inl>
 #endif
 
-#endif //UREACT_OBSERVER_HPP
+#endif //UREACT_DETAIL_OBSERVER_HPP

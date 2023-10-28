@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include <ureact/context.hpp>
+#include <ureact/detail/context.hpp>
 #include <ureact/detail/defines.hpp>
 #include <ureact/detail/graph_impl.hpp>
 

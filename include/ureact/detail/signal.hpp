@@ -7,12 +7,12 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_SIGNAL_HPP
-#define UREACT_SIGNAL_HPP
+#ifndef UREACT_DETAIL_SIGNAL_HPP
+#define UREACT_DETAIL_SIGNAL_HPP
 
 #include <cassert>
 
-#include <ureact/context.hpp>
+#include <ureact/detail/context.hpp>
 #include <ureact/detail/has_changed.hpp>
 #include <ureact/detail/node.hpp>
 #include <ureact/utility/type_traits.hpp>
@@ -651,4 +651,4 @@ UREACT_WARN_UNUSED_RESULT auto make_const( V&& value )
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_SIGNAL_HPP
+#endif //UREACT_DETAIL_SIGNAL_HPP

@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_CONTEXT_HPP
-#define UREACT_CONTEXT_HPP
+#ifndef UREACT_DETAIL_CONTEXT_HPP
+#define UREACT_DETAIL_CONTEXT_HPP
 
 #include <memory>
 
@@ -111,4 +111,4 @@ UREACT_END_NAMESPACE
 #    include <ureact/detail/context.inl>
 #endif
 
-#endif //UREACT_CONTEXT_HPP
+#endif //UREACT_DETAIL_CONTEXT_HPP

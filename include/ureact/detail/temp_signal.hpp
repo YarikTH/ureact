@@ -12,7 +12,7 @@
 
 #include <cassert>
 
-#include <ureact/signal.hpp>
+#include <ureact/detail/signal.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

@@ -7,10 +7,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_TRANSACTION_HPP
-#define UREACT_TRANSACTION_HPP
+#ifndef UREACT_DETAIL_TRANSACTION_HPP
+#define UREACT_DETAIL_TRANSACTION_HPP
 
-#include <ureact/context.hpp>
+#include <ureact/detail/context.hpp>
 #include <ureact/detail/defines.hpp>
 
 UREACT_BEGIN_NAMESPACE
@@ -61,4 +61,4 @@ UREACT_END_NAMESPACE
 #    include <ureact/detail/transaction.inl>
 #endif
 
-#endif // UREACT_TRANSACTION_HPP
+#endif // UREACT_DETAIL_TRANSACTION_HPP

@@ -14,7 +14,7 @@
 #include <tuple>
 #include <utility>
 
-#include <ureact/context.hpp>
+#include <ureact/detail/context.hpp>
 #include <ureact/detail/graph_impl.hpp>
 #include <ureact/detail/graph_interface.hpp>
 #include <ureact/detail/node_id_vector.hpp>

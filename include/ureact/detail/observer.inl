@@ -13,7 +13,7 @@
 #include <cassert>
 
 #include <ureact/detail/defines.hpp>
-#include <ureact/observer.hpp>
+#include <ureact/detail/observer.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

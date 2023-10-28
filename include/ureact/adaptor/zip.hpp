@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct ZipAdaptor : Adaptor
+struct ZipAdaptor : adaptor
 {
     /*!
 	 * @brief Emit a tuple (e1,…,eN) for each complete set of values for sources 1...N

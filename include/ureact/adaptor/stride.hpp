@@ -21,7 +21,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct StrideAdaptor : Adaptor
+struct StrideAdaptor : adaptor
 {
     /*!
 	 * @brief Advances N elements from the source stream at a time

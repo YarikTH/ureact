@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct HoldAdaptor : Adaptor
+struct HoldAdaptor : adaptor
 {
     /*!
 	 * @brief Holds the most recent event in a signal

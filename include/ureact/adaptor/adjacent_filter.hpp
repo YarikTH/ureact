@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <size_t N>
-struct AdjacentFilterAdaptor : Adaptor
+struct AdjacentFilterAdaptor : adaptor
 {
     static_assert( N >= 1 );
 

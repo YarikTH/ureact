@@ -117,7 +117,7 @@ private:
     std::shared_ptr<event_stream_node<InnerE>> m_inner;
 };
 
-struct FlattenClosure : AdaptorClosure
+struct FlattenClosure : adaptor_closure
 {
     /*!
 	 * @brief Create a new event stream by flattening a signal

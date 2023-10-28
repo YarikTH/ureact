@@ -67,7 +67,7 @@ private:
 };
 
 template <typename Derived>
-struct TakeDropAdaptorBase : Adaptor
+struct TakeDropAdaptorBase : adaptor
 {
     template <typename N, class = std::enable_if_t<std::is_integral_v<N>>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const N count ) const

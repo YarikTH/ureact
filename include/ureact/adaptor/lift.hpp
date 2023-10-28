@@ -93,7 +93,7 @@ struct unary_plus
 };
 
 template <typename SIn = void>
-struct LiftAdaptor : Adaptor
+struct LiftAdaptor : adaptor
 {
 
     /*!

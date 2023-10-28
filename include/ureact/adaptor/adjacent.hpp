@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <size_t N>
-struct AdjacentClosure : AdaptorClosure
+struct AdjacentClosure : adaptor_closure
 {
     static_assert( N >= 1 );
 

@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct ZipTransformAdaptor : Adaptor
+struct ZipTransformAdaptor : adaptor
 {
     /*!
 	 * @brief Emit an invoke result for func(e1,…,eN) for each complete set of values for sources 1...N

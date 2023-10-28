@@ -57,7 +57,7 @@ private:
 };
 
 template <typename EIn = void>
-struct MergeAdaptor : Adaptor
+struct MergeAdaptor : adaptor
 {
     /// TODO: rewrite to something more sane. Unfortunately conditional_t doesn't work
     template <typename... Sources>

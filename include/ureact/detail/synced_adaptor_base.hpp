@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <typename Derived>
-struct SyncedAdaptorBase : Adaptor
+struct SyncedAdaptorBase : adaptor
 {
     template <typename E, typename F>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source, F&& func ) const

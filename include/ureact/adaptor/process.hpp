@@ -73,7 +73,7 @@ private:
 };
 
 template <typename OutE>
-struct ProcessAdaptor : Adaptor
+struct ProcessAdaptor : adaptor
 {
     /*!
 	 * @brief Create a new event stream by batch processing events from other stream

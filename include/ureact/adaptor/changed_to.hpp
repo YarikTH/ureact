@@ -20,7 +20,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct ChangedToAdaptor : Adaptor
+struct ChangedToAdaptor : adaptor
 {
     template <typename V, typename S = std::decay_t<V>>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const signal<S>& target, V&& value ) const

@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct PulseAdaptor : Adaptor
+struct PulseAdaptor : adaptor
 {
     /*!
 	 * @brief Emits the value of a target signal when an event is received

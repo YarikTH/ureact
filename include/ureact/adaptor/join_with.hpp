@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct JoinWithAdaptor : Adaptor
+struct JoinWithAdaptor : adaptor
 {
     /*!
 	 * @brief Emits the sequence obtained from flattening received event value, with the delimiter in between elements

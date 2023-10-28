@@ -296,7 +296,7 @@ auto observe_events_impl(
         context, subject, std::forward<InF>( func ), dep_pack );
 }
 
-struct ObserveAdaptor : Adaptor
+struct ObserveAdaptor : adaptor
 {
     /*!
 	 * @brief Create observer for signal

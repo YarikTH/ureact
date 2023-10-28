@@ -141,7 +141,7 @@ private:
     signal_pack<Deps...> m_deps;
 };
 
-struct FoldAdaptor : Adaptor
+struct FoldAdaptor : adaptor
 {
     /*!
 	 * @brief Folds values from an event stream into a signal

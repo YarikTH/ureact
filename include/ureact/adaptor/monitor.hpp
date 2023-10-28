@@ -46,7 +46,7 @@ private:
     signal<S> m_target;
 };
 
-struct MonitorClosure : AdaptorClosure
+struct MonitorClosure : adaptor_closure
 {
     /*!
 	 * @brief Emits value changes of signal as events

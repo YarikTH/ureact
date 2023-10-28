@@ -48,7 +48,7 @@ struct decay_input<member_var_signal<Owner, S>>
 template <typename T>
 using decay_input_t = typename decay_input<T>::type;
 
-struct ReactiveRefAdaptor : Adaptor
+struct ReactiveRefAdaptor : adaptor
 {
     /*!
 	 * @brief Adaptor to flatten public signal attribute of class pointed be reference

@@ -20,7 +20,7 @@ namespace detail
 {
 
 template <template <typename...> class ContT>
-struct CollectClosure : AdaptorClosure
+struct CollectClosure : adaptor_closure
 {
     /*!
 	 * @brief Collects received events into signal<ContT<E>>

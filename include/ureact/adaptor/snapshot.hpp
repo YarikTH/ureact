@@ -18,7 +18,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct SnapshotAdaptor : Adaptor
+struct SnapshotAdaptor : adaptor
 {
     /*!
 	 * @brief Sets the signal value to the value of a target signal when an event is received

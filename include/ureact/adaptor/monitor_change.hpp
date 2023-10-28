@@ -19,7 +19,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct MonitorChangeClosure : AdaptorClosure
+struct MonitorChangeClosure : adaptor_closure
 {
     /*!
 	 * @brief Emits pairs of value changes of signal as events

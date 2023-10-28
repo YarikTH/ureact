@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <size_t N>
-struct AdjacentTransformAdaptor : Adaptor
+struct AdjacentTransformAdaptor : adaptor
 {
     static_assert( N >= 1 );
 

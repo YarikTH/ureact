@@ -19,7 +19,7 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
-struct EnumerateAdaptorClosure : AdaptorClosure
+struct EnumerateAdaptorClosure : adaptor_closure
 {
     template <typename E>
     UREACT_WARN_UNUSED_RESULT constexpr auto operator()( const events<E>& source ) const

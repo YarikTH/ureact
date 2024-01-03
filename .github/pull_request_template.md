@@ -1,8 +1,6 @@
 <!--
 Please read the contribution guidelines before submitting a pull request:
-https://github.com/YarikTH/ureact/blob/master/CONTRIBUTING.md.
-By submitting this pull request, you agree that your contributions are licensed
-under the µReact license, and agree to future changes to the licensing.
+https://github.com/YarikTH/ureact/blob/main/CONTRIBUTING.md.
 -->
 
 ## Description

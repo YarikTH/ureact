@@ -62,6 +62,18 @@ struct callback_sanitizer
         } while( false )
 #endif
 
+struct react_graph_listener
+{
+    virtual ~react_graph_listener() = default;
+
+    virtual void node_is_registered( node_id nodeId ) = 0;
+    virtual void node_is_queued_for_unregister( node_id nodeId ) = 0;
+    virtual void node_is_unregistered( node_id nodeId ) = 0;
+
+    virtual void node_is_attached( node_id nodeId, node_id parentId ) = 0;
+    virtual void node_is_detached( node_id nodeId, node_id parentId ) = 0;
+};
+
 struct react_graph
 #if !defined( NDEBUG )
     : public callback_sanitizer
@@ -86,7 +98,8 @@ struct react_graph
     [[nodiscard]] virtual bool is_propagation_in_progress() const = 0;
 };
 
-UREACT_API std::shared_ptr<react_graph> make_react_graph();
+UREACT_API std::shared_ptr<react_graph> make_react_graph(
+    std::shared_ptr<react_graph_listener> listener = nullptr );
 
 } // namespace detail
 

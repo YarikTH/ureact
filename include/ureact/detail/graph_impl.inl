@@ -27,6 +27,23 @@ UREACT_BEGIN_NAMESPACE
 namespace detail
 {
 
+struct null_react_graph_listener : react_graph_listener
+{
+    void node_is_registered( node_id ) override
+    {}
+
+    void node_is_queued_for_unregister( node_id ) override
+    {}
+
+    void node_is_unregistered( node_id ) override
+    {}
+
+    void node_is_attached( node_id, node_id ) override
+    {}
+    void node_is_detached( node_id, node_id ) override
+    {}
+};
+
 class react_graph_impl : public react_graph
 {
 #if !defined( NDEBUG )
@@ -50,7 +67,7 @@ class react_graph_impl : public react_graph
     }
 #endif
 public:
-    react_graph_impl() = default;
+    explicit react_graph_impl( std::shared_ptr<react_graph_listener> listener );
     ~react_graph_impl() override;
 
     node_id register_node() override;
@@ -139,6 +156,8 @@ private:
 
     void unregister_queued_nodes();
 
+    std::shared_ptr<react_graph_listener> m_listener;
+
     node_id::context_id_type m_id = create_context_id();
 
     slot_map<node_data> m_node_data;
@@ -154,6 +173,10 @@ private:
 
     node_id_vector m_nodes_queued_for_unregister;
 };
+
+UREACT_FUNC react_graph_impl::react_graph_impl( std::shared_ptr<react_graph_listener> listener )
+    : m_listener( std::move( listener ) )
+{}
 
 UREACT_FUNC react_graph_impl::~react_graph_impl()
 {
@@ -178,6 +201,7 @@ UREACT_FUNC void react_graph_impl::register_node_ptr(
 
     node_data& node = m_node_data[nodeId];
     node.node_ptr = nodePtr;
+    m_listener->node_is_registered( nodeId );
 }
 
 UREACT_FUNC void react_graph_impl::unregister_node( const node_id nodeId )
@@ -186,9 +210,15 @@ UREACT_FUNC void react_graph_impl::unregister_node( const node_id nodeId )
     assert( m_node_data[nodeId].successors.empty() );
 
     if( can_unregister_node() )
+    {
         m_node_data.erase( nodeId );
+        m_listener->node_is_unregistered( nodeId );
+    }
     else
+    {
         m_nodes_queued_for_unregister.add( nodeId );
+        m_listener->node_is_queued_for_unregister( nodeId );
+    }
 }
 
 UREACT_FUNC void react_graph_impl::attach_node( const node_id nodeId, const node_id parentId )
@@ -202,6 +232,8 @@ UREACT_FUNC void react_graph_impl::attach_node( const node_id nodeId, const node
     parent.successors.add( nodeId );
 
     node.level = std::max( node.level, parent.level + 1 );
+
+    m_listener->node_is_attached( nodeId, parentId );
 }
 
 UREACT_FUNC void react_graph_impl::detach_node( const node_id nodeId, const node_id parentId )
@@ -213,6 +245,8 @@ UREACT_FUNC void react_graph_impl::detach_node( const node_id nodeId, const node
     node_id_vector& successors = parent.successors;
 
     successors.remove( nodeId );
+
+    m_listener->node_is_detached( nodeId, parentId );
 }
 
 UREACT_FUNC void react_graph_impl::push_input( const node_id nodeId )
@@ -387,9 +421,12 @@ UREACT_FUNC bool react_graph_impl::topological_queue::fetch_next()
     return !m_next_data.empty();
 }
 
-UREACT_FUNC std::shared_ptr<react_graph> make_react_graph()
+UREACT_FUNC std::shared_ptr<react_graph> make_react_graph(
+    std::shared_ptr<react_graph_listener> listener )
 {
-    return std::make_shared<react_graph_impl>();
+    return std::make_shared<react_graph_impl>(
+        listener ? std::move( listener ) //
+                 : std::make_shared<null_react_graph_listener>() );
 }
 
 } // namespace detail

@@ -12,8 +12,8 @@ include(FetchContent)
 
 FetchContent_Declare(
     Catch2
-    URL "https://github.com/catchorg/Catch2/archive/refs/tags/v3.4.0.tar.gz"
-    URL_HASH MD5=2c802a4938ed842e2942c60d1d231bb7
+    URL "https://github.com/catchorg/Catch2/archive/refs/tags/v3.5.1.tar.gz"
+    URL_HASH MD5=3b666cc058b84e9af3431cad9649c1af
 )
 
 FetchContent_MakeAvailable(Catch2)

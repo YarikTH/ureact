@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?asciidoc-toc maxdepth="3"?>
+<?asciidoc-numbered?>
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xl="http://www.w3.org/1999/xlink" version="5.0" xml:lang="en">
+<info>
+<title>µReact <div style="z-index</title>
+<subtitle>3; bottom:-9px; right:4px; position:fixed"><input width="32" height="32" type="image" alt="Skin" src="./skin.png" onclick="this.blur();switch_style();return false;"/></div></subtitle>
+<date>2024-01-04</date>
+<author>
+<personname>
+<firstname>Functional Reactive Programming library written in C++17</firstname>
+</personname>
+</author>
+<authorinitials>F</authorinitials>
+</info>
+<simpara role="text-right"><link xl:href="https://github.com/YarikTH/ureact">GitHub</link> | <link xl:href="https://YarikTH.github.io/ureact/ureact.pdf">PDF</link></simpara>
+<section xml:id="_overview">
+<title>Overview</title>
+<programlisting language="c++" linenumbering="unnumbered">class Shape
+{
+public:
+    int width  = 1; <co xml:id="CO1-1"/>
+    int height = 1;
+};</programlisting>
+<calloutlist>
+<callout arearefs="CO1-1">
+<para>dfgsd</para>
+</callout>
+</calloutlist>
+<section xml:id="_description">
+<title>Description</title>
+<note>
+<simpara>add docs</simpara>
+</note>
+</section>
+<section xml:id="_dependencies">
+<title>Dependencies</title>
+<note>
+<simpara>add docs</simpara>
+</note>
+</section>
+<section xml:id="_supported_compilers">
+<title>Supported Compilers</title>
+<note>
+<simpara>add docs</simpara>
+</note>
+</section>
+</section>
+<section xml:id="_tutorial">
+<title>Tutorial</title>
+<simpara>341638756981</simpara>
+<section xml:id="_introduction">
+<title>Introduction</title>
+<note>
+<simpara>add docs 1</simpara>
+</note>
+</section>
+<section xml:id="_essential">
+<title>Essential</title>
+<note>
+<simpara>add docs 2</simpara>
+</note>
+</section>
+<section xml:id="_advanced">
+<title>Advanced</title>
+<note>
+<simpara>add docs 3</simpara>
+</note>
+</section>
+</section>
+<section xml:id="_reference">
+<title>Reference</title>
+<simpara>jkgfdjkghfdsjkahk</simpara>
+<simpara><?asciidoc-hr?></simpara>
+<simpara role="text-right">Documentation rendered by <link xl:href="https://asciidoctor.org/">Asciidoctor</link> with <link xl:href="https://github.com/boostorg/qvm/tree/develop/doc">these customizations</link> that are based on <link xl:href="https://github.com/zajo/asciidoctor_skin">these customizations</link>.</simpara>
+<simpara role="text-right">Copyright 2014-2017 Sebastian Jeckel, 2020-2024 Yaroslav Krylov.</simpara>
+</section>
+</article>

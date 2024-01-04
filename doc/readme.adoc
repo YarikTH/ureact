@@ -1,0 +1,48 @@
+:last-update-label!:
+:icons: font
+:prewrap!:
+:docinfo: shared
+:stylesheet: zajo-dark.css
+:source-highlighter: rouge
+
+ifdef::backend-pdf[]
+= µReact
+endif::[]
+ifndef::backend-pdf[]
+= µReact pass:[<div style="z-index: 3; bottom:-9px; right:4px; position:fixed"><input width="32" height="32" type="image" alt="Skin" src="./skin.png" onclick="this.blur();switch_style();return false;"/></div>]
+endif::[]
+Functional Reactive Programming library written in C++17
+ifndef::backend-pdf,env-github[]
+:toc: left
+:toclevels: 3
+:toc-title:
+
+[.text-right]
+https://github.com/YarikTH/ureact[GitHub] | https://YarikTH.github.io/ureact/ureact.pdf[PDF]
+endif::[]
+
+ifdef::safe-mode-secure[]
+link:overview.adoc[Overview]:: An overview of the features included in µReact, plus rationale and design information.
+link:tutorial.adoc[Tutorial]:: Tutorial
+link:reference.adoc[Reference]:: Detailed class and function reference.
+endif::[]
+
+ifndef::safe-mode-secure[]
+:leveloffset: +1
+
+include::overview.adoc[]
+
+include::tutorial.adoc[]
+
+include::reference.adoc[]
+
+:leveloffset: -1
+endif::[]
+
+'''
+
+[.text-right]
+Documentation rendered by https://asciidoctor.org/[Asciidoctor] with https://github.com/boostorg/qvm/tree/develop/doc[these customizations] that are based on https://github.com/zajo/asciidoctor_skin[these customizations].
+
+[.text-right]
+Copyright 2014-2017 Sebastian Jeckel, 2020-2024 Yaroslav Krylov.

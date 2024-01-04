@@ -1,0 +1,24 @@
+= Overview
+
+[source,c++]
+----
+class Shape
+{
+public:
+    int width  = 1; // <1>
+    int height = 1;
+};
+----
+<1> dfgsd
+
+== Description
+
+NOTE: add docs
+
+== Dependencies
+
+NOTE: add docs
+
+== Supported Compilers
+
+NOTE: add docs

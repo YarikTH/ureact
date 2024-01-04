@@ -23,6 +23,8 @@ all:
 	@echo "Supported targets:"
 	@echo "* pretty_check - check if all cmake and c++ files are properly formatted"
 	@echo "* pretty - prettify all cmake and c++ files"
+	@echo "* docs - generate documentation in doc/html"
+	@echo "* docs_deploy - deploy documentation to gh-pages"
 	@echo "* amalgamated - generate ureact_amalgamated.hpp (does prettify first)"
 	@echo "* integration_check - check library integrations"
 	@echo "* integration_update - generate integration files"
@@ -48,6 +50,38 @@ pretty_check:
 # prettify all cmake and c++ files
 pretty:
 	@./support/venv.sh $(PRETTY_PY_COMMAND) $(PRETTY_PY_OPTIONS) -
+
+
+##########################################################################
+# Documentation
+##########################################################################
+ASCIIDOCTOR_COMMON_ARGS = --source-dir ./doc
+ASCIIDOCTOR_COMMON_ARGS += --destination-dir ./doc/html
+
+ASCIIDOCTOR_HTML_ARGS = --out-file "index.html"
+ASCIIDOCTOR_HTML_ARGS += --backend "html5"
+ASCIIDOCTOR_HTML_ARGS += --doctype "article"
+ASCIIDOCTOR_HTML_ARGS += --attribute "stylesheet=zajo-dark.css"
+ASCIIDOCTOR_HTML_ARGS += --attribute "linkcss"
+
+ASCIIDOCTOR_PDF_ARGS = --out-file "ureact.pdf"
+ASCIIDOCTOR_PDF_ARGS += --backend "pdf"
+ASCIIDOCTOR_PDF_ARGS += --doctype "book"
+ASCIIDOCTOR_PDF_ARGS += --require "asciidoctor-pdf"
+ASCIIDOCTOR_PDF_ARGS += --attribute "pdf-themesdir=./doc"
+ASCIIDOCTOR_PDF_ARGS += --attribute "pdf-theme=ureact"
+
+# generate documentation in doc/html
+docs:
+	@asciidoctor $(ASCIIDOCTOR_COMMON_ARGS) $(ASCIIDOCTOR_HTML_ARGS) ./doc/readme.adoc
+	@asciidoctor $(ASCIIDOCTOR_COMMON_ARGS) $(ASCIIDOCTOR_PDF_ARGS) ./doc/readme.adoc
+	@cp ./doc/skin.png ./doc/zajo-light.css ./doc/rouge-github.css ./doc/html
+
+# deploy documentation to gh-pages
+# See https://gist.github.com/cobyism/4730490
+docs_deploy:
+	@echo "Deploying documentation to GitHub pages. Make sure latest documentation is already committed"
+	@git push origin :gh-pages && git subtree push --prefix doc/html/ origin gh-pages
 
 
 ##########################################################################

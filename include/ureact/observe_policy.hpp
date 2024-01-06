@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UTILITY_OBSERVE_POLICY_HPP
-#define UREACT_UTILITY_OBSERVE_POLICY_HPP
+#ifndef UREACT_OBSERVE_POLICY_HPP
+#define UREACT_OBSERVE_POLICY_HPP
 
 #include <ureact/detail/defines.hpp>
 
@@ -25,4 +25,4 @@ enum class observe_policy
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_UTILITY_OBSERVE_POLICY_HPP
+#endif //UREACT_OBSERVE_POLICY_HPP

@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UTILITY_TYPE_TRAITS_HPP
-#define UREACT_UTILITY_TYPE_TRAITS_HPP
+#ifndef UREACT_TYPE_TRAITS_HPP
+#define UREACT_TYPE_TRAITS_HPP
 
 #include <type_traits>
 
@@ -334,4 +334,4 @@ inline constexpr bool is_reactive_v = is_reactive<T>::value;
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_UTILITY_TYPE_TRAITS_HPP
+#endif //UREACT_TYPE_TRAITS_HPP

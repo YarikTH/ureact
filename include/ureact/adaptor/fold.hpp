@@ -14,10 +14,10 @@
 
 #include <ureact/detail/adaptor.hpp>
 #include <ureact/detail/linker_functor.hpp>
+#include <ureact/event_range.hpp>
 #include <ureact/signal.hpp>
-#include <ureact/utility/event_range.hpp>
-#include <ureact/utility/signal_pack.hpp>
-#include <ureact/utility/type_traits.hpp>
+#include <ureact/signal_pack.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

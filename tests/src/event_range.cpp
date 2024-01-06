@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ureact/utility/event_range.hpp"
+#include "ureact/event_range.hpp"
 
 #include "catch2_extra.hpp"
 

@@ -15,7 +15,7 @@
 
 #include <ureact/adaptor/detail/take_drop_base.hpp>
 #include <ureact/adaptor/filter.hpp>
-#include <ureact/utility/type_traits.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

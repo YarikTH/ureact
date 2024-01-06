@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UTILITY_UNIT_HPP
-#define UREACT_UTILITY_UNIT_HPP
+#ifndef UREACT_UNIT_HPP
+#define UREACT_UNIT_HPP
 
 #include <ureact/detail/defines.hpp>
 
@@ -44,4 +44,4 @@ constexpr bool operator>=(unit, unit) noexcept { return true; }
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_UTILITY_UNIT_HPP
+#endif //UREACT_UNIT_HPP

@@ -13,7 +13,7 @@
 #include <ureact/adaptor/flatten.hpp>
 #include <ureact/adaptor/lift.hpp>
 #include <ureact/detail/adaptor.hpp>
-#include <ureact/utility/type_traits.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

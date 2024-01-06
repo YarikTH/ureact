@@ -7,13 +7,13 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UTILITY_EVENT_EMITTER_HPP
-#define UREACT_UTILITY_EVENT_EMITTER_HPP
+#ifndef UREACT_EVENT_EMITTER_HPP
+#define UREACT_EVENT_EMITTER_HPP
 
 #include <vector>
 
 #include <ureact/detail/defines.hpp>
-#include <ureact/utility/unit.hpp>
+#include <ureact/unit.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
@@ -93,4 +93,4 @@ private:
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_UTILITY_EVENT_EMITTER_HPP
+#endif //UREACT_EVENT_EMITTER_HPP

@@ -11,7 +11,7 @@
 #define UREACT_ADAPTOR_DETAIL_REACTIVE_OP_BASE_HPP
 
 #include <ureact/detail/linker_functor.hpp>
-#include <ureact/utility/type_traits.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

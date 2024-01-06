@@ -15,16 +15,16 @@
 // clang-format on
 
 #include <ureact/context.hpp>
+#include <ureact/event_emitter.hpp>
+#include <ureact/event_range.hpp>
 #include <ureact/events.hpp>
+#include <ureact/observe_policy.hpp>
 #include <ureact/observer.hpp>
+#include <ureact/observer_action.hpp>
 #include <ureact/signal.hpp>
+#include <ureact/signal_pack.hpp>
 #include <ureact/transaction.hpp>
-#include <ureact/utility/event_emitter.hpp>
-#include <ureact/utility/event_range.hpp>
-#include <ureact/utility/observe_policy.hpp>
-#include <ureact/utility/observer_action.hpp>
-#include <ureact/utility/signal_pack.hpp>
-#include <ureact/utility/type_traits.hpp>
-#include <ureact/utility/unit.hpp>
+#include <ureact/type_traits.hpp>
+#include <ureact/unit.hpp>
 
 #endif //UREACT_UREACT_HPP

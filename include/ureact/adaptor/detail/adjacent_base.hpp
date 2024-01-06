@@ -16,8 +16,8 @@
 
 #include <ureact/detail/defines.hpp>
 #include <ureact/events.hpp>
-#include <ureact/utility/signal_pack.hpp>
-#include <ureact/utility/type_traits.hpp>
+#include <ureact/signal_pack.hpp>
+#include <ureact/type_traits.hpp>
 
 UREACT_BEGIN_NAMESPACE
 

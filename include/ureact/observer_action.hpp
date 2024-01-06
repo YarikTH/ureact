@@ -7,8 +7,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef UREACT_UTILITY_OBSERVER_ACTION_HPP
-#define UREACT_UTILITY_OBSERVER_ACTION_HPP
+#ifndef UREACT_OBSERVER_ACTION_HPP
+#define UREACT_OBSERVER_ACTION_HPP
 
 #include <ureact/detail/defines.hpp>
 
@@ -25,4 +25,4 @@ enum class observer_action
 
 UREACT_END_NAMESPACE
 
-#endif //UREACT_UTILITY_OBSERVER_ACTION_HPP
+#endif //UREACT_OBSERVER_ACTION_HPP

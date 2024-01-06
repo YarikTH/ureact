@@ -15,8 +15,8 @@
 
 #include <ureact/context.hpp>
 #include <ureact/detail/node.hpp>
-#include <ureact/utility/event_range.hpp> // event ranges often needed along with events.hpp header
-#include <ureact/utility/unit.hpp>
+#include <ureact/event_range.hpp> // event ranges often needed along with events.hpp header
+#include <ureact/unit.hpp>
 
 UREACT_BEGIN_NAMESPACE
 
